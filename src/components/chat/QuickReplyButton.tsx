@@ -7,7 +7,7 @@ import Animated, {
   withSpring,
   FadeInUp 
 } from 'react-native-reanimated';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 
 interface QuickReplyButtonProps {
   text: string;
@@ -15,8 +15,6 @@ interface QuickReplyButtonProps {
   icon?: string;
   delay?: number;
 }
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function QuickReplyButton({ text, onPress, icon, delay = 0 }: QuickReplyButtonProps) {
   const scale = useSharedValue(1);
@@ -34,25 +32,27 @@ export function QuickReplyButton({ text, onPress, icon, delay = 0 }: QuickReplyB
   };
 
   return (
-    <AnimatedPressable
-      entering={FadeInUp.delay(delay).springify()}
-      style={animatedStyle}
-      onPress={onPress}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      className={cn(
-        'flex-row items-center bg-primary/10 dark:bg-primary/20',
-        'border border-primary/30 rounded-full px-4 py-2.5 mr-2 mb-2'
-      )}
-    >
-      {icon && (
-        <Text className="mr-2 text-base">
-          {icon}
-        </Text>
-      )}
-      <Text variant="body" className="text-primary font-medium">
-        {text}
-      </Text>
-    </AnimatedPressable>
+    <Animated.View entering={FadeInUp.delay(delay).springify()}>
+      <Animated.View style={animatedStyle}>
+        <Pressable
+          onPress={onPress}
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          className={cn(
+            'flex-row items-center bg-primary/10 dark:bg-primary/20',
+            'border border-primary/30 rounded-full px-4 py-2.5 mr-2 mb-2'
+          )}
+        >
+          {icon && (
+            <Text className="mr-2 text-base">
+              {icon}
+            </Text>
+          )}
+          <Text variant="body" className="text-primary font-medium">
+            {text}
+          </Text>
+        </Pressable>
+      </Animated.View>
+    </Animated.View>
   );
 }

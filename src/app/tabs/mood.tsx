@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, ScrollView, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
-import { MoodSelector, MoodGraph, MoodCalendar } from '~/components/mood';
+// import { MoodSelector, MoodGraph, MoodCalendar } from '~/components/mood';
+import { SafeMoodSelector } from '~/components/mood/SafeMoodSelector';
+import { MoodGraph, MoodCalendar } from '~/components/mood';
 import { Button } from '~/components/ui/button';
 import { Calendar, BarChart3 } from 'lucide-react-native';
-import { cn } from '~/lib/utils';
-import Animated, { FadeInDown } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { cn } from '~/lib/cn';
+// import Animated, { FadeInDown } from 'react-native-reanimated';
+import { safeHaptics } from '~/lib/haptics';
 import { subDays } from 'date-fns';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
@@ -116,7 +118,7 @@ function MoodScreen() {
 
   const handleMoodSelect = (mood: any) => {
     setSelectedMood(mood.id);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    safeHaptics.selection();
   };
 
   const handleLogMood = async () => {
@@ -135,7 +137,7 @@ function MoodScreen() {
       });
       
       setSelectedMood('');
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+      safeHaptics.notification();
     }
   };
 
@@ -154,37 +156,28 @@ function MoodScreen() {
 
         {/* Mood Check-in */}
         {!hasLoggedToday && (
-          <Animated.View
-            entering={FadeInDown.springify()}
-            className="px-6 mt-6"
-          >
-            <MoodSelector
+          <View className="px-6 mt-6">
+            <SafeMoodSelector
               selectedMood={selectedMood}
               onMoodSelect={handleMoodSelect}
             />
             
             {selectedMood && (
-              <Animated.View
-                entering={FadeInDown.delay(200).springify()}
-                className="mt-4"
-              >
+              <View className="mt-4">
                 <Button
                   onPress={handleLogMood}
                   className="w-full"
                 >
                   <Text>Log Mood</Text>
                 </Button>
-              </Animated.View>
+              </View>
             )}
-          </Animated.View>
+          </View>
         )}
 
         {/* Success Message */}
         {hasLoggedToday && (
-          <Animated.View
-            entering={FadeInDown.springify()}
-            className="mx-6 mt-6 bg-green-50 dark:bg-green-900/20 rounded-2xl p-6"
-          >
+          <View className="mx-6 mt-6 bg-green-50 dark:bg-green-900/20 rounded-2xl p-6">
             <View className="flex-row items-center">
               <Text className="text-2xl mr-3">✅</Text>
               <View className="flex-1">
@@ -196,7 +189,7 @@ function MoodScreen() {
                 </Text>
               </View>
             </View>
-          </Animated.View>
+          </View>
         )}
 
         {/* View Toggle */}
@@ -263,22 +256,16 @@ function MoodScreen() {
         </View>
 
         {/* Mood Visualization */}
-        <Animated.View
-          entering={FadeInDown.delay(300).springify()}
-          className="px-6 pb-6"
-        >
+        <View className="px-6 pb-6">
           {viewMode === 'graph' ? (
             <MoodGraph data={graphMoodData} />
           ) : (
             <MoodCalendar moodEntries={calendarMoodData} />
           )}
-        </Animated.View>
+        </View>
 
         {/* Insights */}
-        <Animated.View
-          entering={FadeInDown.delay(400).springify()}
-          className="mx-6 mb-6 bg-primary/5 dark:bg-primary/10 rounded-2xl p-6"
-        >
+        <View className="mx-6 mb-6 bg-primary/5 dark:bg-primary/10 rounded-2xl p-6">
           <Text variant="title3" className="mb-3">
             Weekly Insights
           </Text>
@@ -302,7 +289,7 @@ function MoodScreen() {
               </Text>
             </View>
           </View>
-        </Animated.View>
+        </View>
       </ScrollView>
     </SafeAreaView>
   );

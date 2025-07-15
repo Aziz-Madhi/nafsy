@@ -3,7 +3,7 @@ import { View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { Text } from '~/components/ui/text';
 import { Avatar } from '~/components/ui/avatar';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 
 interface ChatBubbleProps {
   message: string;

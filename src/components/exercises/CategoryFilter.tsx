@@ -8,7 +8,7 @@ import Animated, {
   FadeInRight,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 
 interface Category {
   id: string;
@@ -29,8 +29,6 @@ interface CategoryFilterProps {
   selectedCategory: string;
   onCategorySelect: (category: string) => void;
 }
-
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function CategoryFilter({ selectedCategory, onCategorySelect }: CategoryFilterProps) {
   return (
@@ -76,29 +74,31 @@ function CategoryChip({ category, isSelected, onPress, index }: CategoryChipProp
   };
 
   return (
-    <AnimatedPressable
-      entering={FadeInRight.delay(index * 50).springify()}
-      style={animatedStyle}
-      onPress={handlePress}
-      className={cn(
-        'flex-row items-center px-4 py-2.5 rounded-full mr-3',
-        isSelected
-          ? 'bg-primary'
-          : 'bg-secondary/20'
-      )}
-    >
-      <Text className="text-base mr-2">{category.icon}</Text>
-      <Text
-        variant="body"
-        className={cn(
-          'font-medium',
-          isSelected
-            ? 'text-primary-foreground'
-            : 'text-muted-foreground'
-        )}
-      >
-        {category.name}
-      </Text>
-    </AnimatedPressable>
+    <Animated.View entering={FadeInRight.delay(index * 50).springify()}>
+      <Animated.View style={animatedStyle}>
+        <Pressable
+          onPress={handlePress}
+          className={cn(
+            'flex-row items-center px-4 py-2.5 rounded-full mr-3',
+            isSelected
+              ? 'bg-primary'
+              : 'bg-secondary/20'
+          )}
+        >
+          <Text className="text-base mr-2">{category.icon}</Text>
+          <Text
+            variant="body"
+            className={cn(
+              'font-medium',
+              isSelected
+                ? 'text-primary-foreground'
+                : 'text-muted-foreground'
+            )}
+          >
+            {category.name}
+          </Text>
+        </Pressable>
+      </Animated.View>
+    </Animated.View>
   );
 }

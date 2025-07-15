@@ -1,7 +1,7 @@
 import { type VariantProps, cva } from 'class-variance-authority';
 import * as React from 'react';
 import { Text as RNText } from 'react-native';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 
 // Keep this context for backward compatibility with button, card, tooltip
 const TextClassContext = React.createContext<string | undefined>(undefined);

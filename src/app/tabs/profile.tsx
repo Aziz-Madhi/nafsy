@@ -9,7 +9,6 @@ import { api } from '../../../convex/_generated/api';
 import { Text } from '~/components/ui/text';
 import { Avatar } from '~/components/ui/avatar';
 import { Card } from '~/components/ui/card';
-import { ThemeToggle } from '~/components/ui/theme-toggle';
 import { 
   ChevronRight, 
   User, 
@@ -17,15 +16,13 @@ import {
   Shield, 
   HelpCircle, 
   LogOut,
-  Moon,
   Globe,
   Heart,
-  Award,
-  Settings
+  Award
 } from 'lucide-react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 
 interface SettingItem {
   id: string;
@@ -140,14 +137,6 @@ export default function ProfileScreen() {
     {
       title: 'Preferences',
       items: [
-        {
-          id: 'theme',
-          title: 'Appearance',
-          subtitle: 'Light, Dark, or System',
-          icon: Moon,
-          iconColor: '#6366F1',
-          rightElement: <ThemeToggle />,
-        },
         {
           id: 'privacy',
           title: 'Privacy & Security',

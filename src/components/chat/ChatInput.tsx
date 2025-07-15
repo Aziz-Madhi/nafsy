@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { View, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
 import { Send, Mic, Paperclip } from 'lucide-react-native';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 interface ChatInputProps {
@@ -10,7 +10,6 @@ interface ChatInputProps {
   disabled?: boolean;
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 export function ChatInput({ 
   onSendMessage, 
@@ -59,14 +58,15 @@ export function ChatInput({
         </View>
 
         {message.trim() ? (
-          <AnimatedPressable
-            onPress={handleSend}
-            style={sendButtonStyle}
-            className="ml-2 p-2"
-            disabled={disabled}
-          >
-            <Send size={24} className="text-primary" />
-          </AnimatedPressable>
+          <Animated.View style={sendButtonStyle}>
+            <Pressable
+              onPress={handleSend}
+              className="ml-2 p-2"
+              disabled={disabled}
+            >
+              <Send size={24} className="text-primary" />
+            </Pressable>
+          </Animated.View>
         ) : (
           <Pressable className="ml-2 p-2">
             <Mic size={24} className="text-muted-foreground" />

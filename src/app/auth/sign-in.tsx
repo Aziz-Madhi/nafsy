@@ -17,16 +17,27 @@ export default function SignInScreen() {
       return;
     }
 
+    // Trim whitespace
+    const trimmedEmail = emailAddress.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    if (!trimmedEmail || !trimmedPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
     try {
       const completeSignIn = await signIn.create({
-        identifier: emailAddress,
-        password,
+        identifier: trimmedEmail,
+        password: trimmedPassword,
       });
 
       await setActive({ session: completeSignIn.createdSessionId });
       router.replace('/tabs/chat');
     } catch (err: any) {
-      Alert.alert('Error', err.errors[0].message);
+      console.error('Sign in error:', err);
+      const errorMessage = err.errors?.[0]?.message || err.message || 'Failed to sign in. Please try again.';
+      Alert.alert('Error', errorMessage);
     }
   };
 

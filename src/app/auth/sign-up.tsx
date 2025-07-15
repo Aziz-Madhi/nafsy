@@ -20,16 +20,41 @@ export default function SignUpScreen() {
       return;
     }
 
+    // Trim whitespace from email
+    const trimmedEmail = emailAddress.trim().toLowerCase();
+    const trimmedPassword = password.trim();
+
+    // Basic validation
+    if (!trimmedEmail || !trimmedPassword) {
+      Alert.alert('Error', 'Please fill in all fields');
+      return;
+    }
+
+    // More robust email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(trimmedEmail)) {
+      Alert.alert('Error', 'Please enter a valid email address');
+      return;
+    }
+
+    if (trimmedPassword.length < 8) {
+      Alert.alert('Error', 'Password must be at least 8 characters');
+      return;
+    }
+
     try {
+      console.log('Attempting to sign up with email:', trimmedEmail);
       await signUp.create({
-        emailAddress,
-        password,
+        emailAddress: trimmedEmail,
+        password: trimmedPassword,
       });
 
       await signUp.prepareEmailAddressVerification({ strategy: 'email_code' });
       setPendingVerification(true);
     } catch (err: any) {
-      Alert.alert('Error', err.errors[0].message);
+      console.error('Sign up error:', err);
+      const errorMessage = err.errors?.[0]?.message || err.message || 'Failed to sign up. Please try again.';
+      Alert.alert('Error', errorMessage);
     }
   };
 
@@ -46,7 +71,9 @@ export default function SignUpScreen() {
       await setActive({ session: completeSignUp.createdSessionId });
       router.replace('/tabs/chat');
     } catch (err: any) {
-      Alert.alert('Error', err.errors[0].message);
+      console.error('Verification error:', err);
+      const errorMessage = err.errors?.[0]?.message || err.message || 'Failed to verify email. Please try again.';
+      Alert.alert('Error', errorMessage);
     }
   };
 
@@ -92,10 +119,13 @@ export default function SignUpScreen() {
                     placeholder="Enter your email"
                     placeholderTextColor="#9CA3AF"
                     value={emailAddress}
-                    onChangeText={setEmailAddress}
+                    onChangeText={(text) => setEmailAddress(text.trim())}
                     autoCapitalize="none"
                     autoComplete="email"
+                    autoCorrect={false}
+                    autoFocus={false}
                     keyboardType="email-address"
+                    textContentType="emailAddress"
                   />
                 </View>
 

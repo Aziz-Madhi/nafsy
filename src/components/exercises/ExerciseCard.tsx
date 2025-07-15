@@ -10,7 +10,7 @@ import Animated, {
   FadeInDown,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 
 interface Exercise {
   id: string;
@@ -18,10 +18,12 @@ interface Exercise {
   description: string;
   duration: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: 'breathing' | 'mindfulness' | 'movement' | 'cbt';
+  category: 'breathing' | 'mindfulness' | 'movement' | 'cbt' | 'journaling' | 'relaxation';
   imageUrl?: string;
   icon: string;
   color: string;
+  steps?: string[];
+  benefits?: string[];
 }
 
 interface ExerciseCardProps {
@@ -30,7 +32,6 @@ interface ExerciseCardProps {
   index: number;
 }
 
-const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
 
 const DIFFICULTY_COLORS = {
   beginner: '#22C55E',
@@ -65,14 +66,16 @@ export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
   };
 
   return (
-    <AnimatedPressable
+    <Animated.View
       entering={FadeInDown.delay(index * 100).springify()}
-      style={animatedStyle}
-      onPressIn={handlePressIn}
-      onPressOut={handlePressOut}
-      onPress={handlePress}
       className="mb-4"
     >
+      <Animated.View style={animatedStyle}>
+        <Pressable
+          onPressIn={handlePressIn}
+          onPressOut={handlePressOut}
+          onPress={handlePress}
+        >
       <Card className="overflow-hidden">
         <View
           className="h-32 justify-end p-4"
@@ -116,6 +119,8 @@ export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
           </View>
         </View>
       </Card>
-    </AnimatedPressable>
+        </Pressable>
+      </Animated.View>
+    </Animated.View>
   );
 }

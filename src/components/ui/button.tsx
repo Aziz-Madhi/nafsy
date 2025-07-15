@@ -2,10 +2,10 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import * as React from 'react';
 import { Pressable } from 'react-native';
 import { TextClassContext } from '~/components/ui/text';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 
 const buttonVariants = cva(
-  'group flex items-center justify-center rounded-md web:ring-offset-background web:transition-colors web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2',
+  'group flex items-center justify-center rounded-md web:ring-offset-background web:transition-colors web:focus-visible:outline-none web:focus-visible:ring-2 web:focus-visible:ring-ring web:focus-visible:ring-offset-2 web:disabled:opacity-50 web:disabled:pointer-events-none',
   {
     variants: {
       variant: {
@@ -65,10 +65,7 @@ function Button({ ref, className, variant, size, ...props }: ButtonProps) {
       value={buttonTextVariants({ variant, size, className: 'web:pointer-events-none' })}
     >
       <Pressable
-        className={cn(
-          props.disabled && 'opacity-50 web:pointer-events-none',
-          buttonVariants({ variant, size, className })
-        )}
+        className={cn(buttonVariants({ variant, size, className }))}
         ref={ref}
         role='button'
         {...props}

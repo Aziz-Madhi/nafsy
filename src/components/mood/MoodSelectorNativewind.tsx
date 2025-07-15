@@ -18,14 +18,14 @@ const MOODS: Mood[] = [
   { id: 'very-happy', emoji: '😄', label: 'Very Happy', color: '#22C55E' },
 ];
 
-interface MoodSelectorProps {
+interface MoodSelectorNativewindProps {
   selectedMood?: string;
   onMoodSelect: (mood: Mood) => void;
 }
 
-export function MoodSelector({ selectedMood, onMoodSelect }: MoodSelectorProps) {
+export function MoodSelectorNativewind({ selectedMood, onMoodSelect }: MoodSelectorNativewindProps) {
   return (
-    <View className="bg-card rounded-2xl p-6 shadow-sm">
+    <View className="bg-white dark:bg-gray-800 rounded-2xl p-6 shadow-sm">
       <Text variant="title3" className="mb-6 text-center">
         How are you feeling today?
       </Text>
@@ -56,29 +56,29 @@ function MoodButton({ mood, isSelected, onPress }: MoodButtonProps) {
     safeHaptics.impact();
   };
 
+  // Use separate components for selected/unselected states
+  if (isSelected) {
+    return (
+      <Pressable onPress={handlePress} className="items-center">
+        <View 
+          className="w-16 h-16 rounded-full items-center justify-center mb-2 ring-2 ring-offset-2 ring-primary"
+          style={{ backgroundColor: mood.color + '20' }}
+        >
+          <Text className="text-2xl">{mood.emoji || '😐'}</Text>
+        </View>
+        <Text variant="muted" className="text-xs text-foreground font-medium">
+          {mood.label}
+        </Text>
+      </Pressable>
+    );
+  }
+
   return (
-    <Pressable
-      onPress={handlePress}
-      className="items-center"
-    >
-      <View
-        className={
-          isSelected 
-            ? 'w-16 h-16 rounded-full items-center justify-center mb-2 ring-2 ring-offset-2 ring-primary'
-            : 'w-16 h-16 rounded-full items-center justify-center mb-2'
-        }
-        style={{ backgroundColor: isSelected ? mood.color + '20' : 'transparent' }}
-      >
+    <Pressable onPress={handlePress} className="items-center">
+      <View className="w-16 h-16 rounded-full items-center justify-center mb-2">
         <Text className="text-2xl">{mood.emoji || '😐'}</Text>
       </View>
-      <Text
-        variant="muted"
-        className={
-          isSelected 
-            ? 'text-xs text-foreground font-medium'
-            : 'text-xs'
-        }
-      >
+      <Text variant="muted" className="text-xs">
         {mood.label}
       </Text>
     </Pressable>

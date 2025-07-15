@@ -38,15 +38,23 @@ You are an expert in TypeScript, React Native, Expo, Nativewind v4, and React Na
 
 ## UI and Styling
 
-- Use **NativeWindUI** architecture with **Nativewind v4** for all styling
-- Import icons from **lucide-react-native** (React Native compatible icon library)
-- Use **Text component variants** for typography: `variant="title1"`, `variant="body"`, `variant="muted"`
-- Implement responsive design with Tailwind's responsive breakpoints and Nativewind's media queries
-- Use **CSS variables** from global.css for theming: `hsl(var(--primary))`, `hsl(var(--background))`
-- Ensure high accessibility (a11y) standards using ARIA roles and native accessibility props
-- Leverage **React Native Reanimated 4** with CSS-style animations for performant animations
-- Use className prop for styling instead of StyleSheet objects
-- Use `cn()` utility for class merging (clsx + tailwind-merge)
+**Current Architecture: Shadcn/ui + NativeWind v4 + React Native Reanimated 4.0**
+
+- **Shadcn/ui Pattern**: Use React Native Reusables approach with shadcn/ui design system
+- **NativeWind v4**: Primary styling system with Tailwind CSS classes (`nativewind@^4.1.23`)
+- **CSS Variables**: Single source of truth in `global.css` with `hsl(var(--primary))` format
+- **Typography**: Centralized Text component with variants (title1, title2, heading, body, muted, etc.)
+- **Icons**: `lucide-react-native@^0.525.0` for React Native compatible icons
+- **Animations**: React Native Reanimated 4.0.0-beta.5 for high-performance animations
+- **Class Merging**: `cn()` utility from `lib/cn.ts` (clsx + tailwind-merge with error handling)
+- **Component Architecture**: All UI components in root `/lib/` and `/components/` with consistent patterns
+
+### Styling Best Practices:
+- **Prefer className** over StyleSheet for all styling
+- **Use CSS variables** for theming: `bg-primary`, `text-foreground`, `border-input`
+- **Text variants** instead of hardcoded styling: `<Text variant="title1">`
+- **Component composition** over complex styling logic
+- **Static className values** to avoid NativeWind v4 context issues
 
 ## Safe Area Management
 
@@ -186,21 +194,88 @@ This is a React Native Expo application optimized for iOS with TypeScript and Na
 
 ## UI Framework
 
-This project uses **NativeWindUI** architecture with **Nativewind v4**:
-- **Core packages**: `nativewind@^4.1.23`, `tailwindcss@^3.4.17`, `lucide-react-native`, `@shopify/flash-list`
-- **Icon system**: `lucide-react-native` for React Native compatible icons
-- **Theme system**: CSS variables in `global.css` as single source of truth for theming
-- **Component architecture**: All UI components in `~/components/ui/` with consistent NativeWind styling
-- **Typography system**: Unified Text component with variants (title1, title2, heading, body, muted, etc.)
-- **Build optimization**: Nativewind's CSS-in-JS compilation for optimal performance and tree-shaking
-- **Best practices**: 
-  - Use className prop with Tailwind utilities instead of StyleSheet
-  - All components use `cn()` utility for class merging (clsx + tailwind-merge)
-  - Leverage CSS variables for consistent theming: `hsl(var(--primary))`, `hsl(var(--background))`
-  - Import icons from `lucide-react-native` for proper React Native compatibility
-  - Use Text component variants instead of hardcoded text styling
+**Current Tech Stack: Shadcn/ui + NativeWind v4 + React Native Reanimated 4.0**
 
-The root layout uses AppProviders composition with SafeAreaProvider, ClerkProvider, and ConvexProvider.
+### Core Dependencies:
+- **NativeWind**: `nativewind@^4.1.23` with `tailwindcss@^3.4.17`
+- **UI Primitives**: `@rn-primitives/*` for shadcn/ui components (avatar, progress, tooltip)
+- **Styling Utilities**: `class-variance-authority@^0.7.1`, `clsx@^2.1.1`, `tailwind-merge@^3.3.1`
+- **Icons**: `lucide-react-native@^0.525.0` for React Native compatibility
+- **Animations**: `react-native-reanimated@4.0.0-beta.5` + `moti@^0.30.0` (available but prefer Reanimated)
+- **Performance**: `@shopify/flash-list@1.7.6` for lists
+
+### Architecture Patterns:
+- **Shadcn/ui Design System**: Component patterns inspired by shadcn/ui but adapted for React Native
+- **CSS Variables**: Single source in `global.css` with light/dark mode support
+- **Component Location**: Mix of `/components/ui/` (shadcn-style) and `/lib/` (utilities)
+- **Styling Approach**: className-first with NativeWind, StyleSheet fallback for complex cases
+- **Typography**: Centralized Text component with CVA (class-variance-authority) variants
+
+### Animation Architecture:
+- **Primary**: React Native Reanimated 4.0 for complex animations (UI thread, 120fps)
+- **Layout Animations**: `LinearTransition`, `FadeIn`, `SlideInUp`, etc.
+- **Interactive Animations**: `useAnimatedStyle`, `useSharedValue`, `withSpring`
+- **Performance**: Entrance/exit animations with cascade timing and spring physics
+- **Best Practices**: Fixed hook order, avoid worklet recursion, use `withRepeat` for loops
+
+### Component Structure:
+```
+/components/ui/           # Shadcn-style UI components
+  ├── text.tsx           # Typography with variants
+  ├── button.tsx         # Interactive elements
+  ├── card.tsx           # Layout components
+  └── ...
+/lib/                    # Utility functions
+  ├── cn.ts              # Class merging with error handling
+  ├── constants.ts       # App constants
+  └── haptics.ts         # Haptic feedback
+```
+
+### Theme System:
+- **CSS Variables**: Defined in `global.css` with HSL values
+- **Tailwind Integration**: Colors mapped to CSS variables in `tailwind.config.js`
+- **Dark Mode**: Automatic with `@media (prefers-color-scheme: dark)`
+- **Type Safety**: Consistent color tokens across components
+
+## Animation Patterns & Best Practices
+
+**Preferred Animation Library: React Native Reanimated 4.0**
+
+### Animation Principles:
+1. **Appear in Place**: Messages should `FadeIn` directly at their position, not slide from screen edges
+2. **Layout Transitions**: Use `LinearTransition` for smooth repositioning when content changes
+3. **Cascade Timing**: Stagger animations with delays (`index * 150ms`) for natural flow
+4. **Spring Physics**: Use `springify()` with proper damping (20-25) and stiffness (300-400)
+5. **Performance**: All animations run on UI thread for 60+ FPS
+
+### Common Animation Patterns:
+```tsx
+// Message entrance with cascade
+entering={FadeIn.springify().damping(25).stiffness(400).delay(index * 150)}
+
+// Layout repositioning
+layout={LinearTransition.springify().damping(20).stiffness(300).duration(600)}
+
+// Interactive feedback
+sendButtonScale.value = withSpring(0.8, { damping: 5 }, () => {
+  sendButtonScale.value = withSpring(1.1, { damping: 8 });
+});
+
+// Continuous animations
+shimmerPosition.value = withRepeat(
+  withTiming(1, { duration: 1500, easing: Easing.linear }),
+  -1, true
+);
+```
+
+### Animation Anti-Patterns:
+- ❌ **Avoid**: Sliding from screen edges (`SlideInDown` from top)
+- ❌ **Avoid**: Worklet recursion (use `withRepeat` instead)
+- ❌ **Avoid**: Dynamic `useAnimatedStyle` calls (maintain hook order)
+- ❌ **Avoid**: Too many simultaneous animations (performance impact)
+- ✅ **Prefer**: In-place appearance with layout transitions
+- ✅ **Prefer**: Fixed hook order with stable animated styles
+- ✅ **Prefer**: Entrance/exit + layout animations for smooth UX
 
 ## Convex Tools Guidance
 
@@ -228,26 +303,97 @@ The root layout uses AppProviders composition with SafeAreaProvider, ClerkProvid
 4. **Development builds**: Always use IP address for bundler URL (e.g., 192.168.1.x:8081)
 
 ### Troubleshooting Common Issues
-- **Reanimated errors**: Check version alignment, use `bun run clean`
-- **Nativewind styles not applying**: Clear Metro cache with `bun start:clear`
-- **Tailwind classes not working**: Verify global.css import in root layout
+
+#### Styling & UI Issues:
+- **NativeWind styles not applying**: Clear Metro cache with `bun start:clear`
+- **CSS variable issues**: Ensure using `hsl(var(--variable))` format, not direct CSS values
+- **Dynamic className crashes**: Use static classes with dark: variants, avoid `cn()` with dynamic values
+- **Text styling inconsistent**: Use Text component variants instead of hardcoded className
+- **Icon not displaying**: Import from `lucide-react-native` for React Native compatibility
+
+#### Animation Issues:
+- **React Hooks order violation**: Move all `useAnimatedStyle` calls to top level, avoid dynamic hook creation
+- **Worklet recursion errors**: Use `withRepeat` instead of recursive functions in worklets
+- **Animation stuttering**: Check for multiple simultaneous layout transitions, reduce complexity
+- **Messages sliding from wrong direction**: Use `FadeIn` for in-place appearance, `LinearTransition` for repositioning
+- **Performance drops**: Limit concurrent animations, use UI thread animations (Reanimated 4.0)
+
+#### Development Issues:
+- **Reanimated errors**: Check version alignment (`4.0.0-beta.5`), use `bun run clean`
+- **Metro cache issues**: Use `bun start --clear` before debugging
 - **Route export warnings**: All files in `src/app/` must have `export default`
 - **Clerk auth errors**: Ensure useAuth is called within ClerkProvider context
-- **Metro cache issues**: Use `bun start --clear` before debugging
-- **CSS variable issues**: Ensure using `hsl(var(--variable))` format, not direct CSS values
-- **Icon not displaying**: Import from `lucide-react-native` for React Native compatibility
+- **Package conflicts**: Run `bun run clean-full` for complete dependency reset
 
 ## Claude AI Instructions
 
-- When you try to rerun the app, Ask me first. Don't go by yourself.
-- Do not start "bun expo run:ios" automatically. It takes up to 10 minutes and often times out. Let the user start the build manually.
-- **CRITICAL**: Never downgrade dependencies. Always align JavaScript side UP to match development build versions.
-- **UI Development**: Always use NativeWindUI architecture with:
-  - Text component variants instead of hardcoded styling
-  - `lucide-react-native` for all icons (React Native compatible)
-  - CSS variables from global.css: `hsl(var(--primary))`, `hsl(var(--background))`
-  - Components from `~/components/ui/` directory
-  - `cn()` utility for class merging
+### Development Workflow:
+- **Ask before running app**: Don't start `bun expo run:ios` automatically (takes 10+ minutes, often times out)
+- **Build process**: Let user manually start builds, focus on code implementation
+- **Dependencies**: Never downgrade, always align JavaScript UP to match development build versions
+- **Cache clearing**: Suggest `bun start:clear` for styling issues, `bun run clean-full` for major problems
+
+### UI Development Approach:
+- **Design System**: Use Shadcn/ui + NativeWind v4 + React Native Reanimated 4.0 approach
+- **Component Pattern**: Prefer existing components from `/components/ui/` and `/lib/`
+- **Styling Priority**: 
+  1. Text component variants (`variant="title1"`) 
+  2. NativeWind className (`bg-primary`, `text-foreground`)
+  3. CSS variables (`hsl(var(--primary))`)
+  4. StyleSheet fallback only when necessary
+- **Icons**: Always use `lucide-react-native` for React Native compatibility
+- **Class Merging**: Use `cn()` utility with error handling for combining classes
+
+### Animation Development:
+- **Library Priority**: React Native Reanimated 4.0 > Moti (keep Moti installed but prefer Reanimated)
+- **Animation Patterns**: 
+  - Messages appear in place with `FadeIn` (not slide from edges)
+  - Use `LinearTransition` for repositioning existing content
+  - Implement cascade timing with staggered delays
+  - Apply spring physics for natural movement
+- **Performance**: Maintain hook order, avoid worklet recursion, use `withRepeat` for loops
+- **Debugging**: Fix React Hooks violations by moving `useAnimatedStyle` to component top level
+
+### Code Quality:
+- **TypeScript**: Strict mode, interfaces over types, functional components
+- **Error Handling**: Prioritize edge cases, early returns, proper error boundaries  
+- **Performance**: Minimize useState/useEffect, use context for state, memoize appropriately
+
+## Nativewind v4 Navigation Context Issue
+
+**CRITICAL**: Nativewind v4 has a known issue with navigation context that causes crashes with the error "Couldn't find a navigation context". This affects:
+
+### What Causes Crashes:
+1. **Dynamic className values**: `className={`flex-1 ${isDark ? 'dark' : ''}`}` 
+2. **cn() utility with dynamic values**: `className={cn('base', isActive && 'active')}`
+3. **Any hook that uses className before navigation context is established**
+
+### Safe Patterns to Use:
+1. **Static className with dark: variants**: 
+   ```tsx
+   <View className="bg-white dark:bg-gray-900">
+   ```
+
+2. **Conditional rendering instead of dynamic classes**:
+   ```tsx
+   {isSelected ? <SelectedView /> : <UnselectedView />}
+   ```
+
+3. **StyleSheet for truly dynamic styles**:
+   ```tsx
+   <View style={[styles.base, isDark && styles.dark]}>
+   ```
+
+### Components Affected:
+- Original MoodSelector (used cn() utility)
+- ThemeToggle (used custom useColorScheme hook)
+- Any component using dynamic className values
+
+### Solution Implemented:
+- Created SafeMoodSelector using StyleSheet
+- Created SimpleThemeToggle without cn()
+- Applied dark class in ThemedApp after navigation context is ready
+- Use nativewind's useColorScheme directly, not custom wrappers
 
 ## Development Best Practices
 

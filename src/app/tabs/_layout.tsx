@@ -1,7 +1,7 @@
 import React from 'react';
 import { Redirect, Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
-import { useColorScheme, View, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator, useColorScheme } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 
 export default function TabsLayout() {
@@ -9,9 +9,7 @@ export default function TabsLayout() {
   const colorScheme = useColorScheme();
   
   const activeColor = '#3b82f6'; // primary blue
-  const inactiveColor = '#6b7280'; // gray
-  const backgroundColor = colorScheme === 'dark' ? '#111827' : '#ffffff';
-  const borderColor = colorScheme === 'dark' ? '#4b5563' : '#e5e7eb';
+  const isDark = colorScheme === 'dark';
 
   if (!isLoaded) {
     return (
@@ -29,52 +27,52 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         tabBarActiveTintColor: activeColor,
-        tabBarInactiveTintColor: inactiveColor,
+        tabBarInactiveTintColor: isDark ? '#9CA3AF' : '#6B7280',
         headerShown: false,
         tabBarStyle: {
-          backgroundColor,
-          borderTopColor: borderColor,
           paddingTop: 4,
           borderTopWidth: 1,
+          backgroundColor: isDark ? '#1F2937' : '#FFFFFF',
+          borderTopColor: isDark ? '#374151' : '#E5E7EB',
         },
       }}
     >
-      <Tabs.Screen
-        name="chat"
-        options={{
-          title: 'Chat',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="chatbubble" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="mood"
-        options={{
-          title: 'Mood',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="heart" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="exercises"
-        options={{
-          title: 'Exercises',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="fitness" size={size} color={color} />
-          ),
-        }}
-      />
-      <Tabs.Screen
-        name="profile"
-        options={{
-          title: 'Profile',
-          tabBarIcon: ({ color, size }) => (
-            <Ionicons name="person" size={size} color={color} />
-          ),
-        }}
-      />
-    </Tabs>
+        <Tabs.Screen
+          name="chat"
+          options={{
+            title: 'Chat',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="chatbubble" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="mood"
+          options={{
+            title: 'Mood',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="heart" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="exercises"
+          options={{
+            title: 'Exercises',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="fitness" size={size} color={color} />
+            ),
+          }}
+        />
+        <Tabs.Screen
+          name="profile"
+          options={{
+            title: 'Profile',
+            tabBarIcon: ({ color, size }) => (
+              <Ionicons name="person" size={size} color={color} />
+            ),
+          }}
+        />
+      </Tabs>
   );
 }

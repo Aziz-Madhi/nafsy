@@ -12,7 +12,7 @@ import {
   addMonths,
   subMonths,
 } from 'date-fns';
-import { cn } from '~/lib/utils';
+import { cn } from '~/lib/cn';
 import * as Haptics from 'expo-haptics';
 
 interface MoodEntry {

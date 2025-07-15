@@ -17,7 +17,7 @@ interface Exercise {
   description: string;
   duration: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: string;
+  category: 'breathing' | 'mindfulness' | 'movement' | 'cbt' | 'journaling' | 'relaxation';
   icon: string;
   color: string;
   steps?: string[];
