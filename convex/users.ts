@@ -8,6 +8,7 @@ export const createUser = mutation({
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
   },
+  returns: v.id("users"),
   handler: async (ctx, args) => {
     const existingUser = await ctx.db
       .query("users")
@@ -34,6 +35,7 @@ export const updateUser = mutation({
     avatarUrl: v.optional(v.string()),
     language: v.optional(v.string()),
   },
+  returns: v.id("users"),
   handler: async (ctx, args) => {
     const user = await ctx.db
       .query("users")
@@ -56,6 +58,17 @@ export const updateUser = mutation({
 
 export const getCurrentUser = query({
   args: { clerkId: v.string() },
+  returns: v.union(v.object({
+    _id: v.id("users"),
+    _creationTime: v.number(),
+    clerkId: v.string(),
+    email: v.string(),
+    name: v.optional(v.string()),
+    avatarUrl: v.optional(v.string()),
+    language: v.string(),
+    createdAt: v.number(),
+    lastActive: v.number(),
+  }), v.null()),
   handler: async (ctx, args) => {
     return await ctx.db
       .query("users")

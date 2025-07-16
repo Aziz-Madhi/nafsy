@@ -1,20 +1,20 @@
-import React, { useState, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { View, TextInput, Pressable, Modal, Dimensions, Platform } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutUp, SlideInDown, SlideOutDown, withSpring, useAnimatedStyle, useSharedValue, withTiming, withDelay, interpolate, Easing, BounceIn, ZoomIn, withRepeat, LinearTransition, Layout } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { X, Send, Clock, Check, CheckCheck } from 'lucide-react-native';
 import { Text } from '~/components/ui/text';
 import * as Haptics from 'expo-haptics';
-
-type MessageStatus = 'sending' | 'sent' | 'delivered';
-
-interface FloatingMessage {
-  id: string;
-  text: string;
-  isUser: boolean;
-  status: MessageStatus;
-  timestamp: number;
-}
+import { useAuth } from '@clerk/clerk-expo';
+import { useUserSafe } from '~/lib/useUserSafe';
+import { useMutation, useQuery } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
+import { ChatMessage } from './types';
+import { 
+  useFloatingChatInput, 
+  useFloatingChatTyping,
+  useChatUIStore 
+} from '~/store';
 
 interface FloatingChatProps {
   visible: boolean;
@@ -24,9 +24,32 @@ interface FloatingChatProps {
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export function FloatingChat({ visible, onClose }: FloatingChatProps) {
-  const [message, setMessage] = useState('');
-  const [messages, setMessages] = useState<FloatingMessage[]>([]);
-  const [messageId, setMessageId] = useState(0);
+  // ===== ZUSTAND: Local UI State =====
+  const currentMessage = useFloatingChatInput();
+  const isTyping = useFloatingChatTyping();
+  const { 
+    setFloatingChatInput, 
+    setFloatingChatTyping,
+    clearFloatingChatInput 
+  } = useChatUIStore();
+  
+  // ===== CONVEX: Server Data & Real-time =====
+  const { user, isLoaded } = useUserSafe();
+  const { isSignedIn } = useAuth();
+  
+  const currentUser = useQuery(
+    api.users.getCurrentUser,
+    user ? { clerkId: user.id } : 'skip'
+  );
+  const ventMessages = useQuery(
+    api.ventChat.getCurrentVentMessages, // Use vent-specific endpoint
+    currentUser ? { userId: currentUser._id, limit: 3 } : 'skip'
+  );
+  const sendVentMessage = useMutation(api.ventChat.sendVentMessage); // Use vent-specific endpoint
+  const currentVentSessionId = useQuery(
+    api.ventChat.getCurrentVentSessionId,
+    currentUser ? { userId: currentUser._id } : 'skip'
+  );
   
   // Shared values for animations
   const sendButtonScale = useSharedValue(1);
@@ -69,7 +92,7 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
   // Animated style for send button
   const sendButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: sendButtonScale.value }],
-    opacity: message.trim() ? 1 : 0.5,
+    opacity: currentMessage.trim() ? 1 : 0.5,
   }));
 
   // Shimmer/Glow effect style (fixed hook order)
@@ -86,23 +109,38 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
     };
   });
 
+  // Transform Convex vent messages to UI format
+  const messages: ChatMessage[] = (ventMessages ?? [])
+    .map((msg): ChatMessage => ({
+      id: String(msg._id), // cast branded Id to plain string
+      text: msg.content,
+      isUser: msg.role === 'user',
+      timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
+        hour: '2-digit',
+        minute: '2-digit',
+      }),
+      status: 'delivered' as const,
+      role: msg.role,
+    }))
+    .reverse(); // Reverse to show oldest first
+
   useEffect(() => {
     if (!visible) {
-      setMessages([]);
-      setMessage('');
+      clearFloatingChatInput();
+      setFloatingChatTyping(false);
     }
-  }, [visible]);
+  }, [visible, clearFloatingChatInput, setFloatingChatTyping]);
 
   useEffect(() => {
     // Animate send button based on message input
-    sendButtonScale.value = withSpring(message.trim() ? 1 : 0.8, {
+    sendButtonScale.value = withSpring(currentMessage.trim() ? 1 : 0.8, {
       damping: 15,
       stiffness: 200,
     });
-  }, [message]);
+  }, [currentMessage]);
 
-  const handleSend = () => {
-    if (message.trim()) {
+  const handleSend = async () => {
+    if (currentMessage.trim() && currentUser) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
       
       // Elastic Scale Effect on send - bounce animation
@@ -114,71 +152,67 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
           damping: 8, 
           stiffness: 400 
         }, () => {
-          sendButtonScale.value = withSpring(message.trim() ? 1 : 0.8, { 
+          sendButtonScale.value = withSpring(currentMessage.trim() ? 1 : 0.8, { 
             damping: 12, 
             stiffness: 300 
           });
         });
       });
       
-      const newMessage: FloatingMessage = {
-        id: messageId.toString(),
-        text: message.trim(),
-        isUser: true,
-        status: 'sending',
-        timestamp: Date.now(),
-      };
-
-      // Add to END of array (oldest-first approach for display)
-      setMessages((prev) => {
-        const updated = [...prev, newMessage];
-        return updated.slice(-3); // Keep last 3 messages
-      });
-
-      setMessageId(prev => prev + 1);
-      setMessage('');
-
-      // Simulate message status updates
-      setTimeout(() => {
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === newMessage.id 
-              ? { ...msg, status: 'sent' as MessageStatus }
-              : msg
-          )
-        );
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }, 300);
-
-      setTimeout(() => {
-        setMessages(prev => 
-          prev.map(msg => 
-            msg.id === newMessage.id 
-              ? { ...msg, status: 'delivered' as MessageStatus }
-              : msg
-          )
-        );
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      }, 600);
-
-      // Simulate AI response
-      setTimeout(() => {
-        const aiResponse: FloatingMessage = {
-          id: (messageId + 1).toString(),
-          text: "I'm listening. Tell me more.",
-          isUser: false,
-          status: 'delivered',
-          timestamp: Date.now(),
-        };
-        
-        setMessages(prev => {
-          const updated = [...prev, aiResponse];
-          return updated.slice(-3);
+      // ===== ZUSTAND: Update UI State =====
+      const messageText = currentMessage.trim();
+      clearFloatingChatInput(); // Clear input immediately
+      setFloatingChatTyping(true); // Show typing indicator
+      
+      try {
+        // ===== CONVEX: Send to Vent Chat =====
+        await sendVentMessage({
+          userId: currentUser._id,
+          content: messageText,
+          role: 'user',
+          ventSessionId: currentVentSessionId || undefined,
         });
-        
-        setMessageId(prev => prev + 2);
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      }, 1800);
+
+        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+        // Simulate AI response delay for vent chat
+        setTimeout(async () => {
+          try {
+            // Generate contextual vent responses
+            let ventResponse = "I'm here to listen. Let it out.";
+            
+            const lowerMessage = messageText.toLowerCase();
+            if (lowerMessage.includes('stress') || lowerMessage.includes('overwhelm')) {
+              ventResponse = "That sounds really stressful. Take a deep breath. You're safe here.";
+            } else if (lowerMessage.includes('anxious') || lowerMessage.includes('anxiety')) {
+              ventResponse = "Anxiety is tough. Remember, this feeling will pass. You're stronger than you know.";
+            } else if (lowerMessage.includes('sad') || lowerMessage.includes('down')) {
+              ventResponse = "I hear your sadness. It's okay to feel this way. You're not alone.";
+            } else if (lowerMessage.includes('angry') || lowerMessage.includes('frustrated')) {
+              ventResponse = "Your frustration is valid. Sometimes we need to let these feelings out.";
+            } else if (lowerMessage.includes('work') || lowerMessage.includes('job')) {
+              ventResponse = "Work stress is real. Remember to prioritize your mental health.";
+            }
+            
+            await sendVentMessage({
+              userId: currentUser._id,
+              content: ventResponse,
+              role: 'assistant',
+              ventSessionId: currentVentSessionId || undefined,
+            });
+            setFloatingChatTyping(false); // Hide typing indicator
+            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+          } catch (error) {
+            console.error('Error sending AI vent response:', error);
+            setFloatingChatTyping(false);
+          }
+        }, 1800);
+      } catch (error) {
+        console.error('Error sending vent message:', error);
+        // Restore message on error using Zustand
+        setFloatingChatInput(messageText);
+        setFloatingChatTyping(false);
+      }
     }
   };
 
@@ -399,8 +433,8 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
                 className="flex-row items-center bg-white/20 backdrop-blur-md rounded-full px-5 py-3"
               >
                 <TextInput
-                  value={message}
-                  onChangeText={setMessage}
+                  value={currentMessage}
+                  onChangeText={setFloatingChatInput}
                   placeholder="What's on your mind?"
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   className="flex-1 text-white text-base mr-3"
@@ -414,7 +448,7 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
                 >
                   <Pressable
                     onPress={handleSend}
-                    disabled={!message.trim()}
+                    disabled={!currentMessage.trim()}
                     className="w-10 h-10 bg-primary rounded-full items-center justify-center"
                   >
                     <Send size={20} className="text-primary-foreground" />

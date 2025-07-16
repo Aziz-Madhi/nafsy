@@ -20,6 +20,7 @@ function NavigationStack() {
         <Stack.Screen name="tabs" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
+        <Stack.Screen name="chat-history" options={{ headerShown: false }} />
       </Stack>
     </>
   );

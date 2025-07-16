@@ -1,6 +1,8 @@
-export { ChatBubble } from './ChatBubble';
-export { ChatInput } from './ChatInput';
-export { TypingIndicator } from './TypingIndicator';
-export { QuickReplyButton } from './QuickReplyButton';
+// Consolidated chat components
+export { ChatBubble, ChatInput, TypingIndicator, QuickReplyButton } from './ChatComponents';
+
+// Specialized components
 export { FloatingChat } from './FloatingChat';
-export { StackedChatBubbles } from './StackedChatBubbles';
+
+// Types
+export type { ChatMessage, ChatUser, QuickReply, ChatInputProps, ChatBubbleProps } from './types';

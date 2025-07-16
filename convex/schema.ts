@@ -14,6 +14,7 @@ export default defineSchema({
     .index("by_clerk_id", ["clerkId"])
     .index("by_email", ["email"]),
 
+  // Legacy messages table (can be removed after migration)
   messages: defineTable({
     userId: v.id("users"),
     content: v.string(),
@@ -21,6 +22,41 @@ export default defineSchema({
     createdAt: v.number(),
   })
     .index("by_user", ["userId", "createdAt"]),
+
+  // Main chat conversations (structured therapy sessions)
+  mainChatMessages: defineTable({
+    userId: v.id("users"),
+    content: v.string(),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    sessionId: v.string(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"])
+    .index("by_session", ["sessionId"])
+    .index("by_user_session", ["userId", "sessionId"]),
+
+  // Vent chat conversations (quick emotional vents from floating chat)
+  ventChatMessages: defineTable({
+    userId: v.id("users"),
+    content: v.string(),
+    role: v.union(v.literal("user"), v.literal("assistant")),
+    ventSessionId: v.string(),
+    createdAt: v.number(),
+  }).index("by_user", ["userId"])
+    .index("by_vent_session", ["ventSessionId"])
+    .index("by_user_vent_session", ["userId", "ventSessionId"]),
+
+  // Chat sessions metadata (for both main and vent)
+  chatSessions: defineTable({
+    userId: v.id("users"),
+    type: v.union(v.literal("main"), v.literal("vent")),
+    sessionId: v.string(), // Unique identifier for the session
+    title: v.string(), // Human-readable title
+    startedAt: v.number(),
+    lastMessageAt: v.number(),
+    messageCount: v.number(),
+  }).index("by_user", ["userId"])
+    .index("by_user_type", ["userId", "type"])
+    .index("by_session_id", ["sessionId"]),
 
   moods: defineTable({
     userId: v.id("users"),

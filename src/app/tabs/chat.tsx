@@ -1,15 +1,22 @@
-import React, { useState, useRef, useCallback, useEffect } from 'react';
+import React, { useRef, useCallback, useEffect } from 'react';
 import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { ChatBubble, ChatInput, TypingIndicator, QuickReplyButton, FloatingChat } from '~/components/chat';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { MoreVertical } from 'lucide-react-native';
+import { MoreVertical, History } from 'lucide-react-native';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { router } from 'expo-router';
+import { 
+  useFloatingChatVisible,
+  useMainChatTyping,
+  useShowQuickReplies,
+  useChatUIStore 
+} from '~/store';
 
 interface Message {
   id: string;
@@ -28,13 +35,21 @@ const QUICK_REPLIES = [
 ];
 
 export default function ChatScreen() {
+  // ===== ZUSTAND: Local UI State =====
+  const isTyping = useMainChatTyping();
+  const showFloatingChat = useFloatingChatVisible();
+  const showQuickReplies = useShowQuickReplies();
+  const { 
+    setFloatingChatVisible, 
+    setMainChatTyping,
+    setShowQuickReplies 
+  } = useChatUIStore();
+  
+  // ===== CONVEX: Server Data =====
   const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
-  const [isTyping, setIsTyping] = useState(false);
-  const [showFloatingChat, setShowFloatingChat] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
   const lastTapRef = useRef(0);
-  const [isFirstLoad, setIsFirstLoad] = useState(true);
 
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
@@ -63,12 +78,16 @@ export default function ChatScreen() {
     api.users.getCurrentUser,
     user ? { clerkId: user.id } : 'skip'
   );
-  const convexMessages = useQuery(
-    api.messages.getMessages,
+  const mainChatMessages = useQuery(
+    api.mainChat.getMainChatMessages,
     currentUser ? { userId: currentUser._id, limit: 50 } : 'skip'
   );
-  const sendMessage = useMutation(api.messages.sendMessage);
+  const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
   const createUser = useMutation(api.users.createUser);
+  const currentMainSessionId = useQuery(
+    api.mainChat.getCurrentMainSessionId,
+    currentUser ? { userId: currentUser._id } : 'skip'
+  );
 
   // Create user if doesn't exist
   useEffect(() => {
@@ -84,18 +103,18 @@ export default function ChatScreen() {
 
   // Send welcome message on first load
   useEffect(() => {
-    if (currentUser && convexMessages && convexMessages.length === 0 && isFirstLoad) {
-      setIsFirstLoad(false);
-      sendMessage({
+    if (currentUser && mainChatMessages && mainChatMessages.length === 0) {
+      sendMainMessage({
         userId: currentUser._id,
         content: WELCOME_MESSAGE,
         role: 'assistant',
+        sessionId: currentMainSessionId || undefined,
       });
     }
-  }, [currentUser, convexMessages, sendMessage, isFirstLoad]);
+  }, [currentUser, mainChatMessages, sendMainMessage, currentMainSessionId]);
 
-  // Transform Convex messages to UI format
-  const messages: Message[] = convexMessages?.map(msg => ({
+  // Transform Convex main chat messages to UI format
+  const messages: Message[] = mainChatMessages?.map(msg => ({
     id: msg._id,
     text: msg.content,
     isUser: msg.role === 'user',
@@ -109,26 +128,31 @@ export default function ChatScreen() {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setShowFloatingChat(true);
+      setFloatingChatVisible(true);
     }
     lastTapRef.current = now;
-  }, []);
+  }, [setFloatingChatVisible]);
 
   const handleSendMessage = useCallback(async (text: string) => {
     if (!currentUser) return;
 
-    // Send user message
-    await sendMessage({
+    // Hide quick replies after first message
+    setShowQuickReplies(false);
+
+    // Send user message to main chat
+    await sendMainMessage({
       userId: currentUser._id,
       content: text,
       role: 'user',
+      sessionId: currentMainSessionId || undefined,
     });
 
-    setIsTyping(true);
+    // Update UI state with Zustand
+    setMainChatTyping(true);
 
     // Simulate AI response
     setTimeout(async () => {
-      setIsTyping(false);
+      setMainChatTyping(false);
       
       // Generate contextual AI response based on user input
       let aiResponseText = "I hear you. Let's work through this together. Can you tell me more about what's on your mind?";
@@ -143,13 +167,14 @@ export default function ChatScreen() {
         aiResponseText = "Great choice! We have various exercises including breathing techniques, mindfulness, and movement. Check out the Exercises tab, or I can recommend one based on how you're feeling.";
       }
       
-      await sendMessage({
+      await sendMainMessage({
         userId: currentUser._id,
         content: aiResponseText,
         role: 'assistant',
+        sessionId: currentMainSessionId || undefined,
       });
     }, 2000);
-  }, [currentUser, sendMessage]);
+  }, [currentUser, sendMainMessage, setShowQuickReplies, setMainChatTyping, currentMainSessionId]);
 
   const handleQuickReply = useCallback((text: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
@@ -164,9 +189,17 @@ export default function ChatScreen() {
           <View className="w-2 h-2 bg-green-500 rounded-full mr-2" />
           <Text variant="title3">Nafsy AI</Text>
         </View>
-        <Pressable className="p-2">
-          <MoreVertical size={24} className="text-muted-foreground" />
-        </Pressable>
+        <View className="flex-row items-center">
+          <Pressable 
+            className="p-2 mr-1"
+            onPress={() => router.push('/chat-history')}
+          >
+            <History size={24} color="white" />
+          </Pressable>
+          <Pressable className="p-2">
+            <MoreVertical size={24} color="#9CA3AF" />
+          </Pressable>
+        </View>
       </View>
 
       <KeyboardAvoidingView
@@ -209,7 +242,7 @@ export default function ChatScreen() {
             {isTyping && <TypingIndicator />}
 
             {/* Quick Replies */}
-            {messages.length === 1 && (
+            {showQuickReplies && messages.length === 1 && (
               <View className="flex-row flex-wrap mt-4">
                 {QUICK_REPLIES.map((reply, index) => (
                   <QuickReplyButton
@@ -231,7 +264,7 @@ export default function ChatScreen() {
       {/* Floating Chat Modal */}
       <FloatingChat 
         visible={showFloatingChat} 
-        onClose={() => setShowFloatingChat(false)} 
+        onClose={() => setFloatingChatVisible(false)} 
       />
     </SafeAreaView>
   );
