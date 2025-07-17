@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '~/components/ui/text';
-import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import { 
   format, 
   startOfMonth, 
@@ -66,7 +66,7 @@ export function MoodCalendar({ moodEntries, selectedDate, onDateSelect }: MoodCa
       {/* Header */}
       <View className="flex-row items-center justify-between mb-6">
         <Pressable onPress={handlePreviousMonth} className="p-2">
-          <ChevronLeft size={20} className="text-muted-foreground" />
+          <SymbolView name="chevron.left" size={20} tintColor="#6B7280" />
         </Pressable>
         
         <Text variant="title3">
@@ -74,7 +74,7 @@ export function MoodCalendar({ moodEntries, selectedDate, onDateSelect }: MoodCa
         </Text>
         
         <Pressable onPress={handleNextMonth} className="p-2">
-          <ChevronRight size={20} className="text-muted-foreground" />
+          <SymbolView name="chevron.right" size={20} tintColor="#6B7280" />
         </Pressable>
       </View>
 

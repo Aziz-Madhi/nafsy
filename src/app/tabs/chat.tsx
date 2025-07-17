@@ -4,19 +4,19 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { ChatBubble, ChatInput, TypingIndicator, QuickReplyButton, FloatingChat } from '~/components/chat';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { MoreVertical, History } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
-import { router } from 'expo-router';
 import { 
   useFloatingChatVisible,
   useMainChatTyping,
   useShowQuickReplies,
   useChatUIStore 
 } from '~/store';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface Message {
   id: string;
@@ -25,13 +25,13 @@ interface Message {
   timestamp: string;
 }
 
-const WELCOME_MESSAGE = "Hello! I'm here to support your mental wellness journey. How are you feeling today?";
+const getWelcomeMessage = (t: any) => t('chat.welcomeMessage');
 
-const QUICK_REPLIES = [
-  { text: "I'm feeling anxious", icon: "😟" },
-  { text: "I need someone to talk to", icon: "💭" },
-  { text: "I want to track my mood", icon: "📊" },
-  { text: "Show me exercises", icon: "🧘" },
+const getQuickReplies = (t: any) => [
+  { text: t('chat.quickReplies.anxious'), icon: "😟" },
+  { text: t('chat.quickReplies.needTalk'), icon: "💭" },
+  { text: t('chat.quickReplies.trackMood'), icon: "📊" },
+  { text: t('chat.quickReplies.showExercises'), icon: "🧘" },
 ];
 
 export default function ChatScreen() {
@@ -48,15 +48,16 @@ export default function ChatScreen() {
   // ===== CONVEX: Server Data =====
   const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
+  const { t } = useTranslation();
   const scrollViewRef = useRef<ScrollView>(null);
   const lastTapRef = useRef(0);
 
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">Loading...</Text>
+          <Text variant="body" className="text-muted-foreground">{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -65,9 +66,9 @@ export default function ChatScreen() {
   // Show sign-in prompt if not authenticated
   if (!isSignedIn || !user) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">Please sign in to continue</Text>
+          <Text variant="body" className="text-muted-foreground">{t('common.pleaseSignIn')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -106,7 +107,7 @@ export default function ChatScreen() {
     if (currentUser && mainChatMessages && mainChatMessages.length === 0) {
       sendMainMessage({
         userId: currentUser._id,
-        content: WELCOME_MESSAGE,
+        content: getWelcomeMessage(t),
         role: 'assistant',
         sessionId: currentMainSessionId || undefined,
       });
@@ -124,9 +125,11 @@ export default function ChatScreen() {
     }),
   })).reverse() || [];
 
+  // Native double-tap detection (fastest approach)
   const handleDoubleTap = useCallback(() => {
     const now = Date.now();
     if (now - lastTapRef.current < 300) {
+      console.log('🔥 Double tap detected - opening floating chat!');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       setFloatingChatVisible(true);
     }
@@ -182,38 +185,35 @@ export default function ChatScreen() {
   }, [handleSendMessage]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
       {/* Header */}
-      <View className="flex-row items-center justify-between px-4 py-3 border-b border-border/20">
-        <View className="flex-row items-center">
-          <View className="w-2 h-2 bg-green-500 rounded-full mr-2" />
-          <Text variant="title3">Nafsy AI</Text>
-        </View>
-        <View className="flex-row items-center">
-          <Pressable 
-            className="p-2 mr-1"
-            onPress={() => router.push('/chat-history')}
-          >
-            <History size={24} color="white" />
-          </Pressable>
+      <View className="flex-row items-center justify-between px-5 pt-2 pb-4">
+          <View className="flex-row items-center">
+            <Pressable className="mr-2 p-2">
+              <SymbolView name="chevron.left" size={32} tintColor="rgba(141,110,99,0.75)" />
+            </Pressable>
+            <Text variant="heading" style={{ color: 'rgba(141,110,99,0.75)' }}>
+              {t('tabs.chat')}
+            </Text>
+          </View>
           <Pressable className="p-2">
-            <MoreVertical size={24} color="#9CA3AF" />
+            <SymbolView name="message.circle" size={32} tintColor="rgba(141,110,99,0.75)" />
           </Pressable>
         </View>
-      </View>
 
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
         keyboardVerticalOffset={0}
       >
-        <Pressable onPress={handleDoubleTap} className="flex-1">
+        <View className="flex-1">
           <ScrollView
             ref={scrollViewRef}
             className="flex-1 px-4 pt-4"
             contentContainerStyle={{ paddingBottom: 20 }}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
+            onTouchEnd={handleDoubleTap}
           >
             {/* Welcome Section */}
             <Animated.View
@@ -221,10 +221,10 @@ export default function ChatScreen() {
               className="items-center mb-8 mt-4"
             >
               <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center mb-4">
-                <Text className="text-3xl">🌱</Text>
+                <Text className="text-3xl" enableRTL={false}>🌱</Text>
               </View>
-              <Text variant="body" className="text-muted-foreground text-center">
-                Your safe space for mental wellness
+              <Text variant="body" className="text-muted-foreground text-center" enableRTL={false}>
+                {t('chat.welcomeSubtitle')}
               </Text>
             </Animated.View>
 
@@ -244,7 +244,7 @@ export default function ChatScreen() {
             {/* Quick Replies */}
             {showQuickReplies && messages.length === 1 && (
               <View className="flex-row flex-wrap mt-4">
-                {QUICK_REPLIES.map((reply, index) => (
+                {getQuickReplies(t).map((reply: any, index: number) => (
                   <QuickReplyButton
                     key={reply.text}
                     text={reply.text}
@@ -255,10 +255,10 @@ export default function ChatScreen() {
                 ))}
               </View>
             )}
-          </ScrollView>
-        </Pressable>
+            </ScrollView>
+          </View>
 
-        <ChatInput onSendMessage={handleSendMessage} placeholder="How are you feeling?" />
+        <ChatInput onSendMessage={handleSendMessage} placeholder={t('chat.typingPlaceholder')} />
       </KeyboardAvoidingView>
 
       {/* Floating Chat Modal */}

@@ -8,7 +8,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   version: '1.0.0',
   orientation: 'portrait',
   icon: './assets/icon.png',
-  userInterfaceStyle: 'automatic',
+  userInterfaceStyle: 'light',
   newArchEnabled: true,
   splash: {
     image: './assets/splash-icon.png',
@@ -18,6 +18,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.nafsy.app',
+    deploymentTarget: '18.0',
   },
   android: {
     adaptiveIcon: {

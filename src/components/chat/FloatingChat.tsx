@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import { View, TextInput, Pressable, Modal, Dimensions, Platform } from 'react-native';
 import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutUp, SlideInDown, SlideOutDown, withSpring, useAnimatedStyle, useSharedValue, withTiming, withDelay, interpolate, Easing, BounceIn, ZoomIn, withRepeat, LinearTransition, Layout } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { X, Send, Clock, Check, CheckCheck } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import { Text } from '~/components/ui/text';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@clerk/clerk-expo';
@@ -240,7 +240,7 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
                 onPress={onClose}
                 className="w-10 h-10 bg-white/20 rounded-full items-center justify-center"
               >
-                <X size={24} className="text-white" />
+                <SymbolView name="xmark" size={24} tintColor="white" />
               </Pressable>
             </Animated.View>
 
@@ -372,13 +372,13 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
                               className="absolute -bottom-1 -right-1 bg-white/90 backdrop-blur-sm rounded-full p-1.5 border border-white/30"
                             >
                               {msg.status === 'sending' && (
-                                <Clock size={12} color="#6B7280" />
+                                <SymbolView name="clock" size={12} tintColor="#6B7280" />
                               )}
                               {msg.status === 'sent' && (
-                                <Check size={12} color="#6B7280" />
+                                <SymbolView name="checkmark" size={12} tintColor="#6B7280" />
                               )}
                               {msg.status === 'delivered' && (
-                                <CheckCheck size={12} color="#9CC99A" />
+                                <SymbolView name="checkmark.circle" size={12} tintColor="#9CC99A" />
                               )}
                             </Animated.View>
                           )}
@@ -451,7 +451,7 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
                     disabled={!currentMessage.trim()}
                     className="w-10 h-10 bg-primary rounded-full items-center justify-center"
                   >
-                    <Send size={20} className="text-primary-foreground" />
+                    <SymbolView name="paperplane.fill" size={20} tintColor="white" />
                   </Pressable>
                 </Animated.View>
               </Animated.View>

@@ -1,4 +1,4 @@
-import { Moon, Sun } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import { View } from 'react-native';
 import { useColorScheme } from 'react-native';
 
@@ -11,9 +11,9 @@ export function SimpleThemeToggle() {
     <View className="items-center justify-center">
       <View className="px-0.5">
         {currentScheme === 'dark' ? (
-          <Moon size={24} className="text-foreground" />
+          <SymbolView name="moon.fill" size={24} tintColor="#1F2937" />
         ) : (
-          <Sun size={24} className="text-foreground" />
+          <SymbolView name="sun.max.fill" size={24} tintColor="#1F2937" />
         )}
       </View>
     </View>

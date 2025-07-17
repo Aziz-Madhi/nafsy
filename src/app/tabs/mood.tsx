@@ -6,7 +6,7 @@ import { Text } from '~/components/ui/text';
 import { SafeMoodSelector } from '~/components/mood/SafeMoodSelector';
 import { MoodGraph, MoodCalendar } from '~/components/mood';
 import { Button } from '~/components/ui/button';
-import { Calendar, BarChart3 } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import { cn } from '~/lib/cn';
 // import Animated, { FadeInDown } from 'react-native-reanimated';
 import { safeHaptics } from '~/lib/haptics';
@@ -15,21 +15,23 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useTranslation } from '~/hooks/useTranslation';
 
 type ViewMode = 'graph' | 'calendar';
 
 function MoodScreen() {
   const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
+  const { t } = useTranslation();
   const [selectedMood, setSelectedMood] = useState<string>('');
   const [viewMode, setViewMode] = useState<ViewMode>('graph');
 
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">Loading...</Text>
+          <Text variant="body" className="text-muted-foreground">{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -38,9 +40,9 @@ function MoodScreen() {
   // Show sign-in prompt if not authenticated
   if (!isSignedIn || !user) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">Please sign in to continue</Text>
+          <Text variant="body" className="text-muted-foreground">{t('common.pleaseSignIn')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -142,15 +144,15 @@ function MoodScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-6 pt-4 pb-2">
           <Text variant="title1" className="mb-2">
-            Mood Tracking
+            {t('mood.title')}
           </Text>
           <Text variant="muted">
-            Monitor your emotional well-being over time
+            {t('mood.subtitle')}
           </Text>
         </View>
 
@@ -168,7 +170,7 @@ function MoodScreen() {
                   onPress={handleLogMood}
                   className="w-full"
                 >
-                  <Text>Log Mood</Text>
+                  <Text>{t('mood.saveMood')}</Text>
                 </Button>
               </View>
             )}
@@ -182,7 +184,7 @@ function MoodScreen() {
               <Text className="text-2xl mr-3">✅</Text>
               <View className="flex-1">
                 <Text variant="body" className="font-medium text-green-800 dark:text-green-200">
-                  Mood logged successfully!
+                  {t('mood.moodSaved')}
                 </Text>
                 <Text variant="muted" className="text-green-700 dark:text-green-300 mt-1">
                   Great job tracking your emotions today
@@ -203,14 +205,10 @@ function MoodScreen() {
                 : 'bg-secondary/20'
             )}
           >
-            <BarChart3
+            <SymbolView
+              name="chart.bar"
               size={20}
-              className={cn(
-                'mr-2',
-                viewMode === 'graph'
-                  ? 'text-primary-foreground'
-                  : 'text-muted-foreground'
-              )}
+              tintColor={viewMode === 'graph' ? 'white' : '#6B7280'}
             />
             <Text
               variant="body"
@@ -220,7 +218,7 @@ function MoodScreen() {
                   : 'text-muted-foreground'
               )}
             >
-              Graph
+              {t('mood.stats.title')}
             </Text>
           </Pressable>
           
@@ -233,14 +231,10 @@ function MoodScreen() {
                 : 'bg-secondary/20'
             )}
           >
-            <Calendar
+            <SymbolView
+              name="calendar"
               size={20}
-              className={cn(
-                'mr-2',
-                viewMode === 'calendar'
-                  ? 'text-primary-foreground'
-                  : 'text-muted-foreground'
-              )}
+              tintColor={viewMode === 'calendar' ? 'white' : '#6B7280'}
             />
             <Text
               variant="body"
@@ -250,7 +244,7 @@ function MoodScreen() {
                   : 'text-muted-foreground'
               )}
             >
-              Calendar
+              {t('mood.calendar.title')}
             </Text>
           </Pressable>
         </View>
@@ -267,25 +261,25 @@ function MoodScreen() {
         {/* Insights */}
         <View className="mx-6 mb-6 bg-primary/5 dark:bg-primary/10 rounded-2xl p-6">
           <Text variant="title3" className="mb-3">
-            Weekly Insights
+            {t('mood.stats.title')}
           </Text>
           <View className="space-y-2">
             <View className="flex-row items-center">
               <Text className="text-lg mr-2">📈</Text>
               <Text variant="body">
-                {moodStats?.totalEntries || 0} mood entries this week
+                {moodStats?.totalEntries || 0} {t('mood.stats.totalEntries')}
               </Text>
             </View>
             <View className="flex-row items-center">
               <Text className="text-lg mr-2">😊</Text>
               <Text variant="body">
-                Most common mood: {moodStats?.mostCommonMood || 'N/A'}
+                {t('mood.stats.mostCommonMood')}: {moodStats?.mostCommonMood || 'N/A'}
               </Text>
             </View>
             <View className="flex-row items-center">
               <Text className="text-lg mr-2">🎯</Text>
               <Text variant="body">
-                {moodStats?.currentStreak || 0}-day streak! Keep it up!
+                {moodStats?.currentStreak || 0} {t('mood.stats.streakDays')}!
               </Text>
             </View>
           </View>

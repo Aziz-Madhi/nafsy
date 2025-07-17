@@ -9,6 +9,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { cn } from '~/lib/cn';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface Category {
   id: string;
@@ -17,12 +18,13 @@ interface Category {
   color: string;
 }
 
-const CATEGORIES: Category[] = [
-  { id: 'all', name: 'All', icon: '✨', color: '#3B82F6' },
-  { id: 'breathing', name: 'Breathing', icon: '🌬️', color: '#06B6D4' },
-  { id: 'mindfulness', name: 'Mindfulness', icon: '🧘', color: '#8B5CF6' },
-  { id: 'movement', name: 'Movement', icon: '🏃', color: '#10B981' },
-  { id: 'cbt', name: 'CBT', icon: '🧠', color: '#F59E0B' },
+const getCategoriesWithTranslations = (t: any): Category[] => [
+  { id: 'all', name: t('exercises.categories.all'), icon: '✨', color: '#3B82F6' },
+  { id: 'breathing', name: t('exercises.categories.breathing'), icon: '🌬️', color: '#06B6D4' },
+  { id: 'mindfulness', name: t('exercises.categories.mindfulness'), icon: '🧘', color: '#8B5CF6' },
+  { id: 'movement', name: t('exercises.categories.movement'), icon: '🏃', color: '#10B981' },
+  { id: 'journaling', name: t('exercises.categories.journaling'), icon: '📝', color: '#F59E0B' },
+  { id: 'relaxation', name: t('exercises.categories.relaxation'), icon: '💆', color: '#EC4899' },
 ];
 
 interface CategoryFilterProps {
@@ -31,6 +33,9 @@ interface CategoryFilterProps {
 }
 
 export function CategoryFilter({ selectedCategory, onCategorySelect }: CategoryFilterProps) {
+  const { t } = useTranslation();
+  const categories = getCategoriesWithTranslations(t);
+  
   return (
     <ScrollView
       horizontal
@@ -38,7 +43,7 @@ export function CategoryFilter({ selectedCategory, onCategorySelect }: CategoryF
       className="mb-6"
       contentContainerStyle={{ paddingHorizontal: 24 }}
     >
-      {CATEGORIES.map((category, index) => (
+      {categories.map((category, index) => (
         <CategoryChip
           key={category.id}
           category={category}

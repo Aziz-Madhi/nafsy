@@ -3,7 +3,7 @@ import { View, Modal, Pressable, ScrollView } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
-import { X, Clock, BarChart3, CheckCircle } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import Animated, {
   FadeIn,
   FadeOut,
@@ -62,7 +62,7 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
                 onPress={onClose}
                 className="w-10 h-10 bg-secondary/20 rounded-full items-center justify-center"
               >
-                <X size={24} className="text-muted-foreground" />
+                <SymbolView name="xmark" size={24} tintColor="#6B7280" />
               </Pressable>
             </View>
 
@@ -91,11 +91,11 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
               className="flex-row justify-center mb-8"
             >
               <View className="flex-row items-center mr-6">
-                <Clock size={20} className="text-muted-foreground mr-2" />
+                <SymbolView name="clock" size={20} tintColor="#6B7280" />
                 <Text variant="body">{exercise.duration}</Text>
               </View>
               <View className="flex-row items-center">
-                <BarChart3 size={20} className="text-muted-foreground mr-2" />
+                <SymbolView name="chart.bar" size={20} tintColor="#6B7280" />
                 <Text
                   variant="body"
                   style={{ color: DIFFICULTY_COLORS[exercise.difficulty] }}
@@ -116,7 +116,7 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
                 </Text>
                 {exercise.benefits.map((benefit, index) => (
                   <View key={index} className="flex-row items-start mb-3">
-                    <CheckCircle size={20} className="text-primary mr-3 mt-0.5" />
+                    <SymbolView name="checkmark.circle" size={20} tintColor="#6F9460" />
                     <Text variant="body" className="flex-1">
                       {benefit}
                     </Text>

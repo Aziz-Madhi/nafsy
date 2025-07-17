@@ -1,0 +1,231 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "cancel": "Cancel",
+    "save": "Save",
+    "edit": "Edit",
+    "delete": "Delete",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "done": "Done",
+    "error": "Error",
+    "success": "Success",
+    "retry": "Retry",
+    "close": "Close",
+    "search": "Search",
+    "filter": "Filter",
+    "all": "All",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "thisWeek": "This Week",
+    "thisMonth": "This Month",
+    "signIn": "Sign In",
+    "signUp": "Sign Up",
+    "signOut": "Sign Out",
+    "pleaseSignIn": "Please sign in to continue"
+  },
+  "auth": {
+    "welcome": "Welcome to Nafsy",
+    "signInTitle": "Sign In",
+    "signUpTitle": "Sign Up",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "createAccount": "Create Account",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "emailRequired": "Email is required",
+    "passwordRequired": "Password is required",
+    "invalidEmail": "Invalid email address",
+    "passwordTooShort": "Password must be at least 6 characters"
+  },
+  "tabs": {
+    "chat": "Chat",
+    "mood": "Mood",
+    "exercises": "Exercises",
+    "profile": "Profile",
+    "history": "History"
+  },
+  "chat": {
+    "title": "Chat",
+    "welcomeMessage": "Hello! I'm here to support your mental wellness journey. How are you feeling today?",
+    "welcomeSubtitle": "Your safe space for mental wellness",
+    "typingPlaceholder": "Type your message...",
+    "send": "Send",
+    "typing": "Typing...",
+    "quickReplies": {
+      "anxious": "I'm feeling anxious",
+      "needTalk": "I need someone to talk to",
+      "trackMood": "I want to track my mood",
+      "showExercises": "Show me exercises"
+    },
+    "floatingChat": {
+      "title": "Quick Vent",
+      "subtitle": "How are you feeling?",
+      "placeholder": "Share what's on your mind...",
+      "send": "Send"
+    },
+    "history": {
+      "title": "Chat History",
+      "mainSessions": "Therapy Sessions",
+      "ventSessions": "Quick Vents",
+      "noHistory": "No chat history yet",
+      "searchPlaceholder": "Search conversations...",
+      "deleteSession": "Delete Session",
+      "confirmDelete": "Are you sure you want to delete this session?"
+    }
+  },
+  "mood": {
+    "title": "Mood Tracking",
+    "subtitle": "How are you feeling today?",
+    "selectMood": "Select your mood",
+    "addNote": "Add a note (optional)",
+    "notePlaceholder": "How are you feeling? What's on your mind?",
+    "saveMood": "Save Mood",
+    "moodSaved": "Mood saved successfully!",
+    "moods": {
+      "happy": "Happy",
+      "neutral": "Neutral",
+      "sad": "Sad",
+      "anxious": "Anxious",
+      "angry": "Angry"
+    },
+    "moodEmojis": {
+      "happy": "😊",
+      "neutral": "😐",
+      "sad": "😢",
+      "anxious": "😰",
+      "angry": "😠"
+    },
+    "calendar": {
+      "title": "Mood Calendar",
+      "noMoodData": "No mood data for this day",
+      "selectDate": "Select a date to view mood"
+    },
+    "stats": {
+      "title": "Mood Statistics",
+      "averageMood": "Average Mood",
+      "moodPattern": "Mood Pattern",
+      "streakDays": "Day Streak",
+      "totalEntries": "Total Entries",
+      "mostCommonMood": "Most Common Mood",
+      "improvementTrend": "Improvement Trend"
+    }
+  },
+  "exercises": {
+    "title": "Wellness Exercises",
+    "subtitle": "Evidence-based practices for mental wellness",
+    "categories": {
+      "all": "All",
+      "breathing": "Breathing",
+      "mindfulness": "Mindfulness",
+      "movement": "Movement",
+      "journaling": "Journaling",
+      "relaxation": "Relaxation"
+    },
+    "stats": {
+      "completed": "Completed",
+      "thisWeek": "This Week",
+      "totalTime": "Total Time"
+    },
+    "difficulty": {
+      "beginner": "Beginner",
+      "intermediate": "Intermediate",
+      "advanced": "Advanced"
+    },
+    "duration": "Duration",
+    "instructions": "Instructions",
+    "benefits": "Benefits",
+    "startExercise": "Start Exercise",
+    "completeExercise": "Complete Exercise",
+    "exerciseCompleted": "Exercise completed successfully!",
+    "exerciseInProgress": "Exercise in progress...",
+    "benefits": {
+      "breathing": [
+        "Reduces stress and anxiety",
+        "Improves focus and concentration",
+        "Lowers blood pressure",
+        "Promotes relaxation"
+      ],
+      "mindfulness": [
+        "Increases self-awareness",
+        "Reduces negative emotions",
+        "Improves emotional regulation",
+        "Enhances well-being"
+      ],
+      "movement": [
+        "Boosts mood and energy",
+        "Reduces physical tension",
+        "Improves body awareness",
+        "Enhances overall health"
+      ],
+      "journaling": [
+        "Clarifies thoughts and feelings",
+        "Reduces stress",
+        "Improves self-reflection",
+        "Tracks personal growth"
+      ],
+      "relaxation": [
+        "Reduces muscle tension",
+        "Improves sleep quality",
+        "Lowers stress hormones",
+        "Promotes calmness"
+      ]
+    }
+  },
+  "profile": {
+    "title": "Profile",
+    "sections": {
+      "account": "Account",
+      "preferences": "Preferences",
+      "support": "Support"
+    },
+    "settings": {
+      "editProfile": "Edit Profile",
+      "editProfileSubtitle": "Update your personal information",
+      "notifications": "Notifications",
+      "notificationsSubtitle": "Manage your notification preferences",
+      "language": "Language",
+      "languageSubtitle": "Choose your preferred language",
+      "privacy": "Privacy & Security",
+      "privacySubtitle": "Manage your data and privacy",
+      "help": "Help & Support",
+      "helpSubtitle": "Get help with the app",
+      "crisis": "Crisis Resources",
+      "crisisSubtitle": "Emergency mental health support"
+    },
+    "stats": {
+      "dayStreak": "Day Streak",
+      "sessions": "Sessions",
+      "totalTime": "Total Time"
+    },
+    "languages": {
+      "english": "English",
+      "arabic": "العربية"
+    },
+    "version": "Nafsy v1.0.0"
+  },
+  "notifications": {
+    "moodReminder": "Time to track your mood!",
+    "exerciseReminder": "Ready for your wellness exercise?",
+    "streakReminder": "Keep your streak going!",
+    "checkIn": "How are you feeling today?"
+  },
+  "errors": {
+    "networkError": "Network error. Please check your connection.",
+    "serverError": "Server error. Please try again later.",
+    "unknownError": "An unexpected error occurred.",
+    "sessionExpired": "Your session has expired. Please sign in again.",
+    "permissionDenied": "Permission denied.",
+    "validationError": "Please check your input and try again."
+  },
+  "success": {
+    "moodSaved": "Mood saved successfully!",
+    "exerciseCompleted": "Exercise completed!",
+    "profileUpdated": "Profile updated successfully!",
+    "settingsSaved": "Settings saved!",
+    "accountCreated": "Account created successfully!"
+  }
+}

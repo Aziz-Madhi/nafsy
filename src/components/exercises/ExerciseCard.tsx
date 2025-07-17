@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Pressable, ImageBackground } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { Card } from '~/components/ui/card';
-import { Clock, Heart, BarChart3 } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import Animated, {
   useAnimatedStyle,
   useSharedValue,
@@ -99,7 +99,7 @@ export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
           <View className="flex-row items-center justify-between">
             {/* Duration */}
             <View className="flex-row items-center">
-              <Clock size={16} className="text-muted-foreground mr-1" />
+              <SymbolView name="clock" size={16} tintColor="#6B7280" />
               <Text variant="muted" className="text-sm">
                 {exercise.duration}
               </Text>
@@ -107,7 +107,7 @@ export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
 
             {/* Difficulty */}
             <View className="flex-row items-center">
-              <BarChart3 size={16} className="text-muted-foreground mr-1" />
+              <SymbolView name="chart.bar" size={16} tintColor="#6B7280" />
               <Text
                 variant="muted"
                 className="text-sm font-medium"

@@ -9,26 +9,17 @@ import { api } from '../../../convex/_generated/api';
 import { Text } from '~/components/ui/text';
 import { Avatar } from '~/components/ui/avatar';
 import { Card } from '~/components/ui/card';
-import { 
-  ChevronRight, 
-  User, 
-  Bell, 
-  Shield, 
-  HelpCircle, 
-  LogOut,
-  Globe,
-  Heart,
-  Award
-} from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { cn } from '~/lib/cn';
+import { useTranslation, useLanguageSwitcher } from '~/hooks/useTranslation';
 
 interface SettingItem {
   id: string;
   title: string;
   subtitle?: string;
-  icon: React.ComponentType<any>;
+  iconName: string;
   iconColor: string;
   action?: () => void;
   rightElement?: React.ReactNode;
@@ -39,14 +30,15 @@ export default function ProfileScreen() {
   const { user, isLoaded } = useUserSafe();
   const router = useRouter();
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [language, setLanguage] = useState('en');
+  const { t } = useTranslation();
+  const { currentLanguage, toggleLanguage } = useLanguageSwitcher();
   
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">Loading...</Text>
+          <Text variant="body" className="text-muted-foreground">{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -55,9 +47,9 @@ export default function ProfileScreen() {
   // Show sign-in prompt if not authenticated
   if (!isSignedIn || !user) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">Please sign in to continue</Text>
+          <Text variant="body" className="text-muted-foreground">{t('common.pleaseSignIn')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -92,28 +84,28 @@ export default function ProfileScreen() {
     setNotificationsEnabled(!notificationsEnabled);
   };
 
-  const toggleLanguage = () => {
+  const handleToggleLanguage = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    setLanguage(language === 'en' ? 'ar' : 'en');
+    toggleLanguage();
   };
 
   const settingsSections: { title: string; items: SettingItem[] }[] = [
     {
-      title: 'Account',
+      title: t('profile.sections.account'),
       items: [
         {
           id: 'edit-profile',
-          title: 'Edit Profile',
-          subtitle: 'Update your personal information',
-          icon: User,
+          title: t('profile.settings.editProfile'),
+          subtitle: t('profile.settings.editProfileSubtitle'),
+          iconName: 'person.circle',
           iconColor: '#3B82F6',
           action: () => console.log('Edit profile'),
         },
         {
           id: 'notifications',
-          title: 'Notifications',
-          subtitle: 'Manage your notification preferences',
-          icon: Bell,
+          title: t('profile.settings.notifications'),
+          subtitle: t('profile.settings.notificationsSubtitle'),
+          iconName: 'bell.fill',
           iconColor: '#F59E0B',
           rightElement: (
             <Switch
@@ -126,43 +118,43 @@ export default function ProfileScreen() {
         },
         {
           id: 'language',
-          title: 'Language',
-          subtitle: language === 'en' ? 'English' : 'العربية',
-          icon: Globe,
+          title: t('profile.settings.language'),
+          subtitle: currentLanguage === 'en' ? t('profile.languages.english') : t('profile.languages.arabic'),
+          iconName: 'globe',
           iconColor: '#8B5CF6',
-          action: toggleLanguage,
+          action: handleToggleLanguage,
         },
       ],
     },
     {
-      title: 'Preferences',
+      title: t('profile.sections.preferences'),
       items: [
         {
           id: 'privacy',
-          title: 'Privacy & Security',
-          subtitle: 'Manage your data and privacy',
-          icon: Shield,
+          title: t('profile.settings.privacy'),
+          subtitle: t('profile.settings.privacySubtitle'),
+          iconName: 'shield.fill',
           iconColor: '#10B981',
           action: () => console.log('Privacy settings'),
         },
       ],
     },
     {
-      title: 'Support',
+      title: t('profile.sections.support'),
       items: [
         {
           id: 'help',
-          title: 'Help & Support',
-          subtitle: 'Get help with the app',
-          icon: HelpCircle,
+          title: t('profile.settings.help'),
+          subtitle: t('profile.settings.helpSubtitle'),
+          iconName: 'questionmark.circle',
           iconColor: '#06B6D4',
           action: () => console.log('Help'),
         },
         {
           id: 'crisis',
-          title: 'Crisis Resources',
-          subtitle: 'Emergency mental health support',
-          icon: Heart,
+          title: t('profile.settings.crisis'),
+          subtitle: t('profile.settings.crisisSubtitle'),
+          iconName: 'heart.fill',
           iconColor: '#EF4444',
           action: () => console.log('Crisis resources'),
         },
@@ -171,12 +163,12 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-6 pt-4 pb-2">
           <Text variant="title1" className="mb-2">
-            Profile
+            {t('profile.title')}
           </Text>
         </View>
 
@@ -211,20 +203,20 @@ export default function ProfileScreen() {
               <View className="flex-row justify-around mt-6 pt-6 border-t border-border/50">
                 <View className="items-center">
                   <View className="flex-row items-center mb-1">
-                    <Award size={16} className="text-primary mr-1" />
+                    <SymbolView name="award.fill" size={16} tintColor="#2196F3" />
                     <Text variant="title3">7</Text>
                   </View>
                   <Text variant="muted" className="text-xs">
-                    Day Streak
+                    {t('profile.stats.dayStreak')}
                   </Text>
                 </View>
                 <View className="items-center">
                   <View className="flex-row items-center mb-1">
-                    <Heart size={16} className="text-primary mr-1" />
+                    <SymbolView name="heart.fill" size={16} tintColor="#2196F3" />
                     <Text variant="title3">24</Text>
                   </View>
                   <Text variant="muted" className="text-xs">
-                    Sessions
+                    {t('profile.stats.sessions')}
                   </Text>
                 </View>
                 <View className="items-center">
@@ -233,7 +225,7 @@ export default function ProfileScreen() {
                     <Text variant="title3">3.5h</Text>
                   </View>
                   <Text variant="muted" className="text-xs">
-                    Total Time
+                    {t('profile.stats.totalTime')}
                   </Text>
                 </View>
               </View>
@@ -275,9 +267,9 @@ export default function ProfileScreen() {
             onPress={handleSignOut}
             className="bg-destructive rounded-xl px-6 py-4 flex-row items-center justify-center"
           >
-            <LogOut size={20} className="text-destructive-foreground mr-2" />
+            <SymbolView name="rectangle.portrait.and.arrow.right" size={20} tintColor="white" />
             <Text variant="body" className="text-destructive-foreground font-medium">
-              Sign Out
+              {t('common.signOut')}
             </Text>
           </Pressable>
         </Animated.View>
@@ -285,7 +277,7 @@ export default function ProfileScreen() {
         {/* Version Info */}
         <View className="items-center mb-8">
           <Text variant="muted" className="text-xs">
-            Nafsy v1.0.0
+            {t('profile.version')}
           </Text>
         </View>
       </ScrollView>
@@ -306,8 +298,6 @@ function SettingRow({ item, isLast }: SettingRowProps) {
     }
   };
 
-  const Icon = item.icon;
-
   return (
     <Pressable
       onPress={handlePress}
@@ -321,7 +311,7 @@ function SettingRow({ item, isLast }: SettingRowProps) {
         className="w-10 h-10 rounded-xl items-center justify-center mr-3"
         style={{ backgroundColor: item.iconColor + '20' }}
       >
-        <Icon size={22} style={{ color: item.iconColor }} />
+        <SymbolView name={item.iconName} size={22} tintColor={item.iconColor} />
       </View>
       
       <View className="flex-1">
@@ -336,7 +326,7 @@ function SettingRow({ item, isLast }: SettingRowProps) {
       </View>
       
       {item.rightElement || (
-        item.action && <ChevronRight size={20} className="text-muted-foreground" />
+        item.action && <SymbolView name="chevron.right" size={20} tintColor="#9CA3AF" />
       )}
     </Pressable>
   );

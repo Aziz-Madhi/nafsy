@@ -3,7 +3,7 @@ import { View, ScrollView, Pressable, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
-import { ArrowLeft, MessageCircle, Heart, Calendar, Trash2 } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import { cn } from '~/lib/cn';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '@clerk/clerk-expo';
@@ -139,9 +139,9 @@ function ChatHistoryScreen() {
         <View className="flex-1">
           <View className="flex-row items-center mb-2">
             {session.type === 'main' ? (
-              <MessageCircle size={18} className="text-primary mr-2" />
+              <SymbolView name="message.circle" size={18} tintColor="#6F9460" />
             ) : (
-              <Heart size={18} className="text-pink-500 mr-2" />
+              <SymbolView name="heart.fill" size={18} tintColor="#EC4899" />
             )}
             <Text variant="body" className="font-medium flex-1">
               {session.title}
@@ -150,7 +150,7 @@ function ChatHistoryScreen() {
           
           <View className="flex-row items-center justify-between">
             <View className="flex-row items-center">
-              <Calendar size={14} className="text-muted-foreground mr-1" />
+              <SymbolView name="calendar" size={14} tintColor="#6B7280" />
               <Text variant="muted" className="text-sm">
                 {formatDate(session.lastMessageAt)}
               </Text>
@@ -166,7 +166,7 @@ function ChatHistoryScreen() {
           onPress={() => handleDeleteSession(session.sessionId, session.type)}
           className="ml-3 p-2 rounded-full"
         >
-          <Trash2 size={16} className="text-destructive" />
+          <SymbolView name="trash" size={16} tintColor="#EF4444" />
         </Pressable>
       </Pressable>
     </Animated.View>
@@ -179,7 +179,7 @@ function ChatHistoryScreen() {
       {/* Header */}
       <View className="flex-row items-center px-6 py-4 border-b border-border/20">
         <Pressable onPress={() => router.back()} className="mr-4">
-          <ArrowLeft size={24} color="white" />
+          <SymbolView name="arrow.left" size={24} tintColor="white" />
         </Pressable>
         <Text variant="title2">Chat History</Text>
       </View>
@@ -195,14 +195,10 @@ function ChatHistoryScreen() {
               : 'bg-secondary/20'
           )}
         >
-          <MessageCircle
+          <SymbolView
+            name="message.circle"
             size={20}
-            className={cn(
-              'mr-2',
-              activeTab === 'main'
-                ? 'text-primary-foreground'
-                : 'text-muted-foreground'
-            )}
+            tintColor={activeTab === 'main' ? 'white' : '#6B7280'}
           />
           <Text
             variant="body"
@@ -225,14 +221,10 @@ function ChatHistoryScreen() {
               : 'bg-secondary/20'
           )}
         >
-          <Heart
+          <SymbolView
+            name="heart.fill"
             size={20}
-            className={cn(
-              'mr-2',
-              activeTab === 'vent'
-                ? 'text-white'
-                : 'text-muted-foreground'
-            )}
+            tintColor={activeTab === 'vent' ? 'white' : '#6B7280'}
           />
           <Text
             variant="body"
@@ -257,9 +249,9 @@ function ChatHistoryScreen() {
           <View className="flex-1 justify-center items-center py-12">
             <View className="items-center">
               {activeTab === 'main' ? (
-                <MessageCircle size={48} className="text-muted-foreground mb-4" />
+                <SymbolView name="message.circle" size={48} tintColor="#6B7280" />
               ) : (
-                <Heart size={48} className="text-muted-foreground mb-4" />
+                <SymbolView name="heart.fill" size={48} tintColor="#6B7280" />
               )}
               <Text variant="title3" className="text-center mb-2">
                 No {activeTab === 'main' ? 'Chat' : 'Vent'} History

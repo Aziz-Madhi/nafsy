@@ -3,12 +3,13 @@ import { View, ScrollView, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { ExerciseCard, CategoryFilter, ExerciseDetail } from '~/components/exercises';
-import { Search } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface Exercise {
   id: string;
@@ -45,38 +46,13 @@ function getCategoryColor(category: string): string {
   return colors[category] || '#3B82F6';
 }
 
-function getBenefitsForCategory(category: string): string[] {
+function getBenefitsForCategory(category: string, t: any): string[] {
   const benefits: Record<string, string[]> = {
-    breathing: [
-      'Reduces stress and anxiety',
-      'Improves focus and concentration',
-      'Lowers blood pressure',
-      'Promotes relaxation'
-    ],
-    mindfulness: [
-      'Increases self-awareness',
-      'Reduces negative emotions',
-      'Improves emotional regulation',
-      'Enhances well-being'
-    ],
-    movement: [
-      'Boosts mood and energy',
-      'Reduces physical tension',
-      'Improves body awareness',
-      'Enhances overall health'
-    ],
-    journaling: [
-      'Clarifies thoughts and feelings',
-      'Reduces stress',
-      'Improves self-reflection',
-      'Tracks personal growth'
-    ],
-    relaxation: [
-      'Reduces muscle tension',
-      'Improves sleep quality',
-      'Lowers stress hormones',
-      'Promotes calmness'
-    ],
+    breathing: t('exercises.benefits.breathing'),
+    mindfulness: t('exercises.benefits.mindfulness'),
+    movement: t('exercises.benefits.movement'),
+    journaling: t('exercises.benefits.journaling'),
+    relaxation: t('exercises.benefits.relaxation'),
   };
   return benefits[category] || [];
 }
@@ -84,6 +60,7 @@ function getBenefitsForCategory(category: string): string[] {
 function ExercisesScreen() {
   const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
+  const { t, locale } = useTranslation();
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showDetail, setShowDetail] = useState(false);
@@ -91,9 +68,9 @@ function ExercisesScreen() {
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">Loading...</Text>
+          <Text variant="body" className="text-muted-foreground">{t('common.loading')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -102,9 +79,9 @@ function ExercisesScreen() {
   // Show sign-in prompt if not authenticated
   if (!isSignedIn || !user) {
     return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">Please sign in to continue</Text>
+          <Text variant="body" className="text-muted-foreground">{t('common.pleaseSignIn')}</Text>
         </View>
       </SafeAreaView>
     );
@@ -129,15 +106,15 @@ function ExercisesScreen() {
   // Transform Convex exercises to UI format
   const exercises: Exercise[] = exercisesWithProgress?.map(ex => ({
     id: ex._id,
-    title: ex.title,
-    description: ex.description,
+    title: locale === 'ar' ? ex.titleAr : ex.title,
+    description: locale === 'ar' ? ex.descriptionAr : ex.description,
     duration: `${ex.duration} min`,
     difficulty: ex.difficulty,
     category: ex.category,
     icon: getCategoryIcon(ex.category),
     color: getCategoryColor(ex.category),
-    steps: ex.instructions,
-    benefits: getBenefitsForCategory(ex.category),
+    steps: locale === 'ar' ? ex.instructionsAr : ex.instructions,
+    benefits: getBenefitsForCategory(ex.category, t),
   })) || [];
 
   // Seed exercises if none exist
@@ -172,14 +149,14 @@ function ExercisesScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
       {/* Header */}
       <View className="px-6 pt-4 pb-2">
         <Text variant="title1" className="mb-2">
-          Wellness Exercises
+          {t('exercises.title')}
         </Text>
         <Text variant="muted">
-          Evidence-based practices for mental wellness
+          {t('exercises.subtitle')}
         </Text>
       </View>
 
@@ -193,7 +170,7 @@ function ExercisesScreen() {
             {userStats?.totalSessions || 0}
           </Text>
           <Text variant="muted" className="text-xs">
-            Completed
+            {t('exercises.stats.completed')}
           </Text>
         </View>
         <View className="w-px bg-border" />
@@ -202,7 +179,7 @@ function ExercisesScreen() {
             {userStats?.completionsThisWeek || 0}
           </Text>
           <Text variant="muted" className="text-xs">
-            This Week
+            {t('exercises.stats.thisWeek')}
           </Text>
         </View>
         <View className="w-px bg-border" />
@@ -211,7 +188,7 @@ function ExercisesScreen() {
             {userStats?.totalMinutes || 0}m
           </Text>
           <Text variant="muted" className="text-xs">
-            Total Time
+            {t('exercises.stats.totalTime')}
           </Text>
         </View>
       </Animated.View>

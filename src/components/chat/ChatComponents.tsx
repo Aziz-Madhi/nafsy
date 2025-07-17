@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
-import { Send, Mic, Paperclip } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import { Text } from '~/components/ui/text';
-import { Avatar } from '~/components/ui/avatar';
 import { cn } from '~/lib/cn';
 import Animated, { 
   FadeInDown, 
@@ -16,48 +15,37 @@ import Animated, {
   withDelay,
 } from 'react-native-reanimated';
 import { ChatBubbleProps, ChatInputProps } from './types';
+import { useTranslation } from '~/hooks/useTranslation';
 
 // =====================
 // CHAT BUBBLE COMPONENT
 // =====================
 export function ChatBubble({ message, isUser, timestamp, avatar, index = 0, status }: ChatBubbleProps) {
+  const { locale } = useTranslation();
+  
+  // User messages always right-aligned, AI messages always left-aligned
+  const shouldJustifyEnd = isUser;
+  
   return (
     <Animated.View
       entering={FadeInDown.delay(index * 100).springify()}
       className={cn(
         'flex-row mb-4',
-        isUser ? 'justify-end' : 'justify-start'
+        shouldJustifyEnd ? 'justify-end' : 'justify-start'
       )}
     >
-      {!isUser && (
-        <Avatar
-          alt="AI Assistant"
-          className="mr-2 h-8 w-8"
-        >
-          <Avatar.Image
-            source={{ uri: avatar || 'https://api.dicebear.com/7.x/bottts/png?seed=nafsy' }}
-          />
-          <Avatar.Fallback>
-            <Text className="text-primary">AI</Text>
-          </Avatar.Fallback>
-        </Avatar>
-      )}
-      
       <View
         className={cn(
-          'max-w-[80%] rounded-2xl px-4 py-3',
-          isUser 
-            ? 'bg-primary' 
-            : 'bg-secondary/20 dark:bg-secondary/10'
+          'max-w-[80%] px-2 py-1',
+          isUser ? 'bg-[#6F9460] rounded-md' : 'bg-transparent'
         )}
       >
         <Text
           variant="body"
           className={cn(
-            isUser 
-              ? 'text-primary-foreground' 
-              : 'text-foreground'
+            isUser ? 'text-white' : 'text-[#336478]'
           )}
+          enableRTL={isUser}
         >
           {message}
         </Text>
@@ -67,10 +55,9 @@ export function ChatBubble({ message, isUser, timestamp, avatar, index = 0, stat
             variant="muted"
             className={cn(
               'text-xs mt-1',
-              isUser 
-                ? 'text-primary-foreground/70' 
-                : 'text-muted-foreground'
+              isUser ? 'text-white/70' : 'text-[#336478]/70'
             )}
+            enableRTL={isUser}
           >
             {timestamp}
           </Text>
@@ -79,7 +66,7 @@ export function ChatBubble({ message, isUser, timestamp, avatar, index = 0, stat
         {/* Status indicator for user messages */}
         {isUser && status && (
           <View className="absolute -bottom-1 -right-1 bg-white/90 rounded-full p-1">
-            <Text className="text-xs">
+            <Text className="text-xs" enableRTL={false}>
               {status === 'sending' && '⏳'}
               {status === 'sent' && '✓'}
               {status === 'delivered' && '✓✓'}
@@ -245,12 +232,12 @@ export function ChatInput({
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View className="flex-row items-end px-4 py-3 bg-background border-t border-border/20">
-        <Pressable className="p-2 mr-2">
-          <Paperclip size={24} className="text-muted-foreground" />
+      <View className="flex-row items-center px-4 py-4 bg-[#8D6E63] rounded-t-[25px]">
+        <Pressable className="w-8 h-8 mr-2 rounded-full items-center justify-center bg-[#3A3A3A]">
+          <SymbolView name="plus" size={16} tintColor="white" />
         </Pressable>
 
-        <View className="flex-1 flex-row items-end bg-secondary/10 dark:bg-secondary/20 rounded-3xl px-4 py-2 min-h-[44px]">
+        <View className="flex-1 flex-row items-end bg-transparent rounded-3xl px-4 py-2 min-h-[44px]">
           <TextInput
             value={message}
             onChangeText={setMessage}
@@ -271,12 +258,12 @@ export function ChatInput({
               className="ml-2 p-2"
               disabled={disabled}
             >
-              <Send size={24} className="text-primary" />
+              <SymbolView name="paperplane.fill" size={24} tintColor="#6F9460" />
             </Pressable>
           </Animated.View>
         ) : (
-          <Pressable className="ml-2 p-2">
-            <Mic size={24} className="text-muted-foreground" />
+          <Pressable className="w-8 h-8 ml-2 rounded-full items-center justify-center bg-[#3A3A3A]">
+            <SymbolView name="mic.fill" size={16} tintColor="white" />
           </Pressable>
         )}
       </View>
