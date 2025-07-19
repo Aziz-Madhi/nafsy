@@ -1,0 +1,146 @@
+## Project Overview
+
+**Nafsy** is a mental health React Native app built with Expo, featuring AI-powered chat, mood tracking, wellness exercises, and multilingual support (English/Arabic). The app uses Clerk for authentication, Convex for real-time backend, and follows iOS design patterns.
+
+You are an expert in TypeScript, React Native, Expo, Nativewind v4, and React Native Reanimated 4 development.
+
+## Development Commands
+
+### Core Development
+- `bun start` - Start the Expo development server
+- `bun start:clear` - Start with cleared cache
+- `bun android` - Run on Android device/emulator
+- `bun ios` - Run on iOS device/simulator (ASK FOR CONFIRMATION first)
+- `bun web` - Run on web browser
+
+### Backend (Convex)
+- `bun convex:dev` - Start Convex development server
+- `bun convex:deploy` - Deploy Convex functions to production
+
+### Cache Management
+- `bun clean` - Remove .expo, node_modules cache, and metro cache
+- `bun clean-full` - Full clean including node_modules and bun.lock, then reinstall
+
+## Architecture Overview
+
+### Tech Stack
+- **Frontend**: React Native with Expo SDK 53
+- **Routing**: Expo Router v5 with typed routes
+- **Styling**: Nativewind v4 (Tailwind CSS for React Native)
+- **Animations**: React Native Reanimated 4 + Moti
+- **State Management**: Zustand with MMKV persistence
+- **Backend**: Convex (real-time database and functions)
+- **Authentication**: Clerk
+- **Localization**: react-native-i18n
+- **Package Manager**: Bun
+
+### Project Structure
+```
+src/
+├── app/                    # Expo Router pages
+│   ├── _layout.tsx        # Root layout with providers
+│   ├── index.tsx          # Landing/auth check page
+│   ├── tabs/              # Tab navigation
+│   │   ├── chat.tsx       # Main chat screen
+│   │   ├── mood.tsx       # Mood tracking
+│   │   ├── exercises.tsx  # Wellness exercises
+│   │   └── profile.tsx    # User profile
+│   └── auth/              # Authentication screens
+├── components/            # Reusable UI components
+│   ├── chat/              # Chat-related components
+│   ├── mood/              # Mood tracking components
+│   ├── exercises/         # Exercise components
+│   └── ui/                # Base UI components
+├── providers/             # React context providers
+├── store/                 # Zustand stores
+├── lib/                   # Utilities and hooks
+├── types/                 # TypeScript type definitions
+└── locales/               # i18n translation files
+```
+
+### State Management Architecture
+- **Zustand Stores**: Separated by feature domain
+  - `useAppStore`: Global app state and user preferences
+  - `useChatUIStore`: Chat UI state and temporary data
+  - `useMoodStore`: Mood tracking local state
+  - `useExerciseStore`: Exercise progress and preferences
+- **Persistence**: MMKV for fast, synchronous storage
+- **Real-time Data**: Convex handles server state with subscriptions
+
+### Database Schema (Convex)
+- **Dual Chat System**: Separate tables for main therapy sessions (`mainChatMessages`) and quick vents (`ventChatMessages`)
+- **Session Management**: `chatSessions` table tracks conversation metadata
+- **User Data**: `users`, `moods`, `exercises`, `userProgress`
+- **Multilingual**: Arabic/English support in exercise content
+
+### Key Features
+1. **AI Chat**: Two types - structured therapy sessions and quick emotional vents
+2. **Mood Tracking**: Daily mood logging with calendar visualization
+3. **Wellness Exercises**: Categorized exercises with progress tracking
+4. **Multilingual**: Full Arabic/English support
+5. **Real-time**: Live chat updates via Convex subscriptions
+6. **Offline Support**: MMKV caching for offline functionality
+
+## Code Style and Structure
+
+- Write concise, technical TypeScript code with accurate examples.
+- Use functional and declarative programming patterns; avoid classes.
+- Prefer iteration and modularization over code duplication.
+- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
+- Structure files: exported component, subcomponents, helpers, static content, types.
+- Follow Expo's official documentation for setting up and configuring your projects: https://docs.expo.dev/
+
+## Naming Conventions
+
+- Use lowercase with dashes for directories (e.g., components/auth-wizard).
+- Favor named exports for components.
+
+## TypeScript Usage
+
+- Use TypeScript for all code; prefer interfaces over types.
+- Avoid enums; use maps instead.
+- Use functional components with TypeScript interfaces.
+- Use strict mode in TypeScript for better type safety.
+
+## Syntax and Formatting
+
+- Use the "function" keyword for pure functions.
+- Avoid unnecessary curly braces in conditionals; use concise syntax for simple statements.
+- Use declarative JSX.
+- Use Prettier for consistent code formatting.
+
+## Key Principles and Workflow Guidance
+
+- If you are given a task, don't overcomplicate it. Do a simple approach. If it didn't function, go into more advanced solutions cleverly.
+- When given an error or a problem to fix, do not overcomplicate. Try a simple fix and simple approach. If it didn't work, you will then go more advanced solutions.
+
+## Build and Development Notes
+
+- Do not run an iOS build. Always ask for confirmation before proceeding with iOS builds.
+- Use `bun` as the package manager, not npm or yarn.
+- Convex functions are TypeScript and run in the cloud.
+- MMKV provides synchronous storage - prefer it over AsyncStorage.
+- Use `expo-router` for navigation - all routes are file-based.
+- **Important Development Tip**: Do not start a dev server. Tell the user to do it.
+
+## Environment Configuration
+
+- Uses Expo's new architecture (Fabric/TurboModules enabled)
+- Clerk authentication with custom provider setup
+- Convex URL and Clerk keys configured via environment variables
+- Supports iOS 18.0+ and modern Android with edge-to-edge display
+
+## Animation and UI Guidelines
+
+- Use React Native Reanimated 4 for complex animations
+- Moti for simpler, declarative animations
+- Nativewind v4 for styling with Tailwind classes
+- Follow iOS design patterns for consistency
+- Use haptic feedback for user interactions
+
+## Important Development Considerations
+
+- Always test on both iOS and Android when making UI changes
+- Consider Arabic RTL layout requirements for multilingual features
+- Use Convex subscriptions for real-time updates, not polling
+- Implement proper error boundaries for Clerk authentication

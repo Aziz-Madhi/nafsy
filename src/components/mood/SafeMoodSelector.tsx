@@ -28,14 +28,8 @@ export function SafeMoodSelector({ selectedMood, onMoodSelect }: SafeMoodSelecto
   const isDark = colorScheme === 'dark';
   
   return (
-    <View style={[
-      styles.container,
-      isDark && styles.containerDark
-    ]}>
-      <Text style={[
-        styles.title,
-        isDark && styles.titleDark
-      ]}>
+    <View className="bg-white/80 rounded-2xl p-6 shadow-sm">
+      <Text className="text-lg font-semibold mb-6 text-center text-[#5A4A3A]">
         How are you feeling today?
       </Text>
       
@@ -93,7 +87,7 @@ function MoodButton({ mood, isSelected, onPress, isDark }: MoodButtonProps) {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
     borderRadius: 16,
     padding: 24,
     shadowColor: '#000',

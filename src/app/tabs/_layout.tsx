@@ -1,5 +1,5 @@
 import React from 'react';
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { SymbolView } from 'expo-symbols';
 import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
@@ -8,29 +8,26 @@ export default function TabsLayout() {
   const { isLoaded, isSignedIn } = useAuth();
   
   const activeColor = '#2196F3'; // design primary blue
-  const inputBarColor = '#8D6E63';
+  const inputBarColor = 'rgba(255, 255, 255, 0.4)'; // Exact match to bg-white/40
 
-  if (!isLoaded) {
+  // Don't do navigation in layout files - let the index.tsx handle redirects
+  if (!isLoaded || !isSignedIn) {
     return (
-      <View className="flex-1 justify-center items-center" style={{ backgroundColor: '#D2BD96' }}>
+      <View className="flex-1 justify-center items-center" style={{ backgroundColor: '#F2FAF9' }}>
         <ActivityIndicator size="large" color={activeColor} />
       </View>
     );
   }
 
-  if (!isSignedIn) {
-    return <Redirect href="/auth/sign-in" />;
-  }
-
   return (
-    <View style={{ flex: 1, backgroundColor: '#D2BD96' }}>
+    <View style={{ flex: 1, backgroundColor: '#F2FAF9' }}>
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: activeColor,
           tabBarInactiveTintColor: '#9CA3AF',
           headerShown: false,
           tabBarStyle: {
-            backgroundColor: inputBarColor,
+            backgroundColor: 'rgba(255, 255, 255, 0.4)',
             borderTopWidth: 0,
             height: 90, // Increased height for better proportions
             paddingBottom: 30, // More padding for home indicator

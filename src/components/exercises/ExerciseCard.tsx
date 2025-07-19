@@ -76,7 +76,7 @@ export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
           onPressOut={handlePressOut}
           onPress={handlePress}
         >
-      <Card className="overflow-hidden">
+      <View className="overflow-hidden rounded-2xl bg-white/40 shadow-sm">
         <View
           className="h-32 justify-end p-4"
           style={{ backgroundColor: exercise.color + '20' }}
@@ -87,30 +87,30 @@ export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
             <Text className="text-2xl">{exercise.icon}</Text>
           </View>
           
-          <Text variant="title3" className="mb-1">
+          <Text variant="title3" className="mb-1 text-[#5A4A3A]">
             {exercise.title}
           </Text>
-          <Text variant="muted" className="text-sm" numberOfLines={1}>
+          <Text variant="body" className="text-sm text-[#5A4A3A]/70" numberOfLines={1}>
             {exercise.description}
           </Text>
         </View>
 
-        <View className="p-4">
+        <View className="p-4 bg-white/20">
           <View className="flex-row items-center justify-between">
             {/* Duration */}
             <View className="flex-row items-center">
-              <SymbolView name="clock" size={16} tintColor="#6B7280" />
-              <Text variant="muted" className="text-sm">
+              <SymbolView name="clock" size={16} tintColor="#5A4A3A" />
+              <Text variant="body" className="text-sm text-[#5A4A3A] ml-1">
                 {exercise.duration}
               </Text>
             </View>
 
             {/* Difficulty */}
             <View className="flex-row items-center">
-              <SymbolView name="chart.bar" size={16} tintColor="#6B7280" />
+              <SymbolView name="chart.bar" size={16} tintColor="#5A4A3A" />
               <Text
-                variant="muted"
-                className="text-sm font-medium"
+                variant="body"
+                className="text-sm font-medium ml-1"
                 style={{ color: DIFFICULTY_COLORS[exercise.difficulty] }}
               >
                 {DIFFICULTY_LABELS[exercise.difficulty]}
@@ -118,7 +118,7 @@ export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
             </View>
           </View>
         </View>
-      </Card>
+      </View>
         </Pressable>
       </Animated.View>
     </Animated.View>

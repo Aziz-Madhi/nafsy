@@ -37,13 +37,13 @@ export function ChatBubble({ message, isUser, timestamp, avatar, index = 0, stat
       <View
         className={cn(
           'max-w-[80%] px-2 py-1',
-          isUser ? 'bg-[#6F9460] rounded-md' : 'bg-transparent'
+          isUser ? 'bg-[#2D7D6E] rounded-md' : 'bg-transparent'
         )}
       >
         <Text
           variant="body"
           className={cn(
-            isUser ? 'text-white' : 'text-[#336478]'
+            isUser ? 'text-white' : 'text-[#2E3A59]'
           )}
           enableRTL={isUser}
         >
@@ -55,7 +55,7 @@ export function ChatBubble({ message, isUser, timestamp, avatar, index = 0, stat
             variant="muted"
             className={cn(
               'text-xs mt-1',
-              isUser ? 'text-white/70' : 'text-[#336478]/70'
+              isUser ? 'text-white/70' : 'text-[#2E3A59]/70'
             )}
             enableRTL={isUser}
           >
@@ -232,7 +232,7 @@ export function ChatInput({
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View className="flex-row items-center px-4 py-4 bg-[#8D6E63] rounded-t-[25px]">
+      <View className="flex-row items-center px-4 py-4 bg-white/40 rounded-t-[25px]">
         <Pressable className="w-8 h-8 mr-2 rounded-full items-center justify-center bg-[#3A3A3A]">
           <SymbolView name="plus" size={16} tintColor="white" />
         </Pressable>

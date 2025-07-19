@@ -52,17 +52,25 @@ export function MoodCalendar({ moodEntries, selectedDate, onDateSelect }: MoodCa
   };
 
   const handlePreviousMonth = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.warn('Haptics error:', error);
+    }
     setCurrentDate(subMonths(currentDate, 1));
   };
 
   const handleNextMonth = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    try {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    } catch (error) {
+      console.warn('Haptics error:', error);
+    }
     setCurrentDate(addMonths(currentDate, 1));
   };
 
   return (
-    <View className="bg-card rounded-2xl p-6">
+    <View className="bg-white/80 rounded-2xl p-6 shadow-sm">
       {/* Header */}
       <View className="flex-row items-center justify-between mb-6">
         <Pressable onPress={handlePreviousMonth} className="p-2">
@@ -106,7 +114,11 @@ export function MoodCalendar({ moodEntries, selectedDate, onDateSelect }: MoodCa
             <Pressable
               key={day.toISOString()}
               onPress={() => {
-                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                try {
+                  Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+                } catch (error) {
+                  console.warn('Haptics error:', error);
+                }
                 onDateSelect?.(day);
               }}
               className="w-[14.28%] h-12 p-1"

@@ -36,7 +36,7 @@ export default function ProfileScreen() {
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
     return (
-      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#F2FAF9]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
           <Text variant="body" className="text-muted-foreground">{t('common.loading')}</Text>
         </View>
@@ -47,7 +47,7 @@ export default function ProfileScreen() {
   // Show sign-in prompt if not authenticated
   if (!isSignedIn || !user) {
     return (
-      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#F2FAF9]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
           <Text variant="body" className="text-muted-foreground">{t('common.pleaseSignIn')}</Text>
         </View>
@@ -163,11 +163,11 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#F2FAF9]" edges={['top']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="px-6 pt-4 pb-2">
-          <Text variant="title1" className="mb-2">
+          <Text variant="title1" className="text-[#5A4A3A] font-bold mb-2">
             {t('profile.title')}
           </Text>
         </View>
@@ -178,7 +178,7 @@ export default function ProfileScreen() {
             entering={FadeInDown.springify()}
             className="px-6 mt-4"
           >
-            <Card className="p-6">
+            <View className="bg-white/80 rounded-2xl p-6 shadow-sm">
               <View className="flex-row items-center">
                 <Avatar alt={user.fullName || 'User'} className="h-20 w-20 mr-4">
                   <Avatar.Image source={{ uri: user.imageUrl }} />
@@ -229,7 +229,7 @@ export default function ProfileScreen() {
                   </Text>
                 </View>
               </View>
-            </Card>
+            </View>
           </Animated.View>
         )}
 
@@ -245,7 +245,7 @@ export default function ProfileScreen() {
             </Text>
             
             <View className="px-6">
-              <Card className="overflow-hidden">
+              <View className="bg-white/80 rounded-2xl overflow-hidden shadow-sm">
                 {section.items.map((item, index) => (
                   <SettingRow
                     key={item.id}
@@ -253,7 +253,7 @@ export default function ProfileScreen() {
                     isLast={index === section.items.length - 1}
                   />
                 ))}
-              </Card>
+              </View>
             </View>
           </Animated.View>
         ))}
@@ -311,7 +311,7 @@ function SettingRow({ item, isLast }: SettingRowProps) {
         className="w-10 h-10 rounded-xl items-center justify-center mr-3"
         style={{ backgroundColor: item.iconColor + '20' }}
       >
-        <SymbolView name={item.iconName} size={22} tintColor={item.iconColor} />
+        <SymbolView name={item.iconName} size={20} tintColor={item.iconColor} />
       </View>
       
       <View className="flex-1">

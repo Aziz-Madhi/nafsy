@@ -5,6 +5,7 @@ import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { View } from 'react-native';
 import { AppProviders } from '~/providers/AppProviders';
+import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -29,7 +30,9 @@ function NavigationStack() {
 export default function RootLayout() {
   return (
     <AppProviders>
-      <NavigationStack />
+      <SafeErrorBoundary>
+        <NavigationStack />
+      </SafeErrorBoundary>
     </AppProviders>
   );
 }

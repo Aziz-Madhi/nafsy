@@ -22,7 +22,7 @@ const PADDING = 20;
 export function MoodGraph({ data }: MoodGraphProps) {
   if (data.length === 0) {
     return (
-      <View className="bg-card rounded-2xl p-6 items-center justify-center h-[250px]">
+      <View className="bg-white/80 rounded-2xl p-6 shadow-sm items-center justify-center h-[250px]">
         <Text variant="muted">No mood data yet</Text>
         <Text variant="muted" className="text-sm mt-2">
           Start tracking your mood to see trends
@@ -49,8 +49,8 @@ export function MoodGraph({ data }: MoodGraphProps) {
   const areaData = `${pathData} L ${PADDING + (data.length - 1) * xStep} ${GRAPH_HEIGHT - PADDING} L ${PADDING} ${GRAPH_HEIGHT - PADDING} Z`;
 
   return (
-    <View className="bg-card rounded-2xl p-6">
-      <Text variant="title3" className="mb-4">
+    <View className="bg-white/80 rounded-2xl p-6 shadow-sm">
+      <Text variant="heading" className="text-[#5A4A3A] font-semibold mb-4">
         Mood Trends
       </Text>
       

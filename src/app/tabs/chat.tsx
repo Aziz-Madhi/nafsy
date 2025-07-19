@@ -55,7 +55,7 @@ export default function ChatScreen() {
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
     return (
-      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#F2FAF9]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
           <Text variant="body" className="text-muted-foreground">{t('common.loading')}</Text>
         </View>
@@ -66,7 +66,7 @@ export default function ChatScreen() {
   // Show sign-in prompt if not authenticated
   if (!isSignedIn || !user) {
     return (
-      <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#F2FAF9]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
           <Text variant="body" className="text-muted-foreground">{t('common.pleaseSignIn')}</Text>
         </View>
@@ -185,19 +185,16 @@ export default function ChatScreen() {
   }, [handleSendMessage]);
 
   return (
-    <SafeAreaView className="flex-1 bg-[#D2BD96]" edges={['top']}>
+    <SafeAreaView className="flex-1 bg-[#F2FAF9]" edges={['top']}>
       {/* Header */}
       <View className="flex-row items-center justify-between px-5 pt-2 pb-4">
           <View className="flex-row items-center">
             <Pressable className="mr-2 p-2">
-              <SymbolView name="chevron.left" size={32} tintColor="rgba(141,110,99,0.75)" />
+              <SymbolView name="chevron.left" size={24} tintColor="#2D7D6E" />
             </Pressable>
-            <Text variant="heading" style={{ color: 'rgba(141,110,99,0.75)' }}>
-              {t('tabs.chat')}
-            </Text>
           </View>
           <Pressable className="p-2">
-            <SymbolView name="message.circle" size={32} tintColor="rgba(141,110,99,0.75)" />
+            <SymbolView name="message.circle" size={24} tintColor="#2D7D6E" />
           </Pressable>
         </View>
 
@@ -209,8 +206,8 @@ export default function ChatScreen() {
         <View className="flex-1">
           <ScrollView
             ref={scrollViewRef}
-            className="flex-1 px-4 pt-4"
-            contentContainerStyle={{ paddingBottom: 20 }}
+            className="flex-1 px-6"
+            contentContainerStyle={{ paddingBottom: 24 }}
             showsVerticalScrollIndicator={false}
             onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
             onTouchEnd={handleDoubleTap}
@@ -221,9 +218,16 @@ export default function ChatScreen() {
               className="items-center mb-8 mt-4"
             >
               <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center mb-4">
-                <Text className="text-3xl" enableRTL={false}>🌱</Text>
+                <Text 
+                  variant="title2" 
+                  enableRTL={false}
+                >🌱</Text>
               </View>
-              <Text variant="body" className="text-muted-foreground text-center" enableRTL={false}>
+              <Text 
+                variant="subhead" 
+                className="text-muted-foreground text-center" 
+                enableRTL={false}
+              >
                 {t('chat.welcomeSubtitle')}
               </Text>
             </Animated.View>
@@ -258,7 +262,9 @@ export default function ChatScreen() {
             </ScrollView>
           </View>
 
-        <ChatInput onSendMessage={handleSendMessage} placeholder={t('chat.typingPlaceholder')} />
+        <View className="px-4">
+          <ChatInput onSendMessage={handleSendMessage} placeholder={t('chat.typingPlaceholder')} />
+        </View>
       </KeyboardAvoidingView>
 
       {/* Floating Chat Modal */}
