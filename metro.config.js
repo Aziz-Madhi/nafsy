@@ -4,6 +4,9 @@ const path = require('path');
 
 const config = getDefaultConfig(__dirname);
 
+// Add support for WASM files (required for Skia web support)
+config.resolver.assetExts.push('wasm');
+
 // Add support for TypeScript
 config.resolver.sourceExts.push('ts', 'tsx');
 

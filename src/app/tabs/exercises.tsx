@@ -1,52 +1,41 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { View, Pressable, ScrollView } from 'react-native';
+import React, { useState, useMemo, useEffect, Suspense } from 'react';
+import { View, Pressable, ScrollView, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { CategoryGrid, CategoryExerciseList, ExerciseDetail } from '~/components/exercises';
 import { SymbolView } from 'expo-symbols';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useAuth } from '@clerk/clerk-expo';
-import { useUserSafe } from '~/lib/useUserSafe';
-import { useMutation, useQuery } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useUserData, useExercisesWithProgress, useUserStats } from '~/hooks/useSharedData';
 import { useTranslation } from '~/hooks/useTranslation';
 import * as Haptics from 'expo-haptics';
-
-interface Exercise {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: 'breathing' | 'mindfulness' | 'movement' | 'cbt' | 'journaling' | 'relaxation';
-  icon: string;
-  color: string;
-  steps?: string[];
-  benefits?: string[];
-}
+import type { Exercise } from '~/types';
 
 function getCategoryIcon(category: string): string {
-  // This function is now handled by the icon constants file
-  // Keeping for backward compatibility but will use Lineicons
+  // Return emojis to match the category cards design
   const icons: Record<string, string> = {
-    breathing: 'wind',
-    mindfulness: 'meditation',
-    movement: 'walking',
-    journaling: 'pencil',
-    relaxation: 'leaf',
+    breathing: '🌬️',
+    mindfulness: '🧘‍♀️',
+    movement: '🚶‍♀️',
+    journaling: '✍️',
+    relaxation: '🛀',
+    reminders: '💭',
   };
-  return icons[category] || 'star';
+  return icons[category] || '⭐';
 }
 
 function getCategoryColor(category: string): string {
+  // More vibrant colors for better visual appeal
   const colors: Record<string, string> = {
-    breathing: '#06B6D4',
-    mindfulness: '#8B5CF6',
-    movement: '#10B981',
-    journaling: '#F59E0B',
-    relaxation: '#EC4899',
+    mindfulness: '#FF6B6B',    // Coral red
+    breathing: '#4ECDC4',      // Turquoise
+    movement: '#45B7D1',       // Sky blue
+    journaling: '#96CEB4',     // Mint green
+    relaxation: '#FFEAA7',     // Warm yellow
+    reminders: '#DDA0DD',      // Plum
   };
-  return colors[category] || '#3B82F6';
+  return colors[category] || '#FF6B6B';
 }
 
 function getBenefitsForCategory(category: string, t: any): string[] {
@@ -61,13 +50,14 @@ function getBenefitsForCategory(category: string, t: any): string[] {
 }
 
 function ExercisesScreen() {
-  const { user, isLoaded } = useUserSafe();
-  const { isSignedIn } = useAuth();
   const { t, locale } = useTranslation();
   const [currentView, setCurrentView] = useState<'categories' | 'exercises'>('categories');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(null);
   const [showDetail, setShowDetail] = useState(false);
+
+  // Get user data
+  const { currentUser, isUserReady, isSignedIn, user, isLoaded } = useUserData();
 
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
@@ -91,19 +81,9 @@ function ExercisesScreen() {
     );
   }
 
-  // Convex hooks
-  const currentUser = useQuery(
-    api.users.getCurrentUser,
-    user ? { clerkId: user.id } : 'skip'
-  );
-  const exercisesWithProgress = useQuery(
-    api.exercises.getExercisesWithProgress,
-    currentUser ? { userId: currentUser._id } : 'skip'
-  );
-  const userStats = useQuery(
-    api.userProgress.getUserStats,
-    currentUser ? { userId: currentUser._id } : 'skip'
-  );
+  // Additional data hooks
+  const exercisesWithProgress = useExercisesWithProgress(currentUser?._id);
+  const userStats = useUserStats(currentUser?._id);
   const recordCompletion = useMutation(api.userProgress.recordCompletion);
   const seedExercises = useMutation(api.seed.seedExercises);
 
@@ -137,7 +117,7 @@ function ExercisesScreen() {
       );
     }
     return exercises.filter(exercise => exercise.category === selectedCategory);
-  }, [selectedCategory, exercises]);
+  }, [selectedCategory, exercises, locale, exercisesWithProgress]);
 
   const handleCategorySelect = (categoryId: string) => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -344,7 +324,7 @@ function ExercisesScreen() {
             </Animated.View>
 
             {/* Category Grid */}
-            <View className="mt-4 pb-8">
+            <View className="flex-1 mt-4">
               <CategoryGrid onCategorySelect={handleCategorySelect} />
             </View>
           </View>
@@ -361,12 +341,14 @@ function ExercisesScreen() {
       )}
 
       {/* Exercise Detail Modal */}
-      <ExerciseDetail
-        exercise={selectedExercise}
-        visible={showDetail}
-        onClose={() => setShowDetail(false)}
-        onStart={handleStartExercise}
-      />
+      <Suspense fallback={null}>
+        <ExerciseDetail
+          exercise={selectedExercise}
+          visible={showDetail}
+          onClose={() => setShowDetail(false)}
+          onStart={handleStartExercise}
+        />
+      </Suspense>
     </SafeAreaView>
   );
 }

@@ -20,15 +20,32 @@ import { useTranslation } from '~/hooks/useTranslation';
 // =====================
 // CHAT BUBBLE COMPONENT
 // =====================
-export function ChatBubble({ message, isUser, timestamp, avatar, index = 0, status }: ChatBubbleProps) {
+export const ChatBubble = React.memo(function ChatBubble({ message, isUser, timestamp, avatar, index = 0, status }: ChatBubbleProps) {
   const { locale } = useTranslation();
   
   // User messages always right-aligned, AI messages always left-aligned
   const shouldJustifyEnd = isUser;
   
+  // Worklet-optimized entrance animation
+  const opacity = useSharedValue(0);
+  const translateY = useSharedValue(20);
+  
+  React.useEffect(() => {
+    opacity.value = withDelay(index * 100, withSpring(1, { damping: 15 }));
+    translateY.value = withDelay(index * 100, withSpring(0, { damping: 15, stiffness: 200 }));
+  }, [index]);
+  
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: opacity.value,
+      transform: [{ translateY: translateY.value }],
+    };
+  });
+  
   return (
     <Animated.View
-      entering={FadeInDown.delay(index * 100).springify()}
+      style={animatedStyle}
       className={cn(
         'flex-row mb-4',
         shouldJustifyEnd ? 'justify-end' : 'justify-start'
@@ -76,7 +93,7 @@ export function ChatBubble({ message, isUser, timestamp, avatar, index = 0, stat
       </View>
     </Animated.View>
   );
-}
+});
 
 // =====================
 // TYPING INDICATOR
@@ -118,20 +135,29 @@ export function TypingIndicator() {
     );
   }, []);
 
-  const dot1Style = useAnimatedStyle(() => ({
-    opacity: 0.3 + dot1.value * 0.7,
-    transform: [{ scale: 0.8 + dot1.value * 0.2 }],
-  }));
+  const dot1Style = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: 0.3 + dot1.value * 0.7,
+      transform: [{ scale: 0.8 + dot1.value * 0.2 }],
+    };
+  });
 
-  const dot2Style = useAnimatedStyle(() => ({
-    opacity: 0.3 + dot2.value * 0.7,
-    transform: [{ scale: 0.8 + dot2.value * 0.2 }],
-  }));
+  const dot2Style = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: 0.3 + dot2.value * 0.7,
+      transform: [{ scale: 0.8 + dot2.value * 0.2 }],
+    };
+  });
 
-  const dot3Style = useAnimatedStyle(() => ({
-    opacity: 0.3 + dot3.value * 0.7,
-    transform: [{ scale: 0.8 + dot3.value * 0.2 }],
-  }));
+  const dot3Style = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      opacity: 0.3 + dot3.value * 0.7,
+      transform: [{ scale: 0.8 + dot3.value * 0.2 }],
+    };
+  });
 
   return (
     <View className="flex-row items-center space-x-1 bg-secondary/20 dark:bg-secondary/10 rounded-full px-4 py-3 ml-10 self-start mb-4">
@@ -164,9 +190,12 @@ interface QuickReplyButtonProps {
 export function QuickReplyButton({ text, onPress, icon, delay = 0 }: QuickReplyButtonProps) {
   const scale = useSharedValue(1);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   const handlePressIn = () => {
     scale.value = withSpring(0.95);

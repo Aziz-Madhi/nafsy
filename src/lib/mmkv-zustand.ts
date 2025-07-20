@@ -191,3 +191,61 @@ export const StateCache = {
     zustandStorage.delete(key);
   },
 };
+
+// Animation state caching for instant app startup
+export const AnimationCache = {
+  // Cache scroll positions for instant restoration
+  setScrollPosition: (screenId: string, position: number): void => {
+    zustandStorage.set(`scroll_${screenId}`, position);
+  },
+  
+  getScrollPosition: (screenId: string): number => {
+    return zustandStorage.getNumber(`scroll_${screenId}`) ?? 0;
+  },
+  
+  // Cache animation preferences
+  setAnimationEnabled: (enabled: boolean): void => {
+    zustandStorage.set('animations_enabled', enabled);
+  },
+  
+  getAnimationEnabled: (): boolean => {
+    return zustandStorage.getBoolean('animations_enabled') ?? true;
+  },
+  
+  // Cache last UI state for instant restoration
+  setUIState: (state: { 
+    selectedMoodDate?: string; 
+    selectedExerciseCategory?: string;
+    chatScrollOffset?: number;
+    moodCalendarMonth?: string;
+  }): void => {
+    zustandStorage.set('ui_state', JSON.stringify(state));
+  },
+  
+  getUIState: (): any => {
+    try {
+      const cached = zustandStorage.getString('ui_state');
+      return cached ? JSON.parse(cached) : {};
+    } catch {
+      return {};
+    }
+  },
+  
+  // Performance metrics caching
+  setPerformanceMetrics: (metrics: {
+    avgFrameRate?: number;
+    memoryUsage?: number;
+    renderTime?: number;
+  }): void => {
+    zustandStorage.set('perf_metrics', JSON.stringify(metrics));
+  },
+  
+  getPerformanceMetrics: (): any => {
+    try {
+      const cached = zustandStorage.getString('perf_metrics');
+      return cached ? JSON.parse(cached) : {};
+    } catch {
+      return {};
+    }
+  },
+};

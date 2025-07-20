@@ -1,5 +1,6 @@
 import { create } from 'zustand';
 import { subscribeWithSelector } from 'zustand/middleware';
+import { createMMKVPersist } from '~/lib/mmkv-zustand';
 import { AppSettings } from './types';
 
 interface AppState {
@@ -26,31 +27,44 @@ const defaultSettings: AppSettings = {
 };
 
 export const useAppStore = create<AppState>()(
-  subscribeWithSelector((set) => ({
-    // Initial state
-    activeTab: 'mood',
-    isLoading: false,
-    settings: defaultSettings,
-
-    // Actions
-    setActiveTab: (tab) =>
-      set({ activeTab: tab }),
-
-    setLoading: (loading) =>
-      set({ isLoading: loading }),
-
-    updateSettings: (newSettings) =>
-      set((state) => ({
-        settings: { ...state.settings, ...newSettings },
-      })),
-
-    resetStore: () =>
-      set({
+  subscribeWithSelector(
+    createMMKVPersist(
+      (set) => ({
+        // Initial state
         activeTab: 'mood',
         isLoading: false,
         settings: defaultSettings,
+
+        // Actions
+        setActiveTab: (tab) =>
+          set({ activeTab: tab }),
+
+        setLoading: (loading) =>
+          set({ isLoading: loading }),
+
+        updateSettings: (newSettings) =>
+          set((state) => ({
+            settings: { ...state.settings, ...newSettings },
+          })),
+
+        resetStore: () =>
+          set({
+            activeTab: 'mood',
+            isLoading: false,
+            settings: defaultSettings,
+          }),
       }),
-  }))
+      {
+        name: 'nafsy-app-store',
+        partialize: (state) => ({
+          // Only persist settings and activeTab, not loading states
+          activeTab: state.activeTab,
+          settings: state.settings,
+        }),
+        version: 1,
+      }
+    )
+  )
 );
 
 // Selectors for optimized subscriptions

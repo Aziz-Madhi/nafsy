@@ -1,26 +1,21 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import { View, ScrollView, Pressable, ActivityIndicator } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
-import { useAuth } from '@clerk/clerk-expo';
-import { useUserSafe } from '~/lib/useUserSafe';
-import { useMutation, useQuery } from 'convex/react';
+import { cn } from '~/lib/cn';
+import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useUserData, useMoodData, useMoodStats, useTodayMood } from '~/hooks/useSharedData';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from 'date-fns';
 import { 
-  CloudRain, 
-  TrendingDown,
-  Minus,
-  TrendingUp,
-  Star,
-  AlertTriangle,
-  Zap,
   Edit3,
   Calendar,
   Flame,
   BarChart3,
   CheckCircle
 } from 'lucide-react-native';
+import { IconRenderer } from '~/components/ui/IconRenderer';
 import Svg, { Circle, Path, Text as SvgText, Defs, LinearGradient, Stop, Ellipse } from 'react-native-svg';
 import Animated, { 
   useSharedValue, 
@@ -42,26 +37,14 @@ const moods = [
 ];
 
 const renderMoodIcon = (moodId: string, size: number = 32) => {
-  const baseProps = { size, strokeWidth: 3 };
-  
-  switch (moodId) {
-    case 'very-sad':
-      return <CloudRain {...baseProps} color="#1F2937" fill="#93C5FD" />;
-    case 'sad':
-      return <TrendingDown {...baseProps} color="#374151" fill="#DBEAFE" />;
-    case 'neutral':
-      return <Minus {...baseProps} color="#374151" strokeWidth={4} />;
-    case 'happy':
-      return <TrendingUp {...baseProps} color="#065F46" fill="#A7F3D0" />;
-    case 'very-happy':
-      return <Star {...baseProps} color="#DC2626" fill="#FEF3C7" />;
-    case 'anxious':
-      return <AlertTriangle {...baseProps} color="#7C2D12" fill="#FED7AA" />;
-    case 'angry':
-      return <Zap {...baseProps} color="#991B1B" fill="#FECACA" />;
-    default:
-      return <Minus {...baseProps} color="#374151" strokeWidth={4} />;
-  }
+  return (
+    <IconRenderer
+      iconType="mood"
+      iconName={moodId}
+      size={size}
+      strokeWidth={3}
+    />
+  );
 };
 
 const moodColors: Record<string, string> = {
@@ -105,10 +88,13 @@ function FloatingBubble({ mood, index }: { mood: string, index: number }) {
     );
   }, []);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateY: translateY.value }],
-    opacity: opacity.value,
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ translateY: translateY.value }],
+      opacity: opacity.value,
+    };
+  });
 
   return (
     <Animated.View
@@ -133,140 +119,72 @@ function FloatingBubble({ mood, index }: { mood: string, index: number }) {
   );
 }
 
-// Liquid Glass Container Component
-function LiquidContainer({ mood, percentage, color, count, index }: {
+
+// Simple Mood Bar Chart Component
+function SimpleMoodChart({ mood, percentage, color, count, index }: {
   mood: string;
   percentage: number;
   color: string;
   count: number;
   index: number;
 }) {
-  const fillHeight = useSharedValue(0);
-  const containerScale = useSharedValue(0.8);
+  const barHeight = useSharedValue(0);
+  const opacity = useSharedValue(0);
 
   React.useEffect(() => {
     // Staggered animation entrance
     setTimeout(() => {
-      containerScale.value = withSpring(1, { damping: 15 });
-      fillHeight.value = withSpring(percentage, { damping: 12, stiffness: 100 });
-    }, index * 200);
+      barHeight.value = withSpring(percentage, { damping: 15, stiffness: 100 });
+      opacity.value = withSpring(1, { damping: 15 });
+    }, index * 150);
   }, [percentage, index]);
 
-  const animatedFillStyle = useAnimatedStyle(() => {
+  const animatedBarStyle = useAnimatedStyle(() => {
+    'worklet';
     const height = interpolate(
-      fillHeight.value,
+      barHeight.value,
       [0, 100],
-      [0, 80],
+      [4, 80],
       Extrapolation.CLAMP
     );
     
     return {
       height,
-      transform: [{ scaleX: containerScale.value }],
+      opacity: opacity.value,
     };
   });
 
-  const animatedContainerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: containerScale.value }],
-  }));
-
-  // Organic container shapes for each mood
-  const getContainerPath = (mood: string) => {
-    switch (mood) {
-      case 'sad':
-        return "M20 10 C15 5, 5 5, 5 20 C5 80, 15 85, 30 85 C45 85, 55 80, 55 20 C55 5, 45 5, 40 10 C35 15, 25 15, 20 10 Z";
-      case 'anxious':
-        return "M25 8 C18 3, 8 8, 8 22 C8 75, 12 88, 30 88 C48 88, 52 75, 52 22 C52 8, 42 3, 35 8 C32 12, 28 12, 25 8 Z";
-      case 'neutral':
-        return "M30 12 C20 6, 10 10, 10 25 C10 70, 15 84, 30 84 C45 84, 50 70, 50 25 C50 10, 40 6, 30 12 Z";
-      case 'happy':
-        return "M30 8 C22 2, 8 6, 8 24 C8 72, 14 86, 30 86 C46 86, 52 72, 52 24 C52 6, 38 2, 30 8 Z";
-      case 'angry':
-        return "M28 6 C20 1, 6 4, 6 20 C6 76, 12 90, 30 90 C48 90, 54 76, 54 20 C54 4, 40 1, 32 6 C30 8, 30 8, 28 6 Z";
-      default:
-        return "M30 10 C20 5, 10 10, 10 25 C10 70, 15 85, 30 85 C45 85, 50 70, 50 25 C50 10, 40 5, 30 10 Z";
-    }
-  };
-
   return (
-    <Animated.View style={[{ alignItems: 'center', margin: 4 }, animatedContainerStyle]}>
-      <View style={{ position: 'relative', width: 60, height: 100 }}>
-        <Svg width="60" height="100" viewBox="0 0 60 95">
-          <Defs>
-            <LinearGradient id={`liquid-${mood}`} x1="0%" y1="0%" x2="0%" y2="100%">
-              <Stop offset="0%" stopColor={color} stopOpacity="0.9" />
-              <Stop offset="50%" stopColor={color} stopOpacity="0.7" />
-              <Stop offset="100%" stopColor={color} stopOpacity="0.9" />
-            </LinearGradient>
-            <LinearGradient id={`glass-${mood}`} x1="0%" y1="0%" x2="100%" y2="100%">
-              <Stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.2" />
-              <Stop offset="50%" stopColor="#FFFFFF" stopOpacity="0.05" />
-              <Stop offset="100%" stopColor="#FFFFFF" stopOpacity="0.1" />
-            </LinearGradient>
-          </Defs>
-          
-          {/* Container Glass */}
-          <Path
-            d={getContainerPath(mood)}
-            fill={`url(#glass-${mood})`}
-            stroke="#FFFFFF40"
-            strokeWidth="1"
-          />
-          
-          {/* Liquid Fill */}
-          <Path
-            d={getContainerPath(mood)}
-            fill={`url(#liquid-${mood})`}
-            clipPath={`url(#clip-${mood})`}
-          />
-          
-          {/* Glass Reflection */}
-          <Ellipse
-            cx="20"
-            cy="25"
-            rx="8"
-            ry="15"
-            fill="#FFFFFF"
-            opacity="0.15"
-          />
-        </Svg>
-
-        {/* Animated Liquid Fill Overlay */}
+    <View style={{ alignItems: 'center', margin: 8 }}>
+      {/* Chart Bar */}
+      <View style={{ 
+        width: 40, 
+        height: 80, 
+        backgroundColor: '#F5F5F5', 
+        borderRadius: 20,
+        justifyContent: 'flex-end',
+        overflow: 'hidden'
+      }}>
         <Animated.View
           style={[
             {
-              position: 'absolute',
-              bottom: 8,
-              left: 8,
-              right: 8,
-              backgroundColor: color + '80',
+              backgroundColor: color,
               borderRadius: 20,
+              width: '100%',
             },
-            animatedFillStyle
+            animatedBarStyle
           ]}
         />
+      </View>
 
-        {/* Floating Bubbles */}
-        {percentage > 0 && (
-          <>
-            <FloatingBubble mood={mood} index={index * 3} />
-            <FloatingBubble mood={mood} index={index * 3 + 1} />
-            <FloatingBubble mood={mood} index={index * 3 + 2} />
-          </>
-        )}
-
-        {/* Mood Icon */}
-        <View style={{ 
-          position: 'absolute', 
-          top: -5, 
-          left: '50%', 
-          transform: [{ translateX: -12 }],
-          backgroundColor: '#FFFFFF90',
-          borderRadius: 12,
-          padding: 4,
-        }}>
-          {renderMoodIcon(mood, 16)}
-        </View>
+      {/* Mood Icon */}
+      <View style={{ 
+        marginTop: 8,
+        backgroundColor: color + '20',
+        borderRadius: 16,
+        padding: 8,
+      }}>
+        {renderMoodIcon(mood, 20)}
       </View>
 
       {/* Labels */}
@@ -281,12 +199,12 @@ function LiquidContainer({ mood, percentage, color, count, index }: {
           {count} {count === 1 ? 'entry' : 'entries'}
         </Text>
       </View>
-    </Animated.View>
+    </View>
   );
 }
 
-// Main Liquid Glass Visualization
-function LiquidGlassVisualization({ data }: { data: MoodData[] }) {
+// Simple Mood Chart Visualization
+function SimpleMoodVisualization({ data }: { data: MoodData[] }) {
   if (data.every(item => item.count === 0)) {
     return (
       <View className="items-center justify-center py-12">
@@ -333,7 +251,7 @@ function LiquidGlassVisualization({ data }: { data: MoodData[] }) {
         }}
       >
         {activeData.map((item, index) => (
-          <LiquidContainer
+          <SimpleMoodChart
             key={item.mood}
             mood={item.mood}
             percentage={item.percentage}
@@ -355,28 +273,12 @@ export default function MoodScreen() {
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   
-  // Authentication
-  const { user, isLoaded } = useUserSafe();
-  const { isSignedIn } = useAuth();
-  
-  // Convex
-  const currentUser = useQuery(
-    api.users.getCurrentUser,
-    user && isSignedIn ? { clerkId: user.id } : 'skip'
-  );
+  // Authentication & Data
+  const { currentUser, isLoaded, isSignedIn, user, isUserReady } = useUserData();
   const createMood = useMutation(api.moods.createMood);
-  const todayMood = useQuery(
-    api.moods.getTodayMood,
-    currentUser ? { userId: currentUser._id } : 'skip'
-  );
-  const moodData = useQuery(
-    api.moods.getMoods,
-    currentUser ? { userId: currentUser._id, limit: 365 } : 'skip'
-  );
-  const moodStats = useQuery(
-    api.moods.getMoodStats,
-    currentUser ? { userId: currentUser._id, days: 30 } : 'skip'
-  );
+  const todayMood = useTodayMood(currentUser?._id);
+  const moodData = useMoodData(currentUser?._id, 365);
+  const moodStats = useMoodStats(currentUser?._id, 30);
 
   if (!isLoaded) {
     return (
@@ -410,13 +312,28 @@ export default function MoodScreen() {
     setIsSaving(true);
     try {
       const mood = moods.find(m => m.id === selectedMood);
-      if (mood) {
-        await createMood({
-          userId: currentUser._id,
-          mood: mood.value,
-        });
-        setSelectedMood('');
+      console.log('Selected mood:', selectedMood, 'Found mood:', mood, 'Current user:', currentUser);
+      
+      if (!mood) {
+        console.error('Mood not found for selectedMood:', selectedMood);
+        return;
       }
+      
+      if (!currentUser?._id) {
+        console.error('Current user ID not found:', currentUser);
+        return;
+      }
+      
+      console.log('Creating mood with:', {
+        userId: currentUser._id,
+        mood: mood.value,
+      });
+      
+      await createMood({
+        userId: currentUser._id,
+        mood: mood.value,
+      });
+      setSelectedMood('');
     } catch (error) {
       console.error('Error saving mood:', error);
     } finally {
@@ -438,6 +355,77 @@ export default function MoodScreen() {
       isSameDay(new Date(mood.createdAt), date)
     );
   };
+
+  // Combine padding days and actual days for FlashList
+  const calendarData = useMemo(() => {
+    const paddingItems = paddingDays.map((_, index) => ({
+      id: `padding-${index}`,
+      type: 'padding' as const,
+      date: null,
+    }));
+    
+    const dayItems = days.map((day) => ({
+      id: day.toISOString(),
+      type: 'day' as const,
+      date: day,
+    }));
+    
+    return [...paddingItems, ...dayItems];
+  }, [paddingDays, days]);
+
+  // FlashList render functions
+  const renderCalendarItem = useCallback(({ item }: { item: any }) => {
+    if (item.type === 'padding') {
+      return <View style={{ width: '100%', height: 48 }} />;
+    }
+    
+    const mood = getMoodForDate(item.date);
+    const isToday = isSameDay(item.date, new Date());
+    const isSelected = selectedDate && isSameDay(item.date, selectedDate);
+    
+    return (
+      <Pressable
+        onPress={() => setSelectedDate(item.date)}
+        style={{
+          width: '100%',
+          height: 48,
+          padding: 2,
+        }}
+      >
+        <View style={{
+          flex: 1,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderRadius: 12,
+          backgroundColor: mood ? moodColors[mood.mood] : 
+                         isSelected ? '#E0F2FE' : 
+                         isToday ? '#F3F4F6' : 'transparent',
+          borderWidth: isSelected ? 2 : 0,
+          borderColor: '#2196F3',
+        }}>
+          {mood ? (
+            <View style={{ transform: [{ scale: 0.7 }] }}>
+              {renderMoodIcon(mood.mood, 24)}
+            </View>
+          ) : (
+            <Text 
+              variant="body" 
+              className={cn(
+                'font-medium',
+                isToday ? 'text-primary' : 'text-foreground'
+              )}
+            >
+              {format(item.date, 'd')}
+            </Text>
+          )}
+        </View>
+      </Pressable>
+    );
+  }, [selectedDate, setSelectedDate]);
+
+  const keyExtractor = useCallback((item: any) => item.id, []);
+
+  const getItemType = useCallback((item: any) => item.type, []);
 
   return (
     <SafeAreaView className="flex-1 bg-[#F2FAF9]">
@@ -617,56 +605,16 @@ export default function MoodScreen() {
               </View>
 
               {/* Calendar grid */}
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
-                {paddingDays.map((_, index) => (
-                  <View key={`padding-${index}`} style={{ width: '14.28%', height: 48 }} />
-                ))}
-                
-                {days.map((day) => {
-                  const mood = getMoodForDate(day);
-                  const isToday = isSameDay(day, new Date());
-                  const isSelected = selectedDate && isSameDay(day, selectedDate);
-                  
-                  return (
-                    <Pressable
-                      key={day.toISOString()}
-                      onPress={() => setSelectedDate(day)}
-                      style={{
-                        width: '14.28%',
-                        height: 48,
-                        padding: 2,
-                      }}
-                    >
-                      <View style={{
-                        flex: 1,
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        borderRadius: 12,
-                        backgroundColor: mood ? moodColors[mood.mood] : 
-                                       isSelected ? '#E0F2FE' : 
-                                       isToday ? '#F3F4F6' : 'transparent',
-                        borderWidth: isSelected ? 2 : 0,
-                        borderColor: '#2196F3',
-                      }}>
-                        {mood ? (
-                          <View style={{ transform: [{ scale: 0.7 }] }}>
-                            {renderMoodIcon(mood.mood, 24)}
-                          </View>
-                        ) : (
-                          <Text 
-                            variant="subhead"
-                            className={`${
-                              isToday ? 'text-blue-500 font-semibold' : 
-                              isSameMonth(day, currentMonth) ? 'text-gray-700' : 'text-gray-300'
-                            }`}
-                          >
-                            {format(day, 'd')}
-                          </Text>
-                        )}
-                      </View>
-                    </Pressable>
-                  );
-                })}
+              <View style={{ height: Math.ceil(calendarData.length / 7) * 48 }}>
+                <FlashList
+                  data={calendarData}
+                  renderItem={renderCalendarItem}
+                  keyExtractor={keyExtractor}
+                  getItemType={getItemType}
+                  numColumns={7}
+                  estimatedItemSize={48}
+                  showsVerticalScrollIndicator={false}
+                />
               </View>
 
               {/* Selected Date Info */}
@@ -790,7 +738,7 @@ export default function MoodScreen() {
                     };
                   });
                   
-                  return <LiquidGlassVisualization data={chartData} />;
+                  return <SimpleMoodVisualization data={chartData} />;
                 })()}
               </View>
 

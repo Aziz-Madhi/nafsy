@@ -10,26 +10,7 @@ import Animated, {
   SlideInDown,
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
-
-interface Exercise {
-  id: string;
-  title: string;
-  description: string;
-  duration: string;
-  difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: 'breathing' | 'mindfulness' | 'movement' | 'cbt' | 'journaling' | 'relaxation';
-  icon: string;
-  color: string;
-  steps?: string[];
-  benefits?: string[];
-}
-
-interface ExerciseDetailProps {
-  exercise: Exercise | null;
-  visible: boolean;
-  onClose: () => void;
-  onStart: (exercise: Exercise) => void;
-}
+import type { Exercise, ExerciseDetailProps } from '~/types';
 
 const DIFFICULTY_COLORS = {
   beginner: '#22C55E',
@@ -167,3 +148,6 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
     </Modal>
   );
 }
+
+// Export as default for lazy loading
+export default ExerciseDetail;

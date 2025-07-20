@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Text } from '~/components/ui/text';
 import Animated, {
   useAnimatedStyle,
@@ -7,7 +8,7 @@ import Animated, {
   withSpring,
   FadeInRight,
 } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { optimizedHaptic } from '~/lib/haptic-optimizer';
 import { cn } from '~/lib/cn';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -36,23 +37,33 @@ export function CategoryFilter({ selectedCategory, onCategorySelect }: CategoryF
   const { t } = useTranslation();
   const categories = getCategoriesWithTranslations(t);
   
+  // FlashList render functions
+  const renderCategoryChip = useCallback(({ item, index }: { item: Category; index: number }) => (
+    <CategoryChip
+      category={item}
+      isSelected={selectedCategory === item.id}
+      onPress={() => onCategorySelect(item.id)}
+      index={index}
+    />
+  ), [selectedCategory, onCategorySelect]);
+
+  const keyExtractor = useCallback((item: Category) => item.id, []);
+
+  const getItemType = useCallback((item: Category) => 'category', []);
+  
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      className="mb-6"
-      contentContainerStyle={{ paddingHorizontal: 24 }}
-    >
-      {categories.map((category, index) => (
-        <CategoryChip
-          key={category.id}
-          category={category}
-          isSelected={selectedCategory === category.id}
-          onPress={() => onCategorySelect(category.id)}
-          index={index}
-        />
-      ))}
-    </ScrollView>
+    <View className="mb-6 h-12">
+      <FlashList
+        data={categories}
+        renderItem={renderCategoryChip}
+        keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        horizontal
+        estimatedItemSize={120}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 24 }}
+      />
+    </View>
   );
 }
 
@@ -66,12 +77,15 @@ interface CategoryChipProps {
 function CategoryChip({ category, isSelected, onPress, index }: CategoryChipProps) {
   const scale = useSharedValue(1);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
-  }));
+  const animatedStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ scale: scale.value }],
+    };
+  });
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    optimizedHaptic.tap();
     scale.value = withSpring(0.9, {}, () => {
       scale.value = withSpring(1);
     });

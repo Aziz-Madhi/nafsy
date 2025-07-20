@@ -1,5 +1,6 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 import { View } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { CategoryCard } from './CategoryCard';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -12,44 +13,51 @@ interface Category {
   name: string;
   color: string;
   description: string;
+  icon: string;
 }
 
 const getCategoriesWithTranslations = (t: any): Category[] => [
   { 
     id: 'mindfulness', 
-    name: t('exercises.categories.mindfulness') || 'Mindfulness', 
-    color: '#F5D4C1',
-    description: 'Present moment awareness'
+    name: 'Mindfulness', 
+    color: '#FF6B6B',    // Coral red
+    description: 'Stay present',
+    icon: '🧘‍♀️'
   },
   { 
     id: 'breathing', 
-    name: t('exercises.categories.breathing') || 'Breathing', 
-    color: '#FDEBC9',
-    description: 'Calm through breath'
+    name: 'Breathing', 
+    color: '#4ECDC4',    // Turquoise
+    description: 'Breathe deeply',
+    icon: '🌬️'
   },
   { 
     id: 'movement', 
-    name: t('exercises.categories.movement') || 'Movement', 
-    color: '#D0F1EB',
-    description: 'Gentle body movement'
+    name: 'Movement', 
+    color: '#45B7D1',    // Sky blue
+    description: 'Move gently',
+    icon: '🚶‍♀️'
   },
   { 
     id: 'journaling', 
-    name: t('exercises.categories.journaling') || 'Journaling', 
-    color: '#DED2F9',
-    description: 'Express your thoughts'
+    name: 'Journaling', 
+    color: '#96CEB4',    // Mint green
+    description: 'Write freely',
+    icon: '✍️'
   },
   { 
     id: 'relaxation', 
-    name: t('exercises.categories.relaxation') || 'Relaxation', 
-    color: '#C9EAFD',
-    description: 'Release tension'
+    name: 'Relaxation', 
+    color: '#FFEAA7',    // Warm yellow
+    description: 'Find peace',
+    icon: '🛀'
   },
   { 
     id: 'reminders', 
-    name: t('exercises.categories.reminders') || 'Reminders', 
-    color: '#FDC9D2',
-    description: 'Positive affirmations'
+    name: 'Reminders', 
+    color: '#DDA0DD',    // Plum
+    description: 'Daily wisdom',
+    icon: '💭'
   },
 ];
 
@@ -57,49 +65,33 @@ export function CategoryGrid({ onCategorySelect }: CategoryGridProps) {
   const { t } = useTranslation();
   const categories = getCategoriesWithTranslations(t);
 
+  // FlashList render functions  
+  const renderCategoryCard = useCallback(({ item, index }: { item: any; index: number }) => (
+    <View style={{ flex: 1, paddingHorizontal: 8, paddingVertical: 8 }}>
+      <CategoryCard
+        category={item}
+        onPress={onCategorySelect}
+        index={index}
+      />
+    </View>
+  ), [onCategorySelect]);
+
+  const keyExtractor = useCallback((item: any) => item.id, []);
+
+  const getItemType = useCallback(() => 'category', []);
+
   return (
-    <View className="px-4">
-      {/* First Row */}
-      <View className="flex-row mb-6" style={{ gap: 12 }}>
-        <CategoryCard
-          category={categories[0]}
-          onPress={onCategorySelect}
-          index={0}
-        />
-        <CategoryCard
-          category={categories[1]}
-          onPress={onCategorySelect}
-          index={1}
-        />
-      </View>
-
-      {/* Second Row */}
-      <View className="flex-row mb-6" style={{ gap: 12 }}>
-        <CategoryCard
-          category={categories[2]}
-          onPress={onCategorySelect}
-          index={2}
-        />
-        <CategoryCard
-          category={categories[3]}
-          onPress={onCategorySelect}
-          index={3}
-        />
-      </View>
-
-      {/* Third Row */}
-      <View className="flex-row" style={{ gap: 12 }}>
-        <CategoryCard
-          category={categories[4]}
-          onPress={onCategorySelect}
-          index={4}
-        />
-        <CategoryCard
-          category={categories[5]}
-          onPress={onCategorySelect}
-          index={5}
-        />
-      </View>
+    <View style={{ flex: 1, paddingHorizontal: 8 }}>
+      <FlashList
+        data={categories}
+        renderItem={renderCategoryCard}
+        keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        numColumns={2}
+        estimatedItemSize={200}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{ paddingBottom: 20 }}
+      />
     </View>
   );
 }

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback, useMemo } from 'react';
 import { View, ScrollView, Pressable, Switch } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '@clerk/clerk-expo';
@@ -171,6 +171,58 @@ export default function ProfileScreen() {
     },
   ];
 
+  // Flatten settings for FlashList optimization
+  const flattenedSettings = useMemo(() => {
+    const items: Array<{ type: 'header' | 'item'; data: any; id: string }> = [];
+    
+    settingsSections.forEach((section, sectionIndex) => {
+      // Add section header
+      items.push({
+        type: 'header',
+        data: { title: section.title, sectionIndex },
+        id: `header-${sectionIndex}`,
+      });
+      
+      // Add section items
+      section.items.forEach((item, itemIndex) => {
+        items.push({
+          type: 'item',
+          data: item,
+          id: `${sectionIndex}-${itemIndex}`,
+        });
+      });
+    });
+    
+    return items;
+  }, [settingsSections]);
+
+  // FlashList render functions
+  const renderSettingItem = useCallback(({ item, index }: { item: any; index: number }) => {
+    if (item.type === 'header') {
+      return (
+        <View className="mt-6">
+          <Text variant="muted" className="px-6 mb-3 text-sm uppercase">
+            {item.data.title}
+          </Text>
+        </View>
+      );
+    }
+    
+    return (
+      <View className="px-6 mb-2">
+        <View className="bg-white/80 rounded-2xl overflow-hidden shadow-sm">
+          <SettingRow 
+            item={item.data} 
+            isLast={index === flattenedSettings.length - 1 || flattenedSettings[index + 1]?.type === 'header'} 
+          />
+        </View>
+      </View>
+    );
+  }, [flattenedSettings]);
+
+  const keyExtractor = useCallback((item: any) => item.id, []);
+  const getItemType = useCallback((item: any) => item.type, []);
+
   return (
     <SafeAreaView className="flex-1 bg-[#F2FAF9]" edges={['top']}>
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
@@ -243,29 +295,13 @@ export default function ProfileScreen() {
         )}
 
         {/* Settings Sections */}
-        {settingsSections.map((section, sectionIndex) => (
-          <Animated.View
-            key={section.title}
-            entering={FadeInDown.delay((sectionIndex + 1) * 100).springify()}
-            className="mt-6"
-          >
-            <Text variant="muted" className="px-6 mb-3 text-sm uppercase">
-              {section.title}
-            </Text>
-            
-            <View className="px-6">
-              <View className="bg-white/80 rounded-2xl overflow-hidden shadow-sm">
-                {section.items.map((item, index) => (
-                  <SettingRow
-                    key={item.id}
-                    item={item}
-                    isLast={index === section.items.length - 1}
-                  />
-                ))}
-              </View>
+        <View>
+          {flattenedSettings.map((item, index) => (
+            <View key={item.id}>
+              {renderSettingItem({ item, index })}
             </View>
-          </Animated.View>
-        ))}
+          ))}
+        </View>
 
         {/* Sign Out Button */}
         <Animated.View

@@ -1,5 +1,6 @@
-import React from 'react';
-import { View, FlatList, Pressable } from 'react-native';
+import React, { useCallback } from 'react';
+import { View, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { Text } from '~/components/ui/text';
 import { ExerciseCard } from './ExerciseCard';
 import { SymbolView } from 'expo-symbols';
@@ -29,14 +30,14 @@ interface CategoryExerciseListProps {
 
 const getCategoryName = (categoryId: string, t: any): string => {
   const categoryNames: Record<string, string> = {
-    mindfulness: t('exercises.categories.mindfulness'),
-    breathing: t('exercises.categories.breathing'),
-    movement: t('exercises.categories.movement'),
-    journaling: t('exercises.categories.journaling'),
-    relaxation: t('exercises.categories.relaxation'),
-    reminders: t('exercises.categories.reminders') || 'Thoughtful Reminders',
+    mindfulness: t('exercises.categories.mindfulness') || 'Mindfulness',
+    breathing: t('exercises.categories.breathing') || 'Breathing',
+    movement: t('exercises.categories.movement') || 'Movement',
+    journaling: t('exercises.categories.journaling') || 'Journaling',
+    relaxation: t('exercises.categories.relaxation') || 'Relaxation',
+    reminders: t('exercises.categories.reminders') || 'Reminders',
   };
-  return categoryNames[categoryId] || categoryId;
+  return categoryNames[categoryId] || categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
 };
 
 export function CategoryExerciseList({ 
@@ -61,6 +62,19 @@ export function CategoryExerciseList({
     }
     return exercise.category === categoryId;
   });
+
+  // FlashList optimization functions
+  const renderExerciseItem = useCallback(({ item, index }: { item: Exercise; index: number }) => (
+    <ExerciseCard
+      exercise={item}
+      onPress={onExercisePress}
+      index={index}
+    />
+  ), [onExercisePress]);
+
+  const keyExtractor = useCallback((item: Exercise) => item.id, []);
+
+  const getItemType = useCallback((item: Exercise) => item.difficulty, []);
 
   return (
     <Animated.View entering={FadeInLeft.springify()} className="flex-1 bg-[#F2FAF9]">
@@ -88,16 +102,12 @@ export function CategoryExerciseList({
       </View>
 
       {/* Exercise List */}
-      <FlatList
+      <FlashList
         data={filteredExercises}
-        keyExtractor={(item) => item.id}
-        renderItem={({ item, index }) => (
-          <ExerciseCard
-            exercise={item}
-            onPress={onExercisePress}
-            index={index}
-          />
-        )}
+        renderItem={renderExerciseItem}
+        keyExtractor={keyExtractor}
+        getItemType={getItemType}
+        estimatedItemSize={120}
         contentContainerStyle={{ 
           paddingHorizontal: 24, 
           paddingBottom: 24 

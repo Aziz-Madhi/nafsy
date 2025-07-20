@@ -63,6 +63,7 @@
   },
   "devDependencies": {
     "@babel/core": "^7.25.2",
+    "@babel/plugin-proposal-export-namespace-from": "^7.18.9",
     "@react-native-reusables/cli": "^0.4.1",
     "@types/react": "~19.0.10",
     "@types/react-dom": "~19.1.6",

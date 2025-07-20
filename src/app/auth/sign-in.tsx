@@ -2,6 +2,8 @@ import React from 'react';
 import { useSignIn } from '@clerk/clerk-expo';
 import { Link, useRouter } from 'expo-router';
 import { Alert, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { optimizedHaptic } from '~/lib/haptic-optimizer';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
@@ -11,6 +13,25 @@ export default function SignInScreen() {
 
   const [emailAddress, setEmailAddress] = React.useState('');
   const [password, setPassword] = React.useState('');
+  
+  // Worklet-optimized validation animations
+  const shakeX = useSharedValue(0);
+  
+  const shakeStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ translateX: shakeX.value }],
+    };
+  });
+  
+  const triggerErrorShake = () => {
+    optimizedHaptic.error();
+    shakeX.value = withSpring(-10, {}, () => {
+      shakeX.value = withSpring(10, {}, () => {
+        shakeX.value = withSpring(0);
+      });
+    });
+  };
 
   const onSignInPress = async () => {
     if (!isLoaded) {
@@ -22,6 +43,7 @@ export default function SignInScreen() {
     const trimmedPassword = password.trim();
 
     if (!trimmedEmail || !trimmedPassword) {
+      triggerErrorShake();
       Alert.alert('Error', 'Please fill in all fields');
       return;
     }
@@ -36,6 +58,7 @@ export default function SignInScreen() {
       router.replace('/tabs/chat');
     } catch (err: any) {
       console.error('Sign in error:', err);
+      triggerErrorShake();
       const errorMessage = err.errors?.[0]?.message || err.message || 'Failed to sign in. Please try again.';
       Alert.alert('Error', errorMessage);
     }
@@ -57,7 +80,7 @@ export default function SignInScreen() {
             </Text>
           </View>
 
-          <View className="gap-4 mt-6">
+          <Animated.View style={shakeStyle} className="gap-4 mt-6">
             <View className="gap-2">
               <Text className="text-sm text-muted-foreground">
                 Email
@@ -97,7 +120,7 @@ export default function SignInScreen() {
                 Sign In
               </Text>
             </TouchableOpacity>
-          </View>
+          </Animated.View>
 
           <View className="flex-row gap-2 justify-center mt-4">
             <Text className="text-muted-foreground">Don't have an account?</Text>

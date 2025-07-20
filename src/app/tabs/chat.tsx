@@ -1,9 +1,11 @@
-import React, { useRef, useCallback, useEffect } from 'react';
-import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable } from 'react-native';
+import React, { useRef, useCallback, useEffect, Suspense } from 'react';
+import { View, ScrollView, KeyboardAvoidingView, Platform, Pressable, ActivityIndicator } from 'react-native';
+import { TapGestureHandler, State } from 'react-native-gesture-handler';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { ChatBubble, ChatInput, TypingIndicator, QuickReplyButton, FloatingChat } from '~/components/chat';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, { FadeInDown, useAnimatedGestureHandler, runOnJS, LinearTransition } from 'react-native-reanimated';
 import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '@clerk/clerk-expo';
@@ -50,8 +52,8 @@ export default function ChatScreen() {
     setShowQuickReplies 
   } = useChatUIStore();
   
-  const scrollViewRef = useRef<ScrollView>(null);
-  const lastTapRef = useRef(0);
+  const flashListRef = useRef<FlashList<Message>>(null);
+  const doubleTapRef = useRef<TapGestureHandler>(null);
 
   // Convex hooks
   const currentUser = useQuery(
@@ -127,16 +129,39 @@ export default function ChatScreen() {
     }),
   })).reverse() || [];
 
-  // Native double-tap detection (fastest approach)
-  const handleDoubleTap = useCallback(() => {
-    const now = Date.now();
-    if (now - lastTapRef.current < 300) {
-      console.log('🔥 Double tap detected - opening floating chat!');
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      setFloatingChatVisible(true);
+  // FlashList render functions
+  const renderMessage = useCallback(({ item, index }: { item: Message; index: number }) => (
+    <ChatBubble
+      message={item.text}
+      isUser={item.isUser}
+      timestamp={item.timestamp}
+      index={index}
+    />
+  ), []);
+
+  const keyExtractor = useCallback((item: Message) => item.id, []);
+
+  const getItemType = useCallback((item: Message) => item.isUser ? 'user' : 'assistant', []);
+
+  // Auto-scroll to end when new messages arrive
+  useEffect(() => {
+    if (messages.length > 0) {
+      flashListRef.current?.scrollToEnd({ animated: true });
     }
-    lastTapRef.current = now;
+  }, [messages.length]);
+
+  // Native gesture handler for double-tap (worklet-optimized)
+  const openFloatingChat = useCallback(() => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    setFloatingChatVisible(true);
   }, [setFloatingChatVisible]);
+
+  const doubleTapGestureHandler = useAnimatedGestureHandler({
+    onEnd: () => {
+      'worklet';
+      runOnJS(openFloatingChat)();
+    },
+  });
 
   const handleSendMessage = useCallback(async (text: string) => {
     if (!currentUser) return;
@@ -205,64 +230,66 @@ export default function ChatScreen() {
         className="flex-1"
         keyboardVerticalOffset={0}
       >
-        <View className="flex-1">
-          <ScrollView
-            ref={scrollViewRef}
-            className="flex-1 px-6"
-            contentContainerStyle={{ paddingBottom: 24 }}
-            showsVerticalScrollIndicator={false}
-            onContentSizeChange={() => scrollViewRef.current?.scrollToEnd({ animated: true })}
-            onTouchEnd={handleDoubleTap}
+        <View className="flex-1 px-6">
+          <TapGestureHandler
+            ref={doubleTapRef}
+            numberOfTaps={2}
+            onGestureEvent={doubleTapGestureHandler}
           >
-            {/* Welcome Section */}
-            <Animated.View
-              entering={FadeInDown.springify()}
-              className="items-center mb-8 mt-4"
-            >
-              <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center mb-4">
-                <Text 
-                  variant="title2" 
-                  enableRTL={false}
-                >🌱</Text>
-              </View>
-              <Text 
-                variant="subhead" 
-                className="text-muted-foreground text-center" 
-                enableRTL={false}
+            <Animated.View style={{ flex: 1 }}>
+              <FlashList
+                ref={flashListRef}
+                data={messages}
+                renderItem={renderMessage}
+                keyExtractor={keyExtractor}
+                getItemType={getItemType}
+                estimatedItemSize={80}
+                showsVerticalScrollIndicator={false}
+            ListHeaderComponent={() => (
+              <Animated.View
+                entering={FadeInDown.springify()}
+                layout={LinearTransition.springify()}
+                className="items-center mb-8 mt-4"
               >
-                {t('chat.welcomeSubtitle')}
-              </Text>
-            </Animated.View>
-
-            {/* Messages */}
-            {messages.map((message, index) => (
-              <ChatBubble
-                key={message.id}
-                message={message.text}
-                isUser={message.isUser}
-                timestamp={message.timestamp}
-                index={index}
-              />
-            ))}
-
-            {isTyping && <TypingIndicator />}
-
-            {/* Quick Replies */}
-            {showQuickReplies && messages.length === 1 && (
-              <View className="flex-row flex-wrap mt-4">
-                {getQuickReplies(t).map((reply: any, index: number) => (
-                  <QuickReplyButton
-                    key={reply.text}
-                    text={reply.text}
-                    icon={reply.icon}
-                    onPress={() => handleQuickReply(reply.text)}
-                    delay={index * 100}
-                  />
-                ))}
+                <View className="w-16 h-16 bg-primary/10 rounded-full items-center justify-center mb-4">
+                  <Text 
+                    variant="title2" 
+                    enableRTL={false}
+                  >🌱</Text>
+                </View>
+                <Text 
+                  variant="subhead" 
+                  className="text-muted-foreground text-center" 
+                  enableRTL={false}
+                >
+                  {t('chat.welcomeSubtitle')}
+                </Text>
+              </Animated.View>
+            )}
+            ListFooterComponent={() => (
+              <View className="pb-6">
+                {isTyping && <TypingIndicator />}
+                
+                {/* Quick Replies */}
+                {showQuickReplies && messages.length === 1 && (
+                  <View className="flex-row flex-wrap mt-4">
+                    {getQuickReplies(t).map((reply: any, index: number) => (
+                      <QuickReplyButton
+                        key={reply.text}
+                        text={reply.text}
+                        icon={reply.icon}
+                        onPress={() => handleQuickReply(reply.text)}
+                        delay={index * 100}
+                      />
+                    ))}
+                  </View>
+                )}
               </View>
             )}
-            </ScrollView>
-          </View>
+              />
+            </Animated.View>
+          </TapGestureHandler>
+        </View>
 
         <View className="px-4">
           <ChatInput onSendMessage={handleSendMessage} placeholder={t('chat.typingPlaceholder')} />
@@ -270,10 +297,12 @@ export default function ChatScreen() {
       </KeyboardAvoidingView>
 
       {/* Floating Chat Modal */}
-      <FloatingChat 
-        visible={showFloatingChat} 
-        onClose={() => setFloatingChatVisible(false)} 
-      />
+      <Suspense fallback={null}>
+        <FloatingChat 
+          visible={showFloatingChat} 
+          onClose={() => setFloatingChatVisible(false)} 
+        />
+      </Suspense>
     </SafeAreaView>
   );
 }

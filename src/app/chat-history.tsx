@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
-import { View, ScrollView, Pressable, FlatList } from 'react-native';
+import React, { useState, useCallback } from 'react';
+import { View, ScrollView, Pressable } from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
@@ -127,6 +128,15 @@ function ChatHistoryScreen() {
     }
   };
 
+  // FlashList render functions
+  const renderSessionCard = useCallback(({ item }: { item: ChatSession }) => (
+    <SessionCard session={item} />
+  ), []);
+
+  const keyExtractor = useCallback((item: ChatSession) => item._id, []);
+
+  const getItemType = useCallback((item: ChatSession) => item.type, []);
+
   const SessionCard = ({ session }: { session: ChatSession }) => (
     <Animated.View
       entering={FadeInDown.springify()}
@@ -240,38 +250,42 @@ function ChatHistoryScreen() {
       </View>
 
       {/* Sessions List */}
-      <ScrollView className="flex-1 px-6">
-        {currentSessions && currentSessions.length > 0 ? (
-          currentSessions.map((session) => (
-            <SessionCard key={session._id} session={session} />
-          ))
-        ) : (
-          <View className="flex-1 justify-center items-center py-12">
-            <View className="items-center">
-              {activeTab === 'main' ? (
-                <SymbolView name="message.circle" size={48} tintColor="#6B7280" />
-              ) : (
-                <SymbolView name="heart.fill" size={48} tintColor="#6B7280" />
-              )}
-              <Text variant="title3" className="text-center mb-2">
-                No {activeTab === 'main' ? 'Chat' : 'Vent'} History
-              </Text>
-              <Text variant="muted" className="text-center mb-6 max-w-sm">
-                {activeTab === 'main' 
-                  ? 'Start a conversation in the main chat to see your history here.'
-                  : 'Use the floating chat for quick vents to see your history here.'
-                }
-              </Text>
-              <Button
-                onPress={() => router.push('/tabs/chat')}
-                className="px-6"
-              >
-                <Text>Start {activeTab === 'main' ? 'Chatting' : 'Venting'}</Text>
-              </Button>
+      <View className="flex-1 px-6">
+        <FlashList
+          data={currentSessions || []}
+          renderItem={renderSessionCard}
+          keyExtractor={keyExtractor}
+          getItemType={getItemType}
+          estimatedItemSize={100}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={() => (
+            <View className="flex-1 justify-center items-center py-12">
+              <View className="items-center">
+                {activeTab === 'main' ? (
+                  <SymbolView name="message.circle" size={48} tintColor="#6B7280" />
+                ) : (
+                  <SymbolView name="heart.fill" size={48} tintColor="#6B7280" />
+                )}
+                <Text variant="title3" className="text-center mb-2">
+                  No {activeTab === 'main' ? 'Chat' : 'Vent'} History
+                </Text>
+                <Text variant="muted" className="text-center mb-6 max-w-sm">
+                  {activeTab === 'main' 
+                    ? 'Start a conversation in the main chat to see your history here.'
+                    : 'Use the floating chat for quick vents to see your history here.'
+                  }
+                </Text>
+                <Button
+                  onPress={() => router.push('/tabs/chat')}
+                  className="px-6"
+                >
+                  <Text>Start {activeTab === 'main' ? 'Chatting' : 'Venting'}</Text>
+                </Button>
+              </View>
             </View>
-          </View>
-        )}
-      </ScrollView>
+          )}
+        />
+      </View>
     </SafeAreaView>
   );
 }

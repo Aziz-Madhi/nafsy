@@ -1,14 +1,28 @@
 import React, { useEffect } from 'react';
 import { View, TextInput, Pressable, Modal, Dimensions, Platform } from 'react-native';
-import Animated, { FadeIn, FadeOut, SlideInUp, SlideOutUp, SlideInDown, SlideOutDown, withSpring, useAnimatedStyle, useSharedValue, withTiming, withDelay, interpolate, Easing, BounceIn, ZoomIn, withRepeat, LinearTransition, Layout } from 'react-native-reanimated';
+import Animated, { 
+  FadeIn, 
+  FadeOut, 
+  SlideInUp, 
+  SlideOutUp, 
+  BounceIn,
+  withSpring, 
+  useAnimatedStyle, 
+  useSharedValue, 
+  withTiming, 
+  interpolate, 
+  Easing, 
+  withRepeat, 
+  LinearTransition
+} from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
+import { AnimationCache } from '~/lib/mmkv-zustand';
 import { SymbolView } from 'expo-symbols';
 import { Text } from '~/components/ui/text';
 import * as Haptics from 'expo-haptics';
-import { useAuth } from '@clerk/clerk-expo';
-import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useUserData } from '~/hooks/useSharedData';
 import { ChatMessage } from './types';
 import { 
   useFloatingChatInput, 
@@ -23,7 +37,7 @@ interface FloatingChatProps {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export function FloatingChat({ visible, onClose }: FloatingChatProps) {
+export const FloatingChat = React.memo(function FloatingChat({ visible, onClose }: FloatingChatProps) {
   // ===== ZUSTAND: Local UI State =====
   const currentMessage = useFloatingChatInput();
   const isTyping = useFloatingChatTyping();
@@ -33,14 +47,15 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
     clearFloatingChatInput 
   } = useChatUIStore();
   
-  // ===== CONVEX: Server Data & Real-time =====
-  const { user, isLoaded } = useUserSafe();
-  const { isSignedIn } = useAuth();
+  // Performance-based blur intensity
+  const getBlurIntensity = () => {
+    const metrics = AnimationCache.getPerformanceMetrics();
+    const isLowPerformance = metrics.avgFrameRate < 50 || metrics.memoryUsage > 70;
+    return isLowPerformance ? 40 : 80; // Reduced intensity on low-performance devices
+  };
   
-  const currentUser = useQuery(
-    api.users.getCurrentUser,
-    user ? { clerkId: user.id } : 'skip'
-  );
+  // ===== CONVEX: Server Data & Real-time =====
+  const { currentUser, isUserReady } = useUserData();
   const ventMessages = useQuery(
     api.ventChat.getCurrentVentMessages, // Use vent-specific endpoint
     currentUser ? { userId: currentUser._id, limit: 3 } : 'skip'
@@ -84,19 +99,26 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
   }, []);
 
   // Animated style for pulsing dot
-  const pulseStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-    opacity: pulseOpacity.value,
-  }));
+  const pulseStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ scale: pulseScale.value }],
+      opacity: pulseOpacity.value,
+    };
+  });
 
   // Animated style for send button
-  const sendButtonStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: sendButtonScale.value }],
-    opacity: currentMessage.trim() ? 1 : 0.5,
-  }));
+  const sendButtonStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ scale: sendButtonScale.value }],
+      opacity: currentMessage.trim() ? 1 : 0.5,
+    };
+  });
 
   // Shimmer/Glow effect style (fixed hook order)
   const shimmerStyle = useAnimatedStyle(() => {
+    'worklet';
     const translateX = interpolate(
       shimmerPosition.value,
       [-1, 1],
@@ -108,6 +130,17 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
       opacity: 0.6,
     };
   });
+
+  // Worklet helper functions for message calculations
+  const calculateMessageOpacity = (messageAge: number) => {
+    'worklet';
+    return messageAge === 0 ? 1 : messageAge === 1 ? 0.8 : Math.max(0.3, 0.6 - (messageAge - 2) * 0.15);
+  };
+
+  const calculateMessageScale = (messageAge: number) => {
+    'worklet';
+    return messageAge === 0 ? 1 : messageAge === 1 ? 0.98 : Math.max(0.85, 0.95 - (messageAge - 2) * 0.03);
+  };
 
   // Transform Convex vent messages to UI format
   const messages: ChatMessage[] = (ventMessages ?? [])
@@ -228,7 +261,7 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
         exiting={FadeOut.duration(300)}
         style={{ flex: 1 }}
       >
-        <BlurView intensity={80} tint="dark" style={{ flex: 1 }}>
+        <BlurView intensity={getBlurIntensity()} tint="dark" style={{ flex: 1 }}>
           <View style={{ flex: 1 }}>
             {/* Close button */}
             <Animated.View
@@ -305,9 +338,9 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
                             .duration(500)
                         }
                         style={{
-                          opacity: messageAge === 0 ? 1 : messageAge === 1 ? 0.8 : Math.max(0.3, 0.6 - (messageAge - 2) * 0.15), // Progressive fade
+                          opacity: calculateMessageOpacity(messageAge),
                           transform: [
-                            { scale: messageAge === 0 ? 1 : messageAge === 1 ? 0.98 : Math.max(0.85, 0.95 - (messageAge - 2) * 0.03) } // Progressive shrink
+                            { scale: calculateMessageScale(messageAge) }
                           ]
                         }}
                       >
@@ -474,4 +507,7 @@ export function FloatingChat({ visible, onClose }: FloatingChatProps) {
       </Animated.View>
     </Modal>
   );
-}
+});
+
+// Export as default for lazy loading  
+export default FloatingChat;

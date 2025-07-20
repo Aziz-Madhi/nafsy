@@ -2,6 +2,8 @@ import React from 'react';
 import { useSignUp } from '@clerk/clerk-expo';
 import { Link, useRouter } from 'expo-router';
 import { Alert, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import Animated, { useSharedValue, useAnimatedStyle, withSpring } from 'react-native-reanimated';
+import { optimizedHaptic } from '~/lib/haptic-optimizer';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 
@@ -14,6 +16,25 @@ export default function SignUpScreen() {
   const [name, setName] = React.useState('');
   const [pendingVerification, setPendingVerification] = React.useState(false);
   const [code, setCode] = React.useState('');
+  
+  // Worklet-optimized validation animations
+  const shakeX = useSharedValue(0);
+  
+  const shakeStyle = useAnimatedStyle(() => {
+    'worklet';
+    return {
+      transform: [{ translateX: shakeX.value }],
+    };
+  });
+  
+  const triggerErrorShake = () => {
+    optimizedHaptic.error();
+    shakeX.value = withSpring(-10, {}, () => {
+      shakeX.value = withSpring(10, {}, () => {
+        shakeX.value = withSpring(0);
+      });
+    });
+  };
 
   const onSignUpPress = async () => {
     if (!isLoaded) {
