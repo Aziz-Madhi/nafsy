@@ -11,52 +11,45 @@ interface Category {
   id: string;
   name: string;
   color: string;
-  emoji: string;
   description: string;
 }
 
 const getCategoriesWithTranslations = (t: any): Category[] => [
   { 
     id: 'mindfulness', 
-    name: t('exercises.categories.mindfulness'), 
+    name: t('exercises.categories.mindfulness') || 'Mindfulness', 
     color: '#F5D4C1',
-    emoji: '🧘‍♀️',
-    description: t('exercises.descriptions.mindfulness') || 'Present moment awareness'
+    description: 'Present moment awareness'
   },
   { 
     id: 'breathing', 
-    name: t('exercises.categories.breathing'), 
+    name: t('exercises.categories.breathing') || 'Breathing', 
     color: '#FDEBC9',
-    emoji: '🌬️',
-    description: t('exercises.descriptions.breathing') || 'Calm through breath'
+    description: 'Calm through breath'
   },
   { 
     id: 'movement', 
-    name: t('exercises.categories.movement'), 
+    name: t('exercises.categories.movement') || 'Movement', 
     color: '#D0F1EB',
-    emoji: '🏃‍♀️',
-    description: t('exercises.descriptions.movement') || 'Gentle body movement'
+    description: 'Gentle body movement'
   },
   { 
     id: 'journaling', 
-    name: t('exercises.categories.journaling'), 
+    name: t('exercises.categories.journaling') || 'Journaling', 
     color: '#DED2F9',
-    emoji: '📝',
-    description: t('exercises.descriptions.journaling') || 'Express your thoughts'
+    description: 'Express your thoughts'
   },
   { 
     id: 'relaxation', 
-    name: t('exercises.categories.relaxation'), 
+    name: t('exercises.categories.relaxation') || 'Relaxation', 
     color: '#C9EAFD',
-    emoji: '💆‍♀️',
-    description: t('exercises.descriptions.relaxation') || 'Release tension'
+    description: 'Release tension'
   },
   { 
     id: 'reminders', 
-    name: t('exercises.categories.reminders') || 'Thoughtful Reminders', 
+    name: t('exercises.categories.reminders') || 'Reminders', 
     color: '#FDC9D2',
-    emoji: '💝',
-    description: t('exercises.descriptions.reminders') || 'Positive affirmations'
+    description: 'Positive affirmations'
   },
 ];
 
@@ -65,9 +58,9 @@ export function CategoryGrid({ onCategorySelect }: CategoryGridProps) {
   const categories = getCategoriesWithTranslations(t);
 
   return (
-    <View className="px-8">
+    <View className="px-4">
       {/* First Row */}
-      <View className="flex-row mb-6" style={{ gap: 16 }}>
+      <View className="flex-row mb-6" style={{ gap: 12 }}>
         <CategoryCard
           category={categories[0]}
           onPress={onCategorySelect}
@@ -81,7 +74,7 @@ export function CategoryGrid({ onCategorySelect }: CategoryGridProps) {
       </View>
 
       {/* Second Row */}
-      <View className="flex-row mb-6" style={{ gap: 16 }}>
+      <View className="flex-row mb-6" style={{ gap: 12 }}>
         <CategoryCard
           category={categories[2]}
           onPress={onCategorySelect}
@@ -95,7 +88,7 @@ export function CategoryGrid({ onCategorySelect }: CategoryGridProps) {
       </View>
 
       {/* Third Row */}
-      <View className="flex-row" style={{ gap: 16 }}>
+      <View className="flex-row" style={{ gap: 12 }}>
         <CategoryCard
           category={categories[4]}
           onPress={onCategorySelect}

@@ -11,6 +11,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { cn } from '~/lib/cn';
+import { Brain, Wind, Activity, BookOpen, Leaf, Heart } from 'lucide-react-native';
 
 interface Exercise {
   id: string;
@@ -44,6 +45,28 @@ const DIFFICULTY_LABELS = {
   intermediate: 'Intermediate',
   advanced: 'Advanced',
 };
+
+// Helper function to render exercise icons
+function getExerciseIconComponent(category: string, color: string) {
+  const iconProps = { size: 24, color };
+  
+  switch (category) {
+    case 'mindfulness':
+      return <Brain {...iconProps} />;
+    case 'breathing':
+      return <Wind {...iconProps} />;
+    case 'movement':
+      return <Activity {...iconProps} />;
+    case 'journaling':
+      return <BookOpen {...iconProps} />;
+    case 'relaxation':
+      return <Leaf {...iconProps} />;
+    case 'reminders':
+      return <Heart {...iconProps} />;
+    default:
+      return <Brain {...iconProps} />;
+  }
+}
 
 export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
   const scale = useSharedValue(1);
@@ -84,7 +107,7 @@ export function ExerciseCard({ exercise, onPress, index }: ExerciseCardProps) {
           <View className="absolute top-4 right-4 w-12 h-12 rounded-full items-center justify-center"
             style={{ backgroundColor: exercise.color + '40' }}
           >
-            <Text className="text-2xl">{exercise.icon}</Text>
+            {getExerciseIconComponent(exercise.category, exercise.color)}
           </View>
           
           <Text variant="title3" className="mb-1 text-[#5A4A3A]">

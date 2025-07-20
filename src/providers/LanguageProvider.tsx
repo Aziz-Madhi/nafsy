@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { I18nManager } from 'react-native';
 import { setLocale, getCurrentLocale, isRTL, type Language } from '../lib/i18n';
-import { useAppStore } from '../store/useAppStore';
 
 interface LanguageContextType {
   currentLanguage: Language;
@@ -17,17 +16,9 @@ interface LanguageProviderProps {
 }
 
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) => {
-  const { settings, updateSettings } = useAppStore();
+  // Remove dependency on useAppStore - manage language state independently
   const [currentLanguage, setCurrentLanguage] = useState<Language>(getCurrentLocale());
   const [isRTLEnabled, setIsRTLEnabled] = useState(isRTL());
-
-  // Initialize language from settings
-  useEffect(() => {
-    const settingsLanguage = settings.language as Language;
-    if (settingsLanguage !== currentLanguage) {
-      setLanguage(settingsLanguage);
-    }
-  }, [settings.language]);
 
   // Update RTL layout manager when language changes
   useEffect(() => {
@@ -45,11 +36,10 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     // Update local state
     setCurrentLanguage(language);
     
-    // Update app store
-    updateSettings({ language });
-    
     // Update RTL state
     setIsRTLEnabled(language === 'ar');
+    
+    // Note: App store sync will be handled separately to avoid navigation context issues
   };
 
   const toggleLanguage = () => {

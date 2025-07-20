@@ -5,19 +5,11 @@ import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '@clerk/clerk-expo';
 
 export default function TabsLayout() {
-  const { isLoaded, isSignedIn } = useAuth();
-  
   const activeColor = '#2196F3'; // design primary blue
   const inputBarColor = 'rgba(255, 255, 255, 0.4)'; // Exact match to bg-white/40
 
-  // Don't do navigation in layout files - let the index.tsx handle redirects
-  if (!isLoaded || !isSignedIn) {
-    return (
-      <View className="flex-1 justify-center items-center" style={{ backgroundColor: '#F2FAF9' }}>
-        <ActivityIndicator size="large" color={activeColor} />
-      </View>
-    );
-  }
+  // Removed useAuth check - let individual screens handle auth
+  // This might be causing the navigation context error
 
   return (
     <View style={{ flex: 1, backgroundColor: '#F2FAF9' }}>

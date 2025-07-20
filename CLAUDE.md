@@ -118,6 +118,10 @@ src/
 - If you are given a task, don't overcomplicate it. Do a simple approach. If it didn't function, go into more advanced solutions cleverly.
 - When given an error or a problem to fix, do not overcomplicate. Try a simple fix and simple approach. If it didn't work, you will then go more advanced solutions.
 
+## Convex Development Notes
+
+- Any time you're editing or fixing something with Convex, remember that you have the option to run the MCP (Master Control Program)
+
 ## Build and Development Notes
 
 - Do not run an iOS build. Always ask for confirmation before proceeding with iOS builds.

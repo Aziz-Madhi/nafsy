@@ -26,14 +26,16 @@ interface Exercise {
 }
 
 function getCategoryIcon(category: string): string {
+  // This function is now handled by the icon constants file
+  // Keeping for backward compatibility but will use Lineicons
   const icons: Record<string, string> = {
-    breathing: '🫁',
-    mindfulness: '🧘',
-    movement: '🚶',
-    journaling: '📝',
-    relaxation: '💆',
+    breathing: 'wind',
+    mindfulness: 'meditation',
+    movement: 'walking',
+    journaling: 'pencil',
+    relaxation: 'leaf',
   };
-  return icons[category] || '✨';
+  return icons[category] || 'star';
 }
 
 function getCategoryColor(category: string): string {

@@ -12,7 +12,7 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
-// Navigation stack without theme wrapper to avoid navigation context issues
+// Navigation stack - expo-router provides NavigationContainer automatically
 function NavigationStack() {
   return (
     <>

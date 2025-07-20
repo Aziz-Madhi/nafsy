@@ -26,6 +26,7 @@ interface SettingItem {
 }
 
 export default function ProfileScreen() {
+  // ===== AUTHENTICATION: Check first =====
   const { signOut, isSignedIn } = useAuth();
   const { user, isLoaded } = useUserSafe();
   const router = useRouter();
@@ -55,6 +56,7 @@ export default function ProfileScreen() {
     );
   }
   
+  // ===== CONVEX: Server data (after auth check) =====
   const createUser = useMutation(api.users.createUser);
   const currentUser = useQuery(
     api.users.getCurrentUser,
@@ -74,9 +76,16 @@ export default function ProfileScreen() {
   }, [user, currentUser, createUser]);
 
   const handleSignOut = async () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-    await signOut();
-    router.replace('/auth/sign-in');
+    try {
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+      await signOut();
+      // Use router.push instead of replace to avoid potential navigation stack issues
+      router.push('/auth/sign-in');
+    } catch (error) {
+      console.error('Error during sign out:', error);
+      // Fallback navigation
+      router.replace('/auth/sign-in');
+    }
   };
 
   const toggleNotifications = () => {

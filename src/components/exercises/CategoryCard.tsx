@@ -9,17 +9,39 @@ import Animated, {
 } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { useTranslation } from '~/hooks/useTranslation';
+import { Brain, Wind, Activity, BookOpen, Leaf, Heart } from 'lucide-react-native';
 
 interface CategoryCardProps {
   category: {
     id: string;
     name: string;
     color: string;
-    emoji: string;
     description: string;
   };
   onPress: (categoryId: string) => void;
   index: number;
+}
+
+// Helper function to render category icons
+function getCategoryIconComponent(categoryId: string) {
+  const iconProps = { size: 64, color: '#5A4A3A' };
+  
+  switch (categoryId) {
+    case 'mindfulness':
+      return <Brain {...iconProps} />;
+    case 'breathing':
+      return <Wind {...iconProps} />;
+    case 'movement':
+      return <Activity {...iconProps} />;
+    case 'journaling':
+      return <BookOpen {...iconProps} />;
+    case 'relaxation':
+      return <Leaf {...iconProps} />;
+    case 'reminders':
+      return <Heart {...iconProps} />;
+    default:
+      return <Brain {...iconProps} />;
+  }
 }
 
 export function CategoryCard({ category, onPress, index }: CategoryCardProps) {
@@ -52,7 +74,7 @@ export function CategoryCard({ category, onPress, index }: CategoryCardProps) {
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
           onPress={handlePress}
-          className="h-56 rounded-3xl flex justify-between items-center p-6 shadow-sm"
+          className="h-56 rounded-3xl flex justify-between items-center p-4 shadow-sm"
           style={{ 
             backgroundColor: category.color,
             shadowColor: '#000',
@@ -62,27 +84,28 @@ export function CategoryCard({ category, onPress, index }: CategoryCardProps) {
             elevation: 4,
           }}
         >
-          {/* Top section with emoji */}
+          {/* Top section with icon */}
           <View className="w-full items-center justify-center flex-1">
-            <Text className="text-7xl">
-              {category.emoji}
-            </Text>
+            {getCategoryIconComponent(category.id)}
           </View>
 
-          {/* Bottom section with title and description */}
-          <View className="w-full items-center justify-end">
+          {/* Bottom section with title and description - Apple HIG: 14-15pt titles, 12-13pt descriptions */}
+          <View className="w-full items-center justify-end px-2">
+            {/* Primary Title - Apple HIG: 14-15pt for main titles (bold) */}
             <Text 
-              variant="heading"
-              className="text-[#5A4A3A] text-center leading-tight mb-2 font-semibold"
-              style={{ fontFamily: 'Raleway_600SemiBold' }}
+              className="text-[#5A4A3A] text-center font-bold leading-tight mb-2"
+              style={{ fontSize: 15 }}
+              numberOfLines={1}
+              ellipsizeMode="tail"
             >
               {category.name}
             </Text>
+            {/* Secondary Description - Apple HIG: 12-13pt for descriptions (regular/medium) */}
             <Text 
-              variant="subhead"
-              className="text-[#5A4A3A]/75 text-center leading-tight px-2"
+              className="text-[#5A4A3A]/70 text-center font-medium leading-relaxed"
+              style={{ fontSize: 13 }}
               numberOfLines={2}
-              style={{ fontFamily: 'Inter_400Regular' }}
+              ellipsizeMode="tail"
             >
               {category.description}
             </Text>

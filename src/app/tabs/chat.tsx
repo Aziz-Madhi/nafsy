@@ -35,7 +35,12 @@ const getQuickReplies = (t: any) => [
 ];
 
 export default function ChatScreen() {
-  // ===== ZUSTAND: Local UI State =====
+  // ===== ALL HOOKS FIRST (before any early returns) =====
+  const { user, isLoaded } = useUserSafe();
+  const { isSignedIn } = useAuth();
+  const { t } = useTranslation();
+
+  // Zustand hooks
   const isTyping = useMainChatTyping();
   const showFloatingChat = useFloatingChatVisible();
   const showQuickReplies = useShowQuickReplies();
@@ -45,13 +50,26 @@ export default function ChatScreen() {
     setShowQuickReplies 
   } = useChatUIStore();
   
-  // ===== CONVEX: Server Data =====
-  const { user, isLoaded } = useUserSafe();
-  const { isSignedIn } = useAuth();
-  const { t } = useTranslation();
   const scrollViewRef = useRef<ScrollView>(null);
   const lastTapRef = useRef(0);
 
+  // Convex hooks
+  const currentUser = useQuery(
+    api.users.getCurrentUser,
+    user && isSignedIn ? { clerkId: user.id } : 'skip'
+  );
+  const mainChatMessages = useQuery(
+    api.mainChat.getMainChatMessages,
+    currentUser ? { userId: currentUser._id, limit: 50 } : 'skip'
+  );
+  const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
+  const createUser = useMutation(api.users.createUser);
+  const currentMainSessionId = useQuery(
+    api.mainChat.getCurrentMainSessionId,
+    currentUser ? { userId: currentUser._id } : 'skip'
+  );
+
+  // ===== EARLY RETURNS AFTER ALL HOOKS =====
   // Show loading state if Clerk hasn't loaded yet
   if (!isLoaded) {
     return (
@@ -73,22 +91,6 @@ export default function ChatScreen() {
       </SafeAreaView>
     );
   }
-
-  // Convex hooks
-  const currentUser = useQuery(
-    api.users.getCurrentUser,
-    user ? { clerkId: user.id } : 'skip'
-  );
-  const mainChatMessages = useQuery(
-    api.mainChat.getMainChatMessages,
-    currentUser ? { userId: currentUser._id, limit: 50 } : 'skip'
-  );
-  const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
-  const createUser = useMutation(api.users.createUser);
-  const currentMainSessionId = useQuery(
-    api.mainChat.getCurrentMainSessionId,
-    currentUser ? { userId: currentUser._id } : 'skip'
-  );
 
   // Create user if doesn't exist
   useEffect(() => {

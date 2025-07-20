@@ -13,13 +13,13 @@ export function AppProviders({ children }: AppProvidersProps) {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <LanguageProvider>
-          <ClerkProviderWrapper>
-            <ConvexProvider>
+        <ClerkProviderWrapper>
+          <ConvexProvider>
+            <LanguageProvider>
               {children}
-            </ConvexProvider>
-          </ClerkProviderWrapper>
-        </LanguageProvider>
+            </LanguageProvider>
+          </ConvexProvider>
+        </ClerkProviderWrapper>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );

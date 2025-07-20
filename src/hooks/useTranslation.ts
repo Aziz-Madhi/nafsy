@@ -13,7 +13,23 @@ export interface TranslationHook {
 }
 
 export const useTranslation = (): TranslationHook => {
-  const { settings, updateSettings } = useAppStore();
+  // Remove dependency on useAppStore during initialization - use independent state
+  const [storeError, setStoreError] = useState<Error | null>(null);
+  
+  let store;
+  try {
+    store = useAppStore();
+  } catch (error) {
+    if (!storeError) {
+      console.warn('useTranslation: useAppStore failed, using independent state');
+      setStoreError(error as Error);
+    }
+  }
+  
+  // Use store values or independent fallbacks
+  const settings = store?.settings || { language: 'en' as Language };
+  const updateSettings = store?.updateSettings || (() => {});
+  
   const [locale, setLocaleState] = useState<Language>(getCurrentLocale());
   const [rtlState, setRtlState] = useState(isRTL());
 

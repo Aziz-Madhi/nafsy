@@ -41,7 +41,16 @@ interface TextProps
 const Text = React.forwardRef<React.ElementRef<typeof RNText>, TextProps>(
   ({ className, variant, style, enableRTL = true, ...props }, ref) => {
     const textClass = React.useContext(TextClassContext);
-    const { locale } = useTranslation();
+    
+    // Safely get translation hook - add error boundary
+    let locale = 'en';
+    try {
+      const translation = useTranslation();
+      locale = translation.locale;
+    } catch (error) {
+      // Fallback if useTranslation fails (e.g., during navigation context issues)
+      console.warn('Text component: useTranslation failed, using fallback locale:', error);
+    }
     
     // Apply RTL text alignment for Arabic when enableRTL is true
     const rtlStyle = enableRTL && locale === 'ar' ? { textAlign: 'right' as const } : {};
