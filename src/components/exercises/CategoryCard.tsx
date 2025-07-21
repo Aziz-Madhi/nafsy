@@ -13,7 +13,11 @@ interface CategoryCardProps {
   index: number;
 }
 
-export const CategoryCard = React.memo(function CategoryCard({ category, onPress, index }: CategoryCardProps) {
+export const CategoryCard = React.memo(function CategoryCard({
+  category,
+  onPress,
+  index,
+}: CategoryCardProps) {
   return (
     <InteractiveCard
       title={category.name}
@@ -24,7 +28,7 @@ export const CategoryCard = React.memo(function CategoryCard({ category, onPress
       onPress={() => onPress(category.id)}
       index={index}
       variant="category"
-      style={{ 
+      style={{
         height: 200,
         width: '100%',
       }}

@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Pressable, KeyboardAvoidingView, Platform } from 'react-native';
+import {
+  View,
+  TextInput,
+  Pressable,
+  KeyboardAvoidingView,
+  Platform,
+} from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
-import Animated, { 
-  FadeInDown, 
+import Animated, {
   FadeInUp,
-  useAnimatedStyle, 
-  useSharedValue, 
+  useAnimatedStyle,
+  useSharedValue,
   withSpring,
   withRepeat,
   withSequence,
@@ -20,21 +25,29 @@ import { useTranslation } from '~/hooks/useTranslation';
 // =====================
 // CHAT BUBBLE COMPONENT
 // =====================
-export const ChatBubble = React.memo(function ChatBubble({ message, isUser, timestamp, avatar, index = 0, status }: ChatBubbleProps) {
-  const { locale } = useTranslation();
-  
+export const ChatBubble = React.memo(function ChatBubble({
+  message,
+  isUser,
+  timestamp,
+  avatar,
+  index = 0,
+  status,
+}: ChatBubbleProps) {
   // User messages always right-aligned, AI messages always left-aligned
   const shouldJustifyEnd = isUser;
-  
+
   // Worklet-optimized entrance animation
   const opacity = useSharedValue(0);
   const translateY = useSharedValue(20);
-  
+
   React.useEffect(() => {
     opacity.value = withDelay(index * 100, withSpring(1, { damping: 15 }));
-    translateY.value = withDelay(index * 100, withSpring(0, { damping: 15, stiffness: 200 }));
+    translateY.value = withDelay(
+      index * 100,
+      withSpring(0, { damping: 15, stiffness: 200 })
+    );
   }, [index]);
-  
+
   const animatedStyle = useAnimatedStyle(() => {
     'worklet';
     return {
@@ -42,7 +55,7 @@ export const ChatBubble = React.memo(function ChatBubble({ message, isUser, time
       transform: [{ translateY: translateY.value }],
     };
   });
-  
+
   return (
     <Animated.View
       style={animatedStyle}
@@ -59,14 +72,12 @@ export const ChatBubble = React.memo(function ChatBubble({ message, isUser, time
       >
         <Text
           variant="body"
-          className={cn(
-            isUser ? 'text-white' : 'text-[#2E3A59]'
-          )}
+          className={cn(isUser ? 'text-white' : 'text-[#2E3A59]')}
           enableRTL={isUser}
         >
           {message}
         </Text>
-        
+
         {timestamp && (
           <Text
             variant="muted"
@@ -187,7 +198,12 @@ interface QuickReplyButtonProps {
   delay?: number;
 }
 
-export function QuickReplyButton({ text, onPress, icon, delay = 0 }: QuickReplyButtonProps) {
+export function QuickReplyButton({
+  text,
+  onPress,
+  icon,
+  delay = 0,
+}: QuickReplyButtonProps) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -217,11 +233,7 @@ export function QuickReplyButton({ text, onPress, icon, delay = 0 }: QuickReplyB
             'border border-primary/30 rounded-full px-4 py-2.5 mr-2 mb-2'
           )}
         >
-          {icon && (
-            <Text className="mr-2 text-base">
-              {icon}
-            </Text>
-          )}
+          {icon && <Text className="mr-2 text-base">{icon}</Text>}
           <Text variant="body" className="text-primary font-medium">
             {text}
           </Text>
@@ -234,10 +246,10 @@ export function QuickReplyButton({ text, onPress, icon, delay = 0 }: QuickReplyB
 // =====================
 // CHAT INPUT COMPONENT
 // =====================
-export function ChatInput({ 
-  onSendMessage, 
-  placeholder = "Type a message...",
-  disabled = false 
+export function ChatInput({
+  onSendMessage,
+  placeholder = 'Type a message...',
+  disabled = false,
 }: ChatInputProps) {
   const [message, setMessage] = useState('');
   const sendScale = useSharedValue(1);
@@ -287,7 +299,11 @@ export function ChatInput({
               className="ml-2 p-2"
               disabled={disabled}
             >
-              <SymbolView name="paperplane.fill" size={24} tintColor="#6F9460" />
+              <SymbolView
+                name="paperplane.fill"
+                size={24}
+                tintColor="#6F9460"
+              />
             </Pressable>
           </Animated.View>
         ) : (

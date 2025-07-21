@@ -1,5 +1,15 @@
 import { useCallback, useEffect, useState } from 'react';
-import { t, getCurrentLocale, setLocale, isRTL, getTextDirection, getTextAlign, getFlexDirection, type Language, type TranslationKeyPath } from '../lib/i18n';
+import {
+  t,
+  getCurrentLocale,
+  setLocale,
+  isRTL,
+  getTextDirection,
+  getTextAlign,
+  getFlexDirection,
+  type Language,
+  type TranslationKeyPath,
+} from '../lib/i18n';
 import { useAppStore } from '../store/useAppStore';
 
 export interface TranslationHook {
@@ -13,23 +23,13 @@ export interface TranslationHook {
 }
 
 export const useTranslation = (): TranslationHook => {
-  // Remove dependency on useAppStore during initialization - use independent state
-  const [storeError, setStoreError] = useState<Error | null>(null);
-  
-  let store;
-  try {
-    store = useAppStore();
-  } catch (error) {
-    if (!storeError) {
-      console.warn('useTranslation: useAppStore failed, using independent state');
-      setStoreError(error as Error);
-    }
-  }
-  
+  // Always call hooks at the top level
+  const store = useAppStore();
+
   // Use store values or independent fallbacks
   const settings = store?.settings || { language: 'en' as Language };
   const updateSettings = store?.updateSettings || (() => {});
-  
+
   const [locale, setLocaleState] = useState<Language>(getCurrentLocale());
   const [rtlState, setRtlState] = useState(isRTL());
 
@@ -53,16 +53,22 @@ export const useTranslation = (): TranslationHook => {
     }
   }, []);
 
-  const setLanguage = useCallback((language: Language) => {
-    updateSettings({ language });
-    setLocale(language);
-    setLocaleState(language);
-    setRtlState(isRTL());
-  }, [updateSettings]);
+  const setLanguage = useCallback(
+    (language: Language) => {
+      updateSettings({ language });
+      setLocale(language);
+      setLocaleState(language);
+      setRtlState(isRTL());
+    },
+    [updateSettings]
+  );
 
-  const translate = useCallback((key: TranslationKeyPath, options?: any): string => {
-    return t(key, options);
-  }, []);
+  const translate = useCallback(
+    (key: TranslationKeyPath, options?: any): string => {
+      return t(key, options);
+    },
+    []
+  );
 
   return {
     t: translate,
@@ -84,19 +90,19 @@ export const useT = () => {
 // Hook specifically for RTL support
 export const useRTLSupport = () => {
   const { isRTL, textDirection, textAlign, flexDirection } = useTranslation();
-  
+
   return {
     isRTL,
     textDirection,
     textAlign,
     flexDirection,
-    getMarginStart: (value: number) => 
+    getMarginStart: (value: number) =>
       isRTL ? { marginRight: value } : { marginLeft: value },
-    getMarginEnd: (value: number) => 
+    getMarginEnd: (value: number) =>
       isRTL ? { marginLeft: value } : { marginRight: value },
-    getPaddingStart: (value: number) => 
+    getPaddingStart: (value: number) =>
       isRTL ? { paddingRight: value } : { paddingLeft: value },
-    getPaddingEnd: (value: number) => 
+    getPaddingEnd: (value: number) =>
       isRTL ? { paddingLeft: value } : { paddingRight: value },
   };
 };
@@ -104,7 +110,7 @@ export const useRTLSupport = () => {
 // Hook for language switching
 export const useLanguageSwitcher = () => {
   const { locale, setLanguage } = useTranslation();
-  
+
   const toggleLanguage = useCallback(() => {
     setLanguage(locale === 'en' ? 'ar' : 'en');
   }, [locale, setLanguage]);

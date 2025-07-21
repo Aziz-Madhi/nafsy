@@ -4,7 +4,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { View, ActivityIndicator } from 'react-native';
 
 export default function AuthRoutesLayout() {
-  const { isLoaded, isSignedIn } = useAuth();
+  const { isLoaded } = useAuth();
 
   // Don't do navigation in layout files - let the index.tsx handle redirects
   if (!isLoaded) {

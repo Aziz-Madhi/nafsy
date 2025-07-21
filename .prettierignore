@@ -1,0 +1,30 @@
+# Dependencies
+node_modules/
+bun.lock
+
+# Build outputs
+dist/
+.expo/
+build/
+
+# iOS
+ios/build/
+ios/Pods/
+
+# Android
+android/build/
+android/app/build/
+
+# Logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Cache
+.cache/
+metro-cache/
+
+# Generated files
+*.d.ts
+!nativewind-env.d.ts

@@ -8,13 +8,19 @@ interface RTLViewProps extends ViewProps {
   ltrStyle?: any;
 }
 
-export function RTLView({ children, style, rtlStyle, ltrStyle, ...props }: RTLViewProps) {
+export function RTLView({
+  children,
+  style,
+  rtlStyle,
+  ltrStyle,
+  ...props
+}: RTLViewProps) {
   const { isRTL } = useTranslation();
-  
+
   // Merge styles based on direction
   const directionStyle = isRTL ? rtlStyle : ltrStyle;
   const combinedStyle = [style, directionStyle];
-  
+
   return (
     <View style={combinedStyle} {...props}>
       {children}
@@ -28,18 +34,24 @@ interface RTLFlexProps extends ViewProps {
   reverse?: boolean;
 }
 
-export function RTLFlex({ children, style, reverse = false, ...props }: RTLFlexProps) {
+export function RTLFlex({
+  children,
+  style,
+  reverse = false,
+  ...props
+}: RTLFlexProps) {
   const { isRTL } = useTranslation();
-  
-  const flexDirection = isRTL 
-    ? (reverse ? 'row' : 'row-reverse') 
-    : (reverse ? 'row-reverse' : 'row');
-  
-  const rtlStyle = [
-    style,
-    { flexDirection }
-  ];
-  
+
+  const flexDirection = isRTL
+    ? reverse
+      ? 'row'
+      : 'row-reverse'
+    : reverse
+      ? 'row-reverse'
+      : 'row';
+
+  const rtlStyle = [style, { flexDirection }];
+
   return (
     <View style={rtlStyle} {...props}>
       {children}
@@ -53,11 +65,16 @@ interface RTLTextContainerProps extends ViewProps {
   align?: 'start' | 'end' | 'center';
 }
 
-export function RTLTextContainer({ children, style, align = 'start', ...props }: RTLTextContainerProps) {
+export function RTLTextContainer({
+  children,
+  style,
+  align = 'start',
+  ...props
+}: RTLTextContainerProps) {
   const { isRTL } = useTranslation();
-  
+
   let alignItems: 'flex-start' | 'flex-end' | 'center' = 'flex-start';
-  
+
   if (align === 'center') {
     alignItems = 'center';
   } else if (align === 'start') {
@@ -65,12 +82,9 @@ export function RTLTextContainer({ children, style, align = 'start', ...props }:
   } else if (align === 'end') {
     alignItems = isRTL ? 'flex-start' : 'flex-end';
   }
-  
-  const rtlStyle = [
-    style,
-    { alignItems }
-  ];
-  
+
+  const rtlStyle = [style, { alignItems }];
+
   return (
     <View style={rtlStyle} {...props}>
       {children}
@@ -81,21 +95,27 @@ export function RTLTextContainer({ children, style, align = 'start', ...props }:
 // Helper for RTL-aware margins
 export const useRTLMargins = () => {
   const { isRTL } = useTranslation();
-  
+
   return {
-    marginStart: (value: number) => isRTL ? { marginRight: value } : { marginLeft: value },
-    marginEnd: (value: number) => isRTL ? { marginLeft: value } : { marginRight: value },
-    paddingStart: (value: number) => isRTL ? { paddingRight: value } : { paddingLeft: value },
-    paddingEnd: (value: number) => isRTL ? { paddingLeft: value } : { paddingRight: value },
+    marginStart: (value: number) =>
+      isRTL ? { marginRight: value } : { marginLeft: value },
+    marginEnd: (value: number) =>
+      isRTL ? { marginLeft: value } : { marginRight: value },
+    paddingStart: (value: number) =>
+      isRTL ? { paddingRight: value } : { paddingLeft: value },
+    paddingEnd: (value: number) =>
+      isRTL ? { paddingLeft: value } : { paddingRight: value },
   };
 };
 
 // Helper for RTL-aware positions
 export const useRTLPositions = () => {
   const { isRTL } = useTranslation();
-  
+
   return {
-    positionStart: (value: number) => isRTL ? { right: value } : { left: value },
-    positionEnd: (value: number) => isRTL ? { left: value } : { right: value },
+    positionStart: (value: number) =>
+      isRTL ? { right: value } : { left: value },
+    positionEnd: (value: number) =>
+      isRTL ? { left: value } : { right: value },
   };
 };

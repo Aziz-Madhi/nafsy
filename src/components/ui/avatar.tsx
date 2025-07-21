@@ -10,7 +10,10 @@ function Avatar({
 }) {
   return (
     <AvatarPrimitive.Root
-      className={cn('relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full', className)}
+      className={cn(
+        'relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full',
+        className
+      )}
       {...props}
     />
   );
@@ -23,7 +26,10 @@ function AvatarImage({
   ref?: React.RefObject<AvatarPrimitive.ImageRef>;
 }) {
   return (
-    <AvatarPrimitive.Image className={cn('aspect-square h-full w-full', className)} {...props} />
+    <AvatarPrimitive.Image
+      className={cn('aspect-square h-full w-full', className)}
+      {...props}
+    />
   );
 }
 
@@ -46,7 +52,7 @@ function AvatarFallback({
 
 // Attach compound components to the root so
 // <Avatar.Image /> and <Avatar.Fallback /> work
-const AvatarRoot = Avatar;                // rename for clarity
+const AvatarRoot = Avatar; // rename for clarity
 const AvatarComposite = Object.assign(AvatarRoot, {
   Image: AvatarImage,
   Fallback: AvatarFallback,

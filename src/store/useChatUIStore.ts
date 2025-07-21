@@ -7,15 +7,15 @@ interface ChatUIState {
   isFloatingChatVisible: boolean;
   floatingChatInput: string;
   floatingChatIsTyping: boolean;
-  
-  // Main Chat UI State  
+
+  // Main Chat UI State
   mainChatInput: string;
   mainChatIsTyping: boolean;
   showQuickReplies: boolean;
-  
+
   // Shared UI State
   chatInputFocused: boolean;
-  
+
   // Actions
   setFloatingChatVisible: (visible: boolean) => void;
   setFloatingChatInput: (input: string) => void;
@@ -46,29 +46,22 @@ export const useChatUIStore = create<ChatUIState>()(
         setFloatingChatVisible: (visible) =>
           set({ isFloatingChatVisible: visible }),
 
-        setFloatingChatInput: (input) =>
-          set({ floatingChatInput: input }),
+        setFloatingChatInput: (input) => set({ floatingChatInput: input }),
 
         setFloatingChatTyping: (typing) =>
           set({ floatingChatIsTyping: typing }),
 
-        setMainChatInput: (input) =>
-          set({ mainChatInput: input }),
+        setMainChatInput: (input) => set({ mainChatInput: input }),
 
-        setMainChatTyping: (typing) =>
-          set({ mainChatIsTyping: typing }),
+        setMainChatTyping: (typing) => set({ mainChatIsTyping: typing }),
 
-        setShowQuickReplies: (show) =>
-          set({ showQuickReplies: show }),
+        setShowQuickReplies: (show) => set({ showQuickReplies: show }),
 
-        setChatInputFocused: (focused) =>
-          set({ chatInputFocused: focused }),
+        setChatInputFocused: (focused) => set({ chatInputFocused: focused }),
 
-        clearFloatingChatInput: () =>
-          set({ floatingChatInput: '' }),
+        clearFloatingChatInput: () => set({ floatingChatInput: '' }),
 
-        clearMainChatInput: () =>
-          set({ mainChatInput: '' }),
+        clearMainChatInput: () => set({ mainChatInput: '' }),
 
         resetChatUI: () =>
           set({

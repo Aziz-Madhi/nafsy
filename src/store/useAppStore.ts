@@ -7,10 +7,10 @@ interface AppState {
   // UI State
   activeTab: string;
   isLoading: boolean;
-  
+
   // Settings
   settings: AppSettings;
-  
+
   // Actions
   setActiveTab: (tab: string) => void;
   setLoading: (loading: boolean) => void;
@@ -36,11 +36,9 @@ export const useAppStore = create<AppState>()(
         settings: defaultSettings,
 
         // Actions
-        setActiveTab: (tab) =>
-          set({ activeTab: tab }),
+        setActiveTab: (tab) => set({ activeTab: tab }),
 
-        setLoading: (loading) =>
-          set({ isLoading: loading }),
+        setLoading: (loading) => set({ isLoading: loading }),
 
         updateSettings: (newSettings) =>
           set((state) => ({
@@ -68,17 +66,13 @@ export const useAppStore = create<AppState>()(
 );
 
 // Selectors for optimized subscriptions
-export const useActiveTab = () =>
-  useAppStore((state) => state.activeTab);
+export const useActiveTab = () => useAppStore((state) => state.activeTab);
 
-export const useIsLoading = () =>
-  useAppStore((state) => state.isLoading);
+export const useIsLoading = () => useAppStore((state) => state.isLoading);
 
-export const useSettings = () =>
-  useAppStore((state) => state.settings);
+export const useSettings = () => useAppStore((state) => state.settings);
 
-export const useTheme = () =>
-  useAppStore((state) => state.settings.theme);
+export const useTheme = () => useAppStore((state) => state.settings.theme);
 
 export const useLanguage = () =>
   useAppStore((state) => state.settings.language);

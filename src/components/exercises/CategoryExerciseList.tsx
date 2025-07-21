@@ -14,7 +14,13 @@ interface Exercise {
   description: string;
   duration: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: 'breathing' | 'mindfulness' | 'movement' | 'cbt' | 'journaling' | 'relaxation';
+  category:
+    | 'breathing'
+    | 'mindfulness'
+    | 'movement'
+    | 'cbt'
+    | 'journaling'
+    | 'relaxation';
   icon: string;
   color: string;
   steps?: string[];
@@ -37,67 +43,66 @@ const getCategoryName = (categoryId: string, t: any): string => {
     relaxation: t('exercises.categories.relaxation') || 'Relaxation',
     reminders: t('exercises.categories.reminders') || 'Reminders',
   };
-  return categoryNames[categoryId] || categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
+  return (
+    categoryNames[categoryId] ||
+    categoryId.charAt(0).toUpperCase() + categoryId.slice(1)
+  );
 };
 
-export function CategoryExerciseList({ 
-  categoryId, 
-  exercises, 
-  onExercisePress, 
-  onBackPress 
+export function CategoryExerciseList({
+  categoryId,
+  exercises,
+  onExercisePress,
+  onBackPress,
 }: CategoryExerciseListProps) {
   const { t } = useTranslation();
   const categoryName = getCategoryName(categoryId, t);
-  
+
   const handleBackPress = () => {
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
     onBackPress();
   };
 
   // Filter exercises by category (handle reminders -> relaxation mapping if needed)
-  const filteredExercises = exercises.filter(exercise => {
+  const filteredExercises = exercises.filter((exercise) => {
     if (categoryId === 'reminders') {
       // Map "reminders" to existing category or handle separately
-      return exercise.category === 'relaxation' || exercise.category === 'mindfulness';
+      return (
+        exercise.category === 'relaxation' ||
+        exercise.category === 'mindfulness'
+      );
     }
     return exercise.category === categoryId;
   });
 
   // FlashList optimization functions
-  const renderExerciseItem = useCallback(({ item, index }: { item: Exercise; index: number }) => (
-    <ExerciseCard
-      exercise={item}
-      onPress={onExercisePress}
-      index={index}
-    />
-  ), [onExercisePress]);
+  const renderExerciseItem = useCallback(
+    ({ item, index }: { item: Exercise; index: number }) => (
+      <ExerciseCard exercise={item} onPress={onExercisePress} index={index} />
+    ),
+    [onExercisePress]
+  );
 
   const keyExtractor = useCallback((item: Exercise) => item.id, []);
 
   const getItemType = useCallback((item: Exercise) => item.difficulty, []);
 
   return (
-    <Animated.View entering={FadeInLeft.springify()} className="flex-1 bg-[#F2FAF9]">
+    <Animated.View
+      entering={FadeInLeft.springify()}
+      className="flex-1 bg-[#F2FAF9]"
+    >
       {/* Header */}
       <View className="flex-row justify-between items-center px-6 py-4 mb-4">
-        <Pressable
-          onPress={handleBackPress}
-          className="flex-row items-center"
-        >
-          <SymbolView 
-            name="chevron.left" 
-            size={32} 
-            tintColor="#5A4A3A"
-          />
+        <Pressable onPress={handleBackPress} className="flex-row items-center">
+          <SymbolView name="chevron.left" size={32} tintColor="#5A4A3A" />
           <Text className="text-[#5A4A3A] font-medium text-lg ml-2">
             {t('common.back') || 'Back'}
           </Text>
         </Pressable>
-        
-        <Text className="text-[#5A4A3A] text-xl font-bold">
-          {categoryName}
-        </Text>
-        
+
+        <Text className="text-[#5A4A3A] text-xl font-bold">{categoryName}</Text>
+
         <View className="w-10" />
       </View>
 
@@ -108,15 +113,16 @@ export function CategoryExerciseList({
         keyExtractor={keyExtractor}
         getItemType={getItemType}
         estimatedItemSize={120}
-        contentContainerStyle={{ 
-          paddingHorizontal: 24, 
-          paddingBottom: 24 
+        contentContainerStyle={{
+          paddingHorizontal: 24,
+          paddingBottom: 24,
         }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={
           <View className="flex-1 justify-center items-center py-12">
             <Text variant="muted" className="text-center">
-              {t('exercises.noExercisesInCategory') || 'No exercises available in this category yet.'}
+              {t('exercises.noExercisesInCategory') ||
+                'No exercises available in this category yet.'}
             </Text>
           </View>
         }

@@ -7,4 +7,8 @@ export { CategoryGrid } from './CategoryGrid';
 export { CategoryExerciseList } from './CategoryExerciseList';
 
 // Lazy-loaded heavy components
-export const ExerciseDetail = lazy(() => import('./ExerciseDetail').then(module => ({ default: module.ExerciseDetail })));
+export const ExerciseDetail = lazy(() =>
+  import('./ExerciseDetail').then((module) => ({
+    default: module.ExerciseDetail,
+  }))
+);

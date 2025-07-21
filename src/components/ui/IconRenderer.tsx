@@ -1,12 +1,12 @@
 import React from 'react';
-import { 
-  Brain, 
-  Wind, 
-  Activity, 
-  BookOpen, 
-  Leaf, 
+import {
+  Brain,
+  Wind,
+  Activity,
+  BookOpen,
+  Leaf,
   Heart,
-  CloudRain, 
+  CloudRain,
   TrendingDown,
   Minus,
   TrendingUp,
@@ -36,12 +36,12 @@ const categoryIconMap = {
 
 const moodIconMap = {
   'very-sad': CloudRain,
-  'sad': TrendingDown,
-  'neutral': Minus,
-  'happy': TrendingUp,
+  sad: TrendingDown,
+  neutral: Minus,
+  happy: TrendingUp,
   'very-happy': Star,
-  'anxious': AlertTriangle,
-  'angry': Zap,
+  anxious: AlertTriangle,
+  angry: Zap,
 };
 
 export const IconRenderer = React.memo(function IconRenderer({
@@ -55,7 +55,9 @@ export const IconRenderer = React.memo(function IconRenderer({
   const getIconComponent = () => {
     switch (iconType) {
       case 'category':
-        return categoryIconMap[iconName as keyof typeof categoryIconMap] || Brain;
+        return (
+          categoryIconMap[iconName as keyof typeof categoryIconMap] || Brain
+        );
       case 'mood':
         return moodIconMap[iconName as keyof typeof moodIconMap] || Minus;
       default:
@@ -64,7 +66,7 @@ export const IconRenderer = React.memo(function IconRenderer({
   };
 
   const IconComponent = getIconComponent();
-  
+
   const baseProps = {
     size,
     strokeWidth,

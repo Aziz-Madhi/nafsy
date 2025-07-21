@@ -1,19 +1,26 @@
 import React, { useEffect } from 'react';
-import { View, TextInput, Pressable, Modal, Dimensions, Platform } from 'react-native';
-import Animated, { 
-  FadeIn, 
-  FadeOut, 
-  SlideInUp, 
-  SlideOutUp, 
+import {
+  View,
+  TextInput,
+  Pressable,
+  Modal,
+  Dimensions,
+  Platform,
+} from 'react-native';
+import Animated, {
+  FadeIn,
+  FadeOut,
+  SlideInUp,
+  SlideOutUp,
   BounceIn,
-  withSpring, 
-  useAnimatedStyle, 
-  useSharedValue, 
-  withTiming, 
-  interpolate, 
-  Easing, 
-  withRepeat, 
-  LinearTransition
+  withSpring,
+  useAnimatedStyle,
+  useSharedValue,
+  withTiming,
+  interpolate,
+  Easing,
+  withRepeat,
+  LinearTransition,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
 import { AnimationCache } from '~/lib/mmkv-zustand';
@@ -24,10 +31,10 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserData } from '~/hooks/useSharedData';
 import { ChatMessage } from './types';
-import { 
-  useFloatingChatInput, 
+import {
+  useFloatingChatInput,
   useFloatingChatTyping,
-  useChatUIStore 
+  useChatUIStore,
 } from '~/store';
 
 interface FloatingChatProps {
@@ -37,43 +44,47 @@ interface FloatingChatProps {
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
-export const FloatingChat = React.memo(function FloatingChat({ visible, onClose }: FloatingChatProps) {
+export const FloatingChat = React.memo(function FloatingChat({
+  visible,
+  onClose,
+}: FloatingChatProps) {
   // ===== ZUSTAND: Local UI State =====
   const currentMessage = useFloatingChatInput();
   const isTyping = useFloatingChatTyping();
-  const { 
-    setFloatingChatInput, 
+  const {
+    setFloatingChatInput,
     setFloatingChatTyping,
-    clearFloatingChatInput 
+    clearFloatingChatInput,
   } = useChatUIStore();
-  
+
   // Performance-based blur intensity
   const getBlurIntensity = () => {
     const metrics = AnimationCache.getPerformanceMetrics();
-    const isLowPerformance = metrics.avgFrameRate < 50 || metrics.memoryUsage > 70;
+    const isLowPerformance =
+      metrics.avgFrameRate < 50 || metrics.memoryUsage > 70;
     return isLowPerformance ? 40 : 80; // Reduced intensity on low-performance devices
   };
-  
+
   // ===== CONVEX: Server Data & Real-time =====
   const { currentUser, isUserReady } = useUserData();
   const ventMessages = useQuery(
     api.ventChat.getCurrentVentMessages, // Use vent-specific endpoint
-    currentUser ? { userId: currentUser._id, limit: 3 } : 'skip'
+    isUserReady ? { limit: 3 } : 'skip'
   );
   const sendVentMessage = useMutation(api.ventChat.sendVentMessage); // Use vent-specific endpoint
   const currentVentSessionId = useQuery(
     api.ventChat.getCurrentVentSessionId,
-    currentUser ? { userId: currentUser._id } : 'skip'
+    isUserReady ? {} : 'skip'
   );
-  
+
   // Shared values for animations
   const sendButtonScale = useSharedValue(1);
   const pulseScale = useSharedValue(1);
   const pulseOpacity = useSharedValue(0.7);
-  
+
   // Shimmer/Glow effect for loading states
   const shimmerPosition = useSharedValue(-1);
-  
+
   useEffect(() => {
     // Continuous shimmer animation using withRepeat
     shimmerPosition.value = withRepeat(
@@ -93,7 +104,7 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
         pulseOpacity.value = withSpring(0.7, { duration: 1000 });
       });
     };
-    
+
     const interval = setInterval(pulse, 2000);
     return () => clearInterval(interval);
   }, []);
@@ -124,7 +135,7 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
       [-1, 1],
       [-300, 300] // Fixed width to avoid dynamic hook calls
     );
-    
+
     return {
       transform: [{ translateX }],
       opacity: 0.6,
@@ -134,27 +145,37 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
   // Worklet helper functions for message calculations
   const calculateMessageOpacity = (messageAge: number) => {
     'worklet';
-    return messageAge === 0 ? 1 : messageAge === 1 ? 0.8 : Math.max(0.3, 0.6 - (messageAge - 2) * 0.15);
+    return messageAge === 0
+      ? 1
+      : messageAge === 1
+        ? 0.8
+        : Math.max(0.3, 0.6 - (messageAge - 2) * 0.15);
   };
 
   const calculateMessageScale = (messageAge: number) => {
     'worklet';
-    return messageAge === 0 ? 1 : messageAge === 1 ? 0.98 : Math.max(0.85, 0.95 - (messageAge - 2) * 0.03);
+    return messageAge === 0
+      ? 1
+      : messageAge === 1
+        ? 0.98
+        : Math.max(0.85, 0.95 - (messageAge - 2) * 0.03);
   };
 
   // Transform Convex vent messages to UI format
   const messages: ChatMessage[] = (ventMessages ?? [])
-    .map((msg): ChatMessage => ({
-      id: String(msg._id), // cast branded Id to plain string
-      text: msg.content,
-      isUser: msg.role === 'user',
-      timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-      }),
-      status: 'delivered' as const,
-      role: msg.role,
-    }))
+    .map(
+      (msg): ChatMessage => ({
+        id: String(msg._id), // cast branded Id to plain string
+        text: msg.content,
+        isUser: msg.role === 'user',
+        timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
+          hour: '2-digit',
+          minute: '2-digit',
+        }),
+        status: 'delivered' as const,
+        role: msg.role,
+      })
+    )
     .reverse(); // Reverse to show oldest first
 
   useEffect(() => {
@@ -175,32 +196,42 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
   const handleSend = async () => {
     if (currentMessage.trim() && currentUser) {
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
-      
+
       // Elastic Scale Effect on send - bounce animation
-      sendButtonScale.value = withSpring(0.8, { 
-        damping: 5, 
-        stiffness: 300 
-      }, () => {
-        sendButtonScale.value = withSpring(1.1, { 
-          damping: 8, 
-          stiffness: 400 
-        }, () => {
-          sendButtonScale.value = withSpring(currentMessage.trim() ? 1 : 0.8, { 
-            damping: 12, 
-            stiffness: 300 
-          });
-        });
-      });
-      
+      sendButtonScale.value = withSpring(
+        0.8,
+        {
+          damping: 5,
+          stiffness: 300,
+        },
+        () => {
+          sendButtonScale.value = withSpring(
+            1.1,
+            {
+              damping: 8,
+              stiffness: 400,
+            },
+            () => {
+              sendButtonScale.value = withSpring(
+                currentMessage.trim() ? 1 : 0.8,
+                {
+                  damping: 12,
+                  stiffness: 300,
+                }
+              );
+            }
+          );
+        }
+      );
+
       // ===== ZUSTAND: Update UI State =====
       const messageText = currentMessage.trim();
       clearFloatingChatInput(); // Clear input immediately
       setFloatingChatTyping(true); // Show typing indicator
-      
+
       try {
         // ===== CONVEX: Send to Vent Chat =====
         await sendVentMessage({
-          userId: currentUser._id,
           content: messageText,
           role: 'user',
           ventSessionId: currentVentSessionId || undefined,
@@ -213,22 +244,41 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
           try {
             // Generate contextual vent responses
             let ventResponse = "I'm here to listen. Let it out.";
-            
+
             const lowerMessage = messageText.toLowerCase();
-            if (lowerMessage.includes('stress') || lowerMessage.includes('overwhelm')) {
-              ventResponse = "That sounds really stressful. Take a deep breath. You're safe here.";
-            } else if (lowerMessage.includes('anxious') || lowerMessage.includes('anxiety')) {
-              ventResponse = "Anxiety is tough. Remember, this feeling will pass. You're stronger than you know.";
-            } else if (lowerMessage.includes('sad') || lowerMessage.includes('down')) {
-              ventResponse = "I hear your sadness. It's okay to feel this way. You're not alone.";
-            } else if (lowerMessage.includes('angry') || lowerMessage.includes('frustrated')) {
-              ventResponse = "Your frustration is valid. Sometimes we need to let these feelings out.";
-            } else if (lowerMessage.includes('work') || lowerMessage.includes('job')) {
-              ventResponse = "Work stress is real. Remember to prioritize your mental health.";
+            if (
+              lowerMessage.includes('stress') ||
+              lowerMessage.includes('overwhelm')
+            ) {
+              ventResponse =
+                "That sounds really stressful. Take a deep breath. You're safe here.";
+            } else if (
+              lowerMessage.includes('anxious') ||
+              lowerMessage.includes('anxiety')
+            ) {
+              ventResponse =
+                "Anxiety is tough. Remember, this feeling will pass. You're stronger than you know.";
+            } else if (
+              lowerMessage.includes('sad') ||
+              lowerMessage.includes('down')
+            ) {
+              ventResponse =
+                "I hear your sadness. It's okay to feel this way. You're not alone.";
+            } else if (
+              lowerMessage.includes('angry') ||
+              lowerMessage.includes('frustrated')
+            ) {
+              ventResponse =
+                'Your frustration is valid. Sometimes we need to let these feelings out.';
+            } else if (
+              lowerMessage.includes('work') ||
+              lowerMessage.includes('job')
+            ) {
+              ventResponse =
+                'Work stress is real. Remember to prioritize your mental health.';
             }
-            
+
             await sendVentMessage({
-              userId: currentUser._id,
               content: ventResponse,
               role: 'assistant',
               ventSessionId: currentVentSessionId || undefined,
@@ -261,11 +311,18 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
         exiting={FadeOut.duration(300)}
         style={{ flex: 1 }}
       >
-        <BlurView intensity={getBlurIntensity()} tint="dark" style={{ flex: 1 }}>
+        <BlurView
+          intensity={getBlurIntensity()}
+          tint="dark"
+          style={{ flex: 1 }}
+        >
           <View style={{ flex: 1 }}>
             {/* Close button */}
             <Animated.View
-              entering={FadeIn.springify().damping(20).stiffness(300).delay(200)}
+              entering={FadeIn.springify()
+                .damping(20)
+                .stiffness(300)
+                .delay(200)}
               exiting={FadeOut.springify().damping(20)}
               className="absolute top-16 right-6 z-20"
             >
@@ -278,16 +335,16 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
             </Animated.View>
 
             {/* Message Area - Center Section */}
-            <View 
+            <View
               className="absolute top-28 left-0 right-0 items-center justify-center px-6"
-              style={{ 
+              style={{
                 height: SCREEN_HEIGHT * 0.6,
                 bottom: 120,
               }}
             >
-              <View 
+              <View
                 className="items-center justify-end w-full"
-                style={{ 
+                style={{
                   flexDirection: 'column',
                   gap: 12,
                 }}
@@ -296,33 +353,30 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                   const isNewest = index === array.length - 1;
                   const messageAge = array.length - 1 - index; // 0 = newest, 1 = second newest, etc.
                   const isOld = messageAge >= 2; // 3rd message and older
-                  
+
                   // Message Appearance Cascade - each message enters with increasing delay
                   const cascadeDelay = index * 150; // 150ms between each message
-                  
+
                   return (
                     <Animated.View
                       key={msg.id}
                       entering={
                         // Just appear in place with fade and slight scale
-                        FadeIn
-                          .springify()
+                        FadeIn.springify()
                           .damping(25)
                           .stiffness(400)
                           .delay(cascadeDelay)
                       }
                       exiting={
                         // Enhanced Fade Transition with slight scale
-                        FadeOut
-                          .springify()
+                        FadeOut.springify()
                           .damping(20)
                           .stiffness(300)
                           .duration(800)
                       }
                       layout={
                         // Sub-animation for repositioning when new messages appear
-                        LinearTransition
-                          .springify()
+                        LinearTransition.springify()
                           .damping(20)
                           .stiffness(300)
                           .duration(600)
@@ -331,8 +385,7 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                       <Animated.View
                         layout={
                           // Additional sub-animation for smooth repositioning
-                          LinearTransition
-                            .springify()
+                          LinearTransition.springify()
                             .damping(25)
                             .stiffness(350)
                             .duration(500)
@@ -340,8 +393,8 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                         style={{
                           opacity: calculateMessageOpacity(messageAge),
                           transform: [
-                            { scale: calculateMessageScale(messageAge) }
-                          ]
+                            { scale: calculateMessageScale(messageAge) },
+                          ],
                         }}
                       >
                         <View
@@ -350,11 +403,11 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                             maxWidth: 300,
                             minWidth: 120,
                             alignSelf: 'center',
-                            
+
                             // Color based on message type
                             backgroundColor: msg.isUser ? '#9CC99A' : '#7BA7D9',
                             borderColor: 'rgba(255, 255, 255, 0.3)',
-                            
+
                             // Shadow for depth
                             shadowColor: msg.isUser ? '#9CC99A' : '#7BA7D9',
                             shadowOffset: { width: 0, height: 8 },
@@ -376,7 +429,7 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                                   bottom: 0,
                                   backgroundColor: 'rgba(255, 255, 255, 0.3)',
                                   borderRadius: 16,
-                                }
+                                },
                               ]}
                             />
                           )}
@@ -405,13 +458,25 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                               className="absolute -bottom-1 -right-1 bg-white/90 backdrop-blur-sm rounded-full p-1.5 border border-white/30"
                             >
                               {msg.status === 'sending' && (
-                                <SymbolView name="clock" size={12} tintColor="#6B7280" />
+                                <SymbolView
+                                  name="clock"
+                                  size={12}
+                                  tintColor="#6B7280"
+                                />
                               )}
                               {msg.status === 'sent' && (
-                                <SymbolView name="checkmark" size={12} tintColor="#6B7280" />
+                                <SymbolView
+                                  name="checkmark"
+                                  size={12}
+                                  tintColor="#6B7280"
+                                />
                               )}
                               {msg.status === 'delivered' && (
-                                <SymbolView name="checkmark.circle" size={12} tintColor="#9CC99A" />
+                                <SymbolView
+                                  name="checkmark.circle"
+                                  size={12}
+                                  tintColor="#9CC99A"
+                                />
                               )}
                             </Animated.View>
                           )}
@@ -443,7 +508,9 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                               exiting={FadeOut.duration(1500)}
                               className="absolute inset-0 rounded-2xl"
                               style={{
-                                backgroundColor: msg.isUser ? 'rgba(156, 201, 154, 0.2)' : 'rgba(123, 167, 217, 0.2)',
+                                backgroundColor: msg.isUser
+                                  ? 'rgba(156, 201, 154, 0.2)'
+                                  : 'rgba(123, 167, 217, 0.2)',
                               }}
                             />
                           )}
@@ -451,13 +518,16 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                       </Animated.View>
                     </Animated.View>
                   );
-                  })}
+                })}
               </View>
             </View>
 
             {/* Input Area - Bottom Section */}
             <Animated.View
-              entering={SlideInUp.springify().damping(30).stiffness(400).delay(300)}
+              entering={SlideInUp.springify()
+                .damping(30)
+                .stiffness(400)
+                .delay(300)}
               exiting={SlideOutUp.springify().damping(30)}
               className="absolute bottom-8 left-6 right-6"
             >
@@ -471,20 +541,24 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
                   placeholder="What's on your mind?"
                   placeholderTextColor="rgba(255,255,255,0.6)"
                   className="flex-1 text-white text-base mr-3"
-                  style={{ fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto' }}
+                  style={{
+                    fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+                  }}
                   autoFocus
                   onSubmitEditing={handleSend}
                   returnKeyType="send"
                 />
-                <Animated.View
-                  style={[sendButtonStyle]}
-                >
+                <Animated.View style={[sendButtonStyle]}>
                   <Pressable
                     onPress={handleSend}
                     disabled={!currentMessage.trim()}
                     className="w-10 h-10 bg-primary rounded-full items-center justify-center"
                   >
-                    <SymbolView name="paperplane.fill" size={20} tintColor="white" />
+                    <SymbolView
+                      name="paperplane.fill"
+                      size={20}
+                      tintColor="white"
+                    />
                   </Pressable>
                 </Animated.View>
               </Animated.View>
@@ -493,7 +567,7 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
             {/* Tap to close area */}
             <Pressable
               onPress={onClose}
-              style={{ 
+              style={{
                 position: 'absolute',
                 top: 0,
                 left: 0,
@@ -509,5 +583,5 @@ export const FloatingChat = React.memo(function FloatingChat({ visible, onClose 
   );
 });
 
-// Export as default for lazy loading  
+// Export as default for lazy loading
 export default FloatingChat;

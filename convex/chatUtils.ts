@@ -1,17 +1,17 @@
-import { v } from "convex/values";
-import type { MutationCtx, QueryCtx } from "./_generated/server";
-import type { Id } from "./_generated/dataModel";
+import { v } from 'convex/values';
+import type { MutationCtx, QueryCtx } from './_generated/server';
+import type { Id } from './_generated/dataModel';
 
 // Shared utility function for updating chat session metadata
 export async function updateChatSession(
   ctx: MutationCtx,
-  userId: Id<"users">,
-  type: "main" | "vent",
+  userId: Id<'users'>,
+  type: 'main' | 'vent',
   sessionId: string
 ) {
   const existing = await ctx.db
-    .query("chatSessions")
-    .filter((q: any) => q.eq(q.field("sessionId"), sessionId))
+    .query('chatSessions')
+    .filter((q: any) => q.eq(q.field('sessionId'), sessionId))
     .first();
 
   if (existing) {
@@ -22,11 +22,12 @@ export async function updateChatSession(
     });
   } else {
     // Create new session
-    const title = type === "main" 
-      ? `Chat Session ${new Date().toLocaleDateString()}`
-      : `Quick Vent ${new Date().toLocaleTimeString()}`;
-      
-    await ctx.db.insert("chatSessions", {
+    const title =
+      type === 'main'
+        ? `Chat Session ${new Date().toLocaleDateString()}`
+        : `Quick Vent ${new Date().toLocaleTimeString()}`;
+
+    await ctx.db.insert('chatSessions', {
       userId,
       type,
       sessionId,
@@ -40,20 +41,20 @@ export async function updateChatSession(
 
 // Generate session titles based on content
 export function generateSessionTitle(
-  type: "main" | "vent",
+  type: 'main' | 'vent',
   firstMessage?: string
 ): string {
   const now = new Date();
-  const timeStr = now.toLocaleTimeString('en-US', { 
-    hour: '2-digit', 
-    minute: '2-digit' 
+  const timeStr = now.toLocaleTimeString('en-US', {
+    hour: '2-digit',
+    minute: '2-digit',
   });
-  const dateStr = now.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric' 
+  const dateStr = now.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
   });
 
-  if (type === "vent") {
+  if (type === 'vent') {
     // Generate vent titles based on common emotions/themes
     if (firstMessage) {
       const message = firstMessage.toLowerCase();

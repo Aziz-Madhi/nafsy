@@ -2,63 +2,63 @@ import { Link } from "react-router-dom";
 import { ChevronLeft, MessageCircle } from "lucide-react";
 
 export default function Index() {
-  const categories = [
-    {
-      name: "Mindfulness",
-      color: "#F5D4C1",
-      path: "/mindfulness",
-    },
-    {
-      name: "Breathing",
-      color: "#FDEBC9",
-      path: "/breathing",
-    },
-    {
-      name: "Movement",
-      color: "#D0F1EB",
-      path: "/movement",
-    },
-    {
-      name: "Journaling",
-      color: "#DED2F9",
-      path: "/journaling",
-    },
-    {
-      name: "Relaxation",
-      color: "#C9EAFD",
-      path: "/relaxation",
-    },
-    {
-      name: "Thoughtful Reminders",
-      color: "#FDC9D2",
-      path: "/reminders",
-    },
-  ];
+const categories = [
+{
+name: "Mindfulness",
+color: "#F5D4C1",
+path: "/mindfulness",
+},
+{
+name: "Breathing",
+color: "#FDEBC9",
+path: "/breathing",
+},
+{
+name: "Movement",
+color: "#D0F1EB",
+path: "/movement",
+},
+{
+name: "Journaling",
+color: "#DED2F9",
+path: "/journaling",
+},
+{
+name: "Relaxation",
+color: "#C9EAFD",
+path: "/relaxation",
+},
+{
+name: "Thoughtful Reminders",
+color: "#FDC9D2",
+path: "/reminders",
+},
+];
 
-  return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-sm mx-auto">
-        {/* Container with rounded corners and dark background */}
-        <div
-          className="rounded-[20px] overflow-hidden min-h-[852px] relative"
-          style={{ backgroundColor: "#CCC0A9" }}
-        >
-          {/* Header */}
-          <div className="flex justify-between items-center px-4 py-3 mt-3">
-            <div className="flex items-center gap-1">
-              <ChevronLeft
+return (
+
+<div className="min-h-screen flex items-center justify-center p-4">
+<div className="w-full max-w-sm mx-auto">
+{/_ Container with rounded corners and dark background _/}
+<div
+className="rounded-[20px] overflow-hidden min-h-[852px] relative"
+style={{ backgroundColor: "#CCC0A9" }} >
+{/_ Header _/}
+<div className="flex justify-between items-center px-4 py-3 mt-3">
+<div className="flex items-center gap-1">
+<ChevronLeft
                 className="w-6 h-6 text-app-header"
                 strokeWidth={1.6}
               />
-              <span className="text-app-header font-instrument text-sm font-normal">
-                Chats
-              </span>
-            </div>
-            <MessageCircle
+<span className="text-app-header font-instrument text-sm font-normal">
+Chats
+</span>
+</div>
+<MessageCircle
               className="w-6 h-6 text-app-header"
               strokeWidth={1.6}
             />
-          </div>
+</div>
 
           {/* Content Area */}
           <div className="px-4 mt-32 pb-8">
@@ -133,5 +133,6 @@ export default function Index() {
         </div>
       </div>
     </div>
-  );
+
+);
 }

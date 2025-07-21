@@ -4,6 +4,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 function App() {
   const animatedStyles = useAnimatedStyle(() => ({
@@ -23,7 +24,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Opacity with useAnimatedStyle in React Native Reanimated (JSX)
 DESCRIPTION: This JSX snippet demonstrates the basic usage of `useAnimatedStyle` to create an animated style object. It defines an `opacity` style property that changes based on a shared value (`sv.value`). The resulting `animatedStyles` object is then applied to an `Animated.View` component, allowing for dynamic, declarative animations.
@@ -31,6 +32,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { useAnimatedStyle } from 'react-native-reanimated';
 
@@ -45,7 +47,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of withTiming in React Native Reanimated
 DESCRIPTION: This snippet demonstrates the basic usage of `withTiming` to animate a shared value (`sv.value`) to `0`. It imports `withTiming` from `react-native-reanimated` and assigns the animation object directly to a shared value.
@@ -53,6 +55,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { withTiming } from 'react-native-reanimated';
 
@@ -62,7 +65,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Applying useAnimatedStyle to an Animated.View in React Native
 DESCRIPTION: This example demonstrates how to integrate `useAnimatedStyle` with an `Animated.View` component in React Native. It initializes a `useSharedValue` for `width` and uses `useAnimatedStyle` to create a dynamic style object. The resulting animated style is then applied to an `Animated.View` alongside a static style defined using `StyleSheet.create`.
@@ -70,6 +73,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 import { StyleSheet } from 'react-native';
 import {
@@ -99,7 +103,7 @@ const styles = StyleSheet.create({
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating View with withTiming in React Native Reanimated
 DESCRIPTION: This snippet demonstrates a basic animation using `useAnimatedStyle` and `withTiming` to move an `Animated.View` horizontally. It initializes a shared value and updates it with `withTiming` on a button press, causing the view to smoothly translate to a new position.
@@ -107,6 +111,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 import React from 'react';
 import { View, Button, Text } from 'react-native';
@@ -143,7 +148,7 @@ export default function Timing() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating an Animated View Component in React Native Reanimated
 DESCRIPTION: This snippet shows how to use the `Animated.View` component to render a basic animatable element. It sets initial `width`, `height`, and `backgroundColor` styles, demonstrating the fundamental usage of an `Animated` component within a React Native application.
@@ -151,6 +156,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import Animated from 'react-native-reanimated';
 
@@ -167,7 +173,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating `translateX` with `withSpring` and Inline Styles
 DESCRIPTION: This example demonstrates animating a box's horizontal position (`translateX`) using `useSharedValue` and `withSpring` for a smooth, spring-based effect. The `translateX` value is updated incrementally on each button press, showcasing basic interactive animation while highlighting the difficulty of applying custom logic to the shared value before assignment when using inline styles.
@@ -175,6 +181,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { View, Button } from 'react-native';
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
@@ -197,7 +204,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Initializing and Modifying useSharedValue in JavaScript
 DESCRIPTION: This JavaScript snippet demonstrates the basic usage of `useSharedValue` from `react-native-reanimated`. It shows how to initialize a shared value with an initial number, then read its current value using `sv.value` and modify it directly by assigning a new value to `sv.value`.
@@ -205,6 +212,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { useSharedValue } from 'react-native-reanimated';
 
@@ -219,7 +227,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Modifying Shared Value on Button Press in React Native Reanimated
 DESCRIPTION: This snippet shows how to modify a shared value's `.value` property in response to a user interaction, specifically a button press. The `handlePress` function increments the `width` shared value by 50, which will trigger an animation on the `Animated.View` when combined with animation functions.
@@ -227,6 +235,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { Button, View } from 'react-native';
 import Animated, { useSharedValue } from 'react-native-reanimated';
@@ -253,7 +262,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of useAnimatedStyle in React Native Reanimated
 DESCRIPTION: This snippet demonstrates the basic usage of `useAnimatedStyle` to create an animated style object. It shows how to define a style based on a shared value (`sv.value`) and apply it to an `Animated.View` component. The `opacity` property will animate between 1 and 0 based on the `sv.value`.
@@ -261,6 +270,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { useAnimatedStyle } from 'react-native-reanimated';
 
@@ -278,7 +288,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Width with withSpring in React Native Reanimated (JSX)
 DESCRIPTION: This snippet demonstrates how to use `useSharedValue` to create an animatable width property and `withSpring` to apply a bouncy spring animation when a button is pressed. The `width.value` is updated with the result of `withSpring`, causing the `Animated.View` to smoothly transition its width.
@@ -286,6 +296,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JSX
 CODE:
+
 ```
 import { Button, View } from 'react-native';
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
@@ -312,7 +323,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating a Spring Animation with React Native Reanimated
 DESCRIPTION: This JSX snippet demonstrates how to use `useSharedValue` to manage an animatable width and `withSpring` to apply a bouncy animation when a button is pressed. The `Animated.View` component's width is bound to the shared value, causing it to animate smoothly. It requires `react-native`, `react-native-reanimated` as dependencies.
@@ -320,6 +331,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { Button, View } from 'react-native';
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
@@ -346,7 +358,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of withTiming in React Native Reanimated
 DESCRIPTION: This snippet demonstrates the fundamental way to use `withTiming` to animate a shared value. It shows how to import the function and assign its result to a shared value to initiate a timing-based animation.
@@ -354,6 +366,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { withTiming } from 'react-native-reanimated';
 
@@ -363,7 +376,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Rendering Interactive React Native Reanimated Example
 DESCRIPTION: Renders an `InteractiveExample` component, passing the `SpringCarousel` component itself and its raw source code. This component is designed to display the interactive example and potentially its source code side-by-side for demonstration purposes.
@@ -371,11 +384,12 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 <InteractiveExample src={SpringCarouselSrc} component={SpringCarousel} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Updating Shared Value from React Native JS Thread
 DESCRIPTION: This example illustrates how to update a Shared Value's `.value` property from the React Native JS thread. Updates made from this thread are asynchronous, meaning the value is not immediately updated but scheduled for performance on the UI thread, similar to how React's state updates behave.
@@ -383,6 +397,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: js
 CODE:
+
 ```
 import { useSharedValue } from 'react-native-reanimated';
 
@@ -397,7 +412,7 @@ function SomeComponent() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Implementing Shared Element Transitions with `sharedTransitionTag` in React Native
 DESCRIPTION: This example demonstrates the basic usage of `sharedTransitionTag` to enable shared element transitions between two screens in a React Native navigation stack. Components with the same `sharedTransitionTag` across different screens will animate smoothly during navigation.
@@ -405,6 +420,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import Animated from 'react-native-reanimated';
 
@@ -448,7 +464,7 @@ export default function SharedElementExample() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Using Animated.View Component in React Native Reanimated
 DESCRIPTION: This code shows how to use an `Animated.View` component, which is an animatable version of React Native's `View`. It's used just like a regular JSX component, allowing you to apply styles and other properties that can be animated by Reanimated.
@@ -456,6 +472,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import Animated from 'react-native-reanimated';
 
@@ -472,7 +489,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Create New Expo App with Reanimated
 DESCRIPTION: This snippet demonstrates how to quickly create a new Expo application pre-configured with React Native Reanimated using either npm or yarn. It's suitable for starting a new project from scratch and provides a ready-to-use environment for Reanimated development.
@@ -480,17 +497,19 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: bash
 CODE:
+
 ```
 npx create-expo-app@latest my-app -e with-reanimated
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 yarn create expo-app my-app -e with-reanimated
 ```
 
-----------------------------------------
+---
 
 TITLE: Install React Native Reanimated Package
 DESCRIPTION: Installs the "react-native-reanimated@next" package, which is the initial step to integrate Reanimated 4 into an Expo project. This ensures you get the latest compatible version for the React Native New Architecture.
@@ -498,17 +517,19 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install react-native-reanimated@next
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 yarn add react-native-reanimated@next
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating translateX with withSpring on Button Press - React Native Reanimated (JSX)
 DESCRIPTION: This example shows a box moving horizontally using `translateX` animated with `withSpring` on each button press. It updates the `translateX` shared value by adding 50 units, demonstrating a common pattern for interactive movement animations.
@@ -516,6 +537,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JSX
 CODE:
+
 ```
 import { View, Button } from 'react-native';
 import Animated, { useSharedValue, withSpring } from 'react-native-reanimated';
@@ -538,7 +560,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Initializing and Using Shared Value for Width in React Native Reanimated
 DESCRIPTION: This example demonstrates initializing a shared value using `useSharedValue` with a default numerical value (100). The shared value `width` is then directly passed to the `width` style property of an `Animated.View`, allowing its value to control the component's width and be animated.
@@ -546,6 +568,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import Animated, { useSharedValue } from 'react-native-reanimated';
 
@@ -564,7 +587,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating UI with withSpring and PanGestureHandler in React Native Reanimated
 DESCRIPTION: This example demonstrates how to use `withSpring` for creating a spring-based animation in React Native Reanimated. It integrates `useSharedValue` to manage the animated value, `useAnimatedStyle` to apply transformations, and `PanGestureHandler` to enable interactive dragging, resetting the element to its original position with a spring animation on release.
@@ -572,6 +595,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 import Animated, {
   useSharedValue,
@@ -614,7 +638,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Automatic Workletization with useAnimatedStyle Hook (TypeScript)
 DESCRIPTION: This example reiterates the concept of autoworkletization, specifically for callbacks passed to Reanimated hooks like `useAnimatedStyle`. The Babel plugin automatically transforms such functions into worklets, eliminating the need for manual `'worklet';` directives and simplifying the code.
@@ -622,6 +646,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: TypeScript
 CODE:
+
 ```
 const style = useAnimatedStyle(() => {
   // You don't need to add the 'worklet' directive here,
@@ -632,7 +657,7 @@ const style = useAnimatedStyle(() => {
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: React Compiler Compliant useSharedValue Usage with get/set Methods
 DESCRIPTION: This JavaScript snippet illustrates the recommended way to use `useSharedValue` when working with the React Compiler, by utilizing the `get()` and `set()` methods instead of direct `value` property access. It demonstrates integrating a shared value with `useAnimatedStyle` and updating it within an event handler.
@@ -640,6 +665,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 function App() {
   const sv = useSharedValue(100);
@@ -655,7 +681,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: JavaScript/TypeScript: Manage Accordion Height with Shared Value
 DESCRIPTION: This snippet demonstrates the declaration of a `height` shared value using `useSharedValue` from React Native Reanimated. This shared value is crucial for animating the accordion item's height, ensuring smooth transitions without triggering excessive re-renders.
@@ -663,6 +689,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 import { useSharedValue } from 'react-native-reanimated';
 
@@ -670,7 +697,7 @@ import { useSharedValue } from 'react-native-reanimated';
 const height = useSharedValue(0);
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Inline Style Animation with React Native Reanimated
 DESCRIPTION: This snippet demonstrates how to animate a component's style by directly passing a `useSharedValue` to its `style` prop. It's a straightforward approach for simple animations where no complex transformations or calculations are needed on the shared value itself.
@@ -678,6 +705,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import Animated, { useSharedValue } from 'react-native-reanimated';
 
@@ -688,7 +716,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating a Derived Shared Value (JavaScript)
 DESCRIPTION: This snippet demonstrates how to use `useDerivedValue` to create a new reactive shared value. The `derivedValue` automatically updates whenever `sv.value` changes, multiplying its current value by 50. This hook is essential for performing calculations on shared values and keeping the results synchronized on the UI thread.
@@ -696,6 +724,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { useDerivedValue } from 'react-native-reanimated';
 
@@ -706,7 +735,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of runOnJS in React Native Reanimated
 DESCRIPTION: This snippet demonstrates the basic usage of `runOnJS` to execute a non-workletized function (`navigation.goBack`) on the JavaScript thread from the UI thread. It's typically used within a UI thread context, such as an animation callback or gesture handler, to interact with standard JavaScript functions.
@@ -714,6 +743,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { runOnJS } from 'react-native-reanimated';
 
@@ -723,7 +753,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Modifying Shared Value on Button Press for Width Animation in React Native Reanimated
 DESCRIPTION: This snippet shows how to dynamically modify a shared value (`width.value`) in response to a button press, incrementing it by 50. The updated shared value then automatically reflects in the `width` style of the `Animated.View`, demonstrating how user interaction can drive animations by directly mutating the `.value` property of a shared value.
@@ -731,6 +761,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { Button, View } from 'react-native';
 import Animated, { useSharedValue } from 'react-native-reanimated';
@@ -757,7 +788,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Caution: Avoiding Infinite Loops with useAnimatedReaction
 DESCRIPTION: This example highlights a common pitfall: mutating the same shared value within the `react` function that was used in the `prepare` function. This leads to an infinite loop and should be avoided to prevent application freezes or crashes.
@@ -765,6 +796,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 function App() {
   useAnimatedReaction(
@@ -781,7 +813,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Defining and Using a Shared Value for Component Width in React Native Reanimated
 DESCRIPTION: This snippet demonstrates how to define a shared value using `useSharedValue` with an initial numerical value (100) and then apply it directly to the `width` style property of an `Animated.View` component. This setup prepares the component for dynamic width animations driven by the shared value.
@@ -789,6 +821,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import Animated, { useSharedValue } from 'react-native-reanimated';
 
@@ -807,7 +840,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Background Color with interpolateColor (React Native Reanimated)
 DESCRIPTION: This snippet demonstrates how to use `interpolateColor` from `react-native-reanimated` to animate the `backgroundColor` of an `Animated.View`. It maps a `progress` shared value from `0` to `1` to a color range from `red` to `green`, creating a smooth color transition.
@@ -815,6 +848,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { interpolateColor } from 'react-native-reanimated';
 
@@ -839,7 +873,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Importing Animated Component in React Native Reanimated
 DESCRIPTION: This snippet demonstrates how to import the `Animated` object from `react-native-reanimated`. This object is essential for creating animatable versions of React Native's built-in components like `View`, `ScrollView`, or `FlatList`, enabling them to participate in animations.
@@ -847,11 +881,12 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import Animated from 'react-native-reanimated';
 ```
 
-----------------------------------------
+---
 
 TITLE: Accessing Component Instance with useAnimatedRef.current (JSX)
 DESCRIPTION: This example illustrates the timing of `animatedRef.current` availability. It shows that `animatedRef.current` is initially `null` when accessed immediately, but becomes populated with the component instance after the component has mounted, typically within a `useEffect` hook or event handlers.
@@ -859,6 +894,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JSX
 CODE:
+
 ```
 function App() {
   const animatedRef = useAnimatedRef();
@@ -873,7 +909,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Using useAnimatedScrollHandler with Dependencies
 DESCRIPTION: This snippet demonstrates how to use `useAnimatedScrollHandler` with an optional `dependencies` array. The `dependencies` array controls when the worklet inside the handler is rebuilt, ensuring that values from the component's state, like `state` in this example, are correctly captured and updated within the worklet's closure. The handler is configured to update a shared value `sv` based on the component's `state` when the `onEndDrag` event occurs.
@@ -881,6 +917,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const App = () => {
   const [state, setState] = useState(0);
@@ -899,7 +936,7 @@ const App = () => {
 };
 ```
 
-----------------------------------------
+---
 
 TITLE: Configuring withSpring Animation in React Native Reanimated
 DESCRIPTION: This snippet illustrates how to customize a `withSpring` physics-based animation in React Native Reanimated. It configures the spring's behavior using `mass` (inertia), `stiffness` (bounciness), and `damping` (how quickly it comes to rest). The `sv.value` represents the shared value being animated.
@@ -907,6 +944,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { withSpring } from 'react-native-reanimated';
 
@@ -917,7 +955,7 @@ withSpring(sv.value, {
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of useSharedValue in React Native Reanimated
 DESCRIPTION: This snippet demonstrates the fundamental usage of `useSharedValue` to create, read, and modify a shared value. It shows how to import the hook, initialize a shared value with an initial number, and then access and update its `value` property directly.
@@ -925,6 +963,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { useSharedValue } from 'react-native-reanimated';
 
@@ -939,7 +978,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Applying FadeIn and FadeOut Animations in React Native Reanimated
 DESCRIPTION: This snippet demonstrates how to apply `FadeIn` and `FadeOut` predefined animations to an `Animated.View` component in React Native Reanimated. The `entering` prop specifies the animation for when the component is added, and `exiting` for when it's removed. This functionality requires `react-native-reanimated` as a dependency.
@@ -947,6 +986,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { FadeIn, FadeOut } from 'react-native-reanimated';
 
@@ -955,7 +995,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Opacity with useAnimatedProps in React Native
 DESCRIPTION: This snippet demonstrates the basic usage of `useAnimatedProps` to animate the `opacity` property of an `Animated.View` component. It creates an animated props object that dynamically sets opacity based on a shared value (`sv.value`), which is then applied to the component via the `animatedProps` prop. This hook is primarily used for animating properties of third-party components.
@@ -963,6 +1003,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { useAnimatedProps } from 'react-native-reanimated';
 
@@ -977,7 +1018,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Opacity with useAnimatedProps in React Native
 DESCRIPTION: This example demonstrates the basic usage of `useAnimatedProps` to animate the `opacity` property of an `Animated.View`. The `updater` function returns an object whose properties, like `opacity`, are animated based on a shared value (`sv.value`). The resulting `animatedProps` object is then passed to the `animatedProps` prop of an `Animated` component.
@@ -985,6 +1026,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { useAnimatedProps } from 'react-native-reanimated';
 
@@ -999,7 +1041,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Starting Timing Animation with Custom Configuration - React Native Reanimated - JavaScript
 DESCRIPTION: This snippet demonstrates how to initiate a timing-based animation using `withTiming` in React Native Reanimated. It configures a custom duration of 500ms and applies an exponential 'out' easing function (`Easing.out(Easing.exp)`) to control the animation's progression. The `offset.value` shared value is animated to `0`.
@@ -1007,6 +1049,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 import { Easing, withTiming } from 'react-native-reanimated';
 
@@ -1016,7 +1059,7 @@ offet.value = withTiming(0, {
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Accessing and Modifying Shared Value in React Native Reanimated
 DESCRIPTION: This snippet demonstrates how to initialize a shared value using `useSharedValue` and how to access and modify its content via the `.value` property. The example shows incrementing the shared value within an event handler, highlighting how shared values can be dynamically updated to drive animations. Shared values automatically synchronize data across threads.
@@ -1024,6 +1067,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 function App() {
   const sv = useSharedValue(0);
@@ -1036,7 +1080,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Inline Styles with useSharedValue - React Native Reanimated (JSX)
 DESCRIPTION: This snippet illustrates how to perform basic style animations by directly passing a `useSharedValue` to a component's `style` prop. It initializes a shared value for `width` and applies it to an `Animated.View`, showcasing a simple approach to dynamic styling.
@@ -1044,6 +1088,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JSX
 CODE:
+
 ```
 import Animated, { useSharedValue } from 'react-native-reanimated';
 
@@ -1054,7 +1099,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Initializing a Shared Value in React Native Reanimated
 DESCRIPTION: This snippet demonstrates how to create a Shared Value using the `useSharedValue` hook. The hook takes a single argument, which is the initial payload for the Shared Value, and can be any primitive or nested data type like an object, array, number, string, or boolean.
@@ -1062,11 +1107,12 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: js
 CODE:
+
 ```
 const sharedVal = useSharedValue(3.1415);
 ```
 
-----------------------------------------
+---
 
 TITLE: Defining Animated Styles with useAnimatedStyle Hook (JavaScript)
 DESCRIPTION: This JavaScript snippet illustrates the use of the `useAnimatedStyle` hook from React Native Reanimated. The provided callback function, which automatically runs on the UI thread, defines an animated style object, in this case setting the opacity to 0.5. This hook is essential for creating dynamic styles that update efficiently on the UI thread.
@@ -1074,6 +1120,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const style = useAnimatedStyle(() => {
   console.log('Running on the UI thread');
@@ -1081,7 +1128,7 @@ const style = useAnimatedStyle(() => {
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Manually Running a Worklet on the UI Thread with runOnUI in React Native Reanimated (JavaScript)
 DESCRIPTION: This snippet demonstrates how to manually execute a worklet on the UI thread using the `runOnUI` function. It defines a worklet that takes a `greeting` parameter and then shows how `onPress` can invoke this worklet on the UI thread, passing arguments for direct UI manipulation or logging.
@@ -1089,6 +1136,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 function myWorklet(greeting) {
   'worklet';
@@ -1101,7 +1149,7 @@ function onPress() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating View Translation with useSharedValue and useAnimatedStyle (React Native Reanimated)
 DESCRIPTION: This snippet demonstrates how to use `useSharedValue` to create a reactive variable and `useAnimatedStyle` to apply dynamic transformations to a React Native `Animated.View`. Pressing the 'Move' button updates the `offset` Shared Value, which in turn triggers the `useAnimatedStyle` worklet to re-run and update the view's `translateX` property, resulting in an immediate visual shift.
@@ -1109,6 +1157,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 import Animated, {
   useSharedValue,
@@ -1136,7 +1185,7 @@ function Box() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Applying withSpring Animation to a Shared Value in React Native Reanimated
 DESCRIPTION: This snippet illustrates how an animation object, specifically one returned by an animation function like `withSpring`, is assigned to a shared value's `.value` property. Reanimated automatically interprets this object to drive the animation, ultimately storing a simple animatable value.
@@ -1144,11 +1193,12 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 sv.value = withSpring(100);
 ```
 
-----------------------------------------
+---
 
 TITLE: Configuring withSpring Animation in React Native Reanimated
 DESCRIPTION: This snippet illustrates how to customize a `withSpring` animation in React Native Reanimated, which is a physics-based animation. It configures the spring's behavior by setting `mass` (inertia), `stiffness` (bounciness), and `damping` (how quickly the animation settles) to achieve a desired physical effect.
@@ -1156,6 +1206,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { withSpring } from 'react-native-reanimated';
 
@@ -1166,7 +1217,7 @@ withSpring(sv.value, {
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Defining a Basic Worklet Function (TypeScript)
 DESCRIPTION: This snippet demonstrates the basic syntax for defining a worklet in Reanimated. A function becomes a worklet by including the `'worklet';` directive as its first statement, allowing it to be executed on the UI thread.
@@ -1174,6 +1225,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: TypeScript
 CODE:
+
 ```
 function foo() {
   'worklet';
@@ -1181,7 +1233,7 @@ function foo() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Accessing and Modifying Shared Values in React Native Reanimated
 DESCRIPTION: This code demonstrates how to define a shared value using `useSharedValue` with an initial state and how to access and modify its `.value` property. Changes to this property automatically synchronize across threads, enabling dynamic animation updates.
@@ -1189,6 +1241,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 function App() {
   const sv = useSharedValue(0);
@@ -1201,7 +1254,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: JavaScript/TypeScript: Implement AccordionItem Component
 DESCRIPTION: This code defines the `AccordionItem` component, which is responsible for rendering an individual expandable section. It utilizes `useSharedValue` for height management and `useAnimatedStyle` for smooth expansion/collapse animations based on the `isExpanded` prop and a configurable `duration`. The `children` prop holds the collapsible content.
@@ -1209,6 +1262,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 import React from 'react';
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
@@ -1254,7 +1308,7 @@ const AccordionItem: React.FC<AccordionItemProps> = ({ isExpanded, duration = 30
 export default AccordionItem;
 ```
 
-----------------------------------------
+---
 
 TITLE: Manually Creating a Worklet in React Native Reanimated (JavaScript)
 DESCRIPTION: This snippet illustrates how to explicitly declare a JavaScript function as a worklet using the `'worklet';` directive. This directive signals to the Reanimated Babel plugin that the function should be workletized, enabling it to run directly on the UI thread for performance-critical operations.
@@ -1262,6 +1316,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 function myWorklet() {
   'worklet';
@@ -1269,7 +1324,7 @@ function myWorklet() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Workletizing a Function Declaration in TypeScript
 DESCRIPTION: This snippet shows how to mark a standard JavaScript function declaration as a worklet. By including the `'worklet';` directive, the Reanimated Babel Plugin processes this function for execution on the UI thread, allowing it to perform operations without impacting the main JavaScript thread.
@@ -1277,6 +1332,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: TypeScript
 CODE:
+
 ```
 function foo() {
   'worklet';
@@ -1284,7 +1340,7 @@ function foo() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Install React Native Reanimated Package
 DESCRIPTION: This snippet shows how to install the react-native-reanimated package using Expo, npm, or yarn. This is the essential first step to integrate Reanimated into an existing or new React Native project, making the library available for use.
@@ -1292,23 +1348,26 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: bash
 CODE:
+
 ```
 npx expo install react-native-reanimated
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 npm install react-native-reanimated
 ```
 
 LANGUAGE: bash
 CODE:
+
 ```
 yarn add react-native-reanimated
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of useAnimatedScrollHandler with Animated.ScrollView (JavaScript)
 DESCRIPTION: This snippet demonstrates how to use `useAnimatedScrollHandler` to capture the vertical scroll offset (`contentOffset.y`) from an `Animated.ScrollView` and store it in a `useSharedValue`. The returned handler is then passed to the `onScroll` prop of the `Animated.ScrollView`.
@@ -1316,6 +1375,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { useAnimatedScrollHandler } from 'react-native-reanimated';
 
@@ -1330,7 +1390,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Applying Worklet Directive in JavaScript
 DESCRIPTION: This directive is crucial for Reanimated's Babel plugin to correctly identify and capture dependencies within a function, even when worklets resolve to plain JavaScript functions on platforms like the Web where a separate UI thread is unavailable.
@@ -1338,11 +1398,12 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 'worklet';
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of useAnimatedRef with Animated.View (JSX)
 DESCRIPTION: This snippet demonstrates the fundamental way to use `useAnimatedRef` to obtain a reference to an `Animated.View` component. The `animatedRef` object is then assigned to the `ref` property of the component, enabling access to its instance for operations like measuring or scrolling.
@@ -1350,6 +1411,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JSX
 CODE:
+
 ```
 import { useAnimatedRef } from 'react-native-reanimated';
 
@@ -1360,7 +1422,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Configure Reanimated Babel Plugin
 DESCRIPTION: This JavaScript snippet illustrates how to add the react-native-reanimated/plugin to your babel.config.js file. This plugin is crucial for automatically converting special JavaScript functions (worklets) to allow them to be passed and run on the UI thread, ensuring smooth animations. It must be listed last in the plugins array.
@@ -1368,6 +1430,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: js
 CODE:
+
 ```
 module.exports = {
   presets: [
@@ -1380,7 +1443,7 @@ module.exports = {
 };
 ```
 
-----------------------------------------
+---
 
 TITLE: Using useScrollViewOffset with Animated.ScrollView (TSX)
 DESCRIPTION: This snippet demonstrates how to use `useScrollViewOffset` with an `Animated.ScrollView` component. It initializes an `animatedRef` and passes it to both the `ScrollView` and `useScrollViewOffset` to track the scroll offset, enabling scroll-based animations. The `scrollOffset` shared value will update automatically.
@@ -1388,6 +1451,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { useScrollViewOffset } from 'react-native-reanimated';
 
@@ -1401,7 +1465,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Configuring Easing with withTiming in React Native Reanimated
 DESCRIPTION: This snippet shows how to apply a custom easing function, specifically `Easing.bounce`, to a `withTiming` animation. It demonstrates passing an options object as the second argument to `withTiming` to customize the animation curve.
@@ -1409,6 +1473,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { Easing } from 'react-native-reanimated';
 
@@ -1417,7 +1482,7 @@ withTiming(sv.value, {
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Wrapping App with GestureHandlerRootView (React Native)
 DESCRIPTION: This snippet demonstrates how to properly wrap your React Native application with `GestureHandlerRootView` from `react-native-gesture-handler`. It is crucial to place this component as close to the root view as possible to ensure all gestures function correctly throughout the app.
@@ -1425,6 +1490,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
@@ -1437,7 +1503,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Using withSpring for Basic Animation in React Native Reanimated
 DESCRIPTION: This snippet demonstrates the basic usage of `withSpring` to animate a shared value (`sv.value`) to `0`. It shows how to import `withSpring` from `react-native-reanimated` and apply it within a functional component.
@@ -1445,6 +1511,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { withSpring } from 'react-native-reanimated';
 
@@ -1454,7 +1521,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Using useAnimatedStyle with Dependencies in React Native
 DESCRIPTION: This snippet illustrates the basic usage of `useAnimatedStyle` within a React Native component, highlighting the `dependencies` array. It shows how the `updater` worklet returns a style object based on a `useSharedValue` and how the `dependencies` array can control when the worklet is rebuilt, affecting performance and reactivity.
@@ -1462,6 +1529,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const App = () => {
   const [state, setState] = useState(0);
@@ -1477,7 +1545,7 @@ const App = () => {
 };
 ```
 
-----------------------------------------
+---
 
 TITLE: Configuring withTiming Animation in React Native Reanimated
 DESCRIPTION: This snippet demonstrates how to customize a `withTiming` animation in React Native Reanimated. It shows passing a configuration object with `duration` (in milliseconds) and `easing` (an Easing function) to control the animation's speed and progression. The `sv.value` represents the shared value being animated.
@@ -1485,6 +1553,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 import { withTiming, Easing } from 'react-native-reanimated';
 
@@ -1494,7 +1563,7 @@ withTiming(sv.value, {
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Defining a Basic Worklet in JavaScript
 DESCRIPTION: This snippet demonstrates how to define a basic worklet function in JavaScript using the `'worklet';` directive at the top of the function body. This directive signals the Reanimated Babel Plugin to convert the function into a serializable object for UI thread execution. It logs a message from the worklet.
@@ -1502,6 +1571,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 function myWorklet() {
   'worklet';
@@ -1509,7 +1579,7 @@ function myWorklet() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating a Mutable Value with makeMutable (JavaScript)
 DESCRIPTION: This snippet demonstrates the basic usage of `makeMutable` to create a mutable value. It shows how to import the function and initialize a mutable variable with a numeric value, which can then be accessed and modified.
@@ -1517,13 +1587,14 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { makeMutable } from 'react-native-reanimated';
 
 const mv = makeMutable(100);
 ```
 
-----------------------------------------
+---
 
 TITLE: Calling JavaScript Callback from UI Thread with `runOnJS` - React Native Reanimated
 DESCRIPTION: This example demonstrates how to use `runOnJS` within a React Native Reanimated application to safely call a JavaScript function (`recordResult`) from the UI thread. It uses `useSharedValue` to manage an animated value and `useDerivedValue` to trigger the `runOnJS` call whenever the value changes, showcasing a common pattern for bridging UI and JS threads.
@@ -1531,6 +1602,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 import {
   useSharedValue,
@@ -1569,7 +1641,7 @@ export default function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Applying Spring Animations Directly in `useAnimatedStyle` in React Native Reanimated
 DESCRIPTION: This snippet demonstrates an alternative animation approach where `withSpring` is applied directly to the `translateX` property within the `useAnimatedStyle` hook. This centralizes the animation logic within the style definition, ensuring that any updates to `offset.value` will trigger a spring animation for the `translateX` property.
@@ -1577,6 +1649,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: JavaScript
 CODE:
+
 ```
 const animatedStyles = useAnimatedStyle(() => {
   return {
@@ -1589,7 +1662,7 @@ const animatedStyles = useAnimatedStyle(() => {
 });
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of useDerivedValue (JavaScript)
 DESCRIPTION: This snippet demonstrates the fundamental way to use `useDerivedValue` to create a new reactive shared value. The `derivedValue` automatically updates whenever `sv.value` changes, multiplying its current value by 50. It illustrates how to derive a new value from an existing shared value, ensuring reactivity.
@@ -1597,6 +1670,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: javascript
 CODE:
+
 ```
 import { useDerivedValue } from 'react-native-reanimated';
 
@@ -1607,7 +1681,7 @@ function App() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Rendering Interactive Spring Carousel Example - JSX
 DESCRIPTION: Renders an `InteractiveExample` component, passing both the `SpringCarousel` component and its raw source code. This setup allows the documentation to display a live, interactive version of the component alongside its underlying code.
@@ -1615,6 +1689,7 @@ SOURCE: https://github.com/software-mansion/react-native-reanimated/blob/main/pa
 
 LANGUAGE: jsx
 CODE:
+
 ```
 <InteractiveExample src={SpringCarouselSrc} component={SpringCarousel} />
 ```

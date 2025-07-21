@@ -17,47 +17,47 @@ interface Category {
 }
 
 const getCategoriesWithTranslations = (t: any): Category[] => [
-  { 
-    id: 'mindfulness', 
-    name: 'Mindfulness', 
-    color: '#FF6B6B',    // Coral red
+  {
+    id: 'mindfulness',
+    name: 'Mindfulness',
+    color: '#FF6B6B', // Coral red
     description: 'Stay present',
-    icon: '🧘‍♀️'
+    icon: '🧘‍♀️',
   },
-  { 
-    id: 'breathing', 
-    name: 'Breathing', 
-    color: '#4ECDC4',    // Turquoise
+  {
+    id: 'breathing',
+    name: 'Breathing',
+    color: '#4ECDC4', // Turquoise
     description: 'Breathe deeply',
-    icon: '🌬️'
+    icon: '🌬️',
   },
-  { 
-    id: 'movement', 
-    name: 'Movement', 
-    color: '#45B7D1',    // Sky blue
+  {
+    id: 'movement',
+    name: 'Movement',
+    color: '#45B7D1', // Sky blue
     description: 'Move gently',
-    icon: '🚶‍♀️'
+    icon: '🚶‍♀️',
   },
-  { 
-    id: 'journaling', 
-    name: 'Journaling', 
-    color: '#96CEB4',    // Mint green
+  {
+    id: 'journaling',
+    name: 'Journaling',
+    color: '#96CEB4', // Mint green
     description: 'Write freely',
-    icon: '✍️'
+    icon: '✍️',
   },
-  { 
-    id: 'relaxation', 
-    name: 'Relaxation', 
-    color: '#FFEAA7',    // Warm yellow
+  {
+    id: 'relaxation',
+    name: 'Relaxation',
+    color: '#FFEAA7', // Warm yellow
     description: 'Find peace',
-    icon: '🛀'
+    icon: '🛀',
   },
-  { 
-    id: 'reminders', 
-    name: 'Reminders', 
-    color: '#DDA0DD',    // Plum
+  {
+    id: 'reminders',
+    name: 'Reminders',
+    color: '#DDA0DD', // Plum
     description: 'Daily wisdom',
-    icon: '💭'
+    icon: '💭',
   },
 ];
 
@@ -65,16 +65,19 @@ export function CategoryGrid({ onCategorySelect }: CategoryGridProps) {
   const { t } = useTranslation();
   const categories = getCategoriesWithTranslations(t);
 
-  // FlashList render functions  
-  const renderCategoryCard = useCallback(({ item, index }: { item: any; index: number }) => (
-    <View style={{ flex: 1, paddingHorizontal: 8, paddingVertical: 8 }}>
-      <CategoryCard
-        category={item}
-        onPress={onCategorySelect}
-        index={index}
-      />
-    </View>
-  ), [onCategorySelect]);
+  // FlashList render functions
+  const renderCategoryCard = useCallback(
+    ({ item, index }: { item: any; index: number }) => (
+      <View style={{ flex: 1, paddingHorizontal: 8, paddingVertical: 8 }}>
+        <CategoryCard
+          category={item}
+          onPress={onCategorySelect}
+          index={index}
+        />
+      </View>
+    ),
+    [onCategorySelect]
+  );
 
   const keyExtractor = useCallback((item: any) => item.id, []);
 

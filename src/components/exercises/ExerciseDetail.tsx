@@ -4,11 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { SymbolView } from 'expo-symbols';
-import Animated, {
-  FadeIn,
-  FadeOut,
-  SlideInDown,
-} from 'react-native-reanimated';
+import Animated, { SlideInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import type { Exercise, ExerciseDetailProps } from '~/types';
 
@@ -18,7 +14,12 @@ const DIFFICULTY_COLORS = {
   advanced: '#EF4444',
 };
 
-export function ExerciseDetail({ exercise, visible, onClose, onStart }: ExerciseDetailProps) {
+export function ExerciseDetail({
+  exercise,
+  visible,
+  onClose,
+  onStart,
+}: ExerciseDetailProps) {
   if (!exercise) return null;
 
   const handleStart = () => {
@@ -73,7 +74,9 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
             >
               <View className="flex-row items-center mr-6">
                 <SymbolView name="clock" size={20} tintColor="#5A4A3A" />
-                <Text variant="body" className="text-[#5A4A3A] ml-1">{exercise.duration}</Text>
+                <Text variant="body" className="text-[#5A4A3A] ml-1">
+                  {exercise.duration}
+                </Text>
               </View>
               <View className="flex-row items-center">
                 <SymbolView name="chart.bar" size={20} tintColor="#5A4A3A" />
@@ -82,7 +85,8 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
                   className="ml-1"
                   style={{ color: DIFFICULTY_COLORS[exercise.difficulty] }}
                 >
-                  {exercise.difficulty.charAt(0).toUpperCase() + exercise.difficulty.slice(1)}
+                  {exercise.difficulty.charAt(0).toUpperCase() +
+                    exercise.difficulty.slice(1)}
                 </Text>
               </View>
             </Animated.View>
@@ -98,7 +102,11 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
                 </Text>
                 {exercise.benefits.map((benefit, index) => (
                   <View key={index} className="flex-row items-start mb-3">
-                    <SymbolView name="checkmark.circle" size={20} tintColor="#6F9460" />
+                    <SymbolView
+                      name="checkmark.circle"
+                      size={20}
+                      tintColor="#6F9460"
+                    />
                     <Text variant="body" className="flex-1 text-[#5A4A3A] ml-2">
                       {benefit}
                     </Text>
@@ -122,7 +130,10 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
                       className="w-8 h-8 rounded-full items-center justify-center mr-3"
                       style={{ backgroundColor: exercise.color + '20' }}
                     >
-                      <Text variant="body" className="font-medium text-[#5A4A3A]">
+                      <Text
+                        variant="body"
+                        className="font-medium text-[#5A4A3A]"
+                      >
                         {index + 1}
                       </Text>
                     </View>
@@ -139,7 +150,10 @@ export function ExerciseDetail({ exercise, visible, onClose, onStart }: Exercise
         {/* Start Button */}
         <View className="px-6 pb-6 pt-4 border-t border-[#5A4A3A]/20">
           <Button onPress={handleStart} size="lg" className="w-full">
-            <Text variant="body" className="text-primary-foreground font-medium">
+            <Text
+              variant="body"
+              className="text-primary-foreground font-medium"
+            >
               Start Exercise
             </Text>
           </Button>

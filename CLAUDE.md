@@ -11,6 +11,7 @@ You are an expert in TypeScript, React Native, Expo, Nativewind v4, and React Na
 ## Development Commands
 
 ### Core Development
+
 - `bun start` - Start the Expo development server
 - `bun start:clear` - Start with cleared cache
 - `bun android` - Run on Android device/emulator
@@ -18,16 +19,19 @@ You are an expert in TypeScript, React Native, Expo, Nativewind v4, and React Na
 - `bun web` - Run on web browser
 
 ### Backend (Convex)
+
 - `bun convex:dev` - Start Convex development server
 - `bun convex:deploy` - Deploy Convex functions to production
 
 ### Cache Management
+
 - `bun clean` - Remove .expo, node_modules cache, and metro cache
 - `bun clean-full` - Full clean including node_modules and bun.lock, then reinstall
 
 ## Architecture Overview
 
 ### Tech Stack
+
 - **Frontend**: React Native with Expo SDK 53
 - **Routing**: Expo Router v5 with typed routes
 - **Styling**: Nativewind v4 (Tailwind CSS for React Native)
@@ -39,6 +43,7 @@ You are an expert in TypeScript, React Native, Expo, Nativewind v4, and React Na
 - **Package Manager**: Bun
 
 ### Project Structure
+
 ```
 src/
 ├── app/                    # Expo Router pages
@@ -63,6 +68,7 @@ src/
 ```
 
 ### State Management Architecture
+
 - **Zustand Stores**: Separated by feature domain
   - `useAppStore`: Global app state and user preferences
   - `useChatUIStore`: Chat UI state and temporary data
@@ -72,12 +78,14 @@ src/
 - **Real-time Data**: Convex handles server state with subscriptions
 
 ### Database Schema (Convex)
+
 - **Dual Chat System**: Separate tables for main therapy sessions (`mainChatMessages`) and quick vents (`ventChatMessages`)
 - **Session Management**: `chatSessions` table tracks conversation metadata
 - **User Data**: `users`, `moods`, `exercises`, `userProgress`
 - **Multilingual**: Arabic/English support in exercise content
 
 ### Key Features
+
 1. **AI Chat**: Two types - structured therapy sessions and quick emotional vents
 2. **Mood Tracking**: Daily mood logging with calendar visualization
 3. **Wellness Exercises**: Categorized exercises with progress tracking
@@ -90,8 +98,6 @@ src/
 - Write concise, technical TypeScript code with accurate examples.
 - Use functional and declarative programming patterns; avoid classes.
 - Prefer iteration and modularization over code duplication.
-- Use descriptive variable names with auxiliary verbs (e.g., isLoading, hasError).
-- Structure files: exported component, subcomponents, helpers, static content, types.
 - Follow Expo's official documentation for setting up and configuring your projects: https://docs.expo.dev/
 
 ## Naming Conventions

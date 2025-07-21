@@ -3,7 +3,6 @@ import 'expo-dev-client';
 
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { View } from 'react-native';
 import { AppProviders } from '~/providers/AppProviders';
 import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
 

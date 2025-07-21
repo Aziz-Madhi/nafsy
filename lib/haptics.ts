@@ -6,7 +6,9 @@ import { Platform } from 'react-native';
  * and checks for device compatibility
  */
 export const safeHaptics = {
-  impact: async (style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light) => {
+  impact: async (
+    style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light
+  ) => {
     try {
       // Check if platform supports haptics
       if (Platform.OS === 'ios' || Platform.OS === 'android') {
@@ -18,7 +20,10 @@ export const safeHaptics = {
     }
   },
 
-  notification: async (type: Haptics.NotificationFeedbackType = Haptics.NotificationFeedbackType.Success) => {
+  notification: async (
+    type: Haptics.NotificationFeedbackType = Haptics.NotificationFeedbackType
+      .Success
+  ) => {
     try {
       // Check if platform supports haptics
       if (Platform.OS === 'ios' || Platform.OS === 'android') {

@@ -64,7 +64,6 @@ The final optimization phase implements user preference settings for customizati
 
 By following these evidence-based guidelines, mental health apps can create interfaces that not only look appealing but genuinely support users' mental wellness journeys through thoughtful, accessible, and culturally sensitive design that builds trust and encourages sustained engagement across all demographics.
 
-
 ## Key Implementation Notes
 
 2. **Progressive Disclosure**: Onboarding broken into small steps to prevent overwhelm, following research showing better completion rates.

@@ -9,7 +9,7 @@
 
 ```
 ┌─────────────────────────────────────┐
-│             ZUSTAND                 │  
+│             ZUSTAND                 │
 │          (UI State)                 │
 ├─────────────────────────────────────┤
 │ • Input values                      │
@@ -42,22 +42,22 @@ function FloatingChat({ visible, onClose }) {
   // ===== ZUSTAND: UI State =====
   const currentMessage = useFloatingChatInput();
   const isTyping = useFloatingChatTyping();
-  const { 
-    setFloatingChatInput, 
+  const {
+    setFloatingChatInput,
     setFloatingChatTyping,
-    clearFloatingChatInput 
+    clearFloatingChatInput,
   } = useChatUIStore();
-  
+
   // ===== CONVEX: Server Data =====
   const messages = useQuery(api.messages.getMessages, { userId });
   const sendMessage = useMutation(api.messages.sendMessage);
-  
+
   const handleSend = async () => {
     // 1. Update UI immediately (Zustand)
     const messageText = currentMessage.trim();
     clearFloatingChatInput();
     setFloatingChatTyping(true);
-    
+
     try {
       // 2. Send to server (Convex)
       await sendMessage({
@@ -65,7 +65,7 @@ function FloatingChat({ visible, onClose }) {
         content: messageText,
         role: 'user',
       });
-      
+
       // 3. UI updates automatically via Convex subscription
       setFloatingChatTyping(false);
     } catch (error) {
@@ -84,10 +84,10 @@ function MoodSelector() {
   // ===== ZUSTAND: Form UI State =====
   const selectedMood = useSelectedMood();
   const { setSelectedMood, clearSelectedMood } = useMoodStore();
-  
+
   // ===== CONVEX: Save to Server =====
   const saveMood = useMutation(api.moods.createMood);
-  
+
   const handleSave = async () => {
     if (selectedMood) {
       await saveMood({ mood: selectedMood }); // Convex
@@ -99,18 +99,18 @@ function MoodSelector() {
 
 ## 📊 **State Ownership Table**
 
-| State Type | Zustand | Convex | Example |
-|------------|---------|--------|---------|
-| **Input Values** | ✅ | ❌ | `currentMessage`, `selectedMood` |
-| **Modal Visibility** | ✅ | ❌ | `isFloatingChatVisible`, `showQuickReplies` |
-| **Loading States** | ✅ | ❌ | `isTyping`, `isLoading` |
-| **Form Validation** | ✅ | ❌ | `hasErrors`, `validationMessages` |
-| **View Modes** | ✅ | ❌ | `viewMode: 'graph' \| 'calendar'` |
-| **Animation States** | ✅ | ❌ | `isAnimating`, `pulseActive` |
-| **Messages/Data** | ❌ | ✅ | `messages[]`, `moodEntries[]` |
-| **User Profile** | ❌ | ✅ | `user`, `preferences` |
-| **Real-time Updates** | ❌ | ✅ | Live chat, notifications |
-| **Persistent Storage** | ❌ | ✅ | Database records |
+| State Type             | Zustand | Convex | Example                                     |
+| ---------------------- | ------- | ------ | ------------------------------------------- |
+| **Input Values**       | ✅      | ❌     | `currentMessage`, `selectedMood`            |
+| **Modal Visibility**   | ✅      | ❌     | `isFloatingChatVisible`, `showQuickReplies` |
+| **Loading States**     | ✅      | ❌     | `isTyping`, `isLoading`                     |
+| **Form Validation**    | ✅      | ❌     | `hasErrors`, `validationMessages`           |
+| **View Modes**         | ✅      | ❌     | `viewMode: 'graph' \| 'calendar'`           |
+| **Animation States**   | ✅      | ❌     | `isAnimating`, `pulseActive`                |
+| **Messages/Data**      | ❌      | ✅     | `messages[]`, `moodEntries[]`               |
+| **User Profile**       | ❌      | ✅     | `user`, `preferences`                       |
+| **Real-time Updates**  | ❌      | ✅     | Live chat, notifications                    |
+| **Persistent Storage** | ❌      | ✅     | Database records                            |
 
 ## 🔄 **Data Flow Patterns**
 
@@ -148,16 +148,19 @@ try {
 ## ✅ **Benefits of This Architecture**
 
 ### **Performance**
+
 - **Immediate UI Updates**: Zustand provides instant feedback
 - **Optimistic Updates**: UI responds before server confirms
 - **Selective Re-renders**: Zustand selectors prevent unnecessary updates
 
-### **Reliability**  
+### **Reliability**
+
 - **Error Recovery**: UI state can be restored on server errors
 - **Offline Resilience**: UI remains responsive during network issues
 - **Data Consistency**: Convex ensures server state is always in sync
 
 ### **Developer Experience**
+
 - **Clear Separation**: UI logic vs business logic
 - **Type Safety**: Both Zustand and Convex are fully typed
 - **Debugging**: Easy to track whether issues are UI or server-related
@@ -168,7 +171,7 @@ try {
 // ❌ DON'T: Store server data in Zustand
 const messages = useZustandMessages(); // Bad: Data should come from Convex
 
-// ❌ DON'T: Store UI state in Convex  
+// ❌ DON'T: Store UI state in Convex
 const isTyping = useQuery(api.ui.getTypingState); // Bad: UI state belongs in Zustand
 
 // ❌ DON'T: Mix concerns
@@ -182,6 +185,7 @@ const isTyping = useTypingState(); // Zustand: UI state
 ## 🎯 **Summary**
 
 **Perfect Architecture:**
+
 - **Zustand**: Manages what the user sees and interacts with
 - **Convex**: Manages what gets saved and synchronized
 - **Clear Boundaries**: UI state vs Server state

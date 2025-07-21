@@ -18,21 +18,25 @@ function getConfig(): AppConfig {
   // In development, use process.env
   // In production, use expo-constants
   const isDev = __DEV__;
-  
-  const clerkKey = isDev 
+
+  const clerkKey = isDev
     ? process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY
     : Constants.expoConfig?.extra?.clerkPublishableKey;
-    
+
   const convexUrl = isDev
-    ? process.env.EXPO_PUBLIC_CONVEX_URL  
+    ? process.env.EXPO_PUBLIC_CONVEX_URL
     : Constants.expoConfig?.extra?.convexUrl;
 
   if (!clerkKey) {
-    throw new Error('Clerk publishable key not found. Please check your environment configuration.');
+    throw new Error(
+      'Clerk publishable key not found. Please check your environment configuration.'
+    );
   }
-  
+
   if (!convexUrl) {
-    throw new Error('Convex URL not found. Please check your environment configuration.');
+    throw new Error(
+      'Convex URL not found. Please check your environment configuration.'
+    );
   }
 
   return {

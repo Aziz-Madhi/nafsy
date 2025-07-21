@@ -14,7 +14,7 @@ This document establishes optimization principles for React Native/Expo iOS deve
 **E**xtend before creating  
 **V**erify through testing  
 **E**liminate duplication  
-**R**educe bundle size  
+**R**educe bundle size
 
 ## 🧠 Extended Thinking Process
 
@@ -29,7 +29,7 @@ graph TD
     D -->|No| F{Is the new component reusable?}
     F -->|Yes| G[Create abstraction]
     F -->|No| H[Reconsider approach]
-    
+
     C --> I[Document extensions]
     E --> I
     G --> J[Create new pattern]
@@ -41,14 +41,17 @@ graph TD
 Before writing any code, complete this extended thinking exercise:
 
 ### 1. Pattern Recognition Phase (10-15 minutes)
+
 ```markdown
 ## Existing Component Analysis
+
 - [ ] What similar UI components already exist?
 - [ ] Which screens display similar information?
 - [ ] What hooks manage related state?
 - [ ] Which API calls fetch related data?
 
 ## Code Reuse Opportunities
+
 - [ ] Can I extend an existing screen instead of creating a new one?
 - [ ] Can I add props to an existing component?
 - [ ] Can I enhance an existing hook with new computed properties?
@@ -56,19 +59,22 @@ Before writing any code, complete this extended thinking exercise:
 ```
 
 ### 2. Complexity Assessment (5-10 minutes)
+
 ```markdown
 ## Proposed Solution Complexity
-- Lines of new code: ___
-- New components created: ___
-- New screens created: ___
-- New API endpoints needed: ___
-- New dependencies required: ___
+
+- Lines of new code: \_\_\_
+- New components created: \_\_\_
+- New screens created: \_\_\_
+- New API endpoints needed: \_\_\_
+- New dependencies required: \_\_\_
 
 ## Optimized Alternative
-- Lines extending existing code: ___
-- Components modified: ___
-- Props added to existing components: ___
-- Existing API calls enhanced: ___
+
+- Lines extending existing code: \_\_\_
+- Components modified: \_\_\_
+- Props added to existing components: \_\_\_
+- Existing API calls enhanced: \_\_\_
 
 If optimized < 50% of proposed, proceed with optimization.
 ```
@@ -78,6 +84,7 @@ If optimized < 50% of proposed, proceed with optimization.
 ### 1. Component Reuse & Extension
 
 #### ❌ Anti-Pattern: Creating Duplicate Components
+
 ```typescript
 // DON'T: Create similar list components
 export function UserList() {
@@ -102,6 +109,7 @@ export function CustomerList() {
 ```
 
 #### ✅ Pattern: Create Flexible Generic Components
+
 ```typescript
 // DO: Create reusable list component
 interface ListItem {
@@ -148,77 +156,80 @@ export function GenericList<T extends ListItem>({
 ### 2. State Management Optimization
 
 #### ❌ Anti-Pattern: Duplicate State Logic
+
 ```typescript
 // DON'T: Create separate hooks for similar data
 export function useUserProfile() {
-  const [user, setUser] = useState()
-  const [loading, setLoading] = useState(false)
+  const [user, setUser] = useState();
+  const [loading, setLoading] = useState(false);
   // ... fetch logic
 }
 
 export function useCustomerProfile() {
-  const [customer, setCustomer] = useState()
-  const [loading, setLoading] = useState(false)
+  const [customer, setCustomer] = useState();
+  const [loading, setLoading] = useState(false);
   // ... nearly identical fetch logic
 }
 ```
 
 #### ✅ Pattern: Generic Data Fetching Hooks
+
 ```typescript
 // DO: Create reusable data fetching hook
 export function useAPIData<T>(
   endpoint: string,
   dependencies: any[] = [],
   options?: {
-    enabled?: boolean
-    refetchOnFocus?: boolean
+    enabled?: boolean;
+    refetchOnFocus?: boolean;
   }
 ) {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const fetchData = useCallback(async () => {
-    if (!options?.enabled ?? true) return
-    
-    setLoading(true)
-    setError(null)
-    
+    if (!options?.enabled ?? true) return;
+
+    setLoading(true);
+    setError(null);
+
     try {
-      const response = await api.get(endpoint)
-      setData(response.data)
+      const response = await api.get(endpoint);
+      setData(response.data);
     } catch (err) {
-      setError(err.message)
+      setError(err.message);
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }, [endpoint, ...dependencies])
+  }, [endpoint, ...dependencies]);
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    fetchData();
+  }, [fetchData]);
 
   // Refetch on app focus if enabled
   useFocusEffect(
     useCallback(() => {
       if (options?.refetchOnFocus) {
-        fetchData()
+        fetchData();
       }
     }, [fetchData, options?.refetchOnFocus])
-  )
+  );
 
-  return { data, loading, error, refetch: fetchData }
+  return { data, loading, error, refetch: fetchData };
 }
 
 // Usage
 export function useUserProfile(userId: string) {
-  return useAPIData<User>(`/users/${userId}`, [userId])
+  return useAPIData<User>(`/users/${userId}`, [userId]);
 }
 ```
 
 ### 3. Screen Architecture
 
 #### ❌ Anti-Pattern: Duplicate Screen Patterns
+
 ```typescript
 // DON'T: Create separate screens with similar layouts
 export function UserDetailScreen() {
@@ -245,6 +256,7 @@ export function ProductDetailScreen() {
 ```
 
 #### ✅ Pattern: Composable Screen Layout
+
 ```typescript
 // DO: Create reusable screen layout
 interface DetailScreenLayoutProps {
@@ -285,7 +297,7 @@ export function DetailScreenLayout({
 // Usage
 export function UserDetailScreen({ userId }: { userId: string }) {
   const { data: user, loading, refetch } = useUserProfile(userId)
-  
+
   return (
     <DetailScreenLayout
       title="User Details"
@@ -306,13 +318,13 @@ export function UserDetailScreen({ userId }: { userId: string }) {
 
 ```typescript
 // ❌ DON'T: Import entire libraries
-import * as Icons from '@expo/vector-icons'
-import { format } from 'date-fns'
+import * as Icons from '@expo/vector-icons';
+import { format } from 'date-fns';
 
 // ✅ DO: Import only what you need
-import { Feather } from '@expo/vector-icons'
-import { format } from 'date-fns/format'
-import { parseISO } from 'date-fns/parseISO'
+import { Feather } from '@expo/vector-icons';
+import { format } from 'date-fns/format';
+import { parseISO } from 'date-fns/parseISO';
 ```
 
 ### 2. Performance Optimization
@@ -335,7 +347,7 @@ export function UserCard({ user }: { user: User }) {
 // ✅ DO: Use useCallback for performance
 export function UserCard({ user }: { user: User }) {
   const navigation = useNavigation()
-  
+
   const handlePress = useCallback(() => {
     navigation.navigate('UserDetail', { userId: user.id })
   }, [navigation, user.id])
@@ -348,44 +360,45 @@ export function UserCard({ user }: { user: User }) {
 }
 ```
 
-
-
 ## 📊 Decision Framework
 
 ### When to Extend vs Create New
 
 Use this scoring system for React Native components:
 
-| Criteria | Extend Existing | Create New |
-|----------|----------------|------------|
-| Similar layout structure exists | +3 points | -3 points |
-| Can reuse existing styling | +2 points | -2 points |
-| Similar data patterns | +3 points | -3 points |
-| Navigation patterns match | +2 points | -2 points |
-| Would require <50 lines to extend | +3 points | -3 points |
-| Would break component responsibility | -5 points | +5 points |
-| Significantly different iOS patterns | -3 points | +3 points |
-| Performance implications | -2 points | +2 points |
+| Criteria                             | Extend Existing | Create New |
+| ------------------------------------ | --------------- | ---------- |
+| Similar layout structure exists      | +3 points       | -3 points  |
+| Can reuse existing styling           | +2 points       | -2 points  |
+| Similar data patterns                | +3 points       | -3 points  |
+| Navigation patterns match            | +2 points       | -2 points  |
+| Would require <50 lines to extend    | +3 points       | -3 points  |
+| Would break component responsibility | -5 points       | +5 points  |
+| Significantly different iOS patterns | -3 points       | +3 points  |
+| Performance implications             | -2 points       | +2 points  |
 
 **Score > 5**: Extend existing component  
 **Score < -5**: Create new implementation  
-**Score -5 to 5**: Deeper analysis required  
+**Score -5 to 5**: Deeper analysis required
 
 ## 🛠️ Implementation Strategies
 
 ### 1. The Three-Pass Approach
 
 **Pass 1: Discovery (No Code)**
+
 - Find all related existing components/screens
 - Document current navigation patterns
 - Identify extension points
 
 **Pass 2: Design (Minimal Code)**
+
 - Write interface/props changes only
 - Update type definitions
 - Plan component hierarchy
 
 **Pass 3: Implementation (Optimized Code)**
+
 - Implement with maximum reuse
 - Add only essential new logic
 - Test on iOS device
@@ -393,18 +406,19 @@ Use this scoring system for React Native components:
 ### 2. Component Reuse Patterns
 
 #### Pattern: Conditional Rendering
+
 ```typescript
 // Instead of new component
-export function StatusCard({ 
-  status, 
+export function StatusCard({
+  status,
   showCampaignBadge = false,
-  campaignSource 
+  campaignSource
 }: StatusCardProps) {
   return (
     <View style={styles.card}>
       {/* Existing status UI */}
       <StatusIndicator status={status} />
-      
+
       {/* Conditionally show new features */}
       {showCampaignBadge && campaignSource && (
         <CampaignBadge source={campaignSource} />
@@ -415,6 +429,7 @@ export function StatusCard({
 ```
 
 #### Pattern: Composition over Inheritance
+
 ```typescript
 // Base card component
 export function BaseCard({ children, style }: BaseCardProps) {
@@ -448,6 +463,7 @@ export function ProductCard({ product }: { product: Product }) {
 ## 📈 Real-World Example: Feature Addition
 
 ### Before Optimization
+
 ```typescript
 // Create new NotificationScreen (200 lines)
 // Create new NotificationCard component (150 lines)
@@ -457,6 +473,7 @@ export function ProductCard({ product }: { product: Product }) {
 ```
 
 ### After Optimization
+
 ```typescript
 // Extend existing ListScreen with notification props (20 lines)
 // Extend existing Card component with notification variant (30 lines)
@@ -468,23 +485,25 @@ export function ProductCard({ product }: { product: Product }) {
 ## ⚡ Mobile Performance Rules
 
 ### 1. Lazy Loading
+
 ```typescript
 // ❌ Load all screens upfront
-import UserScreen from './UserScreen'
-import ProductScreen from './ProductScreen'
+import UserScreen from './UserScreen';
+import ProductScreen from './ProductScreen';
 
 // ✅ Lazy load screens
-const UserScreen = lazy(() => import('./UserScreen'))
-const ProductScreen = lazy(() => import('./ProductScreen'))
+const UserScreen = lazy(() => import('./UserScreen'));
+const ProductScreen = lazy(() => import('./ProductScreen'));
 ```
 
 ### 2. Image Optimization
+
 ```typescript
 // ✅ Optimize images for different screen densities
-export function OptimizedImage({ 
-  source, 
-  style, 
-  placeholder 
+export function OptimizedImage({
+  source,
+  style,
+  placeholder
 }: OptimizedImageProps) {
   return (
     <Image
@@ -502,65 +521,72 @@ export function OptimizedImage({
 ```
 
 ### 3. API Call Optimization
+
 ```typescript
 // ✅ Implement smart caching
 export function useAPIDataWithCache<T>(
   endpoint: string,
   cacheTime: number = 5 * 60 * 1000 // 5 minutes
 ) {
-  const [data, setData] = useState<T | null>(null)
-  const [loading, setLoading] = useState(false)
-  const cacheRef = useRef<{ data: T; timestamp: number } | null>(null)
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(false);
+  const cacheRef = useRef<{ data: T; timestamp: number } | null>(null);
 
   const fetchData = useCallback(async () => {
     // Check cache first
     if (cacheRef.current) {
-      const isValid = Date.now() - cacheRef.current.timestamp < cacheTime
+      const isValid = Date.now() - cacheRef.current.timestamp < cacheTime;
       if (isValid) {
-        setData(cacheRef.current.data)
-        return
+        setData(cacheRef.current.data);
+        return;
       }
     }
 
-    setLoading(true)
+    setLoading(true);
     try {
-      const response = await api.get(endpoint)
-      const newData = response.data
-      
+      const response = await api.get(endpoint);
+      const newData = response.data;
+
       // Update cache
       cacheRef.current = {
         data: newData,
-        timestamp: Date.now()
-      }
-      
-      setData(newData)
-    } catch (error) {
-      console.error('API Error:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [endpoint, cacheTime])
+        timestamp: Date.now(),
+      };
 
-  return { data, loading, refetch: fetchData }
+      setData(newData);
+    } catch (error) {
+      console.error('API Error:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, [endpoint, cacheTime]);
+
+  return { data, loading, refetch: fetchData };
 }
 ```
 
 ## 🚫 Mobile-Specific Anti-Patterns
 
 ### 1. The "Native Module" Trap
+
 Before adding a native module:
+
 - Can Expo SDK handle this?
 - Can we use a web-based alternative?
 - Will this complicate builds/updates?
 
 ### 2. The "Custom Everything" Mistake
+
 Before creating custom UI:
+
 - Does iOS have a native pattern for this?
 - Can we extend existing React Native components?
 - Will this confuse iOS users?
 
 ### 3. The "Heavy Dependencies" Problem
+
 Before adding dependencies:
+
 - What's the bundle size impact?
 - Are we using <30% of the library?
 - Can we implement this feature ourselves in fewer lines?
@@ -571,14 +597,14 @@ When extending existing components:
 
 ```typescript
 // Document WHY you're extending
-export function UserCard({ 
-  user, 
+export function UserCard({
+  user,
   showCampaignInfo = false // OPTIMIZATION: Added campaign display to existing
 }: UserCardProps) {        // UserCard instead of creating CampaignUserCard.
   return (                 // Reduces bundle size and maintains consistency.
     <BaseCard>             // See: campaign-feature-2025-07-04
       <UserInfo user={user} />
-      
+
       {showCampaignInfo && user.campaignSource && (
         <CampaignBadge source={user.campaignSource} />
       )}
@@ -591,15 +617,15 @@ export function UserCard({
 
 Track optimization success:
 
-| Metric | Target |
-|--------|--------|
-| Code reduction vs initial approach | >50% |
-| Reused existing components | >70% |
-| New screens created | <2 per feature |
-| New dependencies added | 0 (use existing) |
-| Bundle size increase | <5% |
-| iOS app size increase | <10MB |
-| Performance impact | No degradation |
+| Metric                             | Target           |
+| ---------------------------------- | ---------------- |
+| Code reduction vs initial approach | >50%             |
+| Reused existing components         | >70%             |
+| New screens created                | <2 per feature   |
+| New dependencies added             | 0 (use existing) |
+| Bundle size increase               | <5%              |
+| iOS app size increase              | <10MB            |
+| Performance impact                 | No degradation   |
 
 ## 🔍 Review Checklist
 
@@ -625,4 +651,4 @@ Before submitting optimized code:
 
 ---
 
-*Remember: Every component is a responsibility. The best feature is one that enhances existing components rather than creating new ones.*
+_Remember: Every component is a responsibility. The best feature is one that enhances existing components rather than creating new ones._

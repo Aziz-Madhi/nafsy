@@ -1,23 +1,26 @@
-import { v } from "convex/values";
-import { mutation, query } from "./_generated/server";
-import { Doc } from "./_generated/dataModel";
+import { v } from 'convex/values';
+import { mutation, query } from './_generated/server';
+import { Doc } from './_generated/dataModel';
+import { getAuthenticatedUser } from './authUtils';
 
 // Create a new mood entry
 export const createMood = mutation({
   args: {
-    userId: v.id("users"),
     mood: v.union(
-      v.literal("happy"),
-      v.literal("neutral"),
-      v.literal("sad"),
-      v.literal("anxious"),
-      v.literal("angry")
+      v.literal('happy'),
+      v.literal('neutral'),
+      v.literal('sad'),
+      v.literal('anxious'),
+      v.literal('angry')
     ),
     note: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
-    const moodId = await ctx.db.insert("moods", {
-      userId: args.userId,
+    // Authenticate user and get their ID
+    const user = await getAuthenticatedUser(ctx);
+
+    const moodId = await ctx.db.insert('moods', {
+      userId: user._id,
       mood: args.mood,
       note: args.note,
       createdAt: Date.now(),
@@ -29,52 +32,58 @@ export const createMood = mutation({
 // Get moods for a user with optional date range
 export const getMoods = query({
   args: {
-    userId: v.id("users"),
     startDate: v.optional(v.number()),
     endDate: v.optional(v.number()),
     limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    let query = ctx.db
-      .query("moods")
-      .withIndex("by_user_date", (q) => q.eq("userId", args.userId))
-      .order("desc");
+    // Authenticate user and get their ID
+    const user = await getAuthenticatedUser(ctx);
 
-    const allMoods = await query.collect();
+    let queryBuilder = ctx.db
+      .query('moods')
+      .withIndex('by_user_date', (q) => q.eq('userId', user._id))
+      .order('desc');
 
-    // Filter by date range if provided
-    let filteredMoods = allMoods;
-    if (args.startDate || args.endDate) {
-      filteredMoods = allMoods.filter((mood) => {
-        if (args.startDate && mood.createdAt < args.startDate) return false;
-        if (args.endDate && mood.createdAt > args.endDate) return false;
-        return true;
-      });
+    // Apply date filtering at database level for better performance
+    if (args.startDate && args.endDate) {
+      queryBuilder = queryBuilder.filter((q) =>
+        q.and(
+          q.gte(q.field('createdAt'), args.startDate!),
+          q.lte(q.field('createdAt'), args.endDate!)
+        )
+      );
+    } else if (args.startDate) {
+      queryBuilder = queryBuilder.filter((q) =>
+        q.gte(q.field('createdAt'), args.startDate!)
+      );
+    } else if (args.endDate) {
+      queryBuilder = queryBuilder.filter((q) =>
+        q.lte(q.field('createdAt'), args.endDate!)
+      );
     }
 
-    // Apply limit if provided
-    if (args.limit) {
-      filteredMoods = filteredMoods.slice(0, args.limit);
-    }
-
-    return filteredMoods;
+    // Apply limit and get results
+    return await queryBuilder.take(args.limit || 50);
   },
 });
 
 // Get mood statistics for a user
 export const getMoodStats = query({
   args: {
-    userId: v.id("users"),
     days: v.optional(v.number()), // Number of days to look back (default 30)
   },
   handler: async (ctx, args) => {
+    // Authenticate user and get their ID
+    const user = await getAuthenticatedUser(ctx);
+
     const daysToLookBack = args.days || 30;
     const startDate = Date.now() - daysToLookBack * 24 * 60 * 60 * 1000;
 
     const moods = await ctx.db
-      .query("moods")
-      .withIndex("by_user_date", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.gte(q.field("createdAt"), startDate))
+      .query('moods')
+      .withIndex('by_user_date', (q) => q.eq('userId', user._id))
+      .filter((q) => q.gte(q.field('createdAt'), startDate))
       .collect();
 
     // Calculate statistics
@@ -86,11 +95,11 @@ export const getMoodStats = query({
       angry: 0,
     };
 
-    const dailyMoods: Record<string, Doc<"moods">> = {};
-    
+    const dailyMoods: Record<string, Doc<'moods'>> = {};
+
     moods.forEach((mood) => {
       moodCounts[mood.mood]++;
-      
+
       // Track daily moods (last mood of each day)
       const date = new Date(mood.createdAt).toDateString();
       if (!dailyMoods[date] || mood.createdAt > dailyMoods[date].createdAt) {
@@ -105,7 +114,7 @@ export const getMoodStats = query({
       const date = new Date(today);
       date.setDate(date.getDate() - i);
       const dateStr = date.toDateString();
-      
+
       if (dailyMoods[dateStr]) {
         currentStreak++;
       } else if (i > 0) {
@@ -124,26 +133,29 @@ export const getMoodStats = query({
       moodCounts,
       currentStreak,
       mostCommonMood,
-      dailyMoods: Object.values(dailyMoods).sort((a, b) => a.createdAt - b.createdAt),
+      dailyMoods: Object.values(dailyMoods).sort(
+        (a, b) => a.createdAt - b.createdAt
+      ),
     };
   },
 });
 
 // Get today's mood for a user
 export const getTodayMood = query({
-  args: {
-    userId: v.id("users"),
-  },
+  args: {},
   handler: async (ctx, args) => {
+    // Authenticate user and get their ID
+    const user = await getAuthenticatedUser(ctx);
+
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const startTimestamp = todayStart.getTime();
 
     const todayMoods = await ctx.db
-      .query("moods")
-      .withIndex("by_user_date", (q) => q.eq("userId", args.userId))
-      .filter((q) => q.gte(q.field("createdAt"), startTimestamp))
-      .order("desc")
+      .query('moods')
+      .withIndex('by_user_date', (q) => q.eq('userId', user._id))
+      .filter((q) => q.gte(q.field('createdAt'), startTimestamp))
+      .order('desc')
       .first();
 
     return todayMoods;

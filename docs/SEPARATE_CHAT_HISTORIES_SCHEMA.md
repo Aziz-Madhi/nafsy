@@ -3,7 +3,7 @@
 ## 🎯 **Requirements**
 
 - **Vent History**: Floating chat conversations (quick emotional vents)
-- **Main History**: Full chat conversations (structured therapy sessions)  
+- **Main History**: Full chat conversations (structured therapy sessions)
 - **Complete Separation**: Different database tables for each chat type
 - **History UI**: User can browse both histories separately
 
@@ -59,8 +59,9 @@ messages: defineTable({
 ```
 
 **Recommendation: Use Option 1 (Separate Tables)** for:
+
 - Clear data separation
-- Better query performance  
+- Better query performance
 - Easier to manage different features per chat type
 - Future scalability
 
@@ -71,63 +72,63 @@ messages: defineTable({
 ```ts
 // convex/mainChat.ts
 export const getMainChatMessages = query({
-  args: { 
-    userId: v.id("users"),
+  args: {
+    userId: v.id('users'),
     sessionId: v.optional(v.string()),
-    limit: v.optional(v.number())
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     let query = ctx.db
-      .query("mainChatMessages")
-      .filter((q) => q.eq(q.field("userId"), args.userId));
-    
+      .query('mainChatMessages')
+      .filter((q) => q.eq(q.field('userId'), args.userId));
+
     if (args.sessionId) {
-      query = query.filter((q) => q.eq(q.field("sessionId"), args.sessionId));
+      query = query.filter((q) => q.eq(q.field('sessionId'), args.sessionId));
     }
-    
-    return await query
-      .order("desc")
-      .take(args.limit || 50);
+
+    return await query.order('desc').take(args.limit || 50);
   },
 });
 
 export const sendMainChatMessage = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     content: v.string(),
-    role: v.union(v.literal("user"), v.literal("assistant")),
+    role: v.union(v.literal('user'), v.literal('assistant')),
     sessionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Create or update session
     const sessionId = args.sessionId || `main_${Date.now()}`;
-    
+
     // Insert message
-    const messageId = await ctx.db.insert("mainChatMessages", {
+    const messageId = await ctx.db.insert('mainChatMessages', {
       userId: args.userId,
       content: args.content,
       role: args.role,
       sessionId,
       createdAt: Date.now(),
     });
-    
+
     // Update session metadata
-    await updateChatSession(ctx, args.userId, "main", sessionId);
-    
+    await updateChatSession(ctx, args.userId, 'main', sessionId);
+
     return messageId;
   },
 });
 
 export const getMainChatSessions = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.id('users') },
   handler: async (ctx, args) => {
     return await ctx.db
-      .query("chatSessions")
-      .filter((q) => q.and(
-        q.eq(q.field("userId"), args.userId),
-        q.eq(q.field("type"), "main")
-      ))
-      .order("desc")
+      .query('chatSessions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), args.userId),
+          q.eq(q.field('type'), 'main')
+        )
+      )
+      .order('desc')
       .take(20);
   },
 });
@@ -138,75 +139,77 @@ export const getMainChatSessions = query({
 ```ts
 // convex/ventChat.ts
 export const getVentChatMessages = query({
-  args: { 
-    userId: v.id("users"),
+  args: {
+    userId: v.id('users'),
     ventSessionId: v.optional(v.string()),
-    limit: v.optional(v.number())
+    limit: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     let query = ctx.db
-      .query("ventChatMessages")
-      .filter((q) => q.eq(q.field("userId"), args.userId));
-    
+      .query('ventChatMessages')
+      .filter((q) => q.eq(q.field('userId'), args.userId));
+
     if (args.ventSessionId) {
-      query = query.filter((q) => q.eq(q.field("ventSessionId"), args.ventSessionId));
+      query = query.filter((q) =>
+        q.eq(q.field('ventSessionId'), args.ventSessionId)
+      );
     }
-    
-    return await query
-      .order("desc")
-      .take(args.limit || 20);
+
+    return await query.order('desc').take(args.limit || 20);
   },
 });
 
 export const sendVentChatMessage = mutation({
   args: {
-    userId: v.id("users"),
+    userId: v.id('users'),
     content: v.string(),
-    role: v.union(v.literal("user"), v.literal("assistant")),
+    role: v.union(v.literal('user'), v.literal('assistant')),
     ventSessionId: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     // Create or update vent session
     const ventSessionId = args.ventSessionId || `vent_${Date.now()}`;
-    
+
     // Insert message
-    const messageId = await ctx.db.insert("ventChatMessages", {
+    const messageId = await ctx.db.insert('ventChatMessages', {
       userId: args.userId,
       content: args.content,
       role: args.role,
       ventSessionId,
       createdAt: Date.now(),
     });
-    
+
     // Update session metadata
-    await updateChatSession(ctx, args.userId, "vent", ventSessionId);
-    
+    await updateChatSession(ctx, args.userId, 'vent', ventSessionId);
+
     return messageId;
   },
 });
 
 export const getVentChatSessions = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.id('users') },
   handler: async (ctx, args) => {
     return await ctx.db
-      .query("chatSessions")
-      .filter((q) => q.and(
-        q.eq(q.field("userId"), args.userId),
-        q.eq(q.field("type"), "vent")
-      ))
-      .order("desc")
+      .query('chatSessions')
+      .filter((q) =>
+        q.and(
+          q.eq(q.field('userId'), args.userId),
+          q.eq(q.field('type'), 'vent')
+        )
+      )
+      .order('desc')
       .take(20);
   },
 });
 
 export const getCurrentVentSession = query({
-  args: { userId: v.id("users") },
+  args: { userId: v.id('users') },
   handler: async (ctx, args) => {
     // Get most recent vent messages (for floating chat)
     return await ctx.db
-      .query("ventChatMessages")
-      .filter((q) => q.eq(q.field("userId"), args.userId))
-      .order("desc")
+      .query('ventChatMessages')
+      .filter((q) => q.eq(q.field('userId'), args.userId))
+      .order('desc')
       .take(3); // Last 3 messages for floating chat
   },
 });
@@ -219,12 +222,12 @@ export const getCurrentVentSession = query({
 export async function updateChatSession(
   ctx: any,
   userId: string,
-  type: "main" | "vent",
+  type: 'main' | 'vent',
   sessionId: string
 ) {
   const existing = await ctx.db
-    .query("chatSessions")
-    .filter((q) => q.eq(q.field("sessionId"), sessionId))
+    .query('chatSessions')
+    .filter((q) => q.eq(q.field('sessionId'), sessionId))
     .first();
 
   if (existing) {
@@ -233,11 +236,11 @@ export async function updateChatSession(
       messageCount: existing.messageCount + 1,
     });
   } else {
-    await ctx.db.insert("chatSessions", {
+    await ctx.db.insert('chatSessions', {
       userId,
       type,
       sessionId,
-      title: type === "main" ? "Chat Session" : "Quick Vent",
+      title: type === 'main' ? 'Chat Session' : 'Quick Vent',
       startedAt: Date.now(),
       lastMessageAt: Date.now(),
       messageCount: 1,
@@ -277,7 +280,7 @@ export async function updateChatSession(
 1. **Create new schema** with separate tables
 2. **Migrate existing messages** to appropriate table based on context
 3. **Update FloatingChat** to use vent endpoints
-4. **Update MainChat** to use main endpoints  
+4. **Update MainChat** to use main endpoints
 5. **Create ChatHistory** screen with tabs
 6. **Test both chat flows** separately
 

@@ -32,8 +32,6 @@ tailwind.config.js
 
 .
 
-  
-
 Make sure to update the
 
 ```bash
@@ -249,7 +247,10 @@ module.exports = function (api) {
   plugins.push('react-native-reanimated/plugin');
 
   return {
-    presets: [['babel-preset-expo', { jsxImportSource: 'nativewind' }], 'nativewind/babel'],
+    presets: [
+      ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
+      'nativewind/babel',
+    ],
     plugins,
   };
 };
@@ -263,15 +264,12 @@ If your Expo project does not have a
 metro.config.js
 ```
 
-in the project root, run the following command:  
-  
+in the project root, run the following command:
 
 ```bash
 npx expo customize metro.config.js
 ```
 
-  
-  
 For those using Expo SDK 50+, your config should look like this:
 
 metro.config.js
@@ -349,7 +347,6 @@ lib
 
 folder to the root of your project to make it easy to access our colors.
 
-  
 Now, add the following files to said folder:
 
 ~/lib/useColorScheme.tsx
@@ -367,7 +364,8 @@ import { Platform } from 'react-native';
 import { COLORS } from '~/theme/colors';
 
 function useColorScheme() {
-  const { colorScheme, setColorScheme: setNativewindColorScheme } = useNativewindColorScheme();
+  const { colorScheme, setColorScheme: setNativewindColorScheme } =
+    useNativewindColorScheme();
 
   async function setColorScheme(colorScheme: 'light' | 'dark') {
     setNativewindColorScheme(colorScheme);
@@ -409,14 +407,18 @@ export { useColorScheme, useInitialAndroidBarSync };
 
 function setNavigationBar(colorScheme: 'light' | 'dark') {
   return Promise.all([
-    NavigationBar.setButtonStyleAsync(colorScheme === 'dark' ? 'light' : 'dark'),
+    NavigationBar.setButtonStyleAsync(
+      colorScheme === 'dark' ? 'light' : 'dark'
+    ),
     NavigationBar.setPositionAsync('absolute'),
-    NavigationBar.setBackgroundColorAsync(colorScheme === 'dark' ? '#00000030' : '#ffffff80'),
+    NavigationBar.setBackgroundColorAsync(
+      colorScheme === 'dark' ? '#00000030' : '#ffffff80'
+    ),
   ]);
 }
 ```
 
-**Important:** The **useInitialAndroidBarSync** hook needs to be called in the root **_layout.tsx**.
+**Important:** The **useInitialAndroidBarSync** hook needs to be called in the root **\_layout.tsx**.
 
 ~/lib/cn.ts
 
@@ -677,12 +679,12 @@ export function ThemeToggle() {
 Wrap your root navigation stack in
 
 ```html
-<NavThemeProvider>
+<NavThemeProvider></NavThemeProvider>
 ```
 
 :
 
-~/app/_layout.tsx
+~/app/\_layout.tsx
 
 DownloadCopy
 
@@ -848,7 +850,6 @@ function Card({ children, title }: { children: React.ReactNode; title: string })
 const COMPONENTS: ComponentItem[] = [];
 ```
 
-
 # React Native Reusables
 
 1. Follow the installation guide for NativeWind from the [official documentation](https://www.nativewind.dev/getting-started/expo-router)
@@ -958,7 +959,7 @@ Collapse
 
 In your root component (ex: the root `_layout.tsx` if you’re using expo-router), add the following code to load the selected theme, prevent the flash of the default theme, and store the selected theme in the async storage.
 
-_layout.tsx
+\_layout.tsx
 
 ```
 import '~/global.css';

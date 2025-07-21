@@ -11,7 +11,11 @@
     "clean": "rm -rf .expo node_modules/.cache metro-cache",
     "clean-full": "rm -rf .expo node_modules bun.lock && bun install",
     "convex:dev": "bun convex dev",
-    "convex:deploy": "bun convex deploy"
+    "convex:deploy": "bun convex deploy",
+    "lint": "expo lint",
+    "lint:fix": "expo lint --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check ."
   },
   "dependencies": {
     "@clerk/clerk-expo": "2.14.2",
@@ -67,7 +71,12 @@
     "@react-native-reusables/cli": "^0.4.1",
     "@types/react": "~19.0.10",
     "@types/react-dom": "~19.1.6",
+    "eslint": "^9.0.0",
+    "eslint-config-expo": "~9.2.0",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-prettier": "^5.5.3",
     "metro": "^0.82.0",
+    "prettier": "^3.6.2",
     "prettier-plugin-tailwindcss": "^0.5.11",
     "tailwindcss": "^3.4.17",
     "typescript": "~5.8.3"

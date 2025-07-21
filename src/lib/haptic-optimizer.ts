@@ -8,22 +8,24 @@ class HapticOptimizer {
   private recentHaptics: number[] = [];
 
   // Throttled haptic feedback
-  public optimizedImpact(style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light): void {
+  public optimizedImpact(
+    style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light
+  ): void {
     const now = Date.now();
-    
+
     // Check minimum interval
     if (now - this.lastHapticTime < this.minInterval) {
       return;
     }
-    
+
     // Clean old haptics (older than 1 second)
-    this.recentHaptics = this.recentHaptics.filter(time => now - time < 1000);
-    
+    this.recentHaptics = this.recentHaptics.filter((time) => now - time < 1000);
+
     // Check frequency limit
     if (this.recentHaptics.length >= this.maxFrequency) {
       return;
     }
-    
+
     // Execute haptic feedback
     Haptics.impactAsync(style);
     this.lastHapticTime = now;
@@ -31,7 +33,9 @@ class HapticOptimizer {
   }
 
   // Smart haptic based on interaction type
-  public smartHaptic(type: 'tap' | 'press' | 'success' | 'warning' | 'error'): void {
+  public smartHaptic(
+    type: 'tap' | 'press' | 'success' | 'warning' | 'error'
+  ): void {
     switch (type) {
       case 'tap':
         this.optimizedImpact(Haptics.ImpactFeedbackStyle.Light);
@@ -63,9 +67,12 @@ export const hapticOptimizer = new HapticOptimizer();
 
 // Convenience functions
 export const optimizedHaptic = {
-  light: () => hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Light),
-  medium: () => hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Medium),
-  heavy: () => hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Heavy),
+  light: () =>
+    hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Light),
+  medium: () =>
+    hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Medium),
+  heavy: () =>
+    hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Heavy),
   tap: () => hapticOptimizer.smartHaptic('tap'),
   press: () => hapticOptimizer.smartHaptic('press'),
   success: () => hapticOptimizer.smartHaptic('success'),

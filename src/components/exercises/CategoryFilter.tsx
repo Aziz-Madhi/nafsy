@@ -20,12 +20,42 @@ interface Category {
 }
 
 const getCategoriesWithTranslations = (t: any): Category[] => [
-  { id: 'all', name: t('exercises.categories.all'), icon: '✨', color: '#3B82F6' },
-  { id: 'breathing', name: t('exercises.categories.breathing'), icon: '🌬️', color: '#06B6D4' },
-  { id: 'mindfulness', name: t('exercises.categories.mindfulness'), icon: '🧘', color: '#8B5CF6' },
-  { id: 'movement', name: t('exercises.categories.movement'), icon: '🏃', color: '#10B981' },
-  { id: 'journaling', name: t('exercises.categories.journaling'), icon: '📝', color: '#F59E0B' },
-  { id: 'relaxation', name: t('exercises.categories.relaxation'), icon: '💆', color: '#EC4899' },
+  {
+    id: 'all',
+    name: t('exercises.categories.all'),
+    icon: '✨',
+    color: '#3B82F6',
+  },
+  {
+    id: 'breathing',
+    name: t('exercises.categories.breathing'),
+    icon: '🌬️',
+    color: '#06B6D4',
+  },
+  {
+    id: 'mindfulness',
+    name: t('exercises.categories.mindfulness'),
+    icon: '🧘',
+    color: '#8B5CF6',
+  },
+  {
+    id: 'movement',
+    name: t('exercises.categories.movement'),
+    icon: '🏃',
+    color: '#10B981',
+  },
+  {
+    id: 'journaling',
+    name: t('exercises.categories.journaling'),
+    icon: '📝',
+    color: '#F59E0B',
+  },
+  {
+    id: 'relaxation',
+    name: t('exercises.categories.relaxation'),
+    icon: '💆',
+    color: '#EC4899',
+  },
 ];
 
 interface CategoryFilterProps {
@@ -33,24 +63,30 @@ interface CategoryFilterProps {
   onCategorySelect: (category: string) => void;
 }
 
-export function CategoryFilter({ selectedCategory, onCategorySelect }: CategoryFilterProps) {
+export function CategoryFilter({
+  selectedCategory,
+  onCategorySelect,
+}: CategoryFilterProps) {
   const { t } = useTranslation();
   const categories = getCategoriesWithTranslations(t);
-  
+
   // FlashList render functions
-  const renderCategoryChip = useCallback(({ item, index }: { item: Category; index: number }) => (
-    <CategoryChip
-      category={item}
-      isSelected={selectedCategory === item.id}
-      onPress={() => onCategorySelect(item.id)}
-      index={index}
-    />
-  ), [selectedCategory, onCategorySelect]);
+  const renderCategoryChip = useCallback(
+    ({ item, index }: { item: Category; index: number }) => (
+      <CategoryChip
+        category={item}
+        isSelected={selectedCategory === item.id}
+        onPress={() => onCategorySelect(item.id)}
+        index={index}
+      />
+    ),
+    [selectedCategory, onCategorySelect]
+  );
 
   const keyExtractor = useCallback((item: Category) => item.id, []);
 
   const getItemType = useCallback((item: Category) => 'category', []);
-  
+
   return (
     <View className="mb-6 h-12">
       <FlashList
@@ -74,7 +110,12 @@ interface CategoryChipProps {
   index: number;
 }
 
-function CategoryChip({ category, isSelected, onPress, index }: CategoryChipProps) {
+function CategoryChip({
+  category,
+  isSelected,
+  onPress,
+  index,
+}: CategoryChipProps) {
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -99,9 +140,7 @@ function CategoryChip({ category, isSelected, onPress, index }: CategoryChipProp
           onPress={handlePress}
           className={cn(
             'flex-row items-center px-4 py-2.5 rounded-full mr-3',
-            isSelected
-              ? 'bg-primary'
-              : 'bg-secondary/20'
+            isSelected ? 'bg-primary' : 'bg-secondary/20'
           )}
         >
           <Text className="text-base mr-2">{category.icon}</Text>
@@ -109,9 +148,7 @@ function CategoryChip({ category, isSelected, onPress, index }: CategoryChipProp
             variant="body"
             className={cn(
               'font-medium',
-              isSelected
-                ? 'text-primary-foreground'
-                : 'text-muted-foreground'
+              isSelected ? 'text-primary-foreground' : 'text-muted-foreground'
             )}
           >
             {category.name}

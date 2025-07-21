@@ -15,9 +15,7 @@ export function AppProviders({ children }: AppProvidersProps) {
       <SafeAreaProvider>
         <ClerkProviderWrapper>
           <ConvexProvider>
-            <LanguageProvider>
-              {children}
-            </LanguageProvider>
+            <LanguageProvider>{children}</LanguageProvider>
           </ConvexProvider>
         </ClerkProviderWrapper>
       </SafeAreaProvider>

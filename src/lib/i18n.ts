@@ -1,18 +1,24 @@
 import I18n from 'react-native-i18n';
 import { NativeModules, Platform } from 'react-native';
-import { translations, type Language, type TranslationKeyPath } from '../locales';
+import {
+  translations,
+  type Language,
+  type TranslationKeyPath,
+} from '../locales';
 
 // Get device locale
 const getDeviceLocale = (): string => {
   let locale = 'en';
-  
+
   if (Platform.OS === 'ios') {
-    locale = NativeModules.SettingsManager?.settings?.AppleLocale || 
-             NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] || 'en';
+    locale =
+      NativeModules.SettingsManager?.settings?.AppleLocale ||
+      NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ||
+      'en';
   } else {
     locale = NativeModules.I18nManager.localeIdentifier || 'en';
   }
-  
+
   return locale.split('_')[0]; // Get language code only (e.g., 'en' from 'en_US')
 };
 
@@ -29,7 +35,7 @@ I18n.locale = ['en', 'ar'].includes(deviceLocale) ? deviceLocale : 'en';
 const getNestedTranslation = (obj: any, path: string): string => {
   const keys = path.split('.');
   let current = obj;
-  
+
   for (const key of keys) {
     if (current && typeof current === 'object' && key in current) {
       current = current[key];
@@ -37,16 +43,19 @@ const getNestedTranslation = (obj: any, path: string): string => {
       return path; // Return the key if translation not found
     }
   }
-  
+
   return typeof current === 'string' ? current : path;
 };
 
 // Translation function with type safety
 export const t = (key: TranslationKeyPath, options?: any): string => {
   try {
-    const translation = getNestedTranslation(I18n.translations[I18n.locale as Language], key);
+    const translation = getNestedTranslation(
+      I18n.translations[I18n.locale as Language],
+      key
+    );
     return I18n.interpolate(translation, options);
-  } catch (error) {
+  } catch {
     console.warn(`Translation not found for key: ${key}`);
     return key;
   }

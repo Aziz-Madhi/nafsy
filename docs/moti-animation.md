@@ -4,11 +4,12 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic MotiPressable Usage Example
 DESCRIPTION: A simple example of using MotiPressable to change opacity based on pressed or hovered states. This demonstrates the fundamental usage pattern of the component.
@@ -16,6 +17,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: jsx
 CODE:
+
 ```
 <MotiPressable
   onPress={onPress}
@@ -29,7 +31,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Building an Interactive Hover Dropdown Menu with Moti and React Native
 DESCRIPTION: A complete implementation of a web-focused dropdown menu that responds to hover states using Moti animations. It includes components for menu items, dropdown container, animations, and styling. The implementation uses Moti's pressable interactions API to handle hover states and create smooth transitions.
@@ -37,6 +39,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/examples/dropdow
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react'
 import {
@@ -341,7 +344,7 @@ const styles = StyleSheet.create({
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Fade and Scale Animation with Moti in React Native
 DESCRIPTION: Implements a basic animation that fades and scales a white square shape using Moti's MotiView component. The animation is triggered by a toggle press action and uses timing-based transitions. The component demonstrates Moti's from/animate pattern for defining animation states.
@@ -349,6 +352,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hello-world.md#2
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, { useReducer } from 'react'
 import { StyleSheet, Pressable } from 'react-native'
@@ -402,7 +406,7 @@ const styles = StyleSheet.create({
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic MotiView Animation with Opacity Transition in JSX
 DESCRIPTION: A simple example showing how to create a fade-in animation using MotiView component. It transitions opacity from 0 to 1 using Moti's declarative API.
@@ -410,11 +414,12 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/README.md#2025-04-15_snipp
 
 LANGUAGE: jsx
 CODE:
+
 ```
 <MotiView from={{ opacity: 0 }} animate={{ opacity: 1 }} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Full Example: Touchable Pulse Animation Component with useDynamicAnimation
 DESCRIPTION: A complete example of a touchable component that pulses on touch using useDynamicAnimation, TapGestureHandler, and Moti animations.
@@ -422,6 +427,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-dynami
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react'
 import { MotiView, useDynamicAnimation } from 'moti'
@@ -463,7 +469,7 @@ export default function HoverPulse({
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Fade and Scale Animation with Moti in React Native
 DESCRIPTION: This snippet demonstrates how to use Moti to create a simple animation that fades and scales in a shape. It uses MotiView for animation and React hooks for state management. The component renders a pressable area that toggles the visibility of an animated shape.
@@ -471,6 +477,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/examples/hello-w
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, { useReducer } from 'react'
 import { StyleSheet, Pressable } from 'react-native'
@@ -524,7 +531,7 @@ const styles = StyleSheet.create({
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Sequence Animations in Moti
 DESCRIPTION: Shows how to create sequence animations by passing arrays to style properties and customizing individual steps.
@@ -532,6 +539,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView
   animate={{
@@ -545,7 +553,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Customizing Moti Animations with Transition Props
 DESCRIPTION: Demonstrates how to customize animations using the transition prop, including timing and spring animations.
@@ -553,6 +561,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView
   from={{ opacity: 0, scale: 0.5 }}
@@ -564,7 +573,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of useAnimationState in React Native
 DESCRIPTION: Demonstrates how to import and use the useAnimationState hook to create and apply animation states to a MotiView component.
@@ -572,6 +581,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-animat
 
 LANGUAGE: javascript
 CODE:
+
 ```
 const animationState = useAnimationState({
   from: {
@@ -596,7 +606,7 @@ const onPress = () => {
 return <MotiView state={animationState} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Dynamic Variants with useAnimationState in Moti
 DESCRIPTION: Shows how to create and transition between custom animation variants using useAnimationState.
@@ -604,6 +614,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const animationState = useAnimationState({
   closed: {
@@ -625,7 +636,7 @@ const onPress = () => {
 return <MotiView state={animationState} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Children with useMotiPressable Hook
 DESCRIPTION: Demonstrates how to use the useMotiPressable hook to animate child components based on a parent MotiPressable's interaction state without causing re-renders.
@@ -633,6 +644,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { useMotiPressable } from moti/interactions'
 
@@ -648,7 +660,7 @@ const Child = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic useDynamicAnimation Usage in React Native with Moti
 DESCRIPTION: Demonstrates the basic usage of useDynamicAnimation hook to create dynamic animations with an initial state and animating to new states based on layout changes.
@@ -656,6 +668,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-dynami
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const animation = useDynamicAnimation(() => {
   // optional function that returns your initial style
@@ -675,7 +688,7 @@ const onLayout = ({ nativeEvent }) => {
 return <MotiView state={animation} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Opacity Animation with MotiView in React Native
 DESCRIPTION: This snippet demonstrates how to create a simple fade-in and fade-out animation using MotiView component. It defines the initial state, animated state, and exit animation state for opacity transitions.
@@ -683,6 +696,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/index.mdx#2025-0
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView
   from={{ opacity: 0 }}
@@ -691,7 +705,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Complete MotiPressable Implementation Example
 DESCRIPTION: A full example showing how to use MotiPressable with a URL opening action. The animate prop uses a worklet function to handle opacity changes based on pressed or hovered states.
@@ -699,6 +713,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const onPress = () => Linking.openURL('beatgig.com')
 
@@ -714,7 +729,7 @@ const onPress = () => Linking.openURL('beatgig.com')
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Type-Safe AnimatedProps with TypeScript
 DESCRIPTION: Demonstrates how to use TypeScript generics with useMotiPressableAnimatedProps to ensure type safety when working with animated props.
@@ -722,6 +737,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { ViewProps } from 'react-native'
 
@@ -739,7 +755,7 @@ const animatedProps = useMotiPressableAnimatedProps<ViewProps>(
 )
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Dynamic Height with MotiView and useMeasure Hook
 DESCRIPTION: Shows how to animate height changes using MotiView and a custom useMeasure hook.
@@ -747,6 +763,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const [height, setHeight] = useMeasure()
 
@@ -757,7 +774,7 @@ const [height, setHeight] = useMeasure()
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Complete ListItem Implementation with Imports
 DESCRIPTION: Full example of ListItem component with imports and hover effect implementation using useMotiPressables.
@@ -765,6 +782,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/use
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { useMotiPressables } from 'moti/interactions'
 
@@ -790,7 +808,7 @@ const ListItem = ({ id }) => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Simple Animation Implementation Comparison
 DESCRIPTION: Basic opacity animation implementation showing the difference between Moti and Reanimated syntax.
@@ -798,6 +816,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/reanimated.md#20
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { MotiView } from 'moti'
 
@@ -808,6 +827,7 @@ export function Moti({ isActive }) {
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import Animated, { useAnimatedStyle, withTiming } from 'react-native-reanimated'
 
@@ -820,7 +840,7 @@ export function Reanimated({ isActive }) {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating to New State with useDynamicAnimation
 DESCRIPTION: Shows how to trigger animations to a new state using the animateTo method, which is a worklet that can be called from the native thread.
@@ -828,6 +848,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-dynami
 
 LANGUAGE: ts
 CODE:
+
 ```
 const animation = useDynamicAnimation(() => {
   return {
@@ -840,7 +861,7 @@ const onPress = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Optimizing MotiPressable with useCallback
 DESCRIPTION: Example showing how to optimize MotiPressable animations using useCallback to prevent unnecessary re-renders. The animation function defines opacity changes based on pressed and hover states.
@@ -848,6 +869,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const animate = useCallback<MotiPressableInteractionProp>(({ pressed }) => {
   'worklet'
@@ -862,7 +884,7 @@ const animate = useCallback<MotiPressableInteractionProp>(({ pressed }) => {
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Importing and Using Skeleton Component in React Native
 DESCRIPTION: Basic example of importing and using the Skeleton component from Moti to create a loading component that wraps children.
@@ -870,6 +892,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/skeleton.mdx#202
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react'
 import { Skeleton } from 'moti/skeleton'
@@ -879,7 +902,7 @@ const Loader = ({ children }) => <Skeleton>{children}</Skeleton>
 export default Loader
 ```
 
-----------------------------------------
+---
 
 TITLE: Implementing AnimatePresence with Moti in React Native
 DESCRIPTION: This code demonstrates a basic implementation of the AnimatePresence component from Moti to animate a component's mounting and unmounting. It creates a simple shape that fades and scales in when mounted and out when unmounted, controlled by a toggle button.
@@ -887,6 +910,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/examples/animate
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, { useReducer } from 'react'
 import { StyleSheet, Pressable } from 'react-native'
@@ -942,7 +966,7 @@ const styles = StyleSheet.create({
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Transform Array Animation in Moti
 DESCRIPTION: Example of using the traditional transform array approach to animate a scale property from 0 to 1.
@@ -950,6 +974,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/api/transforms.m
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView
   from={{
@@ -961,7 +986,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Using useMotiPressableAnimatedProps in a Menu Component
 DESCRIPTION: Demonstrates how to use the useMotiPressableAnimatedProps hook within a Menu component to handle hover interactions. The hook is used to conditionally set the pointerEvents prop based on the hover state.
@@ -969,6 +994,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/use
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const Menu = () => {
   return (
@@ -993,7 +1019,7 @@ const MenuItems = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Basic PressableScale Component with mergeAnimateProp
 DESCRIPTION: A basic implementation of a PressableScale component that scales down when pressed, while still allowing custom animation props to be passed and merged.
@@ -1001,6 +1027,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/mer
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const PressableScale = ({ animate, ...props }) => {
   return (
@@ -1018,7 +1045,7 @@ const PressableScale = ({ animate, ...props }) => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Full Example of useAnimationState in React Native Component
 DESCRIPTION: A complete example showing how to use useAnimationState within a React Native component, including styles and state management.
@@ -1026,6 +1053,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-animat
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React from 'react'
 import { useAnimationState, MotiView } from 'moti'
@@ -1057,7 +1085,7 @@ const styles = StyleSheet.create({
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Implementing Static Variants with useAnimationState in Moti
 DESCRIPTION: Demonstrates how to define and use static animation variants using the useAnimationState hook.
@@ -1065,6 +1093,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const animationState = useAnimationState({
   from: {
@@ -1079,7 +1108,7 @@ const animationState = useAnimationState({
 return <MotiView state={animationState} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Complete Item Component with Press Transitions and State
 DESCRIPTION: Full implementation of an Item component using both useMotiPressableTransition and useMotiPressableState to create press-reactive animations.
@@ -1087,6 +1116,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/use
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const Item = () => {
   const transition = useMotiPressableTransition(({ pressed }) => {
@@ -1103,7 +1133,7 @@ const Item = () => {
       delay: 50,
     }
   })
-  
+
   const state = useMotiPressableState(({ pressed }) => {
     return {
       translateY: pressed ? -10 : 0,
@@ -1114,7 +1144,7 @@ const Item = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Using Skeleton.Group for Multiple Skeleton Components
 DESCRIPTION: Example of using Skeleton.Group to control multiple Skeleton components together for coordinated loading states.
@@ -1122,6 +1152,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/skeleton.mdx#202
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { Image, Text } from 'react-native'
 import { Skeleton } from 'moti/skeleton'
@@ -1140,7 +1171,7 @@ export function ListItem({ loading, item }) {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic Usage of MotiPressable Component in React Native
 DESCRIPTION: This snippet demonstrates the basic usage of the MotiPressable component, including animation of opacity based on hover and press states. It also shows how to handle press events.
@@ -1148,6 +1179,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/pre
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { MotiPressable } from 'moti/interactions'
 import { useCallback } from 'react'
@@ -1173,7 +1205,7 @@ export const Pressable = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Using Animation Event Listeners in Moti
 DESCRIPTION: Shows how to use the onDidAnimate prop to listen for animation completion events and access animation details.
@@ -1181,6 +1213,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView
   from={{ opacity: 0 }}
@@ -1195,7 +1228,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Reusable Animations with useAnimationState in Moti
 DESCRIPTION: Demonstrates how to create reusable animations using custom hooks with useAnimationState.
@@ -1203,6 +1236,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: ts
 CODE:
+
 ```
 const useFadeIn = () => {
   return useAnimationState({
@@ -1222,7 +1256,7 @@ const FadeInComponent = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Embedding Expo Snack for Moti Animate Height Example
 DESCRIPTION: HTML code that embeds an Expo Snack example showing how to implement an accordion animation with auto height using Moti. The snack demonstrates the animate-height functionality in a dark-themed preview.
@@ -1230,12 +1264,13 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/examples/auto-he
 
 LANGUAGE: html
 CODE:
+
 ```
 <div data-snack-id="@nandorojo/moti-animate-height" data-snack-platform="web" data-snack-preview="true" data-snack-theme="dark" style={{"overflow":"hidden",background:"#212121",border:"1px solid var(--color-border)",borderRadius:"4px",height:"505px",width:"100%"}}></div>
 <script async src="https://snack.expo.dev/embed.js"></script>
 ```
 
-----------------------------------------
+---
 
 TITLE: Mount Animation Comparison
 DESCRIPTION: Side-by-side comparison of mount animations implemented in both Moti and Reanimated.
@@ -1243,6 +1278,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/reanimated.md#20
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { MotiView } from 'moti'
 
@@ -1262,6 +1298,7 @@ export const Moti = () => (
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import Animated, {
   useSharedValue,
@@ -1292,7 +1329,7 @@ export const Reanimated = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating a Motified Component with Sequence Animation
 DESCRIPTION: Example showing how to use the created motified component with sequence animation, specifically animating the height property from 50 to 100.
@@ -1300,12 +1337,13 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/api/motify.md#20
 
 LANGUAGE: tsx
 CODE:
+
 ```
 // height sequence animation
 <MotifiedComponent animate={{ height: [50, 100] }} />
 ```
 
-----------------------------------------
+---
 
 TITLE: TypeScript with useInterpolateMotiPressable
 DESCRIPTION: Shows how to use TypeScript generics with useInterpolateMotiPressable to ensure type safety when working with derived values from interaction states.
@@ -1313,6 +1351,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const swipePosition = useSharedValue(0)
 const interpolatedValue = useInterpolateMotiPressable<{ done: boolean }>(
@@ -1327,7 +1366,7 @@ const interpolatedValue = useInterpolateMotiPressable<{ done: boolean }>(
 )
 ```
 
-----------------------------------------
+---
 
 TITLE: Embedding Stackblitz Example for Moti Variants in Next.js
 DESCRIPTION: An iframe embedding a Stackblitz playground that demonstrates how to use Moti variants in a Next.js application. The example can be found at the specified URL with the index.tsx file open by default.
@@ -1335,11 +1374,12 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/examples/variant
 
 LANGUAGE: html
 CODE:
+
 ```
 <iframe src="https://stackblitz.com/edit/nextjs-ephjdq?embed=1&file=pages/index.tsx" className="stackblitz" />
 ```
 
-----------------------------------------
+---
 
 TITLE: Correct Usage of animate Prop for Dynamic Animations in Moti
 DESCRIPTION: This example shows the recommended approach for dynamic animations in Moti. Using the animate prop directly on MotiView allows the opacity to reactively update based on the isLoading state.
@@ -1347,12 +1387,13 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-animat
 
 LANGUAGE: jsx
 CODE:
+
 ```
 // ✅ do this instead
 <MotiView animate={{ opacity: isLoading ? 1 : 0 }} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Multiple Transforms Using Array Syntax
 DESCRIPTION: Example of using the traditional transform array syntax for multiple transforms while maintaining consistent order.
@@ -1360,6 +1401,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/api/transforms.m
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView
   from={{
@@ -1371,7 +1413,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Optimizing useInterpolateMotiPressable with dependency arrays
 DESCRIPTION: Demonstrates how to optimize the useInterpolateMotiPressable hook using a dependency array similar to useMemo.
@@ -1379,6 +1421,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/use
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const swipePosition = useSharedValue(0)
 const interpolatedValue = useInterpolateMotiPressable(({ pressed }) => {
@@ -1390,7 +1433,7 @@ const interpolatedValue = useInterpolateMotiPressable(({ pressed }) => {
 }, [])
 ```
 
-----------------------------------------
+---
 
 TITLE: Gesture Handling with Moti
 DESCRIPTION: Example of implementing gesture-based animations using Moti with react-native-gesture-handler.
@@ -1398,6 +1441,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/reanimated.md#20
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { GestureDetector, Gesture } from 'react-native-gesture-handler'
 import { MotiView, useDynamicAnimation } from 'moti'
@@ -1427,7 +1471,7 @@ export function WithGestures() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating Sequence Animations with useDynamicAnimation
 DESCRIPTION: Shows how to create sequence animations by passing an array of values to animateTo, which will be executed in sequence with timing options.
@@ -1435,6 +1479,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-dynami
 
 LANGUAGE: ts
 CODE:
+
 ```
 const animation = useDynamicAnimation(() => {
   return {
@@ -1450,7 +1495,7 @@ const onPress = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Transform Animation Sequences in Moti
 DESCRIPTION: Example of creating animation sequences for transforms by passing an array of values to animate through.
@@ -1458,6 +1503,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/api/transforms.m
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView
   animate={{
@@ -1466,7 +1512,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Using AnimatePresence for Mount/Unmount Animations
 DESCRIPTION: Demonstrates how to use AnimatePresence to animate a component before it unmounts, using the exit prop.
@@ -1474,6 +1520,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const [visible, setVisible] = useState(false)
 
@@ -1490,7 +1537,7 @@ const [visible, setVisible] = useState(false)
 </AnimatePresence>
 ```
 
-----------------------------------------
+---
 
 TITLE: Proper Usage Pattern for useDynamicAnimation
 DESCRIPTION: Demonstrates the correct way to use useDynamicAnimation by avoiding destructuring, ensuring the hook works as intended.
@@ -1498,6 +1545,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-dynami
 
 LANGUAGE: ts
 CODE:
+
 ```
 // 😡 don't do this
 const { current, animateTo } = useDynamicAnimation()
@@ -1506,7 +1554,7 @@ const { current, animateTo } = useDynamicAnimation()
 const animation = useDynamicAnimation()
 ```
 
-----------------------------------------
+---
 
 TITLE: TypeScript Implementation of PressableScale with Hover State
 DESCRIPTION: A fully typed implementation of PressableScale that handles both pressed and hovered states, using useMemo for better TypeScript support.
@@ -1514,6 +1562,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/mer
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, { ComponentProps } from 'react'
 import { MotiPressable, mergeAnimateProp } from 'moti/interactions'
@@ -1550,7 +1599,7 @@ const PressableScale = ({ animate, ...props }: Props) => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Using Function-based Updates with animateTo in useDynamicAnimation
 DESCRIPTION: Demonstrates how to use a function with animateTo that receives the current style and returns the next state, similar to setState's functional updates.
@@ -1558,6 +1607,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-dynami
 
 LANGUAGE: ts
 CODE:
+
 ```
 const animation = useDynamicAnimation(() => {
   return {
@@ -1577,7 +1627,7 @@ const onPress = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Customized Transitions with MotiPressable in React Native
 DESCRIPTION: This example shows how to customize transitions in MotiPressable, including delaying animations when releasing the button. It demonstrates the use of both 'animate' and 'transition' props with worklet functions.
@@ -1585,6 +1635,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/pre
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { MotiPressable } from 'moti/interactions'
 import { useCallback } from 'react'
@@ -1620,7 +1671,7 @@ export const Pressable = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic PressableScale Component Without mergeAnimateProp
 DESCRIPTION: Example of a PressableScale component that doesn't use mergeAnimateProp, which causes the problem of overriding any animate prop passed to it.
@@ -1628,6 +1679,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/mer
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const PressableScale = (props) => {
   return (
@@ -1645,7 +1697,7 @@ const PressableScale = (props) => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Using Function-Based State Transitions in useAnimationState
 DESCRIPTION: Shows how to use a function to determine the next animation state based on the current state.
@@ -1653,6 +1705,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-animat
 
 LANGUAGE: tsx
 CODE:
+
 ```
 animationState.transitionTo((currentState) => {
   if (currentState === 'from') {
@@ -1662,7 +1715,7 @@ animationState.transitionTo((currentState) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Using Shared Values with Moti
 DESCRIPTION: Demonstrations of how to use Reanimated shared values with Moti components for high-performance animations.
@@ -1670,6 +1723,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/reanimated.md#20
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { MotiView } from 'moti'
 import { useSharedValue, useDerivedValue } from 'react-native-reanimated'
@@ -1687,7 +1741,7 @@ export function WithSharedValue() {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Configuring Exit Transition for Moti Component in JSX
 DESCRIPTION: This snippet demonstrates how to use the 'exitTransition' prop in a MotiView component. It shows how to set different transition types for regular animations and exit animations, as well as defining animate and exit styles.
@@ -1695,6 +1749,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/api/props.md#202
 
 LANGUAGE: jsx
 CODE:
+
 ```
 <MotiView
   // the animate prop uses the transition
@@ -1706,7 +1761,7 @@ CODE:
 />
 ```
 
-----------------------------------------
+---
 
 TITLE: Using PressableScale with Dripsy Styling
 DESCRIPTION: Simple example of using the Dripsy-integrated PressableScale component with custom styling.
@@ -1714,11 +1769,12 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/mer
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <PressableScale sx={{ height: 100, bg: 'primary' }} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Full Example of Skeleton Component Usage
 DESCRIPTION: Complete example demonstrating the Skeleton component with toggle between light and dark modes.
@@ -1726,6 +1782,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/skeleton.mdx#202
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import React, { useReducer } from 'react'
 import { StyleSheet, Pressable } from 'react-native'
@@ -1771,7 +1828,7 @@ const styles = StyleSheet.create({
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Defining Initial Animation State in Moti's useDynamicAnimation
 DESCRIPTION: Shows how to define the initial animation state using a pure function passed to useDynamicAnimation, similar to React's useState hook.
@@ -1779,6 +1836,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/hooks/use-dynami
 
 LANGUAGE: ts
 CODE:
+
 ```
 const animation = useDynamicAnimation(() => {
   // this is your initial state
@@ -1788,7 +1846,7 @@ const animation = useDynamicAnimation(() => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Animating Based on React State with MotiView
 DESCRIPTION: Demonstrates how to animate opacity based on a loading state variable.
@@ -1796,11 +1854,12 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/animations-overv
 
 LANGUAGE: tsx
 CODE:
+
 ```
 <MotiView animate={{ opacity: isLoading ? 1 : 0 }} />
 ```
 
-----------------------------------------
+---
 
 TITLE: Creating a React Native App with Moti Template
 DESCRIPTION: This command uses npx to create a new React Native application using the Moti starter template. It provides a quick way to set up a project with Moti animations integrated.
@@ -1808,11 +1867,12 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/starter.md#2025-
 
 LANGUAGE: sh
 CODE:
+
 ```
 npx create-react-native-app -t with-moti
 ```
 
-----------------------------------------
+---
 
 TITLE: Targeting Specific Parent with useInterpolateMotiPressable
 DESCRIPTION: Demonstrates how to target a specific parent MotiPressable by ID when using useInterpolateMotiPressable. This allows for more complex animation hierarchies.
@@ -1820,6 +1880,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const mySharedValue = useSharedValue(0)
 useInterpolateMotiPressable('list', ({ pressed }) => {
@@ -1829,7 +1890,7 @@ useInterpolateMotiPressable('list', ({ pressed }) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Initializing a Motified Component with motify()
 DESCRIPTION: Basic example of importing the motify function and using it to transform a standard React Native component into an animated moti component.
@@ -1837,13 +1898,14 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/api/motify.md#20
 
 LANGUAGE: typescript
 CODE:
+
 ```
 import { motify } from 'moti'
 
 const MotifiedComponent = motify(MyComponent)()
 ```
 
-----------------------------------------
+---
 
 TITLE: Animated Props with useMotiPressableAnimatedProps
 DESCRIPTION: Shows how to use useMotiPressableAnimatedProps to update a component's props based on a parent's interaction state. This is useful for properties that need to change based on interaction but aren't directly animatable.
@@ -1851,6 +1913,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const MenuItems = () => {
   const animatedProps = useMotiPressableAnimatedProps(
@@ -1870,7 +1933,7 @@ const MenuItems = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Basic ListItem Component Implementation
 DESCRIPTION: Example of a ListItem component using useMotiPressables to manage opacity based on hover states of list container and individual items.
@@ -1878,6 +1941,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/use
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const ListItem = ({ id }) => {
   const state = useMotiPressables((containers) => {
@@ -1902,7 +1966,7 @@ const ListItem = ({ id }) => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Implementing Pressable Item Component - TypeScript/React
 DESCRIPTION: Shows how to implement a component that uses the useMotiPressable hook to create press animations.
@@ -1910,6 +1974,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/use
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const Item = () => {
   const state = useMotiPressable(({ pressed }) => {
@@ -1924,7 +1989,7 @@ const Item = () => {
 }
 ```
 
-----------------------------------------
+---
 
 TITLE: Interpolating Interaction State with useInterpolateMotiPressable
 DESCRIPTION: Shows how to use useInterpolateMotiPressable to access the shared value state of a parent pressable and create interpolated animations based on interaction state.
@@ -1932,6 +1997,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/ove
 
 LANGUAGE: tsx
 CODE:
+
 ```
 import { useSharedValue } from 'react-native-reanimated'
 import { useInterpolateMotiPressable } from moti/interactions'
@@ -1945,7 +2011,7 @@ useInterpolateMotiPressable(({ pressed }) => {
 })
 ```
 
-----------------------------------------
+---
 
 TITLE: Optimized Pressable with Dependencies - TypeScript/React
 DESCRIPTION: Shows how to use dependency arrays with useMotiPressable for optimized performance.
@@ -1953,6 +2019,7 @@ SOURCE: https://github.com/nandorojo/moti/blob/master/docs/docs/interactions/use
 
 LANGUAGE: tsx
 CODE:
+
 ```
 const state = useMotiPressable(
   'list',

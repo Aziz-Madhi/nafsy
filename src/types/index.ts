@@ -47,7 +47,13 @@ export interface Exercise {
   description: string;
   duration: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
-  category: 'breathing' | 'mindfulness' | 'movement' | 'cbt' | 'journaling' | 'relaxation';
+  category:
+    | 'breathing'
+    | 'mindfulness'
+    | 'movement'
+    | 'cbt'
+    | 'journaling'
+    | 'relaxation';
   imageUrl?: string;
   icon: string;
   color: string;
@@ -55,7 +61,13 @@ export interface Exercise {
   benefits?: string[];
 }
 
-export type ExerciseCategory = 'breathing' | 'mindfulness' | 'movement' | 'cbt' | 'journaling' | 'relaxation';
+export type ExerciseCategory =
+  | 'breathing'
+  | 'mindfulness'
+  | 'movement'
+  | 'cbt'
+  | 'journaling'
+  | 'relaxation';
 export type ExerciseDifficulty = 'beginner' | 'intermediate' | 'advanced';
 
 export interface ExerciseCategory_Config {

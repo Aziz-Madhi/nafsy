@@ -1,4 +1,4 @@
-import { StateCreator, StoreMutatorIdentifier } from 'zustand';
+import { StateCreator } from 'zustand';
 import { MMKV } from 'react-native-mmkv';
 
 // Create dedicated MMKV instance for Zustand persistence
@@ -43,17 +43,15 @@ type Persist<T> = {
   };
 };
 
-export type PersistStoreMutators<T> = [
-  ['zustand/persist', Persist<T>]
-];
+export type PersistStoreMutators<T> = [['zustand/persist', Persist<T>]];
 
 declare module 'zustand/middleware' {
-  interface StoreMutators<S, A> {
-    'zustand/persist': WithPersist<S, A>;
+  interface StoreMutators<S> {
+    'zustand/persist': WithPersist<S>;
   }
 }
 
-type WithPersist<S, A> = S extends { getState: () => infer T }
+type WithPersist<S> = S extends { getState: () => infer T }
   ? S & { persist: Persist<T>['persist'] }
   : never;
 
@@ -88,13 +86,13 @@ export const createMMKVPersist = <T>(
         const item = storage.getItem(name);
         if (item) {
           const persistedState = JSON.parse(item);
-          
+
           // Handle version migration
           let finalState = persistedState;
           if (migrate && persistedState._version !== version) {
             finalState = migrate(persistedState, version);
           }
-          
+
           // Merge with current state
           const mergedState = merge(finalState, get());
           set(mergedState, true);
@@ -107,27 +105,6 @@ export const createMMKVPersist = <T>(
           options.onFinishHydration(get());
         }
       }
-    };
-
-    // Auto-persist state changes
-    const persistState = () => {
-      try {
-        const state = partialize(get());
-        const persistData = {
-          ...state,
-          _version: version,
-          _timestamp: Date.now(),
-        };
-        storage.setItem(name, JSON.stringify(persistData));
-      } catch (error) {
-        console.warn('Failed to persist state to MMKV:', error);
-      }
-    };
-
-    // Enhanced set function with auto-persistence
-    const enhancedSet: typeof set = (partial, replace) => {
-      set(partial, replace);
-      persistState();
     };
 
     // Initialize hydration
@@ -154,15 +131,12 @@ export const createMMKVPersist = <T>(
 };
 
 // Performance optimized persist for specific stores
-export const createFastPersist = <T>(name: string) => 
-  createMMKVPersist<T>(
-    (set, get, api) => ({} as T),
-    {
-      name,
-      storage: mmkvStorage,
-      skipHydration: false,
-    }
-  );
+export const createFastPersist = <T>(name: string) =>
+  createMMKVPersist<T>((set, get, api) => ({}) as T, {
+    name,
+    storage: mmkvStorage,
+    skipHydration: false,
+  });
 
 // Cache utilities for immediate state access
 export const StateCache = {
@@ -174,7 +148,7 @@ export const StateCache = {
       return null;
     }
   },
-  
+
   set: <T>(key: string, data: T): void => {
     try {
       zustandStorage.set(key, JSON.stringify(data));
@@ -182,11 +156,11 @@ export const StateCache = {
       console.warn('Failed to cache state:', error);
     }
   },
-  
+
   has: (key: string): boolean => {
     return zustandStorage.contains(key);
   },
-  
+
   clear: (key: string): void => {
     zustandStorage.delete(key);
   },
@@ -198,30 +172,30 @@ export const AnimationCache = {
   setScrollPosition: (screenId: string, position: number): void => {
     zustandStorage.set(`scroll_${screenId}`, position);
   },
-  
+
   getScrollPosition: (screenId: string): number => {
     return zustandStorage.getNumber(`scroll_${screenId}`) ?? 0;
   },
-  
+
   // Cache animation preferences
   setAnimationEnabled: (enabled: boolean): void => {
     zustandStorage.set('animations_enabled', enabled);
   },
-  
+
   getAnimationEnabled: (): boolean => {
     return zustandStorage.getBoolean('animations_enabled') ?? true;
   },
-  
+
   // Cache last UI state for instant restoration
-  setUIState: (state: { 
-    selectedMoodDate?: string; 
+  setUIState: (state: {
+    selectedMoodDate?: string;
     selectedExerciseCategory?: string;
     chatScrollOffset?: number;
     moodCalendarMonth?: string;
   }): void => {
     zustandStorage.set('ui_state', JSON.stringify(state));
   },
-  
+
   getUIState: (): any => {
     try {
       const cached = zustandStorage.getString('ui_state');
@@ -230,7 +204,7 @@ export const AnimationCache = {
       return {};
     }
   },
-  
+
   // Performance metrics caching
   setPerformanceMetrics: (metrics: {
     avgFrameRate?: number;
@@ -239,7 +213,7 @@ export const AnimationCache = {
   }): void => {
     zustandStorage.set('perf_metrics', JSON.stringify(metrics));
   },
-  
+
   getPerformanceMetrics: (): any => {
     try {
       const cached = zustandStorage.getString('perf_metrics');

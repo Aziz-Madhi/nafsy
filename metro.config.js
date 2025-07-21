@@ -19,7 +19,7 @@ config.resolver.alias = {
 if (process.env.NODE_ENV === 'development') {
   const originalConsoleWarn = console.warn;
   const originalConsoleLog = console.log;
-  
+
   console.warn = (...args) => {
     const message = args.join(' ');
     if (
@@ -30,7 +30,7 @@ if (process.env.NODE_ENV === 'development') {
     }
     originalConsoleWarn(...args);
   };
-  
+
   console.log = (...args) => {
     const message = args.join(' ');
     if (message.includes('[Reanimated]') && message.includes('worklets')) {
@@ -41,5 +41,5 @@ if (process.env.NODE_ENV === 'development') {
 }
 
 module.exports = withNativeWind(config, {
-  input: './global.css'
+  input: './global.css',
 });

@@ -9,7 +9,7 @@ Zustand has been successfully integrated into your Nafsy mental health app with 
 ### Core Stores
 
 1. **`useAppStore`** - Global app state (theme, navigation, settings)
-2. **`useChatStore`** - Chat messages and conversation state  
+2. **`useChatStore`** - Chat messages and conversation state
 3. **`useMoodStore`** - Mood tracking and selection state
 4. **`useExerciseStore`** - Wellness exercises and progress
 
@@ -30,10 +30,10 @@ import { useAppStore, useFloatingChatVisible } from '~/store';
 function MyComponent() {
   // Get state and actions
   const { isFloatingChatVisible, setFloatingChatVisible } = useAppStore();
-  
+
   // Or use optimized selector
   const isVisible = useFloatingChatVisible();
-  
+
   return (
     <Button onPress={() => setFloatingChatVisible(!isVisible)}>
       Toggle Chat
@@ -51,17 +51,19 @@ function ChatComponent() {
   const messages = useMessages();
   const currentMessage = useCurrentMessage();
   const { sendMessage, setCurrentMessage } = useChatStore();
-  
+
   const handleSend = () => {
     if (currentMessage.trim()) {
       sendMessage(currentMessage);
     }
   };
-  
+
   return (
     <View>
-      {messages.map(msg => <Message key={msg.id} {...msg} />)}
-      <TextInput 
+      {messages.map((msg) => (
+        <Message key={msg.id} {...msg} />
+      ))}
+      <TextInput
         value={currentMessage}
         onChangeText={setCurrentMessage}
         onSubmitEditing={handleSend}
@@ -80,17 +82,11 @@ function MoodScreen() {
   const selectedMood = useSelectedMood();
   const viewMode = useViewMode();
   const { setSelectedMood, setViewMode } = useMoodStore();
-  
+
   return (
     <View>
-      <MoodSelector 
-        selectedMood={selectedMood}
-        onSelect={setSelectedMood}
-      />
-      <ViewToggle 
-        mode={viewMode}
-        onChange={setViewMode}
-      />
+      <MoodSelector selectedMood={selectedMood} onSelect={setSelectedMood} />
+      <ViewToggle mode={viewMode} onChange={setViewMode} />
     </View>
   );
 }
@@ -99,6 +95,7 @@ function MoodScreen() {
 ## Integration with Existing Code
 
 ### Convex Backend (Keep As-Is)
+
 Your Convex mutations and queries remain unchanged. Zustand handles local UI state while Convex manages server state:
 
 ```tsx
@@ -118,6 +115,7 @@ const handleSave = async () => {
 ```
 
 ### Provider Architecture (Unchanged)
+
 Your existing provider hierarchy remains the same:
 
 ```tsx
@@ -125,9 +123,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
   return (
     <SafeAreaProvider>
       <ClerkProvider>
-        <ConvexProvider>
-          {children}
-        </ConvexProvider>
+        <ConvexProvider>{children}</ConvexProvider>
       </ClerkProvider>
     </SafeAreaProvider>
   );
@@ -137,11 +133,13 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
 ## Best Practices
 
 ### 1. State Separation
+
 - **Local UI State**: Zustand (form inputs, modals, view modes)
 - **Server State**: Convex (user data, mood entries, exercises)
 - **Auth State**: Clerk (authentication, user sessions)
 
 ### 2. Optimized Selectors
+
 ```tsx
 // ✅ Good - Uses specific selector
 const theme = useTheme();
@@ -152,6 +150,7 @@ const theme = settings.theme;
 ```
 
 ### 3. Type Safety
+
 ```tsx
 // ✅ All stores have full TypeScript support
 interface MoodState {
@@ -163,16 +162,19 @@ interface MoodState {
 ## Migration Strategy
 
 ### Phase 1: Core Features (Completed)
+
 - ✅ Store architecture setup
 - ✅ FloatingChat converted to Zustand
 - ✅ Type definitions and selectors
 
 ### Phase 2: Gradual Migration (Optional)
+
 - Replace useState in mood tracking components
 - Convert exercise progress to Zustand
 - Migrate theme/settings management
 
 ### Phase 3: Advanced Features (Future)
+
 - Add persistence with AsyncStorage
 - Implement store middleware for analytics
 - Add dev tools integration
@@ -188,7 +190,7 @@ interface MoodState {
 
 - `/src/store/types.ts` - TypeScript definitions
 - `/src/store/useAppStore.ts` - Global app state
-- `/src/store/useChatStore.ts` - Chat functionality  
+- `/src/store/useChatStore.ts` - Chat functionality
 - `/src/store/useMoodStore.ts` - Mood tracking
 - `/src/store/useExerciseStore.ts` - Exercise management
 - `/src/store/index.ts` - Centralized exports

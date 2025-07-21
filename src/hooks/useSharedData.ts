@@ -9,13 +9,9 @@ import { api } from '../../convex/_generated/api';
  * to reduce redundant API calls and improve performance
  */
 export function useCurrentUser() {
-  const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
-  
-  return useQuery(
-    api.users.getCurrentUser,
-    user && isSignedIn ? { clerkId: user.id } : 'skip'
-  );
+
+  return useQuery(api.users.getCurrentUser, isSignedIn ? {} : 'skip');
 }
 
 /**
@@ -26,7 +22,7 @@ export function useUserData() {
   const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
   const currentUser = useCurrentUser();
-  
+
   return {
     user,
     isLoaded,
@@ -39,49 +35,50 @@ export function useUserData() {
 /**
  * Optimized mood data hook with caching
  */
-export function useMoodData(userId?: string, limit: number = 365) {
-  return useQuery(
-    api.moods.getMoods,
-    userId ? { userId, limit } : 'skip'
-  );
+export function useMoodData(limit: number = 365) {
+  const { isSignedIn } = useAuth();
+
+  return useQuery(api.moods.getMoods, isSignedIn ? { limit } : 'skip');
 }
 
 /**
  * Optimized mood stats hook
  */
-export function useMoodStats(userId?: string, days: number = 30) {
-  return useQuery(
-    api.moods.getMoodStats,
-    userId ? { userId, days } : 'skip'
-  );
+export function useMoodStats(days: number = 30) {
+  const { isSignedIn } = useAuth();
+
+  return useQuery(api.moods.getMoodStats, isSignedIn ? { days } : 'skip');
 }
 
 /**
  * Today's mood hook
  */
-export function useTodayMood(userId?: string) {
-  return useQuery(
-    api.moods.getTodayMood,
-    userId ? { userId } : 'skip'
-  );
+export function useTodayMood() {
+  const { isSignedIn } = useAuth();
+
+  return useQuery(api.moods.getTodayMood, isSignedIn ? {} : 'skip');
 }
 
 /**
  * Exercise data with progress hook
  */
-export function useExercisesWithProgress(userId?: string) {
+export function useExercisesWithProgress(category?: string, limit?: number) {
+  const { isSignedIn } = useAuth();
+
   return useQuery(
     api.exercises.getExercisesWithProgress,
-    userId ? { userId } : 'skip'
+    isSignedIn ? { category, limit } : 'skip'
   );
 }
 
 /**
  * User stats hook
  */
-export function useUserStats(userId?: string) {
+export function useUserStats(days?: number) {
+  const { isSignedIn } = useAuth();
+
   return useQuery(
     api.userProgress.getUserStats,
-    userId ? { userId } : 'skip'
+    isSignedIn ? { days } : 'skip'
   );
 }

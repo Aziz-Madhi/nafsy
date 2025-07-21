@@ -42,17 +42,12 @@ export class SafeErrorBoundary extends Component<Props, State> {
             <Text style={styles.message}>
               We encountered an unexpected error. Please try again.
             </Text>
-            <TouchableOpacity 
-              onPress={this.handleRetry}
-              style={styles.button}
-            >
+            <TouchableOpacity onPress={this.handleRetry} style={styles.button}>
               <Text style={styles.buttonText}>Try Again</Text>
             </TouchableOpacity>
             {__DEV__ && this.state.error && (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>
-                  {this.state.error.message}
-                </Text>
+                <Text style={styles.errorText}>{this.state.error.message}</Text>
               </View>
             )}
           </View>
