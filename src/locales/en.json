@@ -50,6 +50,8 @@
   },
   "chat": {
     "title": "Chat",
+    "session": "Chat Session",
+    "messages": "messages",
     "welcomeMessage": "Hello! I'm here to support your mental wellness journey. How are you feeling today?",
     "welcomeSubtitle": "Your safe space for mental wellness",
     "typingPlaceholder": "Type your message...",
@@ -69,9 +71,14 @@
     },
     "history": {
       "title": "Chat History",
+      "mainChat": "Main Chat",
+      "ventHistory": "Vent History",
       "mainSessions": "Therapy Sessions",
       "ventSessions": "Quick Vents",
       "noHistory": "No chat history yet",
+      "noMainSessions": "No chat sessions yet",
+      "noVentSessions": "No vent sessions yet",
+      "untitledSession": "Untitled Session",
       "searchPlaceholder": "Search conversations...",
       "deleteSession": "Delete Session",
       "confirmDelete": "Are you sure you want to delete this session?"

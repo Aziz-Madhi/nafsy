@@ -26,12 +26,26 @@ export const useTranslation = (): TranslationHook => {
   // Always call hooks at the top level
   const store = useAppStore();
 
-  // Use store values or independent fallbacks
+  // Defensive fallbacks to prevent undefined returns during hydration
   const settings = store?.settings || { language: 'en' as Language };
   const updateSettings = store?.updateSettings || (() => {});
 
-  const [locale, setLocaleState] = useState<Language>(getCurrentLocale());
-  const [rtlState, setRtlState] = useState(isRTL());
+  // Initialize with safe defaults
+  const [locale, setLocaleState] = useState<Language>(() => {
+    try {
+      return getCurrentLocale() || 'en';
+    } catch {
+      return 'en';
+    }
+  });
+
+  const [rtlState, setRtlState] = useState(() => {
+    try {
+      return isRTL();
+    } catch {
+      return false;
+    }
+  });
 
   // Update locale when settings change
   useEffect(() => {
@@ -65,18 +79,50 @@ export const useTranslation = (): TranslationHook => {
 
   const translate = useCallback(
     (key: TranslationKeyPath, options?: any): string => {
-      return t(key, options);
+      try {
+        const result = t(key, options);
+        // Ensure we never return undefined or null
+        return typeof result === 'string' ? result : key;
+      } catch (error) {
+        console.warn('Translation error:', error);
+        return key; // Return the key as fallback
+      }
     },
     []
   );
 
+  // Safe getters with fallbacks
+  const getTextDirectionSafe = (): 'ltr' | 'rtl' => {
+    try {
+      return getTextDirection();
+    } catch {
+      return rtlState ? 'rtl' : 'ltr';
+    }
+  };
+
+  const getTextAlignSafe = (): 'left' | 'right' => {
+    try {
+      return getTextAlign();
+    } catch {
+      return rtlState ? 'right' : 'left';
+    }
+  };
+
+  const getFlexDirectionSafe = (): 'row' | 'row-reverse' => {
+    try {
+      return getFlexDirection();
+    } catch {
+      return rtlState ? 'row-reverse' : 'row';
+    }
+  };
+
   return {
     t: translate,
-    locale,
+    locale: locale || 'en',
     isRTL: rtlState,
-    textDirection: getTextDirection(),
-    textAlign: getTextAlign(),
-    flexDirection: getFlexDirection(),
+    textDirection: getTextDirectionSafe(),
+    textAlign: getTextAlignSafe(),
+    flexDirection: getFlexDirectionSafe(),
     setLanguage,
   };
 };

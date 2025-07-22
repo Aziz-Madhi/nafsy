@@ -6,6 +6,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
+import { MorphingTabBar } from '~/components/navigation';
 
 export default function TabsLayout() {
   const activeColor = '#2196F3'; // design primary blue
@@ -44,18 +45,10 @@ export default function TabsLayout() {
   return (
     <View style={{ flex: 1, backgroundColor: '#F2FAF9' }}>
       <Tabs
+        tabBar={(props) => <MorphingTabBar {...props} />}
         screenOptions={{
-          tabBarActiveTintColor: activeColor,
-          tabBarInactiveTintColor: '#9CA3AF',
           headerShown: false,
-          tabBarStyle: {
-            backgroundColor: 'rgba(255, 255, 255, 0.4)',
-            borderTopWidth: 0,
-            height: 90, // Increased height for better proportions
-            paddingBottom: 30, // More padding for home indicator
-            paddingTop: 10,
-          },
-          // Restore original slide transition
+          // Keep the animation for screen transitions
           animation: 'shift',
         }}
       >

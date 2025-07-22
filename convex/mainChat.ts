@@ -61,7 +61,7 @@ export const sendMainMessage = mutation({
     });
 
     // Update session metadata
-    await updateChatSession(ctx, user._id, 'main', sessionId);
+    await updateChatSession(ctx, user._id, sessionId);
 
     return messageId;
   },
@@ -77,7 +77,6 @@ export const getMainSessions = query({
       _id: v.id('chatSessions'),
       _creationTime: v.number(),
       userId: v.id('users'),
-      type: v.union(v.literal('main'), v.literal('vent')),
       sessionId: v.string(),
       title: v.string(),
       startedAt: v.number(),
@@ -91,9 +90,7 @@ export const getMainSessions = query({
 
     return await ctx.db
       .query('chatSessions')
-      .filter((q) =>
-        q.and(q.eq(q.field('userId'), user._id), q.eq(q.field('type'), 'main'))
-      )
+      .filter((q) => q.eq(q.field('userId'), user._id))
       .order('desc')
       .take(args.limit || 20);
   },
@@ -109,9 +106,7 @@ export const getCurrentMainSessionId = query({
 
     const latestSession = await ctx.db
       .query('chatSessions')
-      .filter((q) =>
-        q.and(q.eq(q.field('userId'), user._id), q.eq(q.field('type'), 'main'))
-      )
+      .filter((q) => q.eq(q.field('userId'), user._id))
       .order('desc')
       .first();
 
@@ -133,7 +128,6 @@ export const startNewMainSession = mutation({
 
     await ctx.db.insert('chatSessions', {
       userId: user._id,
-      type: 'main',
       sessionId,
       title: args.title || 'New Chat Session',
       startedAt: Date.now(),

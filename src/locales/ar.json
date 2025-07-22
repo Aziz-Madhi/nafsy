@@ -74,7 +74,8 @@
       "noHistory": "لا يوجد تاريخ محادثات بعد",
       "searchPlaceholder": "ابحث في المحادثات...",
       "deleteSession": "حذف الجلسة",
-      "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه الجلسة؟"
+      "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه الجلسة؟",
+      "untitledSession": "جلسة بدون عنوان"
     }
   },
   "mood": {

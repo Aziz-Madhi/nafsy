@@ -8,6 +8,8 @@ export {
   QuickReplyButton,
 } from './ChatComponents';
 
+export { ChatHistorySidebar } from './ChatHistorySidebar';
+
 // Lazy-loaded heavy components
 export const FloatingChat = lazy(() =>
   import('./FloatingChat').then((module) => ({ default: module.FloatingChat }))

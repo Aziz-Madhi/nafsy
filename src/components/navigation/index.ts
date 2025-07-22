@@ -1,0 +1,1 @@
+export { MorphingTabBar } from './MorphingTabBar';

@@ -13,6 +13,9 @@ interface ChatUIState {
   mainChatIsTyping: boolean;
   showQuickReplies: boolean;
 
+  // Chat History Sidebar State
+  isHistorySidebarVisible: boolean;
+
   // Shared UI State
   chatInputFocused: boolean;
 
@@ -23,6 +26,7 @@ interface ChatUIState {
   setMainChatInput: (input: string) => void;
   setMainChatTyping: (typing: boolean) => void;
   setShowQuickReplies: (show: boolean) => void;
+  setHistorySidebarVisible: (visible: boolean) => void;
   setChatInputFocused: (focused: boolean) => void;
   clearFloatingChatInput: () => void;
   clearMainChatInput: () => void;
@@ -40,6 +44,7 @@ export const useChatUIStore = create<ChatUIState>()(
         mainChatInput: '',
         mainChatIsTyping: false,
         showQuickReplies: true,
+        isHistorySidebarVisible: false,
         chatInputFocused: false,
 
         // Actions
@@ -57,6 +62,9 @@ export const useChatUIStore = create<ChatUIState>()(
 
         setShowQuickReplies: (show) => set({ showQuickReplies: show }),
 
+        setHistorySidebarVisible: (visible) =>
+          set({ isHistorySidebarVisible: visible }),
+
         setChatInputFocused: (focused) => set({ chatInputFocused: focused }),
 
         clearFloatingChatInput: () => set({ floatingChatInput: '' }),
@@ -71,6 +79,7 @@ export const useChatUIStore = create<ChatUIState>()(
             mainChatInput: '',
             mainChatIsTyping: false,
             showQuickReplies: true,
+            isHistorySidebarVisible: false,
             chatInputFocused: false,
           }),
       }),
@@ -108,3 +117,6 @@ export const useShowQuickReplies = () =>
 
 export const useChatInputFocused = () =>
   useChatUIStore((state) => state.chatInputFocused);
+
+export const useHistorySidebarVisible = () =>
+  useChatUIStore((state) => state.isHistorySidebarVisible);

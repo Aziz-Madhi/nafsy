@@ -67,13 +67,13 @@ export const FloatingChat = React.memo(function FloatingChat({
 
   // ===== CONVEX: Server Data & Real-time =====
   const { currentUser, isUserReady } = useUserData();
-  const ventMessages = useQuery(
-    api.ventChat.getCurrentVentMessages, // Use vent-specific endpoint
+  const mainMessages = useQuery(
+    api.mainChat.getMainChatMessages,
     isUserReady ? { limit: 3 } : 'skip'
   );
-  const sendVentMessage = useMutation(api.ventChat.sendVentMessage); // Use vent-specific endpoint
-  const currentVentSessionId = useQuery(
-    api.ventChat.getCurrentVentSessionId,
+  const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
+  const currentMainSessionId = useQuery(
+    api.mainChat.getCurrentMainSessionId,
     isUserReady ? {} : 'skip'
   );
 
@@ -161,8 +161,8 @@ export const FloatingChat = React.memo(function FloatingChat({
         : Math.max(0.85, 0.95 - (messageAge - 2) * 0.03);
   };
 
-  // Transform Convex vent messages to UI format
-  const messages: ChatMessage[] = (ventMessages ?? [])
+  // Transform Convex main messages to UI format
+  const messages: ChatMessage[] = (mainMessages ?? [])
     .map(
       (msg): ChatMessage => ({
         id: String(msg._id), // cast branded Id to plain string
@@ -230,68 +230,68 @@ export const FloatingChat = React.memo(function FloatingChat({
       setFloatingChatTyping(true); // Show typing indicator
 
       try {
-        // ===== CONVEX: Send to Vent Chat =====
-        await sendVentMessage({
+        // ===== CONVEX: Send to Main Chat =====
+        await sendMainMessage({
           content: messageText,
           role: 'user',
-          ventSessionId: currentVentSessionId || undefined,
+          sessionId: currentMainSessionId || undefined,
         });
 
         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
 
-        // Simulate AI response delay for vent chat
+        // Simulate AI response delay for floating chat
         setTimeout(async () => {
           try {
-            // Generate contextual vent responses
-            let ventResponse = "I'm here to listen. Let it out.";
+            // Generate contextual responses
+            let aiResponse = "I'm here to listen. Let it out.";
 
             const lowerMessage = messageText.toLowerCase();
             if (
               lowerMessage.includes('stress') ||
               lowerMessage.includes('overwhelm')
             ) {
-              ventResponse =
+              aiResponse =
                 "That sounds really stressful. Take a deep breath. You're safe here.";
             } else if (
               lowerMessage.includes('anxious') ||
               lowerMessage.includes('anxiety')
             ) {
-              ventResponse =
+              aiResponse =
                 "Anxiety is tough. Remember, this feeling will pass. You're stronger than you know.";
             } else if (
               lowerMessage.includes('sad') ||
               lowerMessage.includes('down')
             ) {
-              ventResponse =
+              aiResponse =
                 "I hear your sadness. It's okay to feel this way. You're not alone.";
             } else if (
               lowerMessage.includes('angry') ||
               lowerMessage.includes('frustrated')
             ) {
-              ventResponse =
+              aiResponse =
                 'Your frustration is valid. Sometimes we need to let these feelings out.';
             } else if (
               lowerMessage.includes('work') ||
               lowerMessage.includes('job')
             ) {
-              ventResponse =
+              aiResponse =
                 'Work stress is real. Remember to prioritize your mental health.';
             }
 
-            await sendVentMessage({
-              content: ventResponse,
+            await sendMainMessage({
+              content: aiResponse,
               role: 'assistant',
-              ventSessionId: currentVentSessionId || undefined,
+              sessionId: currentMainSessionId || undefined,
             });
             setFloatingChatTyping(false); // Hide typing indicator
             Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
           } catch (error) {
-            console.error('Error sending AI vent response:', error);
+            console.error('Error sending AI response:', error);
             setFloatingChatTyping(false);
           }
         }, 1800);
       } catch (error) {
-        console.error('Error sending vent message:', error);
+        console.error('Error sending message:', error);
         // Restore message on error using Zustand
         setFloatingChatInput(messageText);
         setFloatingChatTyping(false);

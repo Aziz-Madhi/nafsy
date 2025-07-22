@@ -22,7 +22,10 @@ export class SafeErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
-    console.error('SafeErrorBoundary caught an error:', error, errorInfo);
+    console.error('SafeErrorBoundary caught an error:', error);
+    console.error('Error info:', errorInfo);
+    console.error('Error message:', error?.message);
+    console.error('Error stack:', error?.stack);
   }
 
   handleRetry = () => {
@@ -47,7 +50,9 @@ export class SafeErrorBoundary extends Component<Props, State> {
             </TouchableOpacity>
             {__DEV__ && this.state.error && (
               <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{this.state.error.message}</Text>
+                <Text style={styles.errorText}>
+                  {this.state.error.message || 'Unknown error'}
+                </Text>
               </View>
             )}
           </View>

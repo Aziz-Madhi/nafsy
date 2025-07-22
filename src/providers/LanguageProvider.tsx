@@ -25,10 +25,30 @@ interface LanguageProviderProps {
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
-  // Remove dependency on useAppStore - manage language state independently
-  const [currentLanguage, setCurrentLanguage] =
-    useState<Language>(getCurrentLocale());
-  const [isRTLEnabled, setIsRTLEnabled] = useState(isRTL());
+  // Safe initialization to prevent race conditions
+  const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
+    try {
+      return getCurrentLocale() || 'en';
+    } catch {
+      return 'en';
+    }
+  });
+
+  const [isRTLEnabled, setIsRTLEnabled] = useState(() => {
+    try {
+      return isRTL();
+    } catch {
+      return false;
+    }
+  });
+
+  // Add initialization state to prevent early rendering
+  const [isInitialized, setIsInitialized] = useState(false);
+
+  // Initialize provider after first render to avoid hydration issues
+  useEffect(() => {
+    setIsInitialized(true);
+  }, []);
 
   // Update RTL layout manager when language changes
   useEffect(() => {
@@ -63,6 +83,12 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     setLanguage,
     toggleLanguage,
   };
+
+  // Don't render children until provider is fully initialized
+  // This prevents race conditions during app startup
+  if (!isInitialized) {
+    return null;
+  }
 
   return (
     <LanguageContext.Provider value={contextValue}>

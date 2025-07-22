@@ -19,6 +19,7 @@ import Animated, {
   withTiming,
   withDelay,
 } from 'react-native-reanimated';
+import { AnimatePresence, MotiView } from 'moti';
 import { ChatBubbleProps, ChatInputProps } from './types';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -33,75 +34,159 @@ export const ChatBubble = React.memo(function ChatBubble({
   index = 0,
   status,
 }: ChatBubbleProps) {
-  // User messages always right-aligned, AI messages always left-aligned
   const shouldJustifyEnd = isUser;
 
-  // Worklet-optimized entrance animation
+  // Enhanced entrance animations
   const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
+  const translateY = useSharedValue(30);
+  const scale = useSharedValue(0.8);
+  const rotate = useSharedValue(isUser ? 2 : -2);
 
   React.useEffect(() => {
-    opacity.value = withDelay(index * 100, withSpring(1, { damping: 15 }));
-    translateY.value = withDelay(
-      index * 100,
-      withSpring(0, { damping: 15, stiffness: 200 })
+    // Staggered elastic entrance
+    opacity.value = withDelay(
+      index * 50,
+      withSpring(1, { damping: 12, stiffness: 180 })
     );
-  }, [index]);
+    translateY.value = withDelay(
+      index * 50,
+      withSpring(0, { damping: 10, stiffness: 150, mass: 0.8 })
+    );
+    scale.value = withDelay(
+      index * 50,
+      withSpring(1, { damping: 8, stiffness: 200 })
+    );
+    rotate.value = withDelay(
+      index * 50,
+      withSpring(0, { damping: 10, stiffness: 100 })
+    );
+  }, [index, isUser]);
 
   const animatedStyle = useAnimatedStyle(() => {
     'worklet';
     return {
       opacity: opacity.value,
-      transform: [{ translateY: translateY.value }],
+      transform: [
+        { translateY: translateY.value },
+        { scale: scale.value },
+        { rotate: `${rotate.value}deg` },
+      ],
     };
   });
+
+  // Press animation
+  const messageScale = useSharedValue(1);
+  const handlePressIn = () => {
+    messageScale.value = withSpring(0.98, { damping: 15, stiffness: 400 });
+  };
+  const handlePressOut = () => {
+    messageScale.value = withSpring(1, { damping: 15, stiffness: 400 });
+  };
+
+  const messageAnimatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: messageScale.value }],
+  }));
 
   return (
     <Animated.View
       style={animatedStyle}
       className={cn(
-        'flex-row mb-4',
+        'flex-row mb-5',
         shouldJustifyEnd ? 'justify-end' : 'justify-start'
       )}
     >
-      <View
-        className={cn(
-          'max-w-[80%] px-2 py-1',
-          isUser ? 'bg-[#2D7D6E] rounded-md' : 'bg-transparent'
-        )}
+      <Pressable
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        className="max-w-[85%]"
       >
-        <Text
-          variant="body"
-          className={cn(isUser ? 'text-white' : 'text-[#2E3A59]')}
-          enableRTL={isUser}
-        >
-          {message}
-        </Text>
-
-        {timestamp && (
-          <Text
-            variant="muted"
+        <Animated.View style={messageAnimatedStyle}>
+          <View
             className={cn(
-              'text-xs mt-1',
-              isUser ? 'text-white/70' : 'text-[#2E3A59]/70'
+              'px-4 py-3 rounded-2xl',
+              isUser ? 'bg-[#2D7D6E]' : 'bg-transparent'
             )}
-            enableRTL={isUser}
+            style={{
+              ...(isUser
+                ? {
+                    shadowColor: '#2D7D6E',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 8,
+                    elevation: 5,
+                  }
+                : {}),
+            }}
           >
-            {timestamp}
-          </Text>
-        )}
+            <View className="relative">
+              <Text
+                variant="body"
+                className={cn(isUser ? 'text-white' : 'text-[#2E3A59]')}
+                enableRTL={isUser}
+              >
+                {message}
+              </Text>
 
-        {/* Status indicator for user messages */}
-        {isUser && status && (
-          <View className="absolute -bottom-1 -right-1 bg-white/90 rounded-full p-1">
-            <Text className="text-xs" enableRTL={false}>
-              {status === 'sending' && '⏳'}
-              {status === 'sent' && '✓'}
-              {status === 'delivered' && '✓✓'}
-            </Text>
+              {timestamp && (
+                <Text
+                  variant="muted"
+                  className={cn(
+                    'text-xs mt-2',
+                    isUser ? 'text-white/70' : 'text-[#2E3A59]/70'
+                  )}
+                  enableRTL={isUser}
+                >
+                  {timestamp}
+                </Text>
+              )}
+            </View>
           </View>
-        )}
-      </View>
+
+          {/* Enhanced status indicator */}
+          {isUser && status && (
+            <Animated.View
+              entering={FadeInUp.springify()}
+              className="absolute -bottom-1 -right-1"
+            >
+              <View className="bg-white rounded-full p-1.5 shadow-md">
+                {status === 'sending' && (
+                  <Animated.View
+                    style={[
+                      { width: 14, height: 14 },
+                      useAnimatedStyle(() => ({
+                        transform: [
+                          {
+                            rotate: withRepeat(
+                              withTiming(360, { duration: 1000 }),
+                              -1
+                            ),
+                          },
+                        ],
+                      })),
+                    ]}
+                  >
+                    <SymbolView
+                      name="arrow.clockwise"
+                      size={14}
+                      tintColor="#2D7D6E"
+                    />
+                  </Animated.View>
+                )}
+                {status === 'sent' && (
+                  <SymbolView name="checkmark" size={14} tintColor="#10B981" />
+                )}
+                {status === 'delivered' && (
+                  <SymbolView
+                    name="checkmark.circle.fill"
+                    size={14}
+                    tintColor="#10B981"
+                  />
+                )}
+              </View>
+            </Animated.View>
+          )}
+        </Animated.View>
+      </Pressable>
     </Animated.View>
   );
 });
@@ -113,78 +198,110 @@ export function TypingIndicator() {
   const dot1 = useSharedValue(0);
   const dot2 = useSharedValue(0);
   const dot3 = useSharedValue(0);
+  const containerScale = useSharedValue(0);
+  const containerOpacity = useSharedValue(0);
 
   useEffect(() => {
+    // Container entrance animation
+    containerScale.value = withSpring(1, { damping: 10, stiffness: 200 });
+    containerOpacity.value = withTiming(1, { duration: 300 });
+
+    // Enhanced dot animations with bounce effect
     dot1.value = withRepeat(
       withSequence(
-        withTiming(1, { duration: 400 }),
-        withTiming(0, { duration: 400 })
+        withTiming(1, { duration: 300 }),
+        withSpring(0, { damping: 8, stiffness: 300 })
       ),
       -1
     );
 
     dot2.value = withDelay(
-      200,
+      150,
       withRepeat(
         withSequence(
-          withTiming(1, { duration: 400 }),
-          withTiming(0, { duration: 400 })
+          withTiming(1, { duration: 300 }),
+          withSpring(0, { damping: 8, stiffness: 300 })
         ),
         -1
       )
     );
 
     dot3.value = withDelay(
-      400,
+      300,
       withRepeat(
         withSequence(
-          withTiming(1, { duration: 400 }),
-          withTiming(0, { duration: 400 })
+          withTiming(1, { duration: 300 }),
+          withSpring(0, { damping: 8, stiffness: 300 })
         ),
         -1
       )
     );
   }, []);
 
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: containerScale.value }],
+    opacity: containerOpacity.value,
+  }));
+
   const dot1Style = useAnimatedStyle(() => {
     'worklet';
     return {
-      opacity: 0.3 + dot1.value * 0.7,
-      transform: [{ scale: 0.8 + dot1.value * 0.2 }],
+      transform: [
+        { scale: 0.7 + dot1.value * 0.5 },
+        { translateY: -dot1.value * 8 },
+      ],
+      opacity: 0.4 + dot1.value * 0.6,
     };
   });
 
   const dot2Style = useAnimatedStyle(() => {
     'worklet';
     return {
-      opacity: 0.3 + dot2.value * 0.7,
-      transform: [{ scale: 0.8 + dot2.value * 0.2 }],
+      transform: [
+        { scale: 0.7 + dot2.value * 0.5 },
+        { translateY: -dot2.value * 8 },
+      ],
+      opacity: 0.4 + dot2.value * 0.6,
     };
   });
 
   const dot3Style = useAnimatedStyle(() => {
     'worklet';
     return {
-      opacity: 0.3 + dot3.value * 0.7,
-      transform: [{ scale: 0.8 + dot3.value * 0.2 }],
+      transform: [
+        { scale: 0.7 + dot3.value * 0.5 },
+        { translateY: -dot3.value * 8 },
+      ],
+      opacity: 0.4 + dot3.value * 0.6,
     };
   });
 
   return (
-    <View className="flex-row items-center space-x-1 bg-secondary/20 dark:bg-secondary/10 rounded-full px-4 py-3 ml-10 self-start mb-4">
-      <Animated.View
-        style={dot1Style}
-        className="w-2 h-2 bg-muted-foreground rounded-full"
-      />
-      <Animated.View
-        style={dot2Style}
-        className="w-2 h-2 bg-muted-foreground rounded-full mx-1"
-      />
-      <Animated.View
-        style={dot3Style}
-        className="w-2 h-2 bg-muted-foreground rounded-full"
-      />
-    </View>
+    <Animated.View style={containerStyle} className="mb-5">
+      <View
+        className="flex-row items-center justify-center bg-white rounded-full px-5 py-3.5 ml-4 self-start shadow-md"
+        style={{
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 4,
+        }}
+      >
+        <Animated.View
+          style={[dot1Style, { backgroundColor: '#2D7D6E' }]}
+          className="w-3 h-3 rounded-full"
+        />
+        <Animated.View
+          style={[dot2Style, { backgroundColor: '#2D7D6E' }]}
+          className="w-3 h-3 rounded-full mx-1.5"
+        />
+        <Animated.View
+          style={[dot3Style, { backgroundColor: '#2D7D6E' }]}
+          className="w-3 h-3 rounded-full"
+        />
+      </View>
+    </Animated.View>
   );
 }
 
@@ -205,7 +322,6 @@ export function QuickReplyButton({
   delay = 0,
 }: QuickReplyButtonProps) {
   const scale = useSharedValue(1);
-
   const animatedStyle = useAnimatedStyle(() => {
     'worklet';
     return {
@@ -214,29 +330,45 @@ export function QuickReplyButton({
   });
 
   const handlePressIn = () => {
-    scale.value = withSpring(0.95);
+    scale.value = withSpring(0.95, { damping: 12, stiffness: 400 });
   };
 
   const handlePressOut = () => {
-    scale.value = withSpring(1);
+    scale.value = withSpring(1, { damping: 10, stiffness: 300 });
   };
 
   return (
-    <Animated.View entering={FadeInUp.delay(delay).springify()}>
+    <Animated.View
+      entering={FadeInUp.delay(delay).springify().damping(10).stiffness(150)}
+    >
       <Animated.View style={animatedStyle}>
         <Pressable
           onPress={onPress}
           onPressIn={handlePressIn}
           onPressOut={handlePressOut}
-          className={cn(
-            'flex-row items-center bg-primary/10 dark:bg-primary/20',
-            'border border-primary/30 rounded-full px-4 py-2.5 mr-2 mb-2'
-          )}
+          className="mr-3 mb-3"
         >
-          {icon && <Text className="mr-2 text-base">{icon}</Text>}
-          <Text variant="body" className="text-primary font-medium">
-            {text}
-          </Text>
+          <View
+            className="flex-row items-center bg-white rounded-full px-6 py-3"
+            style={{
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 8,
+              elevation: 4,
+              borderWidth: 1,
+              borderColor: '#E5E7EB',
+            }}
+          >
+            {icon && (
+              <Text className="mr-2.5 text-lg" style={{ fontSize: 18 }}>
+                {icon}
+              </Text>
+            )}
+            <Text variant="body" className="text-gray-700 font-medium">
+              {text}
+            </Text>
+          </View>
         </Pressable>
       </Animated.View>
     </Animated.View>
@@ -250,22 +382,41 @@ export function ChatInput({
   onSendMessage,
   placeholder = 'Type a message...',
   disabled = false,
-}: ChatInputProps) {
+  hideBorder = false,
+}: ChatInputProps & { hideBorder?: boolean }) {
   const [message, setMessage] = useState('');
+  const [isFocused, setIsFocused] = useState(false);
   const sendScale = useSharedValue(1);
+  const containerScale = useSharedValue(1);
+  const hasText = !!message.trim();
 
   const sendButtonStyle = useAnimatedStyle(() => ({
     transform: [{ scale: sendScale.value }],
   }));
 
+  const containerStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: containerScale.value }],
+  }));
+
   const handleSend = () => {
     if (message.trim() && !disabled) {
-      sendScale.value = withSpring(0.8, {}, () => {
-        sendScale.value = withSpring(1);
-      });
+      sendScale.value = withSequence(
+        withSpring(0.8, { damping: 12, stiffness: 400 }),
+        withSpring(1, { damping: 10, stiffness: 300 })
+      );
       onSendMessage(message.trim());
       setMessage('');
     }
+  };
+
+  const handleFocus = () => {
+    setIsFocused(true);
+    containerScale.value = withSpring(1.02, { damping: 15, stiffness: 200 });
+  };
+
+  const handleBlur = () => {
+    setIsFocused(false);
+    containerScale.value = withSpring(1, { damping: 15, stiffness: 200 });
   };
 
   return (
@@ -273,44 +424,93 @@ export function ChatInput({
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View className="flex-row items-center px-4 py-4 bg-white/40 rounded-t-[25px]">
-        <Pressable className="w-8 h-8 mr-2 rounded-full items-center justify-center bg-[#3A3A3A]">
-          <SymbolView name="plus" size={16} tintColor="white" />
-        </Pressable>
-
-        <View className="flex-1 flex-row items-end bg-transparent rounded-3xl px-4 py-2 min-h-[44px]">
-          <TextInput
-            value={message}
-            onChangeText={setMessage}
-            placeholder={placeholder}
-            placeholderTextColor="#9CA3AF"
-            multiline
-            maxLength={1000}
-            editable={!disabled}
-            className="flex-1 text-base text-foreground py-2 max-h-[120px]"
-            style={{ fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto' }}
-          />
-        </View>
-
-        {message.trim() ? (
-          <Animated.View style={sendButtonStyle}>
-            <Pressable
-              onPress={handleSend}
-              className="ml-2 p-2"
-              disabled={disabled}
-            >
-              <SymbolView
-                name="paperplane.fill"
-                size={24}
-                tintColor="#6F9460"
+      <View className={cn('px-4 py-4', !hideBorder && 'bg-white/40')}>
+        <Animated.View
+          style={[
+            containerStyle,
+            {
+              backgroundColor: 'white',
+              borderRadius: 35,
+              paddingHorizontal: 24,
+              paddingVertical: 16,
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.1,
+              shadowRadius: 12,
+              elevation: 8,
+              minHeight: 70,
+            },
+          ]}
+        >
+          <View className="flex-row items-center">
+            {/* Text input - now takes full width */}
+            <View className="flex-1 mr-4 justify-center">
+              <TextInput
+                value={message}
+                onChangeText={setMessage}
+                placeholder={placeholder}
+                placeholderTextColor="#9CA3AF"
+                multiline
+                maxLength={1000}
+                editable={!disabled}
+                onFocus={handleFocus}
+                onBlur={handleBlur}
+                className="text-base text-gray-800"
+                style={{
+                  fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+                  textAlignVertical: 'center',
+                  minHeight: 38,
+                  maxHeight: 100,
+                }}
               />
-            </Pressable>
-          </Animated.View>
-        ) : (
-          <Pressable className="w-8 h-8 ml-2 rounded-full items-center justify-center bg-[#3A3A3A]">
-            <SymbolView name="mic.fill" size={16} tintColor="white" />
-          </Pressable>
-        )}
+            </View>
+
+            {/* Right side - Send/Microphone button */}
+            <View className="w-8 h-8 relative">
+              {/* Always render both, control visibility with Moti */}
+              <MotiView
+                animate={{
+                  opacity: hasText ? 0 : 1,
+                  scale: hasText ? 0.9 : 1,
+                }}
+                transition={{
+                  type: 'timing',
+                  duration: 150,
+                }}
+                style={{ position: 'absolute', top: 0, left: 0 }}
+              >
+                <Pressable className="w-8 h-8 rounded-full items-center justify-center">
+                  <SymbolView name="mic.fill" size={20} tintColor="#6B7280" />
+                </Pressable>
+              </MotiView>
+
+              <MotiView
+                animate={{
+                  opacity: hasText ? 1 : 0,
+                  scale: hasText ? 1 : 0.9,
+                }}
+                transition={{
+                  type: 'timing',
+                  duration: 150,
+                }}
+                style={{ position: 'absolute', top: 0, left: 0 }}
+              >
+                <Animated.View style={sendButtonStyle}>
+                  <Pressable
+                    onPress={handleSend}
+                    disabled={disabled}
+                    className="w-8 h-8 rounded-full items-center justify-center"
+                    style={{
+                      backgroundColor: '#2D7D6E',
+                    }}
+                  >
+                    <SymbolView name="arrow.up" size={18} tintColor="white" />
+                  </Pressable>
+                </Animated.View>
+              </MotiView>
+            </View>
+          </View>
+        </Animated.View>
       </View>
     </KeyboardAvoidingView>
   );
