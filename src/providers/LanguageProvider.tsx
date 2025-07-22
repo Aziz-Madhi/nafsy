@@ -6,6 +6,7 @@ import React, {
   ReactNode,
 } from 'react';
 import { setLocale, getCurrentLocale, isRTL, type Language } from '../lib/i18n';
+import { useAppStore, useLanguage } from '../store/useAppStore';
 
 interface LanguageContextType {
   currentLanguage: Language;
@@ -22,11 +23,27 @@ interface LanguageProviderProps {
   children: ReactNode;
 }
 
+/**
+ * LanguageProvider - Backwards compatibility layer
+ *
+ * This provider now syncs with Zustand store while maintaining the same API.
+ * Eventually, this can be removed once all components use useTranslation directly.
+ */
 export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   children,
 }) => {
-  // Safe initialization to prevent race conditions
+  // Connect to Zustand store
+  const storeLanguage = useLanguage();
+  const updateSettings = useAppStore((state) => state.updateSettings);
+  const isStoreHydrated = useAppStore(
+    (state) => state.persist?.hasHydrated?.() ?? false
+  );
+
+  // Initialize with store value if available, fallback to i18n
   const [currentLanguage, setCurrentLanguage] = useState<Language>(() => {
+    if (isStoreHydrated && storeLanguage) {
+      return storeLanguage;
+    }
     try {
       return getCurrentLocale() || 'en';
     } catch {
@@ -35,41 +52,62 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
   });
 
   const [isRTLEnabled, setIsRTLEnabled] = useState(() => {
-    try {
-      return isRTL();
-    } catch {
-      return false;
-    }
+    const lang = (isStoreHydrated && storeLanguage) || currentLanguage;
+    return lang === 'ar';
   });
 
-  // Add initialization state to prevent early rendering
   const [isInitialized, setIsInitialized] = useState(false);
 
-  // Initialize provider after first render to avoid hydration issues
+  // Initialize provider after first render
   useEffect(() => {
     setIsInitialized(true);
   }, []);
 
-  // Update RTL layout manager when language changes
+  // Sync with store when it changes
+  useEffect(() => {
+    if (isStoreHydrated && storeLanguage && storeLanguage !== currentLanguage) {
+      setCurrentLanguage(storeLanguage);
+      setIsRTLEnabled(storeLanguage === 'ar');
+
+      // Ensure i18n is synced
+      try {
+        if (getCurrentLocale() !== storeLanguage) {
+          setLocale(storeLanguage);
+        }
+      } catch (error) {
+        console.warn(
+          'LanguageProvider: Failed to sync i18n with store:',
+          error
+        );
+      }
+    }
+  }, [isStoreHydrated, storeLanguage, currentLanguage]);
+
+  // Update RTL state when language changes
   useEffect(() => {
     const shouldBeRTL = currentLanguage === 'ar';
     setIsRTLEnabled(shouldBeRTL);
-
-    // Note: We don't force global RTL layout as it affects entire app structure
-    // Instead, we use selective RTL for text content via RTL utilities
   }, [currentLanguage]);
 
   const setLanguage = (language: Language) => {
-    // Update i18n locale
-    setLocale(language);
+    try {
+      // Update Zustand store (primary source of truth)
+      updateSettings({ language });
 
-    // Update local state
-    setCurrentLanguage(language);
+      // Update local state immediately for UI responsiveness
+      setCurrentLanguage(language);
+      setIsRTLEnabled(language === 'ar');
 
-    // Update RTL state
-    setIsRTLEnabled(language === 'ar');
+      // Update i18n as backup (store middleware should handle this)
+      setLocale(language);
+    } catch (error) {
+      console.warn('LanguageProvider: Failed to set language:', error);
 
-    // Note: App store sync will be handled separately to avoid navigation context issues
+      // Fallback to direct i18n update
+      setLocale(language);
+      setCurrentLanguage(language);
+      setIsRTLEnabled(language === 'ar');
+    }
   };
 
   const toggleLanguage = () => {
@@ -84,8 +122,7 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({
     toggleLanguage,
   };
 
-  // Don't render children until provider is fully initialized
-  // This prevents race conditions during app startup
+  // Don't render children until provider is initialized and store is ready
   if (!isInitialized) {
     return null;
   }

@@ -10,7 +10,7 @@ import {
   type Language,
   type TranslationKeyPath,
 } from '../lib/i18n';
-import { useAppStore } from '../store/useAppStore';
+import { useAppStore, useLanguage, useSettings } from '../store/useAppStore';
 
 export interface TranslationHook {
   t: (key: TranslationKeyPath, options?: any) => string;
@@ -23,15 +23,19 @@ export interface TranslationHook {
 }
 
 export const useTranslation = (): TranslationHook => {
-  // Always call hooks at the top level
-  const store = useAppStore();
+  // Use Zustand selectors for optimal performance
+  const language = useLanguage();
+  const settings = useSettings();
+  const updateSettings = useAppStore((state) => state.updateSettings);
+  const isStoreHydrated = useAppStore(
+    (state) => state.persist?.hasHydrated?.() ?? false
+  );
 
-  // Defensive fallbacks to prevent undefined returns during hydration
-  const settings = store?.settings || { language: 'en' as Language };
-  const updateSettings = store?.updateSettings || (() => {});
-
-  // Initialize with safe defaults
+  // Initialize with safe defaults, prioritizing store values once hydrated
   const [locale, setLocaleState] = useState<Language>(() => {
+    if (isStoreHydrated && language) {
+      return language;
+    }
     try {
       return getCurrentLocale() || 'en';
     } catch {
@@ -47,32 +51,63 @@ export const useTranslation = (): TranslationHook => {
     }
   });
 
-  // Update locale when settings change
+  // Sync with store once it's hydrated
   useEffect(() => {
-    const newLocale = settings.language as Language;
-    if (newLocale !== locale) {
-      setLocale(newLocale);
-      setLocaleState(newLocale);
-      setRtlState(isRTL());
+    if (isStoreHydrated && language && language !== locale) {
+      try {
+        setLocale(language);
+        setLocaleState(language);
+        setRtlState(isRTL());
+      } catch (error) {
+        console.warn('Failed to sync locale with store:', error);
+      }
     }
-  }, [settings.language, locale]);
+  }, [isStoreHydrated, language, locale]);
 
-  // Initialize locale from settings on mount
+  // Update locale when store language changes
   useEffect(() => {
-    const settingsLocale = settings.language as Language;
-    if (settingsLocale !== getCurrentLocale()) {
-      setLocale(settingsLocale);
-      setLocaleState(settingsLocale);
-      setRtlState(isRTL());
+    if (language && language !== locale) {
+      try {
+        setLocale(language);
+        setLocaleState(language);
+        setRtlState(isRTL());
+      } catch (error) {
+        console.warn('Failed to update locale:', error);
+      }
     }
-  }, []);
+  }, [language, locale]);
+
+  // Initialize locale from store on mount (with fallback)
+  useEffect(() => {
+    const targetLanguage = language || 'en';
+    const currentI18nLocale = getCurrentLocale();
+
+    if (targetLanguage !== currentI18nLocale) {
+      try {
+        setLocale(targetLanguage);
+        setLocaleState(targetLanguage);
+        setRtlState(isRTL());
+      } catch (error) {
+        console.warn('Failed to initialize locale:', error);
+      }
+    }
+  }, [language]);
 
   const setLanguage = useCallback(
-    (language: Language) => {
-      updateSettings({ language });
-      setLocale(language);
-      setLocaleState(language);
-      setRtlState(isRTL());
+    (newLanguage: Language) => {
+      try {
+        // Update store first (this will trigger i18n update via store middleware)
+        updateSettings({ language: newLanguage });
+
+        // Update local state immediately for UI responsiveness
+        setLocaleState(newLanguage);
+        setRtlState(newLanguage === 'ar');
+
+        // Ensure i18n is updated (backup in case store middleware fails)
+        setLocale(newLanguage);
+      } catch (error) {
+        console.warn('Failed to set language:', error);
+      }
     },
     [updateSettings]
   );

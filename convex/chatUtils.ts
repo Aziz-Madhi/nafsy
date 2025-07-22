@@ -34,6 +34,11 @@ export async function updateChatSession(
   }
 }
 
+// Generate unique session IDs
+export function generateSessionId(): string {
+  return `session_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
+}
+
 // Generate session titles based on content
 export function generateSessionTitle(firstMessage?: string): string {
   const now = new Date();

@@ -22,6 +22,7 @@ import Animated, {
 import { AnimatePresence, MotiView } from 'moti';
 import { ChatBubbleProps, ChatInputProps } from './types';
 import { useTranslation } from '~/hooks/useTranslation';
+import SendingSpinner from './SendingSpinner';
 
 // =====================
 // CHAT BUBBLE COMPONENT
@@ -149,37 +150,15 @@ export const ChatBubble = React.memo(function ChatBubble({
               className="absolute -bottom-1 -right-1"
             >
               <View className="bg-white rounded-full p-1.5 shadow-md">
-                {status === 'sending' && (
-                  <Animated.View
-                    style={[
-                      { width: 14, height: 14 },
-                      useAnimatedStyle(() => ({
-                        transform: [
-                          {
-                            rotate: withRepeat(
-                              withTiming(360, { duration: 1000 }),
-                              -1
-                            ),
-                          },
-                        ],
-                      })),
-                    ]}
-                  >
-                    <SymbolView
-                      name="arrow.clockwise"
-                      size={14}
-                      tintColor="#2D7D6E"
-                    />
-                  </Animated.View>
-                )}
-                {status === 'sent' && (
+                {status === 'sending' ? (
+                  <SendingSpinner />
+                ) : status === 'sent' ? (
                   <SymbolView name="checkmark" size={14} tintColor="#10B981" />
-                )}
-                {status === 'delivered' && (
+                ) : (
                   <SymbolView
-                    name="checkmark.circle.fill"
+                    name="exclamationmark"
                     size={14}
-                    tintColor="#10B981"
+                    tintColor="#EF4444"
                   />
                 )}
               </View>

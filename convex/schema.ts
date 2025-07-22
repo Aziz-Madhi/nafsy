@@ -34,10 +34,36 @@ export default defineSchema({
     .index('by_session', ['sessionId'])
     .index('by_user_session', ['userId', 'sessionId']),
 
+  // Vent chat messages (quick emotional releases)
+  ventChatMessages: defineTable({
+    userId: v.id('users'),
+    content: v.string(),
+    role: v.union(v.literal('user'), v.literal('assistant')),
+    sessionId: v.optional(v.string()), // Optional for backwards compatibility
+    ventSessionId: v.optional(v.string()), // Legacy field
+    createdAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_session', ['sessionId'])
+    .index('by_user_session', ['userId', 'sessionId']),
+
   // Chat sessions metadata (for main chat only)
   chatSessions: defineTable({
     userId: v.id('users'),
     sessionId: v.string(), // Unique identifier for the session
+    title: v.string(), // Human-readable title
+    type: v.optional(v.string()), // Optional field for existing data
+    startedAt: v.number(),
+    lastMessageAt: v.number(),
+    messageCount: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_session_id', ['sessionId']),
+
+  // Vent chat sessions metadata
+  ventChatSessions: defineTable({
+    userId: v.id('users'),
+    sessionId: v.string(), // Unique identifier for the vent session
     title: v.string(), // Human-readable title
     startedAt: v.number(),
     lastMessageAt: v.number(),

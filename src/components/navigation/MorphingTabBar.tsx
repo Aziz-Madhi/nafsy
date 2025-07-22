@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect } from 'react';
-import { View, Pressable } from 'react-native';
+import { View, Pressable, Dimensions } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { SymbolView } from 'expo-symbols';
 import * as Haptics from 'expo-haptics';
@@ -10,9 +10,8 @@ import Animated, {
   withTiming,
   withSequence,
 } from 'react-native-reanimated';
-import { Dimensions } from 'react-native';
 import { ChatInput } from '~/components/chat';
-import { useChatUIStore, useHistorySidebarVisible } from '~/store';
+import { useChatUIStore, useHistorySidebarVisible, useAppStore } from '~/store';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
@@ -117,6 +116,14 @@ export function MorphingTabBar({
   const currentRoute = state.routes[state.index].name;
   const isChat = currentRoute === 'chat';
 
+  // Track active tab in Zustand store
+  const setActiveTab = useAppStore((state) => state.setActiveTab);
+
+  // Update store when tab changes
+  useEffect(() => {
+    setActiveTab(currentRoute);
+  }, [currentRoute, setActiveTab]);
+
   // Animation values
   const containerHeight = useSharedValue(90);
   const borderRadius = useSharedValue(0);
@@ -126,7 +133,7 @@ export function MorphingTabBar({
   const backgroundColor = useSharedValue(0);
   const tabsBottomPosition = useSharedValue(0);
   const tabsHeight = useSharedValue(90);
-  
+
   // Simple tab bar sliding animation
   const tabTranslateX = useSharedValue(0);
   // Dim effect when sidebar is open
@@ -134,7 +141,7 @@ export function MorphingTabBar({
   const showHistorySidebar = useHistorySidebarVisible();
   // Compute sidebar width (must match ChatHistorySidebar)
   const SIDEBAR_WIDTH = Dimensions.get('window').width * 0.85;
-  
+
   // Trigger animation when sidebar state changes
   useEffect(() => {
     if (showHistorySidebar) {

@@ -7,6 +7,7 @@ export {
   TypingIndicator,
   QuickReplyButton,
 } from './ChatComponents';
+export { default as SendingSpinner } from './SendingSpinner';
 
 export { ChatHistorySidebar } from './ChatHistorySidebar';
 

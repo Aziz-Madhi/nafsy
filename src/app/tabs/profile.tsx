@@ -18,6 +18,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as Haptics from 'expo-haptics';
 import { cn } from '~/lib/cn';
 import { useTranslation, useLanguageSwitcher } from '~/hooks/useTranslation';
+import { useTheme, useCurrentTheme, useToggleTheme } from '~/store';
 
 interface SettingItem {
   id: string;
@@ -37,6 +38,11 @@ export default function ProfileScreen() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { t } = useTranslation();
   const { currentLanguage, toggleLanguage } = useLanguageSwitcher();
+
+  // Theme management
+  const themePreference = useTheme();
+  const currentTheme = useCurrentTheme();
+  const toggleTheme = useToggleTheme();
 
   // ===== CONVEX: Server data (move hooks before any early returns) =====
   const createUser = useMutation(api.users.createUser);
@@ -86,6 +92,11 @@ export default function ProfileScreen() {
     toggleLanguage();
   };
 
+  const handleToggleTheme = () => {
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    toggleTheme();
+  };
+
   const settingsSections: { title: string; items: SettingItem[] }[] = [
     {
       title: t('profile.sections.account'),
@@ -123,6 +134,14 @@ export default function ProfileScreen() {
           iconName: 'globe',
           iconColor: '#8B5CF6',
           action: handleToggleLanguage,
+        },
+        {
+          id: 'theme',
+          title: 'Theme',
+          subtitle: `${currentTheme} (${themePreference === 'system' ? 'Auto' : 'Manual'})`,
+          iconName: currentTheme === 'dark' ? 'moon.fill' : 'sun.max.fill',
+          iconColor: currentTheme === 'dark' ? '#4F46E5' : '#F59E0B',
+          action: handleToggleTheme,
         },
       ],
     },

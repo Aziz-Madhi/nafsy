@@ -67,6 +67,31 @@ export const getAuthenticatedClerkId = withErrorHandling(
 );
 
 /**
+ * Simplified function to require authentication and return user ID
+ * Used for simpler auth checks without full user object
+ */
+export const requireAuth = withErrorHandling(
+  async (ctx: QueryCtx | MutationCtx) => {
+    const identity = await ctx.auth.getUserIdentity();
+
+    if (!identity) {
+      throw createAuthError('Authentication required');
+    }
+
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
+      .first();
+
+    if (!user) {
+      throw createNotFoundError('User', identity.subject);
+    }
+
+    return user._id;
+  }
+);
+
+/**
  * Rate-limited authentication check
  */
 export const getAuthenticatedUserWithRateLimit = withErrorHandling(

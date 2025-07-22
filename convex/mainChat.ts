@@ -88,11 +88,19 @@ export const getMainSessions = query({
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
 
-    return await ctx.db
+    const sessions = await ctx.db
       .query('chatSessions')
       .filter((q) => q.eq(q.field('userId'), user._id))
       .order('desc')
       .take(args.limit || 20);
+    
+    // Filter to only return main chat sessions (not vent sessions)
+    // Remove the type field from results to match the validator
+    return sessions
+      .filter(session => 
+        !session.type || session.type === 'main' || session.sessionId.startsWith('main_')
+      )
+      .map(({ type, ...session }) => session);
   },
 });
 
@@ -110,7 +118,16 @@ export const getCurrentMainSessionId = query({
       .order('desc')
       .first();
 
-    return latestSession?.sessionId || null;
+    // Only return main session IDs (not vent session IDs)
+    if (latestSession && (
+      !latestSession.type || 
+      latestSession.type === 'main' || 
+      latestSession.sessionId.startsWith('main_')
+    )) {
+      return latestSession.sessionId;
+    }
+    
+    return null;
   },
 });
 

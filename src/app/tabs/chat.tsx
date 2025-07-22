@@ -30,7 +30,9 @@ import {
   useMainChatTyping,
   useShowQuickReplies,
   useHistorySidebarVisible,
+  useCurrentMainSessionId,
   useChatUIStore,
+  useSwitchToMainSession,
 } from '~/store';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -81,6 +83,10 @@ export default function ChatScreen() {
     setHistorySidebarVisible,
   } = useChatUIStore();
 
+  // Session management
+  const currentMainSessionId = useCurrentMainSessionId();
+  const switchToMainSession = useSwitchToMainSession();
+
   const flashListRef = useRef<FlashList<Message>>(null);
 
   // Convex hooks - only execute when auth is stable
@@ -94,10 +100,19 @@ export default function ChatScreen() {
   );
   const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
   const createUser = useMutation(api.users.createUser);
-  const currentMainSessionId = useQuery(
+  const serverMainSessionId = useQuery(
     api.mainChat.getCurrentMainSessionId,
     isSignedIn ? {} : 'skip'
   );
+
+  // Sync server session with local store
+  useEffect(() => {
+    if (serverMainSessionId && serverMainSessionId !== currentMainSessionId) {
+      // Update store with server session ID
+      const { setCurrentMainSessionId } = useChatUIStore.getState();
+      setCurrentMainSessionId(serverMainSessionId);
+    }
+  }, [serverMainSessionId, currentMainSessionId]);
 
   // Auth is handled at tab layout level - no early returns needed
 
@@ -125,7 +140,7 @@ export default function ChatScreen() {
       sendMainMessage({
         content: getWelcomeMessage(t),
         role: 'assistant',
-        sessionId: currentMainSessionId || undefined,
+        sessionId: currentMainSessionId || serverMainSessionId || undefined,
       });
     }
   }, [
@@ -134,7 +149,7 @@ export default function ChatScreen() {
     isLoaded,
     mainChatMessages,
     sendMainMessage,
-    currentMainSessionId,
+    serverMainSessionId,
     t,
   ]);
 
@@ -177,7 +192,7 @@ export default function ChatScreen() {
 
   // Compute sidebar width (must match ChatHistorySidebar)
   const SIDEBAR_WIDTH = Dimensions.get('window').width * 0.85;
-  
+
   // Trigger animation when sidebar state changes
   useEffect(() => {
     if (showHistorySidebar) {
@@ -188,7 +203,7 @@ export default function ChatScreen() {
       chatTranslateX.value = withTiming(0, { duration: 300 });
     }
   }, [showHistorySidebar, chatTranslateX, SIDEBAR_WIDTH]);
-  
+
   const chatAnimatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: chatTranslateX.value }],
   }));
@@ -226,17 +241,25 @@ export default function ChatScreen() {
   }, [setHistorySidebarVisible]);
 
   const handleSessionSelect = useCallback(
-    (sessionId: string) => {
-      // For now, just close the sidebar - session switching can be implemented later
-      // This removes the complex session management that was causing infinite loops
-      setHistorySidebarVisible(false);
+    async (sessionId: string) => {
+      try {
+        // Switch to the selected session using Zustand store
+        await switchToMainSession(sessionId);
 
-      // Scroll to top
-      setTimeout(() => {
-        flashListRef.current?.scrollToOffset({ offset: 0, animated: true });
-      }, 100);
+        // Close sidebar
+        setHistorySidebarVisible(false);
+
+        // Scroll to top after session loads
+        setTimeout(() => {
+          flashListRef.current?.scrollToOffset({ offset: 0, animated: true });
+        }, 300);
+      } catch (error) {
+        console.error('Failed to switch session:', error);
+        // Still close sidebar on error
+        setHistorySidebarVisible(false);
+      }
     },
-    [setHistorySidebarVisible]
+    [switchToMainSession, setHistorySidebarVisible]
   );
 
   // Note: handleSendMessage is now managed by MorphingTabBar
@@ -254,7 +277,7 @@ export default function ChatScreen() {
       await sendMainMessage({
         content: text,
         role: 'user',
-        sessionId: currentMainSessionId || undefined,
+        sessionId: currentMainSessionId || serverMainSessionId || undefined,
       });
 
       // Update UI state with Zustand
@@ -291,7 +314,7 @@ export default function ChatScreen() {
         await sendMainMessage({
           content: aiResponseText,
           role: 'assistant',
-          sessionId: currentMainSessionId || undefined,
+          sessionId: currentMainSessionId || serverMainSessionId || undefined,
         });
       }, 2000);
     },
@@ -301,6 +324,7 @@ export default function ChatScreen() {
       setShowQuickReplies,
       setMainChatTyping,
       currentMainSessionId,
+      serverMainSessionId,
       isSignedIn,
       isLoaded,
     ]
@@ -407,7 +431,7 @@ export default function ChatScreen() {
         visible={showHistorySidebar}
         onClose={handleCloseSidebar}
         onSessionSelect={handleSessionSelect}
-        currentSessionId={undefined}
+        currentSessionId={currentMainSessionId || undefined}
       />
     </View>
   );

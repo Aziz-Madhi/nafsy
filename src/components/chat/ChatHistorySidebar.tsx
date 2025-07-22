@@ -158,11 +158,11 @@ export function ChatHistorySidebar({
   // Simple sidebar slide animation
   const sidebarTranslateX = useSharedValue(-SIDEBAR_WIDTH);
   const backdropOpacity = useSharedValue(0);
-  
+
   const sidebarStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: sidebarTranslateX.value }],
   }));
-  
+
   const backdropStyle = useAnimatedStyle(() => ({
     opacity: backdropOpacity.value,
   }));
@@ -196,13 +196,13 @@ export function ChatHistorySidebar({
   const currentSessions = useMemo(() => {
     const sessions = mainSessions || [];
     const validSessions = Array.isArray(sessions) ? sessions : [];
-    
+
     // Filter sessions based on search query
     if (!searchQuery.trim()) {
       return validSessions;
     }
-    
-    return validSessions.filter(session => 
+
+    return validSessions.filter((session) =>
       session.title?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   }, [mainSessions, searchQuery]);
@@ -286,7 +286,11 @@ export function ChatHistorySidebar({
               History
             </Text>
             <View className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3">
-              <SymbolView name="magnifyingglass" size={18} tintColor="#9CA3AF" />
+              <SymbolView
+                name="magnifyingglass"
+                size={18}
+                tintColor="#9CA3AF"
+              />
               <TextInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
@@ -302,12 +306,15 @@ export function ChatHistorySidebar({
                   className="p-1"
                   hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
                 >
-                  <SymbolView name="xmark.circle.fill" size={16} tintColor="#9CA3AF" />
+                  <SymbolView
+                    name="xmark.circle.fill"
+                    size={16}
+                    tintColor="#9CA3AF"
+                  />
                 </Pressable>
               )}
             </View>
           </View>
-
 
           {/* Sessions List */}
           <FlatList
@@ -334,21 +341,23 @@ export function ChatHistorySidebar({
             }}
             ListEmptyComponent={() => {
               const hasSearchQuery = searchQuery.trim().length > 0;
-              const emptyMessage = hasSearchQuery 
-                ? (t('chat.search.noResults') || 'No conversations match your search')
-                : (t('chat.history.noMainSessions') || 'No chat sessions yet');
-              const iconName = hasSearchQuery ? 'magnifyingglass' : 'bubble.left';
-              
+              const emptyMessage = hasSearchQuery
+                ? t('chat.search.noResults') ||
+                  'No conversations match your search'
+                : t('chat.history.noMainSessions') || 'No chat sessions yet';
+              const iconName = hasSearchQuery
+                ? 'magnifyingglass'
+                : 'bubble.left';
+
               return (
                 <View className="flex-1 items-center justify-center py-12">
                   <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
-                    <SymbolView
-                      name={iconName}
-                      size={24}
-                      tintColor="#9CA3AF"
-                    />
+                    <SymbolView name={iconName} size={24} tintColor="#9CA3AF" />
                   </View>
-                  <Text variant="subhead" className="text-gray-500 text-center px-6">
+                  <Text
+                    variant="subhead"
+                    className="text-gray-500 text-center px-6"
+                  >
                     {emptyMessage}
                   </Text>
                   {hasSearchQuery && (
