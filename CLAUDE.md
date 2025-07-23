@@ -18,6 +18,19 @@ You are an expert in TypeScript, React Native, Expo, Nativewind v4, and React Na
 - `bun ios` - Run on iOS device/simulator (ASK FOR CONFIRMATION first)
 - `bun web` - Run on web browser
 
+### Code Quality
+
+- `bun lint` - Run ESLint checks
+- `bun lint:fix` - Run ESLint with auto-fix
+- `bun format` - Format code with Prettier
+- `bun format:check` - Check if code is properly formatted
+
+### Testing
+
+- `bun test` - Run Jest tests
+- `bun test:watch` - Run tests in watch mode
+- `bun test:coverage` - Run tests with coverage report
+
 ### Backend (Convex)
 
 - `bun convex:dev` - Start Convex development server
@@ -32,15 +45,24 @@ You are an expert in TypeScript, React Native, Expo, Nativewind v4, and React Na
 
 ### Tech Stack
 
-- **Frontend**: React Native with Expo SDK 53
+- **Frontend**: React Native with Expo SDK 53 (New Architecture enabled)
 - **Routing**: Expo Router v5 with typed routes
 - **Styling**: Nativewind v4 (Tailwind CSS for React Native)
-- **Animations**: React Native Reanimated 4 + Moti
-- **State Management**: Zustand with MMKV persistence
+- **Animations**: React Native Reanimated 4 + Moti with preset library
+- **State Management**: Zustand with MMKV persistence via store factory
 - **Backend**: Convex (real-time database and functions)
-- **Authentication**: Clerk
-- **Localization**: react-native-i18n
+- **Authentication**: Clerk with custom provider setup
+- **Localization**: react-native-i18n with RTL support
+- **Performance**: Comprehensive monitoring, lazy loading, bundle optimization
 - **Package Manager**: Bun
+
+### Performance Architecture
+
+- **Lazy Loading**: Component-based lazy loading with preload strategies
+- **Performance Monitoring**: Comprehensive metrics tracking (startup, navigation, memory)
+- **Bundle Optimization**: Critical path analysis and lazy bundle loading
+- **Animation Optimization**: Reanimated 4 with worklet optimization
+- **Memory Management**: MMKV with health checks and automatic cleanup
 
 ### Project Structure
 
@@ -54,35 +76,57 @@ src/
 │   │   ├── mood.tsx       # Mood tracking
 │   │   ├── exercises.tsx  # Wellness exercises
 │   │   └── profile.tsx    # User profile
-│   └── auth/              # Authentication screens
+│   ├── auth/              # Authentication screens
+│   └── chat-history.tsx   # Chat history modal
 ├── components/            # Reusable UI components
 │   ├── chat/              # Chat-related components
-│   ├── mood/              # Mood tracking components
 │   ├── exercises/         # Exercise components
-│   └── ui/                # Base UI components
+│   ├── lazy/              # Lazy-loaded components
+│   ├── navigation/        # Navigation components
+│   ├── ui/                # Base UI components
+│   ├── auth/              # Authentication components
+│   └── dev/               # Development tools
+├── screens/               # Screen implementations
+│   └── tabs/              # Tab screen implementations
 ├── providers/             # React context providers
-├── store/                 # Zustand stores
-├── lib/                   # Utilities and hooks
+├── store/                 # Zustand stores with MMKV
+├── lib/                   # Utilities and optimization tools
+│   ├── animations/        # Animation presets and utilities
+│   └── performance monitoring, MMKV, lazy loading
+├── hooks/                 # Custom React hooks
+├── config/                # Environment configuration
 ├── types/                 # TypeScript type definitions
 └── locales/               # i18n translation files
 ```
 
 ### State Management Architecture
 
-- **Zustand Stores**: Separated by feature domain
-  - `useAppStore`: Global app state and user preferences
-  - `useChatUIStore`: Chat UI state and temporary data
-  - `useMoodStore`: Mood tracking local state
-  - `useExerciseStore`: Exercise progress and preferences
-- **Persistence**: MMKV for fast, synchronous storage
-- **Real-time Data**: Convex handles server state with subscriptions
+**Modern Zustand + MMKV Implementation:**
+- **Store Factory Pattern**: `createPersistedStore()` factory for consistent MMKV persistence
+- **Primary Stores**:
+  - `useAppStore`: Global app state, themes, settings, language with smart theme resolution
+  - `useChatUIStore`: Chat UI state, session management, floating chat, typing indicators
+- **MMKV Integration**: 
+  - Custom `mmkv-storage.ts` with encryption and error handling
+  - Synchronous persistence with fallback mechanisms
+  - Health checks and storage optimization
+- **Store Provider**: Simplified hydration with error boundaries and system theme listeners
+- **Optimized Selectors**: Shallow comparison selectors and action grouping for performance
 
 ### Database Schema (Convex)
 
-- **Dual Chat System**: Separate tables for main therapy sessions (`mainChatMessages`) and quick vents (`ventChatMessages`)
-- **Session Management**: `chatSessions` table tracks conversation metadata
-- **User Data**: `users`, `moods`, `exercises`, `userProgress`
-- **Multilingual**: Arabic/English support in exercise content
+- **Dual Chat System**: 
+  - `mainChatMessages`: Structured therapy sessions with sessionId
+  - `ventChatMessages`: Quick emotional releases/vents
+- **Session Management**: 
+  - `chatSessions`: Main chat conversation metadata
+  - `ventChatSessions`: Vent chat session metadata
+- **User Data**: 
+  - `users`: User profiles with Clerk integration
+  - `moods`: Daily mood entries with 5 mood types
+  - `exercises`: Wellness exercises with category/difficulty
+  - `userProgress`: Exercise completion tracking
+- **Multilingual**: Arabic/English support in exercise content and UI
 
 ### Key Features
 
@@ -126,7 +170,11 @@ src/
 
 ## Convex Development Notes
 
-- Any time you're editing or fixing something with Convex, remember that you have the option to run the MCP (Master Control Program)
+- Convex functions are located in the `convex/` directory
+- Schema is defined in `convex/schema.ts` with indexed tables
+- Available Convex modules: auth, chat, exercises, moods, users, mainChat, ventChat, userProgress
+- Use MCP tools for Convex operations: `mcp__convex__*` functions for database queries and management
+- Environment variables: EXPO_PUBLIC_CONVEX_URL for deployment connection
 
 ## Build and Development Notes
 
@@ -152,10 +200,42 @@ src/
 - Follow iOS design patterns for consistency
 - Use haptic feedback for user interactions
 
-## Important Development Considerations
+## Performance and Optimization Guidelines
 
-- Always test on both iOS and Android when making UI changes
-- Consider Arabic RTL layout requirements for multilingual features
-- Use Convex subscriptions for real-time updates, not polling
-- Implement proper error boundaries for Clerk authentication
-- Test offline functionality with MMKV persistence
+- **Lazy Loading**: Use lazy components from `src/components/lazy/` for heavy screens
+- **Performance Monitoring**: Leverage built-in performance monitoring for optimization insights
+- **MMKV Best Practices**: Use `mmkvJSON` helpers for object storage, check storage health
+- **Animation Performance**: Use Reanimated 4 worklets, avoid bridge communication
+- **Bundle Optimization**: Monitor critical path size, use lazy loading for non-essential features
+- **Memory Management**: Regular cleanup, monitor memory usage patterns
+
+## Component Architecture
+
+- **Screen Layout System**: `ScreenLayout` component with presets (dashboard, chat, profile, list)
+- **Lazy Loading**: Components in `src/components/lazy/` with performance tracking
+- **UI Components**: Consistent design system in `src/components/ui/`
+- **Animation Library**: Preset animations in `src/lib/animations/`
+- **Generic Patterns**: `GenericList`, `LazyModal`, `InteractiveCard` for common use cases
+
+## Development Workflow
+
+- **Performance First**: Monitor bundle size and lazy load times during development
+- **State Management**: Use store factory pattern for new features requiring persistence
+- **Error Boundaries**: Implement proper error handling for store operations
+- **Testing**: Focus on store hydration, lazy loading, and performance metrics
+- **RTL Support**: Test Arabic layouts, use `RTLView` component for direction-aware layouts
+
+## Testing Framework
+
+- Jest configuration in `jest.config.js` with React Native preset
+- Test files: `src/**/__tests__/**/*.{ts,tsx}` or `src/**/*.(test|spec).{ts,tsx}`
+- Module aliases: `@/` and `~/` point to `src/` directory
+- Coverage collection from `src/**/*.{ts,tsx}` excluding index and type files
+- Transform ignore patterns include React Native, Expo, and animation libraries
+- Store testing: Focus on MMKV persistence, hydration, and error scenarios
+
+# important-instruction-reminders
+Do what has been asked; nothing more, nothing less.
+NEVER create files unless they're absolutely necessary for achieving your goal.
+ALWAYS prefer editing an existing file to creating a new one.
+NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.

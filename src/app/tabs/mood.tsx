@@ -1,8 +1,8 @@
 /**
- * Lazy-loaded Mood Tab Screen
- * This wrapper enables lazy loading for the mood functionality
+ * Mood Tab Screen
+ * Direct import for instant tab switching performance
  */
 
-import { MoodScreenLazy } from '~/components/lazy';
+import MoodScreen from '~/screens/tabs/mood';
 
-export default MoodScreenLazy;
+export default MoodScreen;

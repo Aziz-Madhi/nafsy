@@ -1,5 +1,3 @@
-import { lazy } from 'react';
-
 // Consolidated chat components
 export {
   ChatBubble,
@@ -10,11 +8,7 @@ export {
 export { default as SendingSpinner } from './SendingSpinner';
 
 export { ChatHistorySidebar } from './ChatHistorySidebar';
-
-// Lazy-loaded heavy components
-export const FloatingChat = lazy(() =>
-  import('./FloatingChat').then((module) => ({ default: module.FloatingChat }))
-);
+export { FloatingChat } from './FloatingChat';
 
 // Types
 export type {

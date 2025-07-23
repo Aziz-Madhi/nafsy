@@ -10,7 +10,7 @@ import {
   QuickReplyButton,
   FloatingChat,
 } from '~/components/chat';
-import { ChatHistorySidebarLazy as ChatHistorySidebar } from '~/components/lazy';
+import { ChatHistorySidebar } from '~/components/chat/ChatHistorySidebar';
 import Animated, {
   FadeInDown,
   runOnJS,

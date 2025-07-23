@@ -1,8 +1,8 @@
 /**
- * Lazy-loaded Exercises Tab Screen
- * This wrapper enables lazy loading for the exercises functionality
+ * Exercises Tab Screen
+ * Direct import for instant tab switching performance
  */
 
-import { ExercisesScreenLazy } from '~/components/lazy';
+import ExercisesScreen from '~/screens/tabs/exercises';
 
-export default ExercisesScreenLazy;
+export default ExercisesScreen;

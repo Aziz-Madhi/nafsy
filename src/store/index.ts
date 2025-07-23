@@ -13,9 +13,6 @@ export * from './types';
 export * from './useAppStore';
 export * from './useChatUIStore';
 
-// Re-export theme selectors for convenience
-export { useTheme, useCurrentTheme, useToggleTheme } from './useAppStore';
-
 // Global store reset utility (simplified)
 export const resetAllStores = () => {
   useAppStore.getState().reset();

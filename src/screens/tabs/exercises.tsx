@@ -2,10 +2,9 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { View } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { DashboardLayout } from '~/components/ui/ScreenLayout';
-import { ExerciseDetail } from '~/components/exercises';
+import { ExerciseDetail, CategoryExerciseList } from '~/components/exercises';
 // Temporarily use direct imports to debug missing CategoryGrid
 import { CategoryGrid } from '~/components/exercises/CategoryGrid';
-import { CategoryExerciseListLazy as CategoryExerciseList } from '~/components/lazy';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import {

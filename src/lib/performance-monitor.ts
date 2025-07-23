@@ -10,13 +10,7 @@ interface PerformanceMetric {
   name: string;
   value: number;
   timestamp: number;
-  type:
-    | 'startup'
-    | 'navigation'
-    | 'render'
-    | 'memory'
-    | 'network'
-    | 'lazy-load';
+  type: 'startup' | 'navigation' | 'render' | 'memory' | 'network';
   metadata?: Record<string, any>;
 }
 
@@ -30,18 +24,14 @@ interface AppStartupMetrics {
 
 interface BundleMetrics {
   totalBundleSize?: number;
-  lazilyLoadedSize: number;
   criticalPathSize: number;
-  componentLoadTimes: Record<string, number>;
 }
 
 class PerformanceMonitor {
   private metrics: PerformanceMetric[] = [];
   private startupMetrics: Partial<AppStartupMetrics> = {};
   private bundleMetrics: BundleMetrics = {
-    lazilyLoadedSize: 0,
     criticalPathSize: 0,
-    componentLoadTimes: {},
   };
 
   private static instance: PerformanceMonitor;
@@ -204,50 +194,9 @@ class PerformanceMonitor {
     }
   }
 
-  // Lazy Loading Performance
-  recordLazyLoadStart(componentName: string): void {
-    this.recordMetric({
-      name: `lazy_load_start_${componentName}`,
-      value: Date.now(),
-      timestamp: Date.now(),
-      type: 'lazy-load',
-      metadata: { componentName, phase: 'start' },
-    });
-  }
-
-  recordLazyLoadComplete(componentName: string): void {
-    const startMetric = this.metrics
-      .filter((m) => m.name === `lazy_load_start_${componentName}`)
-      .pop();
-
-    if (startMetric) {
-      const loadTime = Date.now() - startMetric.value;
-      this.bundleMetrics.componentLoadTimes[componentName] = loadTime;
-
-      this.recordMetric({
-        name: `lazy_load_duration_${componentName}`,
-        value: loadTime,
-        timestamp: Date.now(),
-        type: 'lazy-load',
-        metadata: {
-          componentName,
-          phase: 'complete',
-          loadTime,
-        },
-      });
-    }
-  }
-
   // Bundle Analysis
-  recordBundleMetric(
-    metric: 'lazy-loaded-size' | 'critical-path-size',
-    size: number
-  ): void {
-    if (metric === 'lazy-loaded-size') {
-      this.bundleMetrics.lazilyLoadedSize += size;
-    } else if (metric === 'critical-path-size') {
-      this.bundleMetrics.criticalPathSize += size;
-    }
+  recordBundleMetric(metric: 'critical-path-size', size: number): void {
+    this.bundleMetrics.criticalPathSize += size;
 
     this.recordMetric({
       name: `bundle_${metric.replace('-', '_')}`,
@@ -282,11 +231,10 @@ class PerformanceMonitor {
   }
 
   private shouldLogMetric(metric: PerformanceMetric): boolean {
-    // Log startup metrics, slow navigations, and slow lazy loads
+    // Log startup metrics, slow navigations, and memory issues
     return (
       metric.type === 'startup' ||
       (metric.type === 'navigation' && metric.value > 500) ||
-      (metric.type === 'lazy-load' && metric.value > 1000) ||
       (metric.type === 'memory' && metric.metadata?.critical)
     );
   }
@@ -331,29 +279,13 @@ class PerformanceMonitor {
   }
 
   getOptimizationReport(): {
-    averageLazyLoadTime: number;
-    totalOptimizedSize: number;
-    criticalPathPercentage: number;
+    totalBundleSize: number;
     performanceScore: number;
   } {
-    const lazyLoadTimes = Object.values(this.bundleMetrics.componentLoadTimes);
-    const averageLazyLoadTime =
-      lazyLoadTimes.length > 0
-        ? lazyLoadTimes.reduce((a, b) => a + b, 0) / lazyLoadTimes.length
-        : 0;
+    const totalBundleSize = this.bundleMetrics.criticalPathSize;
 
-    const totalOptimizedSize = this.bundleMetrics.lazilyLoadedSize;
-    const totalSize =
-      this.bundleMetrics.criticalPathSize + this.bundleMetrics.lazilyLoadedSize;
-    const criticalPathPercentage =
-      totalSize > 0
-        ? (this.bundleMetrics.criticalPathSize / totalSize) * 100
-        : 0;
-
-    // Simple performance score (0-100)
+    // Simple performance score (0-100) - focus on startup and navigation
     let performanceScore = 100;
-    if (averageLazyLoadTime > 1000) performanceScore -= 20;
-    if (criticalPathPercentage > 60) performanceScore -= 20;
     if (
       this.startupMetrics.timeToInteractive &&
       this.startupMetrics.timeToInteractive > 3000
@@ -366,9 +298,7 @@ class PerformanceMonitor {
       performanceScore -= 20;
 
     return {
-      averageLazyLoadTime,
-      totalOptimizedSize,
-      criticalPathPercentage,
+      totalBundleSize,
       performanceScore: Math.max(0, performanceScore),
     };
   }
@@ -390,9 +320,7 @@ class PerformanceMonitor {
     this.metrics = [];
     this.startupMetrics = {};
     this.bundleMetrics = {
-      lazilyLoadedSize: 0,
       criticalPathSize: 0,
-      componentLoadTimes: {},
     };
   }
 }
@@ -410,7 +338,3 @@ export const startNavigation = (screen: string) =>
   performanceMonitor.startNavigationTimer(screen);
 export const endNavigation = (screen: string) =>
   performanceMonitor.endNavigationTimer(screen);
-export const recordLazyStart = (component: string) =>
-  performanceMonitor.recordLazyLoadStart(component);
-export const recordLazyComplete = (component: string) =>
-  performanceMonitor.recordLazyLoadComplete(component);

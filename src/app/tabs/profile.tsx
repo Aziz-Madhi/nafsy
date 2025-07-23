@@ -1,8 +1,8 @@
 /**
- * Lazy-loaded Profile Tab Screen
- * This wrapper enables lazy loading for the profile functionality
+ * Profile Tab Screen
+ * Direct import for instant tab switching performance
  */
 
-import { ProfileScreenLazy } from '~/components/lazy';
+import ProfileScreen from '~/screens/tabs/profile';
 
-export default ProfileScreenLazy;
+export default ProfileScreen;

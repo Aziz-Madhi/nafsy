@@ -73,7 +73,8 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
     setFloatingChatVisible: (visible: boolean) =>
       set({ isFloatingChatVisible: visible }),
     setFloatingChatInput: (input: string) => set({ floatingChatInput: input }),
-    setFloatingChatTyping: (typing: boolean) => set({ floatingChatIsTyping: typing }),
+    setFloatingChatTyping: (typing: boolean) =>
+      set({ floatingChatIsTyping: typing }),
     clearFloatingChatInput: () => set({ floatingChatInput: '' }),
 
     // Main Chat Actions
@@ -130,7 +131,8 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
     // UI Actions
     setHistorySidebarVisible: (visible: boolean) =>
       set({ isHistorySidebarVisible: visible }),
-    setChatInputFocused: (focused: boolean) => set({ chatInputFocused: focused }),
+    setChatInputFocused: (focused: boolean) =>
+      set({ chatInputFocused: focused }),
 
     // Reset Action
     resetChatUI: () =>
