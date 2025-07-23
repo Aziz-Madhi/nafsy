@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { View, Pressable, Dimensions } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { SymbolView } from 'expo-symbols';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -15,6 +15,7 @@ import { useChatUIStore, useHistorySidebarVisible, useAppStore } from '~/store';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
+import { SPRING_PRESETS, TIMING_PRESETS } from '~/lib/animations';
 
 interface TabIconProps {
   route: string;
@@ -52,10 +53,10 @@ const TabIcon = ({
 
   // Animate background color changes
   useEffect(() => {
-    backgroundColor.value = withSpring(isFocused ? 1 : 0, {
-      damping: 15,
-      stiffness: 200,
-    });
+    backgroundColor.value = withSpring(
+      isFocused ? 1 : 0,
+      SPRING_PRESETS.gentle
+    );
   }, [isFocused]);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -71,19 +72,19 @@ const TabIcon = ({
 
   const handlePress = () => {
     scale.value = withSequence(
-      withSpring(0.85, { damping: 10, stiffness: 400 }),
-      withSpring(1, { damping: 8, stiffness: 200 })
+      withSpring(0.85, SPRING_PRESETS.snappy),
+      withSpring(1, SPRING_PRESETS.bouncy)
     );
 
     if (!isFocused) {
       rotation.value = withSequence(
-        withTiming(10, { duration: 100 }),
-        withTiming(-10, { duration: 100 }),
-        withSpring(0, { damping: 10, stiffness: 300 })
+        withTiming(10, TIMING_PRESETS.fast),
+        withTiming(-10, TIMING_PRESETS.fast),
+        withSpring(0, SPRING_PRESETS.quick)
       );
     }
 
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     onPress();
   };
 

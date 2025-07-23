@@ -18,7 +18,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   ios: {
     supportsTablet: true,
     bundleIdentifier: 'com.nafsy.app',
-    deploymentTarget: '18.0',
+    // deploymentTarget: '18.0', // Removed as it's not a valid iOS config property
   },
   android: {
     adaptiveIcon: {

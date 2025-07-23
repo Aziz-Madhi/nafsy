@@ -1,8 +1,13 @@
-import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
-import { createMMKVPersist } from '~/lib/mmkv-zustand';
+/**
+ * Simplified Chat UI Store - Fixed version
+ * Uses standard Zustand patterns with MMKV persistence
+ */
 
-interface ChatUIState {
+import { shallow } from 'zustand/shallow';
+import { createPersistedStore } from '~/lib/store-factory';
+
+// Chat UI store state and actions interface
+interface ChatUIStoreState {
   // Floating Chat UI State
   isFloatingChatVisible: boolean;
   floatingChatInput: string;
@@ -28,16 +33,13 @@ interface ChatUIState {
   setFloatingChatVisible: (visible: boolean) => void;
   setFloatingChatInput: (input: string) => void;
   setFloatingChatTyping: (typing: boolean) => void;
+  clearFloatingChatInput: () => void;
+
   setMainChatInput: (input: string) => void;
   setMainChatTyping: (typing: boolean) => void;
   setShowQuickReplies: (show: boolean) => void;
-  setHistorySidebarVisible: (visible: boolean) => void;
-  setChatInputFocused: (focused: boolean) => void;
-  clearFloatingChatInput: () => void;
   clearMainChatInput: () => void;
-  resetChatUI: () => void;
 
-  // Session Management Actions
   setCurrentMainSessionId: (sessionId: string | null) => void;
   setCurrentVentSessionId: (sessionId: string | null) => void;
   setSessionSwitchLoading: (loading: boolean) => void;
@@ -45,20 +47,94 @@ interface ChatUIState {
   switchToVentSession: (sessionId: string) => Promise<void>;
   clearCurrentSessions: () => void;
 
-  // Persist methods (added by middleware)
-  persist: {
-    hasHydrated: () => boolean;
-    rehydrate: () => Promise<void>;
-    clearStorage: () => void;
-    getHydrationState: () => any;
-  };
+  setHistorySidebarVisible: (visible: boolean) => void;
+  setChatInputFocused: (focused: boolean) => void;
+
+  resetChatUI: () => void;
 }
 
-export const useChatUIStore = create<ChatUIState>()(
-  subscribeWithSelector(
-    createMMKVPersist(
-      (set) => ({
-        // Initial state
+export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
+  'chat-ui-store',
+  (set: any, get: any) => ({
+    // Initial state
+    isFloatingChatVisible: false,
+    floatingChatInput: '',
+    floatingChatIsTyping: false,
+    mainChatInput: '',
+    mainChatIsTyping: false,
+    showQuickReplies: true,
+    currentMainSessionId: null,
+    currentVentSessionId: null,
+    sessionSwitchLoading: false,
+    isHistorySidebarVisible: false,
+    chatInputFocused: false,
+
+    // Floating Chat Actions
+    setFloatingChatVisible: (visible: boolean) =>
+      set({ isFloatingChatVisible: visible }),
+    setFloatingChatInput: (input: string) => set({ floatingChatInput: input }),
+    setFloatingChatTyping: (typing: boolean) => set({ floatingChatIsTyping: typing }),
+    clearFloatingChatInput: () => set({ floatingChatInput: '' }),
+
+    // Main Chat Actions
+    setMainChatInput: (input: string) => set({ mainChatInput: input }),
+    setMainChatTyping: (typing: boolean) => set({ mainChatIsTyping: typing }),
+    setShowQuickReplies: (show: boolean) => set({ showQuickReplies: show }),
+    clearMainChatInput: () => set({ mainChatInput: '' }),
+
+    // Session Management Actions
+    setCurrentMainSessionId: (sessionId: string | null) =>
+      set({ currentMainSessionId: sessionId }),
+    setCurrentVentSessionId: (sessionId: string | null) =>
+      set({ currentVentSessionId: sessionId }),
+    setSessionSwitchLoading: (loading: boolean) =>
+      set({ sessionSwitchLoading: loading }),
+
+    switchToMainSession: async (sessionId: string) => {
+      set({ sessionSwitchLoading: true });
+      try {
+        set({
+          currentMainSessionId: sessionId,
+          mainChatInput: '',
+          mainChatIsTyping: false,
+          showQuickReplies: false,
+        });
+        // Simulate session switch delay
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      } finally {
+        set({ sessionSwitchLoading: false });
+      }
+    },
+
+    switchToVentSession: async (sessionId: string) => {
+      set({ sessionSwitchLoading: true });
+      try {
+        set({
+          currentVentSessionId: sessionId,
+          floatingChatInput: '',
+          floatingChatIsTyping: false,
+        });
+        await new Promise((resolve) => setTimeout(resolve, 300));
+      } finally {
+        set({ sessionSwitchLoading: false });
+      }
+    },
+
+    clearCurrentSessions: () =>
+      set({
+        currentMainSessionId: null,
+        currentVentSessionId: null,
+        sessionSwitchLoading: false,
+      }),
+
+    // UI Actions
+    setHistorySidebarVisible: (visible: boolean) =>
+      set({ isHistorySidebarVisible: visible }),
+    setChatInputFocused: (focused: boolean) => set({ chatInputFocused: focused }),
+
+    // Reset Action
+    resetChatUI: () =>
+      set({
         isFloatingChatVisible: false,
         floatingChatInput: '',
         floatingChatIsTyping: false,
@@ -70,151 +146,65 @@ export const useChatUIStore = create<ChatUIState>()(
         sessionSwitchLoading: false,
         isHistorySidebarVisible: false,
         chatInputFocused: false,
-
-        // Actions
-        setFloatingChatVisible: (visible) =>
-          set({ isFloatingChatVisible: visible }),
-
-        setFloatingChatInput: (input) => set({ floatingChatInput: input }),
-
-        setFloatingChatTyping: (typing) =>
-          set({ floatingChatIsTyping: typing }),
-
-        setMainChatInput: (input) => set({ mainChatInput: input }),
-
-        setMainChatTyping: (typing) => set({ mainChatIsTyping: typing }),
-
-        setShowQuickReplies: (show) => set({ showQuickReplies: show }),
-
-        setHistorySidebarVisible: (visible) =>
-          set({ isHistorySidebarVisible: visible }),
-
-        setChatInputFocused: (focused) => set({ chatInputFocused: focused }),
-
-        clearFloatingChatInput: () => set({ floatingChatInput: '' }),
-
-        clearMainChatInput: () => set({ mainChatInput: '' }),
-
-        resetChatUI: () =>
-          set({
-            isFloatingChatVisible: false,
-            floatingChatInput: '',
-            floatingChatIsTyping: false,
-            mainChatInput: '',
-            mainChatIsTyping: false,
-            showQuickReplies: true,
-            currentMainSessionId: null,
-            currentVentSessionId: null,
-            sessionSwitchLoading: false,
-            isHistorySidebarVisible: false,
-            chatInputFocused: false,
-          }),
-
-        // Session Management Actions
-        setCurrentMainSessionId: (sessionId) =>
-          set({ currentMainSessionId: sessionId }),
-
-        setCurrentVentSessionId: (sessionId) =>
-          set({ currentVentSessionId: sessionId }),
-
-        setSessionSwitchLoading: (loading) =>
-          set({ sessionSwitchLoading: loading }),
-
-        switchToMainSession: async (sessionId) => {
-          set({ sessionSwitchLoading: true });
-          try {
-            // Reset UI state for session switch
-            set({
-              currentMainSessionId: sessionId,
-              mainChatInput: '',
-              mainChatIsTyping: false,
-              showQuickReplies: false, // Hide quick replies when switching sessions
-            });
-          } finally {
-            set({ sessionSwitchLoading: false });
-          }
-        },
-
-        switchToVentSession: async (sessionId) => {
-          set({ sessionSwitchLoading: true });
-          try {
-            set({
-              currentVentSessionId: sessionId,
-              floatingChatInput: '',
-              floatingChatIsTyping: false,
-            });
-          } finally {
-            set({ sessionSwitchLoading: false });
-          }
-        },
-
-        clearCurrentSessions: () =>
-          set({
-            currentMainSessionId: null,
-            currentVentSessionId: null,
-            sessionSwitchLoading: false,
-          }),
       }),
-      {
-        name: 'chat-ui-store',
-        // Only persist certain UI states, not typing indicators
-        partialize: (state) => ({
-          isFloatingChatVisible: state.isFloatingChatVisible,
-          showQuickReplies: state.showQuickReplies,
-          currentMainSessionId: state.currentMainSessionId,
-          currentVentSessionId: state.currentVentSessionId,
-          // Don't persist typing states, loading states, or input values
-        }),
-      }
-    )
-  )
+  })
 );
 
 // Optimized selectors for UI state
 export const useFloatingChatVisible = () =>
   useChatUIStore((state) => state.isFloatingChatVisible);
-
 export const useFloatingChatInput = () =>
   useChatUIStore((state) => state.floatingChatInput);
-
 export const useFloatingChatTyping = () =>
   useChatUIStore((state) => state.floatingChatIsTyping);
-
 export const useMainChatInput = () =>
   useChatUIStore((state) => state.mainChatInput);
-
 export const useMainChatTyping = () =>
   useChatUIStore((state) => state.mainChatIsTyping);
-
 export const useShowQuickReplies = () =>
   useChatUIStore((state) => state.showQuickReplies);
-
 export const useChatInputFocused = () =>
   useChatUIStore((state) => state.chatInputFocused);
-
 export const useHistorySidebarVisible = () =>
   useChatUIStore((state) => state.isHistorySidebarVisible);
 
 // Session Management Selectors
 export const useCurrentMainSessionId = () =>
   useChatUIStore((state) => state.currentMainSessionId);
-
 export const useCurrentVentSessionId = () =>
   useChatUIStore((state) => state.currentVentSessionId);
-
 export const useSessionSwitchLoading = () =>
   useChatUIStore((state) => state.sessionSwitchLoading);
 
-// Individual session action selectors to avoid object recreation
-export const useSetCurrentMainSessionId = () =>
-  useChatUIStore((state) => state.setCurrentMainSessionId);
-export const useSetCurrentVentSessionId = () =>
-  useChatUIStore((state) => state.setCurrentVentSessionId);
-export const useSetSessionSwitchLoading = () =>
-  useChatUIStore((state) => state.setSessionSwitchLoading);
-export const useSwitchToMainSession = () =>
-  useChatUIStore((state) => state.switchToMainSession);
-export const useSwitchToVentSession = () =>
-  useChatUIStore((state) => state.switchToVentSession);
-export const useClearCurrentSessions = () =>
-  useChatUIStore((state) => state.clearCurrentSessions);
+// Action selectors with shallow comparison
+export const useChatUIActions = () =>
+  useChatUIStore(
+    (state) => ({
+      // Floating chat
+      setFloatingChatVisible: state.setFloatingChatVisible,
+      setFloatingChatInput: state.setFloatingChatInput,
+      setFloatingChatTyping: state.setFloatingChatTyping,
+      clearFloatingChatInput: state.clearFloatingChatInput,
+
+      // Main chat
+      setMainChatInput: state.setMainChatInput,
+      setMainChatTyping: state.setMainChatTyping,
+      setShowQuickReplies: state.setShowQuickReplies,
+      clearMainChatInput: state.clearMainChatInput,
+
+      // Session management
+      setCurrentMainSessionId: state.setCurrentMainSessionId,
+      setCurrentVentSessionId: state.setCurrentVentSessionId,
+      switchToMainSession: state.switchToMainSession,
+      switchToVentSession: state.switchToVentSession,
+      clearCurrentSessions: state.clearCurrentSessions,
+
+      // UI state
+      setHistorySidebarVisible: state.setHistorySidebarVisible,
+      setChatInputFocused: state.setChatInputFocused,
+
+      // Utils
+      resetChatUI: state.resetChatUI,
+    }),
+    shallow
+  );

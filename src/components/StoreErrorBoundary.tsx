@@ -2,7 +2,12 @@ import React, { Component, ErrorInfo, ReactNode } from 'react';
 import { View, Alert } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
-import * as Haptics from 'expo-haptics';
+import {
+  impactAsync,
+  notificationAsync,
+  ImpactFeedbackStyle,
+  NotificationFeedbackType,
+} from 'expo-haptics';
 
 interface Props {
   children: ReactNode;
@@ -40,7 +45,7 @@ export class StoreErrorBoundary extends Component<Props, State> {
     console.error('StoreErrorBoundary caught an error:', error, errorInfo);
 
     // Trigger haptic feedback to indicate error
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+    notificationAsync(NotificationFeedbackType.Error);
 
     // Update state with error details
     this.setState({
@@ -84,7 +89,7 @@ export class StoreErrorBoundary extends Component<Props, State> {
     });
 
     // Provide haptic feedback
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    impactAsync(ImpactFeedbackStyle.Medium);
   };
 
   private handleReportIssue = () => {
@@ -179,7 +184,7 @@ export const useStoreErrorHandler = () => {
       console.error(`Store Error ${context ? `in ${context}` : ''}:`, error);
 
       // Trigger haptic feedback
-      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+      notificationAsync(NotificationFeedbackType.Error);
 
       // Could trigger error reporting here
       // reportError(error, context);

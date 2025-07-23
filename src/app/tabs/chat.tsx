@@ -1,6 +1,6 @@
 import React, { useRef, useCallback, useEffect, Suspense } from 'react';
 import { View, Pressable, Dimensions } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+// import { LinearGradient } from 'expo-linear-gradient'; // Unused - commented out
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
 import { Text } from '~/components/ui/text';
@@ -9,8 +9,8 @@ import {
   TypingIndicator,
   QuickReplyButton,
   FloatingChat,
-  ChatHistorySidebar,
 } from '~/components/chat';
+import { ChatHistorySidebarLazy as ChatHistorySidebar } from '~/components/lazy';
 import Animated, {
   FadeInDown,
   runOnJS,
@@ -20,7 +20,7 @@ import Animated, {
   withTiming,
 } from 'react-native-reanimated';
 import { SymbolView } from 'expo-symbols';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
@@ -32,7 +32,6 @@ import {
   useHistorySidebarVisible,
   useCurrentMainSessionId,
   useChatUIStore,
-  useSwitchToMainSession,
 } from '~/store';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -85,7 +84,9 @@ export default function ChatScreen() {
 
   // Session management
   const currentMainSessionId = useCurrentMainSessionId();
-  const switchToMainSession = useSwitchToMainSession();
+  const switchToMainSession = useChatUIStore(
+    (state) => state.switchToMainSession
+  );
 
   const flashListRef = useRef<FlashList<Message>>(null);
 
@@ -150,6 +151,7 @@ export default function ChatScreen() {
     mainChatMessages,
     sendMainMessage,
     serverMainSessionId,
+    currentMainSessionId,
     t,
   ]);
 
@@ -219,7 +221,7 @@ export default function ChatScreen() {
 
   // Native gesture handler for double-tap (worklet-optimized)
   const openFloatingChat = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setFloatingChatVisible(true);
   }, [setFloatingChatVisible]);
 
@@ -232,7 +234,7 @@ export default function ChatScreen() {
 
   // Simple sidebar handlers
   const handleOpenSidebar = useCallback(() => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     setHistorySidebarVisible(true);
   }, [setHistorySidebarVisible]);
 
@@ -268,7 +270,7 @@ export default function ChatScreen() {
     async (text: string) => {
       if (!currentUser || !isSignedIn || !isLoaded) return;
 
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      impactAsync(ImpactFeedbackStyle.Light);
 
       // Hide quick replies after first message
       setShowQuickReplies(false);

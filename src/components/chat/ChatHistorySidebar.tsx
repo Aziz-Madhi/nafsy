@@ -1,9 +1,10 @@
 import React, { useMemo, useState } from 'react';
-import { View, Pressable, Dimensions, FlatList, TextInput } from 'react-native';
+import { View, Pressable, Dimensions, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
+import { SessionList } from '~/components/ui/GenericList';
 import { SymbolView } from 'expo-symbols';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -208,14 +209,14 @@ export function ChatHistorySidebar({
   }, [mainSessions, searchQuery]);
 
   const handleSessionSelect = (sessionId: string) => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     onSessionSelect(sessionId);
     onClose();
   };
 
   const handleSessionDelete = async (sessionId: string) => {
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
       await deleteMainSession({ sessionId });
     } catch (error) {
       console.error('Error deleting session:', error);
@@ -317,12 +318,10 @@ export function ChatHistorySidebar({
           </View>
 
           {/* Sessions List */}
-          <FlatList
+          <SessionList
             data={currentSessions}
             keyExtractor={(item) => item._id}
-            showsVerticalScrollIndicator={false}
-            contentContainerStyle={{ paddingBottom: 20 }}
-            renderItem={({ item }) => {
+            renderItem={(item, _index) => {
               const sessionId = item.sessionId;
               const isActive = currentSessionId === sessionId;
 
@@ -339,7 +338,7 @@ export function ChatHistorySidebar({
                 />
               );
             }}
-            ListEmptyComponent={() => {
+            emptyComponent={() => {
               const hasSearchQuery = searchQuery.trim().length > 0;
               const emptyMessage = hasSearchQuery
                 ? t('chat.search.noResults') ||

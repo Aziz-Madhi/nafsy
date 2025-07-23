@@ -23,10 +23,9 @@ import Animated, {
   LinearTransition,
 } from 'react-native-reanimated';
 import { BlurView } from 'expo-blur';
-import { AnimationCache } from '~/lib/mmkv-zustand';
 import { SymbolView } from 'expo-symbols';
 import { Text } from '~/components/ui/text';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserData } from '~/hooks/useSharedData';
@@ -57,12 +56,10 @@ export const FloatingChat = React.memo(function FloatingChat({
     clearFloatingChatInput,
   } = useChatUIStore();
 
-  // Performance-based blur intensity
+  // Performance-based blur intensity (simplified)
   const getBlurIntensity = () => {
-    const metrics = AnimationCache.getPerformanceMetrics();
-    const isLowPerformance =
-      metrics.avgFrameRate < 50 || metrics.memoryUsage > 70;
-    return isLowPerformance ? 40 : 80; // Reduced intensity on low-performance devices
+    // Simple fallback: use moderate blur for better performance across devices
+    return Platform.OS === 'ios' ? 60 : 40; // iOS handles blur better than Android
   };
 
   // ===== CONVEX: Server Data & Real-time =====
@@ -195,7 +192,7 @@ export const FloatingChat = React.memo(function FloatingChat({
 
   const handleSend = async () => {
     if (currentMessage.trim() && currentUser) {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      impactAsync(ImpactFeedbackStyle.Medium);
 
       // Elastic Scale Effect on send - bounce animation
       sendButtonScale.value = withSpring(
@@ -237,7 +234,7 @@ export const FloatingChat = React.memo(function FloatingChat({
           sessionId: currentMainSessionId || undefined,
         });
 
-        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+        impactAsync(ImpactFeedbackStyle.Light);
 
         // Simulate AI response delay for floating chat
         setTimeout(async () => {
@@ -284,7 +281,7 @@ export const FloatingChat = React.memo(function FloatingChat({
               sessionId: currentMainSessionId || undefined,
             });
             setFloatingChatTyping(false); // Hide typing indicator
-            Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+            impactAsync(ImpactFeedbackStyle.Medium);
           } catch (error) {
             console.error('Error sending AI response:', error);
             setFloatingChatTyping(false);

@@ -4,7 +4,6 @@ import {
   useFloatingChatVisible,
   useMainChatTyping,
   useCurrentMainSessionId,
-  useSwitchToMainSession,
 } from '~/store/useChatUIStore';
 
 // Mock MMKV

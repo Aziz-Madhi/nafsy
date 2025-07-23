@@ -5,7 +5,7 @@ import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { SymbolView } from 'expo-symbols';
 import Animated, { SlideInDown } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import type { Exercise, ExerciseDetailProps } from '~/types';
 
 const DIFFICULTY_COLORS = {
@@ -23,7 +23,7 @@ export function ExerciseDetail({
   if (!exercise) return null;
 
   const handleStart = () => {
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+    notificationAsync(NotificationFeedbackType.Success);
     onStart(exercise);
   };
 

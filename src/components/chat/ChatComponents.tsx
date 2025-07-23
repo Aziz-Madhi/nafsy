@@ -23,6 +23,12 @@ import { AnimatePresence, MotiView } from 'moti';
 import { ChatBubbleProps, ChatInputProps } from './types';
 import { useTranslation } from '~/hooks/useTranslation';
 import SendingSpinner from './SendingSpinner';
+import {
+  AnimatedContainer,
+  StaggeredListItem,
+  usePressAnimation,
+  SPRING_PRESETS,
+} from '~/lib/animations';
 
 // =====================
 // CHAT BUBBLE COMPONENT
@@ -37,136 +43,81 @@ export const ChatBubble = React.memo(function ChatBubble({
 }: ChatBubbleProps) {
   const shouldJustifyEnd = isUser;
 
-  // Enhanced entrance animations
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(30);
-  const scale = useSharedValue(0.8);
-  const rotate = useSharedValue(isUser ? 2 : -2);
-
-  React.useEffect(() => {
-    // Staggered elastic entrance
-    opacity.value = withDelay(
-      index * 50,
-      withSpring(1, { damping: 12, stiffness: 180 })
-    );
-    translateY.value = withDelay(
-      index * 50,
-      withSpring(0, { damping: 10, stiffness: 150, mass: 0.8 })
-    );
-    scale.value = withDelay(
-      index * 50,
-      withSpring(1, { damping: 8, stiffness: 200 })
-    );
-    rotate.value = withDelay(
-      index * 50,
-      withSpring(0, { damping: 10, stiffness: 100 })
-    );
-  }, [index, isUser]);
-
-  const animatedStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      opacity: opacity.value,
-      transform: [
-        { translateY: translateY.value },
-        { scale: scale.value },
-        { rotate: `${rotate.value}deg` },
-      ],
-    };
-  });
-
-  // Press animation
-  const messageScale = useSharedValue(1);
-  const handlePressIn = () => {
-    messageScale.value = withSpring(0.98, { damping: 15, stiffness: 400 });
-  };
-  const handlePressOut = () => {
-    messageScale.value = withSpring(1, { damping: 15, stiffness: 400 });
-  };
-
-  const messageAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: messageScale.value }],
-  }));
-
   return (
-    <Animated.View
-      style={animatedStyle}
+    <StaggeredListItem
+      index={index}
+      staggerDelay="quick"
+      springPreset="gentle"
       className={cn(
         'flex-row mb-5',
         shouldJustifyEnd ? 'justify-end' : 'justify-start'
       )}
     >
-      <Pressable
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        className="max-w-[85%]"
-      >
-        <Animated.View style={messageAnimatedStyle}>
-          <View
-            className={cn(
-              'px-4 py-3 rounded-2xl',
-              isUser ? 'bg-[#2D7D6E]' : 'bg-transparent'
-            )}
-            style={{
-              ...(isUser
-                ? {
-                    shadowColor: '#2D7D6E',
-                    shadowOffset: { width: 0, height: 3 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 8,
-                    elevation: 5,
-                  }
-                : {}),
-            }}
-          >
-            <View className="relative">
+      <AnimatedContainer pressable pressScale="subtle" className="max-w-[85%]">
+        <View
+          className={cn(
+            'px-4 py-3 rounded-2xl',
+            isUser ? 'bg-[#2D7D6E]' : 'bg-transparent'
+          )}
+          style={{
+            ...(isUser
+              ? {
+                  shadowColor: '#2D7D6E',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 8,
+                  elevation: 5,
+                }
+              : {}),
+          }}
+        >
+          <View className="relative">
+            <Text
+              variant="body"
+              className={cn(isUser ? 'text-white' : 'text-[#2E3A59]')}
+              enableRTL={isUser}
+            >
+              {message}
+            </Text>
+
+            {timestamp && (
               <Text
-                variant="body"
-                className={cn(isUser ? 'text-white' : 'text-[#2E3A59]')}
+                variant="muted"
+                className={cn(
+                  'text-xs mt-2',
+                  isUser ? 'text-white/70' : 'text-[#2E3A59]/70'
+                )}
                 enableRTL={isUser}
               >
-                {message}
+                {timestamp}
               </Text>
+            )}
+          </View>
+        </View>
 
-              {timestamp && (
-                <Text
-                  variant="muted"
-                  className={cn(
-                    'text-xs mt-2',
-                    isUser ? 'text-white/70' : 'text-[#2E3A59]/70'
-                  )}
-                  enableRTL={isUser}
-                >
-                  {timestamp}
-                </Text>
+        {/* Enhanced status indicator */}
+        {isUser && status && (
+          <Animated.View
+            entering={FadeInUp.springify()}
+            className="absolute -bottom-1 -right-1"
+          >
+            <View className="bg-white rounded-full p-1.5 shadow-md">
+              {status === 'sending' ? (
+                <SendingSpinner />
+              ) : status === 'sent' ? (
+                <SymbolView name="checkmark" size={14} tintColor="#10B981" />
+              ) : (
+                <SymbolView
+                  name="exclamationmark"
+                  size={14}
+                  tintColor="#EF4444"
+                />
               )}
             </View>
-          </View>
-
-          {/* Enhanced status indicator */}
-          {isUser && status && (
-            <Animated.View
-              entering={FadeInUp.springify()}
-              className="absolute -bottom-1 -right-1"
-            >
-              <View className="bg-white rounded-full p-1.5 shadow-md">
-                {status === 'sending' ? (
-                  <SendingSpinner />
-                ) : status === 'sent' ? (
-                  <SymbolView name="checkmark" size={14} tintColor="#10B981" />
-                ) : (
-                  <SymbolView
-                    name="exclamationmark"
-                    size={14}
-                    tintColor="#EF4444"
-                  />
-                )}
-              </View>
-            </Animated.View>
-          )}
-        </Animated.View>
-      </Pressable>
-    </Animated.View>
+          </Animated.View>
+        )}
+      </AnimatedContainer>
+    </StaggeredListItem>
   );
 });
 
@@ -300,57 +251,38 @@ export function QuickReplyButton({
   icon,
   delay = 0,
 }: QuickReplyButtonProps) {
-  const scale = useSharedValue(1);
-  const animatedStyle = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [{ scale: scale.value }],
-    };
-  });
-
-  const handlePressIn = () => {
-    scale.value = withSpring(0.95, { damping: 12, stiffness: 400 });
-  };
-
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 10, stiffness: 300 });
-  };
-
   return (
-    <Animated.View
-      entering={FadeInUp.delay(delay).springify().damping(10).stiffness(150)}
+    <AnimatedContainer
+      entrance="slideInUp"
+      entranceDelay={delay}
+      pressable
+      onPress={onPress}
+      pressScale="normal"
+      springPreset="quick"
+      className="mr-3 mb-3"
     >
-      <Animated.View style={animatedStyle}>
-        <Pressable
-          onPress={onPress}
-          onPressIn={handlePressIn}
-          onPressOut={handlePressOut}
-          className="mr-3 mb-3"
-        >
-          <View
-            className="flex-row items-center bg-white rounded-full px-6 py-3"
-            style={{
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 8,
-              elevation: 4,
-              borderWidth: 1,
-              borderColor: '#E5E7EB',
-            }}
-          >
-            {icon && (
-              <Text className="mr-2.5 text-lg" style={{ fontSize: 18 }}>
-                {icon}
-              </Text>
-            )}
-            <Text variant="body" className="text-gray-700 font-medium">
-              {text}
-            </Text>
-          </View>
-        </Pressable>
-      </Animated.View>
-    </Animated.View>
+      <View
+        className="flex-row items-center bg-white rounded-full px-6 py-3"
+        style={{
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 8,
+          elevation: 4,
+          borderWidth: 1,
+          borderColor: '#E5E7EB',
+        }}
+      >
+        {icon && (
+          <Text className="mr-2.5 text-lg" style={{ fontSize: 18 }}>
+            {icon}
+          </Text>
+        )}
+        <Text variant="body" className="text-gray-700 font-medium">
+          {text}
+        </Text>
+      </View>
+    </AnimatedContainer>
   );
 }
 

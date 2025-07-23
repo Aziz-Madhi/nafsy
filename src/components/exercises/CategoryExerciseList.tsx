@@ -1,11 +1,11 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { View, Pressable } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { VerticalList } from '~/components/ui/GenericList';
 import { Text } from '~/components/ui/text';
 import { ExerciseCard } from './ExerciseCard';
 import { SymbolView } from 'expo-symbols';
 import Animated, { FadeInLeft } from 'react-native-reanimated';
-import * as Haptics from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTranslation } from '~/hooks/useTranslation';
 
 interface Exercise {
@@ -59,7 +59,7 @@ export function CategoryExerciseList({
   const categoryName = getCategoryName(categoryId, t);
 
   const handleBackPress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+    impactAsync(ImpactFeedbackStyle.Light);
     onBackPress();
   };
 
@@ -74,18 +74,6 @@ export function CategoryExerciseList({
     }
     return exercise.category === categoryId;
   });
-
-  // FlashList optimization functions
-  const renderExerciseItem = useCallback(
-    ({ item, index }: { item: Exercise; index: number }) => (
-      <ExerciseCard exercise={item} onPress={onExercisePress} index={index} />
-    ),
-    [onExercisePress]
-  );
-
-  const keyExtractor = useCallback((item: Exercise) => item.id, []);
-
-  const getItemType = useCallback((item: Exercise) => item.difficulty, []);
 
   return (
     <Animated.View
@@ -107,24 +95,20 @@ export function CategoryExerciseList({
       </View>
 
       {/* Exercise List */}
-      <FlashList
+      <VerticalList
         data={filteredExercises}
-        renderItem={renderExerciseItem}
-        keyExtractor={keyExtractor}
-        getItemType={getItemType}
-        estimatedItemSize={120}
-        contentContainerStyle={{
-          paddingHorizontal: 24,
-          paddingBottom: 24,
-        }}
-        showsVerticalScrollIndicator={false}
-        ListEmptyComponent={
-          <View className="flex-1 justify-center items-center py-12">
-            <Text variant="muted" className="text-center">
-              {t('exercises.noExercisesInCategory') ||
-                'No exercises available in this category yet.'}
-            </Text>
-          </View>
+        renderItem={(exercise, index) => (
+          <ExerciseCard
+            exercise={exercise}
+            onPress={onExercisePress}
+            index={index}
+          />
+        )}
+        keyExtractor={(item) => item.id}
+        getItemType={(item) => item.difficulty}
+        emptyMessage={
+          t('exercises.noExercisesInCategory') ||
+          'No exercises available in this category yet.'
         }
       />
     </Animated.View>

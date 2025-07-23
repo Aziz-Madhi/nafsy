@@ -1,6 +1,6 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { View } from 'react-native';
-import { FlashList } from '@shopify/flash-list';
+import { GridList } from '~/components/ui/GenericList';
 import { CategoryCard } from './CategoryCard';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -65,36 +65,21 @@ export function CategoryGrid({ onCategorySelect }: CategoryGridProps) {
   const { t } = useTranslation();
   const categories = getCategoriesWithTranslations(t);
 
-  // FlashList render functions
-  const renderCategoryCard = useCallback(
-    ({ item, index }: { item: any; index: number }) => (
-      <View style={{ flex: 1, paddingHorizontal: 8, paddingVertical: 8 }}>
-        <CategoryCard
-          category={item}
-          onPress={onCategorySelect}
-          index={index}
-        />
-      </View>
-    ),
-    [onCategorySelect]
-  );
-
-  const keyExtractor = useCallback((item: any) => item.id, []);
-
-  const getItemType = useCallback(() => 'category', []);
-
   return (
-    <View style={{ flex: 1, paddingHorizontal: 8 }}>
-      <FlashList
-        data={categories}
-        renderItem={renderCategoryCard}
-        keyExtractor={keyExtractor}
-        getItemType={getItemType}
-        numColumns={2}
-        estimatedItemSize={200}
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 20 }}
-      />
-    </View>
+    <GridList
+      data={categories}
+      renderItem={(category, index) => (
+        <View style={{ flex: 1, paddingHorizontal: 8, paddingVertical: 8 }}>
+          <CategoryCard
+            category={category}
+            onPress={onCategorySelect}
+            index={index}
+          />
+        </View>
+      )}
+      keyExtractor={(item) => item.id}
+      getItemType={() => 'category'}
+      emptyMessage="No categories available"
+    />
   );
 }

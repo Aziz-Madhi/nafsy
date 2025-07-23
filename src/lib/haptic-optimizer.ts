@@ -1,4 +1,9 @@
-import * as Haptics from 'expo-haptics';
+import {
+  impactAsync,
+  notificationAsync,
+  ImpactFeedbackStyle,
+  NotificationFeedbackType,
+} from 'expo-haptics';
 
 // Haptic feedback optimization utility
 class HapticOptimizer {
@@ -9,7 +14,7 @@ class HapticOptimizer {
 
   // Throttled haptic feedback
   public optimizedImpact(
-    style: Haptics.ImpactFeedbackStyle = Haptics.ImpactFeedbackStyle.Light
+    style: ImpactFeedbackStyle = ImpactFeedbackStyle.Light
   ): void {
     const now = Date.now();
 
@@ -27,7 +32,7 @@ class HapticOptimizer {
     }
 
     // Execute haptic feedback
-    Haptics.impactAsync(style);
+    impactAsync(style);
     this.lastHapticTime = now;
     this.recentHaptics.push(now);
   }
@@ -38,19 +43,19 @@ class HapticOptimizer {
   ): void {
     switch (type) {
       case 'tap':
-        this.optimizedImpact(Haptics.ImpactFeedbackStyle.Light);
+        this.optimizedImpact(ImpactFeedbackStyle.Light);
         break;
       case 'press':
-        this.optimizedImpact(Haptics.ImpactFeedbackStyle.Medium);
+        this.optimizedImpact(ImpactFeedbackStyle.Medium);
         break;
       case 'success':
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        notificationAsync(NotificationFeedbackType.Success);
         break;
       case 'warning':
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
+        notificationAsync(NotificationFeedbackType.Warning);
         break;
       case 'error':
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
+        notificationAsync(NotificationFeedbackType.Error);
         break;
     }
   }
@@ -67,12 +72,9 @@ export const hapticOptimizer = new HapticOptimizer();
 
 // Convenience functions
 export const optimizedHaptic = {
-  light: () =>
-    hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Light),
-  medium: () =>
-    hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Medium),
-  heavy: () =>
-    hapticOptimizer.optimizedImpact(Haptics.ImpactFeedbackStyle.Heavy),
+  light: () => hapticOptimizer.optimizedImpact(ImpactFeedbackStyle.Light),
+  medium: () => hapticOptimizer.optimizedImpact(ImpactFeedbackStyle.Medium),
+  heavy: () => hapticOptimizer.optimizedImpact(ImpactFeedbackStyle.Heavy),
   tap: () => hapticOptimizer.smartHaptic('tap'),
   press: () => hapticOptimizer.smartHaptic('press'),
   success: () => hapticOptimizer.smartHaptic('success'),

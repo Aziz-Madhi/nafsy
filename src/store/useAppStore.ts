@@ -1,40 +1,12 @@
-import { create } from 'zustand';
-import { subscribeWithSelector } from 'zustand/middleware';
-import { createMMKVPersist, PersistStoreMutators } from '~/lib/mmkv-zustand';
+/**
+ * Simplified App Store - Fixed version
+ * Uses standard Zustand patterns with MMKV persistence
+ */
+
+import { shallow } from 'zustand/shallow';
+import { createPersistedStore } from '~/lib/store-factory';
 import { AppSettings } from './types';
 import { Appearance } from 'react-native';
-
-interface AppState {
-  // UI State
-  activeTab: string;
-  isLoading: boolean;
-
-  // Theme state (computed from settings)
-  currentTheme: 'light' | 'dark';
-  isSystemTheme: boolean;
-
-  // Settings
-  settings: AppSettings;
-
-  // Actions
-  setActiveTab: (tab: string) => void;
-  setLoading: (loading: boolean) => void;
-  updateSettings: (settings: Partial<AppSettings>) => void;
-  resetStore: () => void;
-
-  // Theme-specific actions
-  setTheme: (theme: 'light' | 'dark' | 'system') => void;
-  toggleTheme: () => void;
-  applySystemTheme: () => void;
-
-  // Persist methods (added by middleware)
-  persist: {
-    hasHydrated: () => boolean;
-    rehydrate: () => Promise<void>;
-    clearStorage: () => void;
-    getHydrationState: () => any;
-  };
-}
 
 // Helper function to resolve current theme
 const resolveCurrentTheme = (
@@ -54,169 +26,137 @@ const defaultSettings: AppSettings = {
   moodReminderTime: '09:00',
 };
 
-export const useAppStore = create<AppState>()(
-  subscribeWithSelector(
-    createMMKVPersist(
-      (set, get) => {
-        // Initialize theme state
-        const initialTheme = resolveCurrentTheme(defaultSettings.theme);
+// App store state and actions interface
+interface AppStoreState {
+  // UI State
+  activeTab: string;
+  currentTheme: 'light' | 'dark';
+  isSystemTheme: boolean;
+  isLoading: boolean;
+  error: string | null;
 
-        return {
-          // Initial state
-          activeTab: 'mood',
-          isLoading: false,
-          currentTheme: initialTheme,
-          isSystemTheme: defaultSettings.theme === 'system',
-          settings: defaultSettings,
+  // Settings
+  settings: AppSettings;
 
-          // Actions
-          setActiveTab: (tab) => set({ activeTab: tab }),
+  // Actions
+  setActiveTab: (tab: string) => void;
+  setLoading: (loading: boolean) => void;
+  setError: (error: string | null) => void;
+  updateSettings: (newSettings: Partial<AppSettings>) => void;
+  setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  toggleTheme: () => void;
+  applySystemTheme: () => void;
+  reset: () => void;
+}
 
-          setLoading: (loading) => set({ isLoading: loading }),
+export const useAppStore = createPersistedStore<AppStoreState>(
+  'app-store',
+  (set: any, get: any) => ({
+    // Initial state
+    activeTab: 'mood',
+    currentTheme: resolveCurrentTheme(defaultSettings.theme),
+    isSystemTheme: defaultSettings.theme === 'system',
+    isLoading: false,
+    error: null,
+    settings: defaultSettings,
 
-          updateSettings: (newSettings) => {
-            const currentSettings = get().settings;
-            const updatedSettings = { ...currentSettings, ...newSettings };
+    // Actions
+    setActiveTab: (tab: string) => set({ activeTab: tab }),
 
-            // Handle language updates
-            if (
-              newSettings.language &&
-              newSettings.language !== currentSettings.language
-            ) {
-              import('~/lib/i18n')
-                .then(({ setLocale }) => {
-                  setLocale(newSettings.language);
-                })
-                .catch((error) => {
-                  console.warn('Failed to update i18n locale:', error);
-                });
-            }
+    setLoading: (loading: boolean) => set({ isLoading: loading }),
 
-            // Handle theme updates
-            if (
-              newSettings.theme &&
-              newSettings.theme !== currentSettings.theme
-            ) {
-              const newCurrentTheme = resolveCurrentTheme(newSettings.theme);
-              set({
-                settings: updatedSettings,
-                currentTheme: newCurrentTheme,
-                isSystemTheme: newSettings.theme === 'system',
-              });
-            } else {
-              set({ settings: updatedSettings });
-            }
-          },
+    setError: (error: string | null) => set({ error }),
 
-          // Theme-specific actions
-          setTheme: (theme) => {
-            const currentState = get();
-            const newCurrentTheme = resolveCurrentTheme(theme);
+    updateSettings: (newSettings: Partial<AppSettings>) => {
+      const currentSettings = get().settings;
+      const updatedSettings = { ...currentSettings, ...newSettings };
 
-            set({
-              settings: { ...currentState.settings, theme },
-              currentTheme: newCurrentTheme,
-              isSystemTheme: theme === 'system',
-            });
-          },
-
-          toggleTheme: () => {
-            const currentState = get();
-            const newTheme =
-              currentState.currentTheme === 'light' ? 'dark' : 'light';
-
-            set({
-              settings: { ...currentState.settings, theme: newTheme },
-              currentTheme: newTheme,
-              isSystemTheme: false,
-            });
-          },
-
-          applySystemTheme: () => {
-            const currentState = get();
-            if (currentState.isSystemTheme) {
-              const systemTheme = resolveCurrentTheme('system');
-              if (systemTheme !== currentState.currentTheme) {
-                set({ currentTheme: systemTheme });
-              }
-            }
-          },
-
-          resetStore: () => {
-            const initialTheme = resolveCurrentTheme(defaultSettings.theme);
-
-            set({
-              activeTab: 'mood',
-              isLoading: false,
-              currentTheme: initialTheme,
-              isSystemTheme: defaultSettings.theme === 'system',
-              settings: defaultSettings,
-            });
-
-            // Reset i18n to default language
-            import('~/lib/i18n')
-              .then(({ setLocale }) => {
-                setLocale(defaultSettings.language);
-              })
-              .catch((error) => {
-                console.warn('Failed to reset i18n locale:', error);
-              });
-          },
-        };
-      },
-      {
-        name: 'nafsy-app-store',
-        partialize: (state) => ({
-          // Only persist settings and activeTab, not loading states
-          activeTab: state.activeTab,
-          settings: state.settings,
-        }),
-        version: 1,
-        // Initialize i18n when store hydrates
-        onFinishHydration: (state) => {
-          import('~/lib/i18n')
-            .then(({ setLocale, getCurrentLocale }) => {
-              const currentLocale = getCurrentLocale();
-              const storeLocale = state.settings.language;
-
-              // Sync i18n with store settings
-              if (currentLocale !== storeLocale) {
-                setLocale(storeLocale);
-              }
-            })
-            .catch((error) => {
-              console.warn(
-                'Failed to sync i18n with store on hydration:',
-                error
-              );
-            });
-        },
+      // Handle language updates
+      if (
+        newSettings.language &&
+        newSettings.language !== currentSettings.language
+      ) {
+        import('~/lib/i18n')
+          .then(({ setLocale }) => setLocale(newSettings.language!))
+          .catch((error) =>
+            console.warn('Failed to update i18n locale:', error)
+          );
       }
-    )
-  )
+
+      // Handle theme updates
+      if (newSettings.theme && newSettings.theme !== currentSettings.theme) {
+        const newTheme = resolveCurrentTheme(newSettings.theme);
+        const isSystem = newSettings.theme === 'system';
+
+        set({
+          settings: updatedSettings,
+          currentTheme: newTheme,
+          isSystemTheme: isSystem,
+        });
+      } else {
+        set({ settings: updatedSettings });
+      }
+    },
+
+    setTheme: (theme: 'light' | 'dark' | 'system') => {
+      get().updateSettings({ theme });
+    },
+
+    toggleTheme: () => {
+      const { currentTheme } = get();
+      get().setTheme(currentTheme === 'light' ? 'dark' : 'light');
+    },
+
+    applySystemTheme: () => {
+      const { settings } = get();
+      if (settings.theme === 'system') {
+        const systemTheme = resolveCurrentTheme('system');
+        set({ currentTheme: systemTheme });
+      }
+    },
+
+    reset: () => {
+      set({
+        activeTab: 'mood',
+        currentTheme: resolveCurrentTheme(defaultSettings.theme),
+        isSystemTheme: defaultSettings.theme === 'system',
+        isLoading: false,
+        error: null,
+        settings: defaultSettings,
+      });
+    },
+  })
 );
 
-// Selectors for optimized subscriptions
+// Typed selectors for common use cases
 export const useActiveTab = () => useAppStore((state) => state.activeTab);
-
-export const useIsLoading = () => useAppStore((state) => state.isLoading);
-
-export const useSettings = () => useAppStore((state) => state.settings);
-
-// Theme selectors
-export const useTheme = () => useAppStore((state) => state.settings.theme);
-
 export const useCurrentTheme = () => useAppStore((state) => state.currentTheme);
-
 export const useIsSystemTheme = () =>
   useAppStore((state) => state.isSystemTheme);
+export const useSettings = () => useAppStore((state) => state.settings);
+export const useIsLoading = () => useAppStore((state) => state.isLoading);
+export const useError = () => useAppStore((state) => state.error);
 
-// Individual theme action selectors to avoid object recreation
-export const useSetTheme = () => useAppStore((state) => state.setTheme);
+// Convenience selectors
+export const useTheme = () => useAppStore((state) => state.settings.theme);
 export const useToggleTheme = () => useAppStore((state) => state.toggleTheme);
-export const useApplySystemTheme = () =>
-  useAppStore((state) => state.applySystemTheme);
-
-// Language selectors
 export const useLanguage = () =>
   useAppStore((state) => state.settings.language);
+export const useNotificationsEnabled = () =>
+  useAppStore((state) => state.settings.notificationsEnabled);
+
+// Action selectors with shallow comparison
+export const useAppActions = () =>
+  useAppStore(
+    (state) => ({
+      setActiveTab: state.setActiveTab,
+      updateSettings: state.updateSettings,
+      setTheme: state.setTheme,
+      toggleTheme: state.toggleTheme,
+      applySystemTheme: state.applySystemTheme,
+      setLoading: state.setLoading,
+      setError: state.setError,
+      reset: state.reset,
+    }),
+    shallow
+  );

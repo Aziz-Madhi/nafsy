@@ -1,10 +1,17 @@
 import '../../global.css';
 import 'expo-dev-client';
 
+import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { AppProviders } from '~/providers/AppProviders';
 import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
+import {
+  markAppStart,
+  markFirstRender,
+  markInteractive,
+  recordMemory,
+} from '~/lib/performance-monitor';
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -27,6 +34,21 @@ function NavigationStack() {
 }
 
 export default function RootLayout() {
+  // Mark app start for performance monitoring
+  React.useEffect(() => {
+    markAppStart();
+    recordMemory('app_start');
+
+    // Mark first render
+    setTimeout(markFirstRender, 0);
+
+    // Mark interactive after brief delay
+    setTimeout(() => {
+      markInteractive();
+      recordMemory('app_interactive');
+    }, 1000);
+  }, []);
+
   return (
     <AppProviders>
       <SafeErrorBoundary>

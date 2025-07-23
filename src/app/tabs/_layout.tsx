@@ -7,6 +7,7 @@ import { useUserSafe } from '~/lib/useUserSafe';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { MorphingTabBar } from '~/components/navigation';
+import { preloadStrategies } from '~/lib/lazy-loading-utils';
 
 export default function TabsLayout() {
   const activeColor = '#2196F3'; // design primary blue
@@ -22,6 +23,14 @@ export default function TabsLayout() {
       router.replace('/auth/sign-in');
     }
   }, [isLoaded, isSignedIn]);
+
+  // Smart preloading after successful authentication
+  useEffect(() => {
+    if (isLoaded && isSignedIn && user) {
+      // Start intelligent preloading of likely-to-be-used screens
+      preloadStrategies.preloadLikelyTabs();
+    }
+  }, [isLoaded, isSignedIn, user]);
 
   // Show loading until auth is resolved
   if (!isLoaded) {

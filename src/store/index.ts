@@ -1,25 +1,33 @@
-// Central store exports
-// Store persistence utilities
+/**
+ * Simplified Store Index using the new store factory pattern
+ * Replaces complex store management with straightforward exports
+ */
+
+// Store types
 import { useAppStore } from './useAppStore';
 import { useChatUIStore } from './useChatUIStore';
 
 export * from './types';
+
+// New simplified stores
 export * from './useAppStore';
 export * from './useChatUIStore';
 
-// Global store reset utility
+// Re-export theme selectors for convenience
+export { useTheme, useCurrentTheme, useToggleTheme } from './useAppStore';
+
+// Global store reset utility (simplified)
 export const resetAllStores = () => {
-  useAppStore.getState().resetStore();
+  useAppStore.getState().reset();
   useChatUIStore.getState().resetChatUI();
-  // Note: Chat data is managed by Convex, UI state by Zustand
 };
 
-// Store initialization utility for app startup
+// Store initialization (no longer needed with new factory)
 export const initializeStores = () => {
-  // Initialize any required default state
-  // This could load from AsyncStorage in the future
+  // Stores auto-initialize with the new factory pattern
+  console.log('Stores initialized via factory pattern');
 };
 
-// TypeScript utility for store state types
+// TypeScript utility types (simplified)
 export type AppStoreState = ReturnType<typeof useAppStore.getState>;
 export type ChatUIStoreState = ReturnType<typeof useChatUIStore.getState>;
