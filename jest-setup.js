@@ -69,7 +69,7 @@ jest.mock('@clerk/clerk-expo', () => ({
 }));
 
 // Mock react-native-reanimated
-jest.mock('react-native-reanimated', () => 
+jest.mock('react-native-reanimated', () =>
   require('react-native-reanimated/mock')
 );
 

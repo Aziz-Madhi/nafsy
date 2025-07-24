@@ -4,21 +4,21 @@ import Animated, {
   useAnimatedStyle,
   useSharedValue,
   withSpring,
-  SpringConfig,
+  WithSpringConfig,
 } from 'react-native-reanimated';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { impactAsync, ImpactFeedbackStyle, selectionAsync } from 'expo-haptics';
 
 interface AnimatedPressableProps extends Omit<PressableProps, 'onPress'> {
   onPress?: () => void;
   children: React.ReactNode;
   scaleFrom?: number;
   scaleTo?: number;
-  springConfig?: SpringConfig;
+  springConfig?: WithSpringConfig;
   hapticFeedback?: boolean;
   hapticType?: 'light' | 'medium' | 'heavy' | 'selection';
 }
 
-const defaultSpringConfig: SpringConfig = {
+const defaultSpringConfig: WithSpringConfig = {
   damping: 15,
   stiffness: 300,
 };
@@ -27,7 +27,7 @@ const hapticMap = {
   light: () => impactAsync(ImpactFeedbackStyle.Light),
   medium: () => impactAsync(ImpactFeedbackStyle.Medium),
   heavy: () => impactAsync(ImpactFeedbackStyle.Heavy),
-  selection: () => Haptics.selectionAsync(),
+  selection: () => selectionAsync(),
 };
 
 export const AnimatedPressable = React.memo(function AnimatedPressable({
@@ -50,7 +50,12 @@ export const AnimatedPressable = React.memo(function AnimatedPressable({
   const handlePressIn = () => {
     scale.value = withSpring(scaleTo, springConfig);
     if (hapticFeedback && hapticMap[hapticType]) {
-      hapticMap[hapticType]();
+      try {
+        hapticMap[hapticType]();
+      } catch (error) {
+        // Silently ignore haptic errors
+        console.warn('Haptic feedback error:', error);
+      }
     }
   };
 

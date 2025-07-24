@@ -93,12 +93,15 @@ export const getMainSessions = query({
       .filter((q) => q.eq(q.field('userId'), user._id))
       .order('desc')
       .take(args.limit || 20);
-    
+
     // Filter to only return main chat sessions (not vent sessions)
     // Remove the type field from results to match the validator
     return sessions
-      .filter(session => 
-        !session.type || session.type === 'main' || session.sessionId.startsWith('main_')
+      .filter(
+        (session) =>
+          !session.type ||
+          session.type === 'main' ||
+          session.sessionId.startsWith('main_')
       )
       .map(({ type, ...session }) => session);
   },
@@ -119,14 +122,15 @@ export const getCurrentMainSessionId = query({
       .first();
 
     // Only return main session IDs (not vent session IDs)
-    if (latestSession && (
-      !latestSession.type || 
-      latestSession.type === 'main' || 
-      latestSession.sessionId.startsWith('main_')
-    )) {
+    if (
+      latestSession &&
+      (!latestSession.type ||
+        latestSession.type === 'main' ||
+        latestSession.sessionId.startsWith('main_'))
+    ) {
       return latestSession.sessionId;
     }
-    
+
     return null;
   },
 });

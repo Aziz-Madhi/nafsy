@@ -95,6 +95,8 @@ export interface ChatInputProps {
   onSendMessage: (message: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  value?: string;
+  onChangeText?: (text: string) => void;
 }
 
 export interface ChatBubbleProps {

@@ -1,4 +1,10 @@
-import React, { useRef, useCallback, useEffect, Suspense } from 'react';
+import React, {
+  useRef,
+  useCallback,
+  useEffect,
+  Suspense,
+  useMemo,
+} from 'react';
 import { View, Pressable, Dimensions } from 'react-native';
 // import { LinearGradient } from 'expo-linear-gradient'; // Unused - commented out
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
@@ -12,9 +18,7 @@ import {
 } from '~/components/chat';
 import { ChatHistorySidebar } from '~/components/chat/ChatHistorySidebar';
 import Animated, {
-  FadeInDown,
   runOnJS,
-  LinearTransition,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -34,8 +38,16 @@ import {
   useChatUIStore,
 } from '~/store';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useSegments } from 'expo-router';
 
 // Auth is now handled at tab layout level - no need for wrapper
+
+// Navigation bar height constants (same as ScreenLayout)
+const NAV_BAR_HEIGHT = {
+  CHAT: 180, // Chat tab with input
+  OTHER: 90, // Other tabs without input
+  BOTTOM_MARGIN: 25, // Bottom margin from container positioning
+} as const;
 
 interface Message {
   id: string;
@@ -64,11 +76,27 @@ const getQuickReplies = (t: any) => [
   },
 ];
 
+// Calculate navigation bar padding for chat screen
+function useNavigationBarPadding(): number {
+  const segments = useSegments();
+
+  return useMemo(() => {
+    // Get the current tab from segments (e.g., ['tabs', 'chat'])
+    const currentTab = segments.length > 1 ? segments[1] : 'mood';
+    const baseHeight =
+      currentTab === 'chat' ? NAV_BAR_HEIGHT.CHAT : NAV_BAR_HEIGHT.OTHER;
+    return baseHeight + NAV_BAR_HEIGHT.BOTTOM_MARGIN;
+  }, [segments]);
+}
+
 export default function ChatScreen() {
   // ===== ALL HOOKS FIRST (before any early returns) =====
   const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
   const { t } = useTranslation();
+
+  // Navigation bar padding
+  const navigationBarPadding = useNavigationBarPadding();
 
   // Zustand hooks
   const isTyping = useMainChatTyping();
@@ -362,11 +390,7 @@ export default function ChatScreen() {
                 paddingTop: 0,
               }}
               ListHeaderComponent={() => (
-                <Animated.View
-                  entering={FadeInDown.springify().damping(15).stiffness(150)}
-                  layout={LinearTransition.springify()}
-                  className="items-center mb-8 mt-4"
-                >
+                <View className="items-center mb-8 mt-4">
                   <View
                     className="w-20 h-20 rounded-full items-center justify-center mb-4"
                     style={{
@@ -378,9 +402,7 @@ export default function ChatScreen() {
                       elevation: 6,
                     }}
                   >
-                    <Text variant="title1" style={{ fontSize: 36 }}>
-                      🌱
-                    </Text>
+                    <Text variant="title1">🌱</Text>
                   </View>
                   <Text
                     variant="subhead"
@@ -390,7 +412,7 @@ export default function ChatScreen() {
                     {t('chat.welcomeSubtitle') ||
                       'Your safe space for mental wellness'}
                   </Text>
-                </Animated.View>
+                </View>
               )}
               ListFooterComponent={() => (
                 <View className="pb-6">
@@ -399,20 +421,20 @@ export default function ChatScreen() {
                   {/* Quick Replies */}
                   {showQuickReplies && messages.length === 1 && (
                     <View className="flex-row flex-wrap mt-4">
-                      {getQuickReplies(t).map((reply: any, index: number) => (
+                      {getQuickReplies(t).map((reply: any) => (
                         <QuickReplyButton
                           key={reply.text}
                           text={reply.text}
                           icon={reply.icon}
                           onPress={() => handleQuickReply(reply.text)}
-                          delay={index * 100}
+                          delay={0}
                         />
                       ))}
                     </View>
                   )}
 
-                  {/* Padding for tab bar */}
-                  <View className="h-52" />
+                  {/* Dynamic padding for navigation bar */}
+                  <View style={{ height: navigationBarPadding }} />
                 </View>
               )}
             />

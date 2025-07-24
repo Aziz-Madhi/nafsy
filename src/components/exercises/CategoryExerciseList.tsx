@@ -4,7 +4,6 @@ import { VerticalList } from '~/components/ui/GenericList';
 import { Text } from '~/components/ui/text';
 import { ExerciseCard } from './ExerciseCard';
 import { SymbolView } from 'expo-symbols';
-import Animated, { FadeInLeft } from 'react-native-reanimated';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -76,10 +75,7 @@ export function CategoryExerciseList({
   });
 
   return (
-    <Animated.View
-      entering={FadeInLeft.springify()}
-      className="flex-1 bg-[#F2FAF9]"
-    >
+    <View className="flex-1 bg-[#F2FAF9]">
       {/* Header */}
       <View className="flex-row justify-between items-center px-6 py-4 mb-4">
         <Pressable onPress={handleBackPress} className="flex-row items-center">
@@ -111,6 +107,6 @@ export function CategoryExerciseList({
           'No exercises available in this category yet.'
         }
       />
-    </Animated.View>
+    </View>
   );
 }

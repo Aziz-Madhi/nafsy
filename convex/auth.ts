@@ -18,7 +18,7 @@ async function upsertUserHelper(
   }
 ) {
   let clerkId = args.clerkId;
-  
+
   // If no clerkId provided, this is an update operation - get from auth
   if (!clerkId) {
     const identity = await ctx.auth.getUserIdentity();
@@ -67,9 +67,9 @@ async function upsertUserHelper(
 
 /**
  * Consolidated authentication function
- * Replaces: getAuthenticatedUser, requireAuth, getAuthenticatedClerkId, 
+ * Replaces: getAuthenticatedUser, requireAuth, getAuthenticatedClerkId,
  * validateUserAccess, getAuthenticatedUserWithRateLimit
- * 
+ *
  * Returns the authenticated user's full database record
  */
 export const getAuthenticatedUser = withErrorHandling(
@@ -96,7 +96,7 @@ export const getAuthenticatedUser = withErrorHandling(
 /**
  * Unified user operations (upsert pattern)
  * Replaces: createUser + updateUser
- * 
+ *
  * Creates user if doesn't exist, updates if exists
  */
 export const upsertUser = mutation({
@@ -182,18 +182,23 @@ export const requireAuth = async (ctx: QueryCtx | MutationCtx) => {
 };
 
 // Helper for getting just the Clerk ID
-export const getAuthenticatedClerkId = async (ctx: QueryCtx | MutationCtx): Promise<string> => {
+export const getAuthenticatedClerkId = async (
+  ctx: QueryCtx | MutationCtx
+): Promise<string> => {
   const user = await getAuthenticatedUser(ctx);
   return user.clerkId;
 };
 
 // Helper for validating user access
-export const validateUserAccess = async (ctx: QueryCtx | MutationCtx, userId: string) => {
+export const validateUserAccess = async (
+  ctx: QueryCtx | MutationCtx,
+  userId: string
+) => {
   const authenticatedUser = await getAuthenticatedUser(ctx);
-  
+
   if (authenticatedUser._id !== userId) {
     throw createAuthError("Access denied: Cannot access another user's data");
   }
-  
+
   return authenticatedUser;
 };

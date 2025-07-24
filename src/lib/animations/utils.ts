@@ -41,7 +41,7 @@ export function timing(toValue: number, preset: TimingPreset = 'normal') {
 }
 
 /**
- * Create a staggered animation with delay
+ * Create an immediate animation (stagger delay removed for performance)
  */
 export function staggered(
   toValue: number,
@@ -49,14 +49,12 @@ export function staggered(
   staggerDelay: StaggerDelay = 'normal',
   preset: SpringPreset = 'gentle'
 ) {
-  return withDelay(
-    index * STAGGER_DELAYS[staggerDelay],
-    withSpring(toValue, SPRING_PRESETS[preset])
-  );
+  // No delay - all animations start immediately
+  return withSpring(toValue, SPRING_PRESETS[preset]);
 }
 
 /**
- * Create entrance animation sequence (opacity + translateY)
+ * Create entrance animation sequence (opacity + translateY) - no delay
  */
 export function entranceSequence(
   opacity: SharedValue<number>,
@@ -66,12 +64,13 @@ export function entranceSequence(
 ) {
   'worklet';
 
-  opacity.value = withDelay(delay, withSpring(1, SPRING_PRESETS[preset]));
-  translateY.value = withDelay(delay, withSpring(0, SPRING_PRESETS[preset]));
+  // No delay - immediate animations for better performance
+  opacity.value = withSpring(1, SPRING_PRESETS[preset]);
+  translateY.value = withSpring(0, SPRING_PRESETS[preset]);
 }
 
 /**
- * Create scale entrance animation
+ * Create scale entrance animation - no delay
  */
 export function scaleEntrance(
   scale: SharedValue<number>,
@@ -80,7 +79,8 @@ export function scaleEntrance(
 ) {
   'worklet';
 
-  scale.value = withDelay(delay, withSpring(1, SPRING_PRESETS[preset]));
+  // No delay - immediate animation for better performance
+  scale.value = withSpring(1, SPRING_PRESETS[preset]);
 }
 
 /**

@@ -49,7 +49,10 @@ module.exports = {
         },
       },
       fontFamily: {
-        sans: ['System'],
+        sans: ['CrimsonPro-Regular', 'System'],
+        crimson: ['CrimsonPro-Regular', 'System'],
+        'crimson-bold': ['CrimsonPro-Bold', 'System'],
+        'crimson-italic': ['CrimsonPro-Italic', 'System'],
       },
     },
   },

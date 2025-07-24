@@ -128,8 +128,12 @@ export const getMoodStats = query({
       a[1] > b[1] ? a : b
     )[0];
 
+    // Calculate total sessions (unique days)
+    const totalSessions = Object.keys(dailyMoods).length;
+
     return {
       totalEntries: moods.length,
+      totalSessions,
       moodCounts,
       currentStreak,
       mostCommonMood,

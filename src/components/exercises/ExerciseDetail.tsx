@@ -4,7 +4,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
 import { SymbolView } from 'expo-symbols';
-import Animated, { SlideInDown } from 'react-native-reanimated';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import type { Exercise, ExerciseDetailProps } from '~/types';
 
@@ -49,10 +48,7 @@ export function ExerciseDetail({
             </View>
 
             {/* Icon and Title */}
-            <Animated.View
-              entering={SlideInDown.delay(100).springify()}
-              className="items-center mb-6"
-            >
+            <View className="items-center mb-6">
               <View
                 className="w-24 h-24 rounded-full items-center justify-center mb-4"
                 style={{ backgroundColor: exercise.color + '20' }}
@@ -65,13 +61,10 @@ export function ExerciseDetail({
               <Text variant="muted" className="text-center">
                 {exercise.description}
               </Text>
-            </Animated.View>
+            </View>
 
             {/* Meta Info */}
-            <Animated.View
-              entering={SlideInDown.delay(200).springify()}
-              className="flex-row justify-center mb-8"
-            >
+            <View className="flex-row justify-center mb-8">
               <View className="flex-row items-center mr-6">
                 <SymbolView name="clock" size={20} tintColor="#5A4A3A" />
                 <Text variant="body" className="text-[#5A4A3A] ml-1">
@@ -89,14 +82,11 @@ export function ExerciseDetail({
                     exercise.difficulty.slice(1)}
                 </Text>
               </View>
-            </Animated.View>
+            </View>
 
             {/* Benefits */}
             {exercise.benefits && Array.isArray(exercise.benefits) && (
-              <Animated.View
-                entering={SlideInDown.delay(300).springify()}
-                className="bg-white/20 rounded-2xl p-6 mb-6"
-              >
+              <View className="bg-white/20 rounded-2xl p-6 mb-6">
                 <Text variant="title3" className="mb-4 text-[#5A4A3A]">
                   Benefits
                 </Text>
@@ -112,15 +102,12 @@ export function ExerciseDetail({
                     </Text>
                   </View>
                 ))}
-              </Animated.View>
+              </View>
             )}
 
             {/* Steps */}
             {exercise.steps && Array.isArray(exercise.steps) && (
-              <Animated.View
-                entering={SlideInDown.delay(400).springify()}
-                className="mb-6"
-              >
+              <View className="mb-6">
                 <Text variant="title3" className="mb-4 text-[#5A4A3A]">
                   How to Practice
                 </Text>
@@ -142,7 +129,7 @@ export function ExerciseDetail({
                     </Text>
                   </View>
                 ))}
-              </Animated.View>
+              </View>
             )}
           </View>
         </ScrollView>

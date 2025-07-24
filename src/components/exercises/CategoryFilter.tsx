@@ -134,7 +134,7 @@ function CategoryChip({
   };
 
   return (
-    <Animated.View entering={FadeInRight.delay(index * 50).springify()}>
+    <Animated.View entering={FadeInRight.springify()}>
       <Animated.View style={animatedStyle}>
         <Pressable
           onPress={handlePress}

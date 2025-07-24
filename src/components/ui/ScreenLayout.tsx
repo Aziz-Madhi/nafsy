@@ -3,6 +3,27 @@ import { View, ScrollView, ViewStyle, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { useSegments } from 'expo-router';
+
+// Navigation bar height constants
+const NAV_BAR_HEIGHT = {
+  CHAT: 180, // Chat tab with input
+  OTHER: 90, // Other tabs without input
+  BOTTOM_MARGIN: 25, // Bottom margin from container positioning
+} as const;
+
+// Calculate bottom padding based on current route
+function useNavigationBarPadding(): number {
+  const segments = useSegments();
+
+  return useMemo(() => {
+    // Get the current tab from segments (e.g., ['tabs', 'chat'])
+    const currentTab = segments.length > 1 ? segments[1] : 'mood';
+    const baseHeight =
+      currentTab === 'chat' ? NAV_BAR_HEIGHT.CHAT : NAV_BAR_HEIGHT.OTHER;
+    return baseHeight + NAV_BAR_HEIGHT.BOTTOM_MARGIN;
+  }, [segments]);
+}
 
 interface ScreenLayoutProps {
   // Header configuration
@@ -33,7 +54,6 @@ interface ScreenLayoutProps {
 
   // Animation
   animated?: boolean;
-  animationDelay?: number;
 }
 
 // Header component
@@ -59,29 +79,26 @@ function ScreenHeader({
       className="flex-row justify-between items-center px-6 py-4"
       style={style}
     >
-      {/* Left section */}
-      <View className="flex-1 items-start">{headerLeft}</View>
-
-      {/* Center section */}
-      <View className="flex-2 items-center">
-        {headerCenter || (
-          <View className="items-center">
+      {/* Left section - Title goes here */}
+      <View className="flex-1 items-start">
+        {headerLeft || (
+          <View>
             {title && (
-              <Text className="text-[#5A4A3A] text-xl font-bold text-center">
+              <Text variant="title1" className="text-[#5A4A3A] font-bold">
                 {title}
               </Text>
             )}
             {subtitle && (
-              <Text
-                variant="caption1"
-                className="text-[#5A4A3A]/70 text-center mt-1"
-              >
+              <Text variant="caption1" className="text-[#5A4A3A]/70 mt-1">
                 {subtitle}
               </Text>
             )}
           </View>
         )}
       </View>
+
+      {/* Center section */}
+      <View className="flex-2 items-center">{headerCenter}</View>
 
       {/* Right section */}
       <View className="flex-1 items-end">{headerRight}</View>
@@ -90,8 +107,9 @@ function ScreenHeader({
 }
 
 // Stats section wrapper (common across mood/exercises/profile screens)
+// Note: No horizontal padding since ContentWrapper handles it
 function StatsSection({ children }: { children: React.ReactNode }) {
-  return <View className="px-6 py-4 mb-4">{children}</View>;
+  return <View className="py-4 mb-4">{children}</View>;
 }
 
 // Content wrapper based on variant
@@ -102,6 +120,7 @@ function ContentWrapper({
   refreshing,
   onRefresh,
   contentStyle,
+  statsSection,
 }: {
   children: React.ReactNode;
   variant: 'default' | 'chat' | 'dashboard' | 'list';
@@ -109,13 +128,16 @@ function ContentWrapper({
   refreshing?: boolean;
   onRefresh?: () => void;
   contentStyle?: ViewStyle;
+  statsSection?: React.ReactNode;
 }) {
+  const navigationBarPadding = useNavigationBarPadding();
+
   const refreshControl = useMemo(() => {
     if (!onRefresh) return undefined;
     return <RefreshControl refreshing={!!refreshing} onRefresh={onRefresh} />;
   }, [refreshing, onRefresh]);
 
-  // Chat variant - no scrolling, full height
+  // Chat variant - no scrolling, full height, no padding (chat handles its own)
   if (variant === 'chat') {
     return (
       <View className="flex-1" style={contentStyle}>
@@ -124,45 +146,62 @@ function ContentWrapper({
     );
   }
 
-  // List variant - no padding, let list handle its own styling
+  // List variant - add navigation bar padding
   if (variant === 'list') {
+    const listContentStyle = [
+      contentStyle,
+      { paddingBottom: navigationBarPadding },
+    ];
+
     if (scrollable) {
       return (
         <ScrollView
           className="flex-1"
-          style={contentStyle}
+          style={listContentStyle}
           refreshControl={refreshControl}
           showsVerticalScrollIndicator={false}
         >
+          {/* Stats section at top of scrollable content */}
+          {statsSection && <StatsSection>{statsSection}</StatsSection>}
           {children}
         </ScrollView>
       );
     }
     return (
-      <View className="flex-1" style={contentStyle}>
+      <View className="flex-1" style={listContentStyle}>
+        {/* Stats section for non-scrollable list */}
+        {statsSection && <StatsSection>{statsSection}</StatsSection>}
         {children}
       </View>
     );
   }
 
-  // Dashboard/default variants - with padding
+  // Dashboard/default variants - with padding and navigation bar clearance
   const paddingClass = variant === 'dashboard' ? 'px-6' : 'px-4';
+  const dashboardContentStyle = [
+    contentStyle,
+    { paddingBottom: navigationBarPadding },
+  ];
 
   if (scrollable) {
     return (
       <ScrollView
         className={`flex-1 ${paddingClass}`}
-        style={contentStyle}
+        style={dashboardContentStyle}
         refreshControl={refreshControl}
         showsVerticalScrollIndicator={false}
       >
+        {/* Stats section at top of scrollable content */}
+        {statsSection && <StatsSection>{statsSection}</StatsSection>}
         {children}
       </ScrollView>
     );
   }
 
   return (
-    <View className={`flex-1 ${paddingClass}`} style={contentStyle}>
+    <View className={`flex-1 ${paddingClass}`} style={dashboardContentStyle}>
+      {/* Stats section for non-scrollable content */}
+      {statsSection && <StatsSection>{statsSection}</StatsSection>}
       {children}
     </View>
   );
@@ -181,12 +220,11 @@ export function ScreenLayout({
   onRefresh,
   statsSection,
   variant = 'default',
-  backgroundColor = '#F2FAF9', // Default mental health app background
+  backgroundColor = '#F8F9FA', // Default light gray background
   contentStyle,
   headerStyle,
   safeAreaStyle,
   animated = false,
-  animationDelay = 0,
 }: ScreenLayoutProps) {
   const content = (
     <SafeAreaView
@@ -205,16 +243,14 @@ export function ScreenLayout({
         />
       )}
 
-      {/* Stats section */}
-      {statsSection && <StatsSection>{statsSection}</StatsSection>}
-
-      {/* Main content */}
+      {/* Main content with stats section inside */}
       <ContentWrapper
         variant={variant}
         scrollable={scrollable}
         refreshing={refreshing}
         onRefresh={onRefresh}
         contentStyle={contentStyle}
+        statsSection={statsSection}
       >
         {children}
       </ContentWrapper>
@@ -223,10 +259,7 @@ export function ScreenLayout({
 
   if (animated) {
     return (
-      <Animated.View
-        entering={FadeInDown.delay(animationDelay)}
-        className="flex-1"
-      >
+      <Animated.View entering={FadeInDown} className="flex-1">
         {content}
       </Animated.View>
     );
@@ -242,7 +275,7 @@ export const ScreenPresets = {
     variant: 'dashboard' as const,
     scrollable: true,
     animated: true,
-    backgroundColor: '#F2FAF9',
+    backgroundColor: '#F8F9FA',
   },
 
   // Chat layout
@@ -257,14 +290,14 @@ export const ScreenPresets = {
   profile: {
     variant: 'default' as const,
     scrollable: true,
-    backgroundColor: '#F2FAF9',
+    backgroundColor: '#F8F9FA',
   },
 
   // List layout (exercise details, etc.)
   list: {
     variant: 'list' as const,
     scrollable: false,
-    backgroundColor: '#F2FAF9',
+    backgroundColor: '#F8F9FA',
   },
 };
 

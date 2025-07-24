@@ -105,39 +105,19 @@ export function AnimatedContainer({
     ? createPressHandlers(scale, pressScale, hapticFeedback)
     : undefined;
 
-  // Initialize and trigger entrance animations
+  // Initialize and trigger entrance animations (no delays)
   useEffect(() => {
     if (animateOnMount && entrance === 'custom') {
       initializeEntranceValues(opacity, translateY, scale);
 
-      if (staggerIndex !== undefined) {
-        // Staggered entrance
-        opacity.value = staggered(1, staggerIndex, staggerDelay, springPreset);
-        translateY.value = staggered(
-          0,
-          staggerIndex,
-          staggerDelay,
-          springPreset
-        );
-        if (entrance === 'scale') {
-          scale.value = staggered(1, staggerIndex, staggerDelay, 'bouncy');
-        }
-      } else {
-        // Regular entrance with delay
-        entranceSequence(opacity, translateY, entranceDelay, springPreset);
-        if (entrance === 'scale') {
-          scaleEntrance(scale, entranceDelay, 'bouncy');
-        }
+      // All animations start immediately - no stagger delays
+      opacity.value = staggered(1, 0, staggerDelay, springPreset);
+      translateY.value = staggered(0, 0, staggerDelay, springPreset);
+      if (entrance === 'scale') {
+        scale.value = staggered(1, 0, staggerDelay, 'bouncy');
       }
     }
-  }, [
-    animateOnMount,
-    entrance,
-    entranceDelay,
-    staggerIndex,
-    staggerDelay,
-    springPreset,
-  ]);
+  }, [animateOnMount, entrance, springPreset]);
 
   // Animated styles
   const animatedStyle = useAnimatedStyle(() => ({
@@ -149,49 +129,22 @@ export function AnimatedContainer({
     ],
   }));
 
-  // Built-in Reanimated entering animations (more performant)
+  // Built-in Reanimated entering animations (disabled for performance)
   const getEnteringAnimation = () => {
-    const delay =
-      staggerIndex !== undefined
-        ? entranceDelay +
-          staggerIndex *
-            (staggerDelay === 'quick'
-              ? 50
-              : staggerDelay === 'slow'
-                ? 150
-                : 100)
-        : entranceDelay;
-
-    switch (entrance) {
-      case 'fadeIn':
-        return FadeIn.delay(delay).springify();
-      case 'slideInDown':
-        return FadeInDown.delay(delay).springify();
-      case 'slideInUp':
-        return FadeInUp.delay(delay).springify();
-      case 'slideInLeft':
-        return FadeInLeft.delay(delay).springify();
-      case 'slideInRight':
-        return FadeInRight.delay(delay).springify();
-      case 'scale':
-        return FadeIn.delay(delay).springify().damping(8).stiffness(200);
-      case 'staggered':
-        return FadeInDown.delay(delay).springify().damping(15).stiffness(150);
-      default:
-        return undefined;
-    }
+    // All animations disabled - return undefined for immediate display
+    return undefined;
   };
 
   // Choose component based on pressable requirement
   if (pressable && pressHandlers) {
     return (
       <Animated.View
-        style={[animatedStyle]}
+        style={entrance === 'custom' ? [animatedStyle] : [style]}
         className={className}
         entering={entrance !== 'custom' ? getEnteringAnimation() : undefined}
       >
         <Pressable
-          style={style}
+          style={entrance !== 'custom' ? style : undefined}
           onPress={onPress}
           onPressIn={() => {
             pressHandlers.handlePressIn();
@@ -211,7 +164,7 @@ export function AnimatedContainer({
 
   return (
     <Animated.View
-      style={[style, entrance === 'custom' ? animatedStyle : style]}
+      style={entrance === 'custom' ? [animatedStyle] : [style]}
       className={className}
       entering={entrance !== 'custom' ? getEnteringAnimation() : undefined}
     >

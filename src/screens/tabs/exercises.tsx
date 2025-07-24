@@ -165,7 +165,7 @@ function ExercisesScreen() {
       {/* Categories View */}
       {currentView === 'categories' ? (
         <DashboardLayout
-          title={t('exercises.title') || 'Wellness Exercises'}
+          title={t('exercises.title') || 'Exercises'}
           subtitle={
             t('exercises.subtitle') || 'Guided activities for your wellbeing'
           }

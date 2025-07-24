@@ -136,12 +136,8 @@ function ColorCard({
         </View>
         <View className="items-center pb-1">
           <Text
-            className="text-white font-bold text-center"
-            style={{
-              fontSize: 18,
-              lineHeight: 24,
-              fontFamily: 'CrimsonPro-Bold',
-            }}
+            variant="heading"
+            className="text-white text-center"
             numberOfLines={1}
             ellipsizeMode="tail"
           >
@@ -271,7 +267,7 @@ function AnimatedCardWrapper({
       {...ANIMATION_CONFIG}
       transition={{
         ...ANIMATION_CONFIG.transition,
-        delay: index * 100,
+        delay: 0, // Removed index-based delay for better performance
       }}
       className={wrapperClassName}
     >

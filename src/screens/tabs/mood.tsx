@@ -25,13 +25,15 @@ import {
   Flame,
   BarChart3,
   CheckCircle,
+  Star,
 } from 'lucide-react-native';
 import { IconRenderer } from '~/components/ui/IconRenderer';
+import { StatCard } from '~/components/mood/StatCard';
+import { WeekView } from '~/components/mood/WeekView';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
@@ -85,24 +87,20 @@ function SimpleMoodChart({
   percentage,
   color,
   count,
-  index,
 }: {
   mood: string;
   percentage: number;
   color: string;
   count: number;
-  index: number;
 }) {
   const barHeight = useSharedValue(0);
   const opacity = useSharedValue(0);
 
   React.useEffect(() => {
-    // Staggered animation entrance
-    setTimeout(() => {
-      barHeight.value = withSpring(percentage, { damping: 15, stiffness: 100 });
-      opacity.value = withSpring(1, { damping: 15 });
-    }, index * 150);
-  }, [percentage, index]);
+    // Immediate display - no animations
+    barHeight.value = percentage;
+    opacity.value = 1;
+  }, [percentage]);
 
   const animatedBarStyle = useAnimatedStyle(() => {
     'worklet';
@@ -227,14 +225,13 @@ function SimpleMoodVisualization({ data }: { data: MoodData[] }) {
           justifyContent: 'center',
         }}
       >
-        {activeData.map((item, index) => (
+        {activeData.map((item) => (
           <SimpleMoodChart
             key={item.mood}
             mood={item.mood}
             percentage={item.percentage}
             color={item.color}
             count={item.count}
-            index={index}
           />
         ))}
       </ScrollView>
@@ -389,24 +386,20 @@ export default function MoodScreen() {
   // Stats section for header
   const statsSection = (
     <View className="flex-row gap-4 mb-4">
-      <View className="flex-1 bg-blue-50 rounded-2xl p-5 items-center">
-        <Flame size={32} color="#1E40AF" className="mb-1" />
-        <Text variant="title2" className="text-[#1E40AF] font-bold">
-          {moodStats?.currentStreak || 0}
-        </Text>
-        <Text variant="caption1" className="text-[#1E40AF] opacity-80">
-          Day Streak
-        </Text>
-      </View>
-      <View className="flex-1 bg-green-50 rounded-2xl p-5 items-center">
-        <BarChart3 size={32} color="#047857" className="mb-1" />
-        <Text variant="title2" className="text-[#047857] font-bold">
-          {moodStats?.totalEntries || 0}
-        </Text>
-        <Text variant="caption1" className="text-[#047857] opacity-80">
-          Total Logs
-        </Text>
-      </View>
+      <StatCard
+        icon={Star}
+        iconColor="#5A4A3A"
+        value={moodStats?.totalSessions || 0}
+        label="Sessions"
+        backgroundColor="rgba(90, 74, 58, 0.08)"
+      />
+      <StatCard
+        icon={Flame}
+        iconColor="#5A4A3A"
+        value={moodStats?.currentStreak || 0}
+        label="Streaks"
+        backgroundColor="rgba(90, 74, 58, 0.08)"
+      />
     </View>
   );
 
@@ -416,6 +409,11 @@ export default function MoodScreen() {
       subtitle="Track your emotional wellbeing"
       statsSection={statsSection}
     >
+      {/* Week View Section */}
+      <View className="mb-6">
+        <WeekView moodData={moodData} />
+      </View>
+
       {/* Today's Mood Log Section */}
       <View className="mb-8">
         <View className="flex-row items-center mb-4">

@@ -7,30 +7,37 @@ import { useTranslation } from '~/hooks/useTranslation';
 // Keep this context for backward compatibility with button, card, tooltip
 const TextClassContext = React.createContext<string | undefined>(undefined);
 
-const textVariants = cva('text-base text-foreground web:select-text', {
-  variants: {
-    variant: {
-      default: '',
-      title1: 'text-5xl font-bold', // iOS Large Title - 34pt
-      title2: 'text-4xl font-bold', // iOS Title 1 - 28pt
-      title3: 'text-3xl font-bold', // iOS Title 2 - 22pt
-      title4: 'text-2xl font-bold', // iOS Title 3 - 20pt
-      heading: 'text-xl font-semibold', // iOS Headline - 17pt
-      body: 'text-lg', // iOS Body - 17pt
-      callout: 'text-lg font-medium', // iOS Callout - 16pt
-      subhead: 'text-base font-medium', // iOS Subheadline - 15pt
-      footnote: 'text-base', // iOS Footnote - 13pt
-      caption1: 'text-sm font-medium', // iOS Caption 1 - 12pt
-      caption2: 'text-sm', // iOS Caption 2 - 11pt
-      large: 'text-xl font-semibold',
-      small: 'text-base font-medium leading-none',
-      muted: 'text-base text-muted-foreground',
+const textVariants = cva(
+  'text-base text-foreground web:select-text font-crimson',
+  {
+    variants: {
+      variant: {
+        default: '',
+        // iOS Typography Scale - Aligned with iOS HID Guidelines with CrimsonPro
+        title1: 'text-4xl font-crimson-bold', // iOS Large Title - 28pt
+        title2: 'text-3xl font-crimson-bold', // iOS Title 1 - 24pt
+        title3: 'text-2xl font-crimson-bold', // iOS Title 2 - 20pt
+        title4: 'text-xl font-crimson-bold', // iOS Title 3 - 18pt (screen titles)
+        heading: 'text-lg font-crimson-bold', // iOS Headline - 17pt (nav titles)
+        body: 'text-base font-crimson', // iOS Body - 16pt (primary text)
+        callout: 'text-base font-crimson-bold', // iOS Callout - 16pt (emphasized body)
+        subhead: 'text-sm font-crimson', // iOS Subheadline - 14pt (list descriptions)
+        footnote: 'text-sm font-crimson', // iOS Footnote - 13pt (tertiary text)
+        caption1: 'text-xs font-crimson', // iOS Caption 1 - 12pt (labels)
+        caption2: 'text-xs font-crimson', // iOS Caption 2 - 11pt (smallest text)
+        // Legacy variants for backward compatibility
+        large: 'text-xl font-crimson-bold',
+        small: 'text-sm font-crimson leading-none',
+        muted: 'text-sm text-muted-foreground font-crimson',
+        // Add italic variant for emphasis
+        italic: 'text-base font-crimson-italic',
+      },
     },
-  },
-  defaultVariants: {
-    variant: 'default',
-  },
-});
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
 
 interface TextProps
   extends React.ComponentPropsWithoutRef<typeof RNText>,

@@ -17,7 +17,6 @@ import Animated, {
   withRepeat,
   withSequence,
   withTiming,
-  withDelay,
 } from 'react-native-reanimated';
 import { AnimatePresence, MotiView } from 'moti';
 import { ChatBubbleProps, ChatInputProps } from './types';
@@ -74,17 +73,20 @@ export const ChatBubble = React.memo(function ChatBubble({
           <View className="relative">
             <Text
               variant="body"
-              className={cn(isUser ? 'text-white' : 'text-[#2E3A59]')}
+              className={cn(
+                'text-lg',
+                isUser ? 'text-white' : 'text-[#2E3A59]'
+              )}
               enableRTL={isUser}
             >
               {message}
             </Text>
 
-            {timestamp && (
+            {timestamp && !isUser && (
               <Text
-                variant="muted"
+                variant="footnote"
                 className={cn(
-                  'text-xs mt-2',
+                  'mt-2',
                   isUser ? 'text-white/70' : 'text-[#2E3A59]/70'
                 )}
                 enableRTL={isUser}
@@ -145,26 +147,20 @@ export function TypingIndicator() {
       -1
     );
 
-    dot2.value = withDelay(
-      150,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 300 }),
-          withSpring(0, { damping: 8, stiffness: 300 })
-        ),
-        -1
-      )
+    dot2.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 300 }),
+        withSpring(0, { damping: 8, stiffness: 300 })
+      ),
+      -1
     );
 
-    dot3.value = withDelay(
-      300,
-      withRepeat(
-        withSequence(
-          withTiming(1, { duration: 300 }),
-          withSpring(0, { damping: 8, stiffness: 300 })
-        ),
-        -1
-      )
+    dot3.value = withRepeat(
+      withSequence(
+        withTiming(1, { duration: 300 }),
+        withSpring(0, { damping: 8, stiffness: 300 })
+      ),
+      -1
     );
   }, []);
 
@@ -274,7 +270,7 @@ export function QuickReplyButton({
         }}
       >
         {icon && (
-          <Text className="mr-2.5 text-lg" style={{ fontSize: 18 }}>
+          <Text variant="heading" className="mr-2.5">
             {icon}
           </Text>
         )}
@@ -294,11 +290,19 @@ export function ChatInput({
   placeholder = 'Type a message...',
   disabled = false,
   hideBorder = false,
-}: ChatInputProps & { hideBorder?: boolean }) {
-  const [message, setMessage] = useState('');
+  hideButton = false,
+  value,
+  onChangeText,
+}: ChatInputProps & { hideBorder?: boolean; hideButton?: boolean }) {
+  const [internalMessage, setInternalMessage] = useState('');
   const [isFocused, setIsFocused] = useState(false);
   const sendScale = useSharedValue(1);
   const containerScale = useSharedValue(1);
+
+  // Use controlled value if provided, otherwise use internal state
+  const message = value !== undefined ? value : internalMessage;
+  const setMessage =
+    value !== undefined ? onChangeText || (() => {}) : setInternalMessage;
   const hasText = !!message.trim();
 
   const sendButtonStyle = useAnimatedStyle(() => ({
@@ -316,18 +320,21 @@ export function ChatInput({
         withSpring(1, { damping: 10, stiffness: 300 })
       );
       onSendMessage(message.trim());
-      setMessage('');
+      // Only clear if using internal state
+      if (value === undefined) {
+        setMessage('');
+      }
     }
   };
 
   const handleFocus = () => {
     setIsFocused(true);
-    containerScale.value = withSpring(1.02, { damping: 15, stiffness: 200 });
+    containerScale.value = withSpring(1.01, { damping: 18, stiffness: 250 }); // More subtle scale
   };
 
   const handleBlur = () => {
     setIsFocused(false);
-    containerScale.value = withSpring(1, { damping: 15, stiffness: 200 });
+    containerScale.value = withSpring(1, { damping: 18, stiffness: 250 });
   };
 
   return (
@@ -335,91 +342,104 @@ export function ChatInput({
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View className={cn('px-4 py-4', !hideBorder && 'bg-white/40')}>
+      <View className={cn('px-4 py-4', !hideBorder && 'bg-transparent')}>
         <Animated.View
           style={[
             containerStyle,
             {
-              backgroundColor: 'white',
-              borderRadius: 35,
-              paddingHorizontal: 24,
-              paddingVertical: 16,
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.1,
-              shadowRadius: 12,
-              elevation: 8,
-              minHeight: 70,
+              // Elegant glassmorphism effect with subtle tint
+              backgroundColor: 'rgba(248, 250, 252, 0.95)', // Very subtle blue-gray tint
+              borderRadius: 28,
+              paddingHorizontal: 20,
+              paddingVertical: 14,
+              // Sophisticated shadow system
+              shadowColor: '#1e293b',
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 20,
+              elevation: 12,
+              // Subtle border for definition
+              borderWidth: 1,
+              borderColor: 'rgba(226, 232, 240, 0.8)',
+              minHeight: 66,
             },
           ]}
         >
           <View className="flex-row items-center">
-            {/* Text input - now takes full width */}
-            <View className="flex-1 mr-4 justify-center">
+            {/* Text input - takes full width when button is hidden */}
+            <View
+              className={`flex-1 justify-center ${!hideButton ? 'mr-4' : ''}`}
+            >
               <TextInput
                 value={message}
                 onChangeText={setMessage}
                 placeholder={placeholder}
-                placeholderTextColor="#9CA3AF"
+                placeholderTextColor="#94a3b8" // More refined slate color
                 multiline
                 maxLength={1000}
                 editable={!disabled}
                 onFocus={handleFocus}
                 onBlur={handleBlur}
-                className="text-base text-gray-800"
+                className="text-base"
                 style={{
-                  fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+                  fontFamily: 'CrimsonPro-Regular',
                   textAlignVertical: 'center',
                   minHeight: 38,
                   maxHeight: 100,
+                  fontSize: 16,
+                  lineHeight: 22,
+                  color: '#1e293b', // Rich, sophisticated text color
+                  fontWeight: '400',
                 }}
               />
             </View>
 
-            {/* Right side - Send/Microphone button */}
-            <View className="w-8 h-8 relative">
-              {/* Always render both, control visibility with Moti */}
-              <MotiView
-                animate={{
-                  opacity: hasText ? 0 : 1,
-                  scale: hasText ? 0.9 : 1,
-                }}
-                transition={{
-                  type: 'timing',
-                  duration: 150,
-                }}
-                style={{ position: 'absolute', top: 0, left: 0 }}
-              >
-                <Pressable className="w-8 h-8 rounded-full items-center justify-center">
-                  <SymbolView name="mic.fill" size={20} tintColor="#6B7280" />
-                </Pressable>
-              </MotiView>
-
-              <MotiView
-                animate={{
-                  opacity: hasText ? 1 : 0,
-                  scale: hasText ? 1 : 0.9,
-                }}
-                transition={{
-                  type: 'timing',
-                  duration: 150,
-                }}
-                style={{ position: 'absolute', top: 0, left: 0 }}
-              >
-                <Animated.View style={sendButtonStyle}>
-                  <Pressable
-                    onPress={handleSend}
-                    disabled={disabled}
-                    className="w-8 h-8 rounded-full items-center justify-center"
-                    style={{
-                      backgroundColor: '#2D7D6E',
-                    }}
-                  >
-                    <SymbolView name="arrow.up" size={18} tintColor="white" />
+            {/* Right side - Send/Microphone button (conditionally rendered) */}
+            {!hideButton && (
+              <View className="w-8 h-8 relative">
+                {/* Always render both, control visibility with Moti */}
+                <MotiView
+                  animate={{
+                    opacity: hasText ? 0 : 1,
+                    scale: hasText ? 0.9 : 1,
+                  }}
+                  transition={{
+                    type: 'timing',
+                    duration: 150,
+                  }}
+                  style={{ position: 'absolute', top: 0, left: 0 }}
+                >
+                  <Pressable className="w-8 h-8 rounded-full items-center justify-center">
+                    <SymbolView name="mic.fill" size={20} tintColor="#6B7280" />
                   </Pressable>
-                </Animated.View>
-              </MotiView>
-            </View>
+                </MotiView>
+
+                <MotiView
+                  animate={{
+                    opacity: hasText ? 1 : 0,
+                    scale: hasText ? 1 : 0.9,
+                  }}
+                  transition={{
+                    type: 'timing',
+                    duration: 150,
+                  }}
+                  style={{ position: 'absolute', top: 0, left: 0 }}
+                >
+                  <Animated.View style={sendButtonStyle}>
+                    <Pressable
+                      onPress={handleSend}
+                      disabled={disabled}
+                      className="w-8 h-8 rounded-full items-center justify-center"
+                      style={{
+                        backgroundColor: '#2D7D6E',
+                      }}
+                    >
+                      <SymbolView name="arrow.up" size={18} tintColor="white" />
+                    </Pressable>
+                  </Animated.View>
+                </MotiView>
+              </View>
+            )}
           </View>
         </Animated.View>
       </View>

@@ -211,7 +211,10 @@ export default function ProfileScreen() {
       if (item.type === 'header') {
         return (
           <View className="mt-6">
-            <Text variant="muted" className="px-6 mb-3 text-sm uppercase">
+            <Text
+              variant="caption1"
+              className="px-6 mb-3 uppercase text-muted-foreground"
+            >
               {item.data.title}
             </Text>
           </View>
@@ -243,7 +246,7 @@ export default function ProfileScreen() {
           <Avatar alt={user.fullName || 'User'} className="h-20 w-20 mr-4">
             <Avatar.Image source={{ uri: user.imageUrl }} />
             <Avatar.Fallback>
-              <Text className="text-2xl">
+              <Text variant="title3">
                 {user.fullName?.charAt(0) ||
                   user.firstName?.charAt(0) ||
                   user.emailAddresses?.[0]?.emailAddress
@@ -258,7 +261,7 @@ export default function ProfileScreen() {
             <Text variant="title3" className="mb-1">
               {user.fullName || 'Anonymous User'}
             </Text>
-            <Text variant="muted" className="text-sm">
+            <Text variant="muted">
               {user.emailAddresses?.[0]?.emailAddress}
             </Text>
           </View>
@@ -271,7 +274,7 @@ export default function ProfileScreen() {
               <SymbolView name="award.fill" size={16} tintColor="#2196F3" />
               <Text variant="title3">7</Text>
             </View>
-            <Text variant="muted" className="text-xs">
+            <Text variant="caption2" className="text-muted-foreground">
               {t('profile.stats.dayStreak')}
             </Text>
           </View>
@@ -280,7 +283,7 @@ export default function ProfileScreen() {
               <SymbolView name="heart.fill" size={16} tintColor="#2196F3" />
               <Text variant="title3">24</Text>
             </View>
-            <Text variant="muted" className="text-xs">
+            <Text variant="caption2" className="text-muted-foreground">
               {t('profile.stats.sessions')}
             </Text>
           </View>
@@ -289,7 +292,7 @@ export default function ProfileScreen() {
               <Text className="text-primary mr-1">🧘</Text>
               <Text variant="title3">3.5h</Text>
             </View>
-            <Text variant="muted" className="text-xs">
+            <Text variant="caption2" className="text-muted-foreground">
               {t('profile.stats.totalTime')}
             </Text>
           </View>
@@ -308,10 +311,7 @@ export default function ProfileScreen() {
       </View>
 
       {/* Sign Out Button */}
-      <Animated.View
-        entering={FadeInDown.delay(400).springify()}
-        className="mt-8 mb-6"
-      >
+      <Animated.View entering={FadeInDown.springify()} className="mt-8">
         <Pressable
           onPress={handleSignOut}
           disabled={isSigningOut}
@@ -344,8 +344,8 @@ export default function ProfileScreen() {
       </Animated.View>
 
       {/* Version Info */}
-      <View className="items-center mb-8">
-        <Text variant="muted" className="text-xs">
+      <View className="items-center">
+        <Text variant="caption2" className="text-muted-foreground">
           {t('profile.version')}
         </Text>
       </View>
@@ -387,7 +387,7 @@ function SettingRow({ item, isLast }: SettingRowProps) {
           {item.title}
         </Text>
         {item.subtitle && (
-          <Text variant="muted" className="text-sm mt-0.5">
+          <Text variant="subhead" className="text-muted-foreground mt-0.5">
             {item.subtitle}
           </Text>
         )}

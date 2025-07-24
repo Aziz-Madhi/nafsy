@@ -22,7 +22,8 @@ export const sendChatMessage = mutation({
     const user = await getAuthenticatedUser(ctx);
 
     // Create session ID if not provided
-    const sessionId = args.sessionId || `${args.type}_${Date.now()}_${user._id}`;
+    const sessionId =
+      args.sessionId || `${args.type}_${Date.now()}_${user._id}`;
 
     let messageId: any;
 
@@ -102,7 +103,8 @@ export const getChatMessages = query({
     const user = await getAuthenticatedUser(ctx);
     const limit = args.limit || 50;
 
-    const tableName = args.type === 'main' ? 'mainChatMessages' : 'ventChatMessages';
+    const tableName =
+      args.type === 'main' ? 'mainChatMessages' : 'ventChatMessages';
 
     let query = ctx.db
       .query(tableName)
@@ -113,7 +115,7 @@ export const getChatMessages = query({
     }
 
     const messages = await query.order('desc').take(limit);
-    
+
     // For vent messages without sessionId, get latest session if no specific session requested
     if (args.type === 'vent' && !args.sessionId && messages.length === 0) {
       const latestSession = await ctx.db
@@ -170,11 +172,14 @@ export const getChatSessions = query({
         .filter((q) => q.eq(q.field('userId'), user._id))
         .order('desc')
         .take(limit);
-      
+
       // Filter to only return main chat sessions
       return sessions
-        .filter(session => 
-          !session.type || session.type === 'main' || session.sessionId.startsWith('main_')
+        .filter(
+          (session) =>
+            !session.type ||
+            session.type === 'main' ||
+            session.sessionId.startsWith('main_')
         )
         .map(({ type, ...session }) => session);
     } else {
@@ -208,11 +213,12 @@ export const getCurrentSessionId = query({
         .first();
 
       // Only return main session IDs
-      if (latestSession && (
-        !latestSession.type || 
-        latestSession.type === 'main' || 
-        latestSession.sessionId.startsWith('main_')
-      )) {
+      if (
+        latestSession &&
+        (!latestSession.type ||
+          latestSession.type === 'main' ||
+          latestSession.sessionId.startsWith('main_'))
+      ) {
         return latestSession.sessionId;
       }
     } else {
@@ -225,7 +231,7 @@ export const getCurrentSessionId = query({
 
       return latestSession?.sessionId || null;
     }
-    
+
     return null;
   },
 });
@@ -254,7 +260,8 @@ export const createChatSession = mutation({
         messageCount: 0,
       });
     } else {
-      const title = args.title || `Vent Session ${new Date().toLocaleDateString()}`;
+      const title =
+        args.title || `Vent Session ${new Date().toLocaleDateString()}`;
       await ctx.db.insert('ventChatSessions', {
         userId: user._id,
         sessionId,
@@ -282,8 +289,10 @@ export const deleteChatSession = mutation({
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
 
-    const messagesTableName = args.type === 'main' ? 'mainChatMessages' : 'ventChatMessages';
-    const sessionsTableName = args.type === 'main' ? 'chatSessions' : 'ventChatSessions';
+    const messagesTableName =
+      args.type === 'main' ? 'mainChatMessages' : 'ventChatMessages';
+    const sessionsTableName =
+      args.type === 'main' ? 'chatSessions' : 'ventChatSessions';
 
     // Delete all messages in the session
     const messages = await ctx.db
@@ -340,7 +349,8 @@ export const updateChatSessionTitle = mutation({
   returns: v.union(v.id('chatSessions'), v.id('ventChatSessions'), v.null()),
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const sessionsTableName = args.type === 'main' ? 'chatSessions' : 'ventChatSessions';
+    const sessionsTableName =
+      args.type === 'main' ? 'chatSessions' : 'ventChatSessions';
 
     let session;
     if (args.type === 'main') {

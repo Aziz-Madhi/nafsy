@@ -102,11 +102,12 @@ src/
 ### State Management Architecture
 
 **Modern Zustand + MMKV Implementation:**
+
 - **Store Factory Pattern**: `createPersistedStore()` factory for consistent MMKV persistence
 - **Primary Stores**:
   - `useAppStore`: Global app state, themes, settings, language with smart theme resolution
   - `useChatUIStore`: Chat UI state, session management, floating chat, typing indicators
-- **MMKV Integration**: 
+- **MMKV Integration**:
   - Custom `mmkv-storage.ts` with encryption and error handling
   - Synchronous persistence with fallback mechanisms
   - Health checks and storage optimization
@@ -115,13 +116,13 @@ src/
 
 ### Database Schema (Convex)
 
-- **Dual Chat System**: 
+- **Dual Chat System**:
   - `mainChatMessages`: Structured therapy sessions with sessionId
   - `ventChatMessages`: Quick emotional releases/vents
-- **Session Management**: 
+- **Session Management**:
   - `chatSessions`: Main chat conversation metadata
   - `ventChatSessions`: Vent chat session metadata
-- **User Data**: 
+- **User Data**:
   - `users`: User profiles with Clerk integration
   - `moods`: Daily mood entries with 5 mood types
   - `exercises`: Wellness exercises with category/difficulty
@@ -235,7 +236,8 @@ src/
 - Store testing: Focus on MMKV persistence, hydration, and error scenarios
 
 # important-instruction-reminders
+
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
 ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+NEVER proactively create documentation files (\*.md) or README files. Only create documentation files if explicitly requested by the User.

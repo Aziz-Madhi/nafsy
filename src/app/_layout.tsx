@@ -4,6 +4,8 @@ import 'expo-dev-client';
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useFonts } from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 import { AppProviders } from '~/providers/AppProviders';
 import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
 import {
@@ -12,6 +14,9 @@ import {
   markInteractive,
   recordMemory,
 } from '~/lib/performance-monitor';
+
+// Keep the splash screen visible while we fetch resources
+SplashScreen.preventAutoHideAsync();
 
 export {
   // Catch any errors thrown by the Layout component.
@@ -34,6 +39,13 @@ function NavigationStack() {
 }
 
 export default function RootLayout() {
+  // Load custom fonts
+  const [fontsLoaded, fontError] = useFonts({
+    'CrimsonPro-Regular': require('../../assets/fonts/CrimsonPro-Regular.ttf'),
+    'CrimsonPro-Bold': require('../../assets/fonts/CrimsonPro-Bold.ttf'),
+    'CrimsonPro-Italic': require('../../assets/fonts/CrimsonPro-Italic.ttf'),
+  });
+
   // Mark app start for performance monitoring
   React.useEffect(() => {
     markAppStart();
@@ -48,6 +60,18 @@ export default function RootLayout() {
       recordMemory('app_interactive');
     }, 1000);
   }, []);
+
+  // Handle font loading completion
+  React.useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync();
+    }
+  }, [fontsLoaded, fontError]);
+
+  // Don't render until fonts are loaded
+  if (!fontsLoaded && !fontError) {
+    return null;
+  }
 
   return (
     <AppProviders>

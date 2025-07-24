@@ -56,7 +56,6 @@ export const sendVentMessage = mutation({
     }
 
     return messageId;
-
   },
 });
 
@@ -152,7 +151,8 @@ export const createVentSession = mutation({
     const userId = await requireAuth(ctx);
 
     const sessionId = generateSessionId();
-    const title = args.title || `Vent Session ${new Date().toLocaleDateString()}`;
+    const title =
+      args.title || `Vent Session ${new Date().toLocaleDateString()}`;
 
     const sessionDocId = await ctx.db.insert('ventChatSessions', {
       userId,

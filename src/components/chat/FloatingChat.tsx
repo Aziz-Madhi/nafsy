@@ -351,18 +351,13 @@ export const FloatingChat = React.memo(function FloatingChat({
                   const messageAge = array.length - 1 - index; // 0 = newest, 1 = second newest, etc.
                   const isOld = messageAge >= 2; // 3rd message and older
 
-                  // Message Appearance Cascade - each message enters with increasing delay
-                  const cascadeDelay = index * 150; // 150ms between each message
-
+                  // Immediate message appearance - no cascade delay for better performance
                   return (
                     <Animated.View
                       key={msg.id}
                       entering={
                         // Just appear in place with fade and slight scale
-                        FadeIn.springify()
-                          .damping(25)
-                          .stiffness(400)
-                          .delay(cascadeDelay)
+                        FadeIn.springify().damping(25).stiffness(400)
                       }
                       exiting={
                         // Enhanced Fade Transition with slight scale
@@ -378,141 +373,131 @@ export const FloatingChat = React.memo(function FloatingChat({
                           .stiffness(300)
                           .duration(600)
                       }
+                      style={{
+                        opacity: calculateMessageOpacity(messageAge),
+                        transform: [
+                          { scale: calculateMessageScale(messageAge) },
+                        ],
+                      }}
                     >
-                      <Animated.View
-                        layout={
-                          // Additional sub-animation for smooth repositioning
-                          LinearTransition.springify()
-                            .damping(25)
-                            .stiffness(350)
-                            .duration(500)
-                        }
+                      <View
+                        className="backdrop-blur-md border border-opacity-30 rounded-2xl px-8 py-6 overflow-hidden"
                         style={{
-                          opacity: calculateMessageOpacity(messageAge),
-                          transform: [
-                            { scale: calculateMessageScale(messageAge) },
-                          ],
+                          maxWidth: 300,
+                          minWidth: 120,
+                          alignSelf: 'center',
+
+                          // Color based on message type
+                          backgroundColor: msg.isUser ? '#9CC99A' : '#7BA7D9',
+                          borderColor: 'rgba(255, 255, 255, 0.3)',
+
+                          // Shadow for depth
+                          shadowColor: msg.isUser ? '#9CC99A' : '#7BA7D9',
+                          shadowOffset: { width: 0, height: 8 },
+                          shadowOpacity: 0.2,
+                          shadowRadius: 12,
+                          elevation: 8,
                         }}
                       >
-                        <View
-                          className="backdrop-blur-md border border-opacity-30 rounded-2xl px-8 py-6 overflow-hidden"
+                        {/* Shimmer/Glow effect for sending messages */}
+                        {msg.status === 'sending' && (
+                          <Animated.View
+                            style={[
+                              shimmerStyle,
+                              {
+                                position: 'absolute',
+                                top: 0,
+                                left: 0,
+                                right: 0,
+                                bottom: 0,
+                                backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                                borderRadius: 16,
+                              },
+                            ]}
+                          />
+                        )}
+                        <Text
                           style={{
-                            maxWidth: 300,
-                            minWidth: 120,
-                            alignSelf: 'center',
-
-                            // Color based on message type
-                            backgroundColor: msg.isUser ? '#9CC99A' : '#7BA7D9',
-                            borderColor: 'rgba(255, 255, 255, 0.3)',
-
-                            // Shadow for depth
-                            shadowColor: msg.isUser ? '#9CC99A' : '#7BA7D9',
-                            shadowOffset: { width: 0, height: 8 },
-                            shadowOpacity: 0.2,
-                            shadowRadius: 12,
-                            elevation: 8,
+                            fontSize: 16,
+                            fontWeight: '500',
+                            color: 'white',
+                            textAlign: 'left',
+                            lineHeight: 22,
                           }}
                         >
-                          {/* Shimmer/Glow effect for sending messages */}
-                          {msg.status === 'sending' && (
-                            <Animated.View
-                              style={[
-                                shimmerStyle,
-                                {
-                                  position: 'absolute',
-                                  top: 0,
-                                  left: 0,
-                                  right: 0,
-                                  bottom: 0,
-                                  backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                                  borderRadius: 16,
-                                },
-                              ]}
-                            />
-                          )}
-                          <Text
-                            style={{
-                              fontSize: 16,
-                              fontWeight: '500',
-                              color: 'white',
-                              textAlign: 'left',
-                              lineHeight: 22,
-                            }}
+                          {msg.text}
+                        </Text>
+
+                        {/* Status indicator for user messages - only newest */}
+                        {msg.isUser && isNewest && messageAge === 0 && (
+                          <Animated.View
+                            entering={
+                              // Elastic Scale Effect for status changes
+                              BounceIn.springify()
+                                .damping(8)
+                                .stiffness(200)
+                                .delay(300)
+                            }
+                            className="absolute -bottom-1 -right-1 bg-white/90 backdrop-blur-sm rounded-full p-1.5 border border-white/30"
                           >
-                            {msg.text}
-                          </Text>
-
-                          {/* Status indicator for user messages - only newest */}
-                          {msg.isUser && isNewest && messageAge === 0 && (
-                            <Animated.View
-                              entering={
-                                // Elastic Scale Effect for status changes
-                                BounceIn.springify()
-                                  .damping(8)
-                                  .stiffness(200)
-                                  .delay(300)
-                              }
-                              className="absolute -bottom-1 -right-1 bg-white/90 backdrop-blur-sm rounded-full p-1.5 border border-white/30"
-                            >
-                              {msg.status === 'sending' && (
-                                <SymbolView
-                                  name="clock"
-                                  size={12}
-                                  tintColor="#6B7280"
-                                />
-                              )}
-                              {msg.status === 'sent' && (
-                                <SymbolView
-                                  name="checkmark"
-                                  size={12}
-                                  tintColor="#6B7280"
-                                />
-                              )}
-                              {msg.status === 'delivered' && (
-                                <SymbolView
-                                  name="checkmark.circle"
-                                  size={12}
-                                  tintColor="#9CC99A"
-                                />
-                              )}
-                            </Animated.View>
-                          )}
-
-                          {/* System message indicator - only newest */}
-                          {!msg.isUser && isNewest && messageAge === 0 && (
-                            <Animated.View
-                              entering={
-                                // Elastic Scale Effect for AI indicator
-                                BounceIn.springify()
-                                  .damping(10)
-                                  .stiffness(300)
-                                  .delay(200)
-                              }
-                              className="absolute -top-2 -left-2 backdrop-blur-sm rounded-full w-4 h-4 border border-white/30"
-                              style={{ backgroundColor: '#7BA7D9' }}
-                            >
-                              <Animated.View
-                                style={[pulseStyle]}
-                                className="w-2 h-2 bg-white rounded-full m-1"
+                            {msg.status === 'sending' && (
+                              <SymbolView
+                                name="clock"
+                                size={12}
+                                tintColor="#6B7280"
                               />
-                            </Animated.View>
-                          )}
+                            )}
+                            {msg.status === 'sent' && (
+                              <SymbolView
+                                name="checkmark"
+                                size={12}
+                                tintColor="#6B7280"
+                              />
+                            )}
+                            {msg.status === 'delivered' && (
+                              <SymbolView
+                                name="checkmark.circle"
+                                size={12}
+                                tintColor="#9CC99A"
+                              />
+                            )}
+                          </Animated.View>
+                        )}
 
-                          {/* Enhanced glow effect for newest message only */}
-                          {isNewest && messageAge === 0 && (
+                        {/* System message indicator - only newest */}
+                        {!msg.isUser && isNewest && messageAge === 0 && (
+                          <Animated.View
+                            entering={
+                              // Elastic Scale Effect for AI indicator
+                              BounceIn.springify()
+                                .damping(10)
+                                .stiffness(300)
+                                .delay(200)
+                            }
+                            className="absolute -top-2 -left-2 backdrop-blur-sm rounded-full w-4 h-4 border border-white/30"
+                            style={{ backgroundColor: '#7BA7D9' }}
+                          >
                             <Animated.View
-                              entering={FadeIn.duration(100)}
-                              exiting={FadeOut.duration(1500)}
-                              className="absolute inset-0 rounded-2xl"
-                              style={{
-                                backgroundColor: msg.isUser
-                                  ? 'rgba(156, 201, 154, 0.2)'
-                                  : 'rgba(123, 167, 217, 0.2)',
-                              }}
+                              style={[pulseStyle]}
+                              className="w-2 h-2 bg-white rounded-full m-1"
                             />
-                          )}
-                        </View>
-                      </Animated.View>
+                          </Animated.View>
+                        )}
+
+                        {/* Enhanced glow effect for newest message only */}
+                        {isNewest && messageAge === 0 && (
+                          <Animated.View
+                            entering={FadeIn.duration(100)}
+                            exiting={FadeOut.duration(1500)}
+                            className="absolute inset-0 rounded-2xl"
+                            style={{
+                              backgroundColor: msg.isUser
+                                ? 'rgba(156, 201, 154, 0.2)'
+                                : 'rgba(123, 167, 217, 0.2)',
+                            }}
+                          />
+                        )}
+                      </View>
                     </Animated.View>
                   );
                 })}
