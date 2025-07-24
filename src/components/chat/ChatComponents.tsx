@@ -72,11 +72,8 @@ export const ChatBubble = React.memo(function ChatBubble({
         >
           <View className="relative">
             <Text
-              variant="body"
-              className={cn(
-                'text-lg',
-                isUser ? 'text-white' : 'text-[#2E3A59]'
-              )}
+              variant="callout"
+              className={cn(isUser ? 'text-white' : 'text-[#2E3A59]')}
               enableRTL={isUser}
             >
               {message}
@@ -274,7 +271,7 @@ export function QuickReplyButton({
             {icon}
           </Text>
         )}
-        <Text variant="body" className="text-gray-700 font-medium">
+        <Text variant="callout" className="text-gray-700">
           {text}
         </Text>
       </View>
@@ -295,7 +292,6 @@ export function ChatInput({
   onChangeText,
 }: ChatInputProps & { hideBorder?: boolean; hideButton?: boolean }) {
   const [internalMessage, setInternalMessage] = useState('');
-  const [isFocused, setIsFocused] = useState(false);
   const sendScale = useSharedValue(1);
   const containerScale = useSharedValue(1);
 
@@ -328,12 +324,10 @@ export function ChatInput({
   };
 
   const handleFocus = () => {
-    setIsFocused(true);
     containerScale.value = withSpring(1.01, { damping: 18, stiffness: 250 }); // More subtle scale
   };
 
   const handleBlur = () => {
-    setIsFocused(false);
     containerScale.value = withSpring(1, { damping: 18, stiffness: 250 });
   };
 

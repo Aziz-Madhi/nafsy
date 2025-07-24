@@ -405,7 +405,7 @@ export default function ChatScreen() {
                     <Text variant="title1">🌱</Text>
                   </View>
                   <Text
-                    variant="subhead"
+                    variant="body"
                     className="text-gray-600 text-center px-8"
                     enableRTL={false}
                   >

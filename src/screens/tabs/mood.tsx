@@ -1,5 +1,6 @@
 import React, { useState, useCallback, useMemo } from 'react';
-import { View, ScrollView, Pressable } from 'react-native';
+import { View, ScrollView, Pressable, TextInput } from 'react-native';
+import { router } from 'expo-router';
 import { FlashList } from '@shopify/flash-list';
 import { Text } from '~/components/ui/text';
 import { DashboardLayout } from '~/components/ui/ScreenLayout';
@@ -9,8 +10,8 @@ import { api } from '../../../convex/_generated/api';
 import {
   useCurrentUser,
   useMoodData,
-  useMoodStats,
   useTodayMood,
+  useExercisesWithProgress,
 } from '~/hooks/useSharedData';
 import {
   format,
@@ -19,16 +20,8 @@ import {
   eachDayOfInterval,
   isSameDay,
 } from 'date-fns';
-import {
-  Edit3,
-  Calendar,
-  Flame,
-  BarChart3,
-  CheckCircle,
-  Star,
-} from 'lucide-react-native';
+import { Calendar, BarChart3, Heart } from 'lucide-react-native';
 import { IconRenderer } from '~/components/ui/IconRenderer';
-import { StatCard } from '~/components/mood/StatCard';
 import { WeekView } from '~/components/mood/WeekView';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import Animated, {
@@ -37,13 +30,14 @@ import Animated, {
   interpolate,
   Extrapolation,
 } from 'react-native-reanimated';
+import { MotiView } from 'moti';
 
 const moods = [
-  { id: 'very-sad', label: 'Very Sad', value: 'sad', color: '#94A3B8' },
-  { id: 'sad', label: 'Sad', value: 'sad', color: '#64748B' },
-  { id: 'neutral', label: 'Neutral', value: 'neutral', color: '#7ED321' },
-  { id: 'happy', label: 'Happy', value: 'happy', color: '#4ADE80' },
-  { id: 'very-happy', label: 'Very Happy', value: 'happy', color: '#22C55E' },
+  { id: 'very-sad', label: 'Very Sad', value: 'sad', color: '#6366F1' },
+  { id: 'sad', label: 'Sad', value: 'sad', color: '#8B5CF6' },
+  { id: 'neutral', label: 'Neutral', value: 'neutral', color: '#F59E0B' },
+  { id: 'happy', label: 'Happy', value: 'happy', color: '#10B981' },
+  { id: 'very-happy', label: 'Very Happy', value: 'happy', color: '#EF4444' },
 ];
 
 const renderMoodIcon = (moodId: string, size: number = 32) => {
@@ -57,12 +51,79 @@ const renderMoodIcon = (moodId: string, size: number = 32) => {
   );
 };
 
+// Animated Mood Button Component using MOTI
+function AnimatedMoodButton({
+  mood,
+  isSelected,
+  onPress,
+}: {
+  mood: any;
+  isSelected: boolean;
+  onPress: () => void;
+}) {
+  const [isPressed, setIsPressed] = React.useState(false);
+
+  const handlePressIn = () => {
+    setIsPressed(true);
+  };
+
+  const handlePressOut = () => {
+    setIsPressed(false);
+    onPress();
+  };
+
+  return (
+    <Pressable
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      className="items-center py-4"
+      style={{ width: '20%' }}
+    >
+      <MotiView
+        className={`mb-3 items-center justify-center ${
+          isSelected ? 'w-16 h-16 rounded-full' : ''
+        }`}
+        style={{
+          backgroundColor: isSelected ? mood.color + '20' : 'transparent',
+          borderWidth: isSelected ? 2 : 0,
+          borderColor: isSelected ? mood.color : 'transparent',
+        }}
+        animate={{
+          scale: isPressed ? 0.9 : isSelected ? 1.05 : 1,
+          opacity: isPressed ? 0.8 : 1,
+        }}
+        transition={{
+          type: 'spring',
+          damping: 20,
+          stiffness: 400,
+          mass: 0.8,
+        }}
+      >
+        {renderMoodIcon(mood.id, isSelected ? 36 : 42)}
+      </MotiView>
+      <Text
+        variant="body"
+        className={`text-center ${
+          isSelected ? 'font-bold' : 'font-medium text-gray-600'
+        }`}
+        style={{
+          color: isSelected ? '#2D3748' : '#6B7280',
+          fontSize: isSelected ? 16 : 14,
+          letterSpacing: 0.3,
+        }}
+      >
+        {mood.label}
+      </Text>
+    </Pressable>
+  );
+}
+
 const moodColors: Record<string, string> = {
-  sad: '#DED2F9',
-  anxious: '#FDC9D2',
-  neutral: '#FDEBC9',
-  happy: '#D0F1EB',
-  angry: '#F5D4C1',
+  sad: '#B39DED', // Ultra vibrant light purple
+  anxious: '#F472B6', // Ultra vibrant light pink
+  neutral: '#FDE047', // Ultra vibrant light yellow
+  happy: '#34D399', // Ultra vibrant light teal
+  angry: '#FB923C', // Ultra vibrant light orange
 };
 
 const moodChartColors: Record<string, string> = {
@@ -72,6 +133,137 @@ const moodChartColors: Record<string, string> = {
   happy: '#10B981',
   angry: '#F97316',
 };
+
+// Exercise category helpers
+function getCategoryIcon(category: string): string {
+  const icons: Record<string, string> = {
+    breathing: '🌬️',
+    mindfulness: '🧘‍♀️',
+    movement: '🚶‍♀️',
+    journaling: '✍️',
+    relaxation: '🛀',
+  };
+  return icons[category] || '⭐';
+}
+
+function getCategoryColor(category: string): string {
+  const colors: Record<string, string> = {
+    mindfulness: '#EF4444', // Ultra vibrant coral red
+    breathing: '#06B6D4', // Ultra vibrant turquoise
+    movement: '#3B82F6', // Ultra vibrant sky blue
+    journaling: '#10B981', // Ultra vibrant mint green
+    relaxation: '#F59E0B', // Ultra vibrant warm yellow
+  };
+  return colors[category] || '#EF4444';
+}
+
+// Helper function to randomly select an exercise
+function getRandomExercise(exercises: any[]) {
+  if (!exercises || exercises.length === 0) return null;
+  const randomIndex = Math.floor(Math.random() * exercises.length);
+  return exercises[randomIndex];
+}
+
+// Exercise Suggestion Card Component
+function ExerciseSuggestionCard({
+  exercise,
+  onPress,
+}: {
+  exercise: any;
+  onPress: () => void;
+}) {
+  const categoryColor = getCategoryColor(exercise.category);
+  const categoryIcon = getCategoryIcon(exercise.category);
+
+  return (
+    <View
+      className="p-6"
+      style={{
+        backgroundColor: categoryColor + '15',
+      }}
+    >
+      <Text variant="subhead" className="text-gray-500 mb-3 font-medium">
+        Try this to elevate your mood
+      </Text>
+
+      <View className="flex-row items-start mb-4">
+        <View
+          className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
+          style={{ backgroundColor: categoryColor + '20' }}
+        >
+          <Text style={{ fontSize: 20 }}>{categoryIcon}</Text>
+        </View>
+
+        <View className="flex-1">
+          <Text variant="title3" className="text-[#5A4A3A] font-bold mb-1">
+            {exercise.title}
+          </Text>
+          <Text variant="body" className="text-[#5A4A3A] opacity-70 leading-5">
+            {exercise.description}
+          </Text>
+        </View>
+      </View>
+
+      <View className="flex-row items-center justify-between mb-5">
+        <View className="flex-row items-center space-x-4">
+          <View className="flex-row items-center">
+            <Text variant="caption1" className="text-gray-500 mr-1">
+              ⏱️
+            </Text>
+            <Text variant="caption1" className="text-gray-600 font-medium">
+              {exercise.duration} min
+            </Text>
+          </View>
+          <View className="flex-row items-center">
+            <Text variant="caption1" className="text-gray-500 mr-1">
+              📊
+            </Text>
+            <Text
+              variant="caption1"
+              className="text-gray-600 font-medium capitalize"
+            >
+              {exercise.difficulty}
+            </Text>
+          </View>
+        </View>
+
+        <View
+          className="px-3 py-1 rounded-full"
+          style={{ backgroundColor: categoryColor + '15' }}
+        >
+          <Text
+            variant="caption1"
+            className="font-semibold capitalize"
+            style={{ color: categoryColor }}
+          >
+            {exercise.category}
+          </Text>
+        </View>
+      </View>
+
+      <Pressable
+        onPress={onPress}
+        className="bg-[#4C51BF] py-4 rounded-2xl items-center"
+        style={({ pressed }) => ({
+          opacity: pressed ? 0.8 : 1,
+          shadowColor: '#4C51BF',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.25,
+          shadowRadius: 6,
+          elevation: 6,
+        })}
+      >
+        <Text
+          variant="callout"
+          className="text-white font-bold"
+          style={{ fontSize: 16, letterSpacing: 0.5 }}
+        >
+          Start Exercise
+        </Text>
+      </Pressable>
+    </View>
+  );
+}
 
 interface MoodData {
   mood: string;
@@ -122,12 +314,19 @@ function SimpleMoodChart({
       {/* Chart Bar */}
       <View
         style={{
-          width: 40,
-          height: 80,
-          backgroundColor: '#F5F5F5',
-          borderRadius: 20,
+          width: 44,
+          height: 88,
+          backgroundColor: '#F1F5F9',
+          borderRadius: 22,
           justifyContent: 'flex-end',
           overflow: 'hidden',
+          borderWidth: 2,
+          borderColor: '#E2E8F0',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 4,
+          elevation: 2,
         }}
       >
         <Animated.View
@@ -136,6 +335,10 @@ function SimpleMoodChart({
               backgroundColor: color,
               borderRadius: 20,
               width: '100%',
+              shadowColor: color,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.3,
+              shadowRadius: 2,
             },
             animatedBarStyle,
           ]}
@@ -145,10 +348,17 @@ function SimpleMoodChart({
       {/* Mood Icon */}
       <View
         style={{
-          marginTop: 8,
+          marginTop: 10,
           backgroundColor: color + '20',
-          borderRadius: 16,
-          padding: 8,
+          borderRadius: 18,
+          padding: 10,
+          borderWidth: 2,
+          borderColor: color + '40',
+          shadowColor: color,
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.2,
+          shadowRadius: 4,
+          elevation: 3,
         }}
       >
         {renderMoodIcon(mood, 20)}
@@ -241,6 +451,7 @@ function SimpleMoodVisualization({ data }: { data: MoodData[] }) {
 
 export default function MoodScreen() {
   const [selectedMood, setSelectedMood] = useState<string>('');
+  const [moodNote, setMoodNote] = useState<string>('');
   const [isSaving, setIsSaving] = useState(false);
   const [currentMonth, setCurrentMonth] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -250,7 +461,7 @@ export default function MoodScreen() {
   const createMood = useMutation(api.moods.createMood);
   const todayMood = useTodayMood();
   const moodData = useMoodData(365);
-  const moodStats = useMoodStats(30);
+  const exercisesWithProgress = useExercisesWithProgress(undefined, 20);
 
   const handleSaveMood = async () => {
     if (!selectedMood || !currentUser || isSaving) return;
@@ -279,12 +490,15 @@ export default function MoodScreen() {
 
       console.log('Creating mood with:', {
         mood: mood.value,
+        note: moodNote.trim() || undefined,
       });
 
       await createMood({
         mood: mood.value as any,
+        note: moodNote.trim() || undefined,
       });
       setSelectedMood('');
+      setMoodNote('');
     } catch (error) {
       console.error('Error saving mood:', error);
     } finally {
@@ -293,6 +507,16 @@ export default function MoodScreen() {
   };
 
   const hasLoggedToday = !!todayMood;
+
+  // Get random exercise suggestion
+  const suggestedExercise = useMemo(() => {
+    return getRandomExercise(exercisesWithProgress || []);
+  }, [exercisesWithProgress]);
+
+  const handleStartExercise = () => {
+    // Navigate to exercises tab - the app uses tab-based navigation
+    router.push('/tabs/exercises');
+  };
 
   // Calendar data
   const monthStart = startOfMonth(currentMonth);
@@ -355,12 +579,17 @@ export default function MoodScreen() {
                   : isToday
                     ? '#F3F4F6'
                     : 'transparent',
-              borderWidth: isSelected ? 2 : 0,
-              borderColor: '#2196F3',
+              borderWidth: mood ? 2 : isSelected ? 2 : 0,
+              borderColor: mood ? moodChartColors[mood.mood] : '#2196F3',
+              shadowColor: mood ? moodChartColors[mood.mood] : '#000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: mood ? 0.2 : 0,
+              shadowRadius: 2,
+              elevation: mood ? 2 : 0,
             }}
           >
             {mood ? (
-              <View>{renderMoodIcon(mood.mood, 18)}</View>
+              <View>{renderMoodIcon(mood.mood, 20)}</View>
             ) : (
               <Text
                 variant="body"
@@ -383,136 +612,189 @@ export default function MoodScreen() {
 
   const getItemType = useCallback((item: any) => item.type, []);
 
-  // Stats section for header
-  const statsSection = (
-    <View className="flex-row gap-4 mb-4">
-      <StatCard
-        icon={Star}
-        iconColor="#5A4A3A"
-        value={moodStats?.totalSessions || 0}
-        label="Sessions"
-        backgroundColor="rgba(90, 74, 58, 0.08)"
-      />
-      <StatCard
-        icon={Flame}
-        iconColor="#5A4A3A"
-        value={moodStats?.currentStreak || 0}
-        label="Streaks"
-        backgroundColor="rgba(90, 74, 58, 0.08)"
-      />
-    </View>
-  );
-
   return (
     <DashboardLayout
       title="Mood Tracker"
       subtitle="Track your emotional wellbeing"
-      statsSection={statsSection}
     >
       {/* Week View Section */}
-      <View className="mb-6">
+      <View className="mb-8 mx-2">
         <WeekView moodData={moodData} />
       </View>
 
       {/* Today's Mood Log Section */}
       <View className="mb-8">
-        <View className="flex-row items-center mb-4">
-          <Edit3 size={20} color="#5A4A3A" />
-          <Text variant="title3" className="text-[#5A4A3A] font-bold ml-2">
-            Today&apos;s Mood
-          </Text>
-        </View>
-
         {hasLoggedToday ? (
           <View
-            className="rounded-3xl p-8 items-center shadow-sm"
-            style={{ backgroundColor: 'rgba(90, 74, 58, 0.08)' }}
+            className="rounded-3xl overflow-hidden border border-gray-200"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.08,
+              shadowRadius: 6,
+              elevation: 4,
+            }}
           >
-            <View className="w-20 h-20 bg-[#D0F1EB] rounded-full items-center justify-center mb-4">
-              <CheckCircle size={48} color="#059669" fill="#D1FAE5" />
-            </View>
-            <Text variant="title3" className="text-[#5A4A3A] font-bold mb-2">
-              Mood Saved!
-            </Text>
-            <Text
-              variant="body"
-              className="text-[#5A4A3A] opacity-70 text-center"
+            {/* Mood check section */}
+            <View
+              className="p-6 pb-4"
+              style={{
+                backgroundColor: 'rgba(90, 74, 58, 0.12)',
+              }}
             >
-              Great job tracking your emotions today
-            </Text>
-            {todayMood && (
-              <View className="flex-row items-center mt-4 bg-gray-100 px-5 py-3 rounded-2xl">
-                <View style={{ marginRight: 8 }}>
-                  {renderMoodIcon(todayMood.mood, 20)}
+              {todayMood && (
+                <View className="flex-row items-center">
+                  <View className="mr-3">
+                    <Text style={{ fontSize: 28, color: '#10B981' }}>✓</Text>
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      variant="body"
+                      className="text-[#2D3748] font-bold capitalize"
+                      style={{ fontSize: 16, letterSpacing: 0.3 }}
+                    >
+                      Feeling {todayMood.mood} today
+                    </Text>
+                    {todayMood.note && (
+                      <Text
+                        variant="caption1"
+                        className="text-gray-600 mt-1 font-medium"
+                        style={{ fontSize: 14, lineHeight: 18 }}
+                      >
+                        &ldquo;{todayMood.note}&rdquo;
+                      </Text>
+                    )}
+                  </View>
                 </View>
-                <Text variant="subhead" className="text-[#5A4A3A]">
-                  Today you felt {todayMood.mood}
+              )}
+            </View>
+
+            {/* Exercise suggestion - full width */}
+            {suggestedExercise ? (
+              <ExerciseSuggestionCard
+                exercise={suggestedExercise}
+                onPress={handleStartExercise}
+              />
+            ) : (
+              <View className="bg-white p-4">
+                <Text variant="body" className="text-center text-gray-500">
+                  Loading exercise suggestions...
                 </Text>
               </View>
             )}
           </View>
         ) : (
           <View
-            className="rounded-3xl p-6 shadow-sm"
-            style={{ backgroundColor: 'rgba(90, 74, 58, 0.08)' }}
+            className="rounded-3xl p-6 border border-gray-200"
+            style={{
+              backgroundColor: 'rgba(90, 74, 58, 0.12)',
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.08,
+              shadowRadius: 6,
+              elevation: 4,
+            }}
           >
             <Text
               variant="heading"
-              className="text-[#5A4A3A] font-semibold text-center mb-8"
+              className="text-[#2D3748] font-bold text-center mb-8"
+              style={{ fontSize: 22, letterSpacing: 0.5 }}
             >
               How are you feeling today?
             </Text>
 
-            <View className="flex-row justify-between mb-8">
+            <View className="flex-row mb-4">
               {moods.map((mood) => (
-                <Pressable
+                <AnimatedMoodButton
                   key={mood.id}
+                  mood={mood}
+                  isSelected={selectedMood === mood.id}
                   onPress={() => setSelectedMood(mood.id)}
-                  className="items-center"
-                >
-                  <View
-                    className={cn(
-                      'rounded-full border-2 items-center justify-center mb-2',
-                      selectedMood === mood.id ? 'w-18 h-18' : 'w-16 h-16'
-                    )}
-                    style={{
-                      backgroundColor:
-                        selectedMood === mood.id ? mood.color : 'white',
-                      borderColor:
-                        selectedMood === mood.id ? mood.color : '#E5E7EB',
-                    }}
-                  >
-                    {renderMoodIcon(mood.id, 32)}
-                  </View>
-                  <Text
-                    variant="caption1"
-                    className={`${
-                      selectedMood === mood.id
-                        ? 'font-semibold'
-                        : 'text-gray-600'
-                    }`}
-                    style={{
-                      color: selectedMood === mood.id ? mood.color : undefined,
-                    }}
-                  >
-                    {mood.label}
-                  </Text>
-                </Pressable>
+                />
               ))}
             </View>
 
             {selectedMood && (
-              <Pressable
-                onPress={handleSaveMood}
-                disabled={isSaving}
-                className={`bg-blue-500 py-4 rounded-2xl items-center ${
-                  isSaving ? 'opacity-60' : ''
-                }`}
+              <MotiView
+                from={{ opacity: 0, translateY: 10 }}
+                animate={{ opacity: 1, translateY: 0 }}
+                transition={{
+                  type: 'timing',
+                  duration: 150,
+                }}
               >
-                <Text variant="callout" className="text-white font-semibold">
-                  {isSaving ? 'Saving...' : 'Save Mood'}
-                </Text>
-              </Pressable>
+                <View className="flex-row items-center gap-3">
+                  <View
+                    className="flex-1 rounded-2xl p-4 border"
+                    style={{
+                      backgroundColor: 'rgba(90, 74, 58, 0.08)',
+                      borderColor: 'rgba(90, 74, 58, 0.15)',
+                      shadowColor: '#5A4A3A',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.08,
+                      shadowRadius: 8,
+                      elevation: 2,
+                    }}
+                  >
+                    <TextInput
+                      value={moodNote}
+                      onChangeText={setMoodNote}
+                      placeholder="Share what's on your mind..."
+                      placeholderTextColor="#8B7355"
+                      multiline
+                      numberOfLines={2}
+                      maxLength={200}
+                      className="text-base"
+                      style={{
+                        textAlignVertical: 'top',
+                        minHeight: 50,
+                        fontSize: 16,
+                        lineHeight: 22,
+                        color: '#2D3748',
+                        fontFamily: 'CrimsonPro-Regular',
+                      }}
+                    />
+                    <Text
+                      variant="caption1"
+                      className="text-right mt-1"
+                      style={{
+                        fontSize: 12,
+                        color: 'rgba(90, 74, 58, 0.6)',
+                      }}
+                    >
+                      {moodNote.length}/200
+                    </Text>
+                  </View>
+                  <MotiView
+                    animate={{
+                      scale: isSaving ? 0.9 : 1,
+                      rotate: isSaving ? '180deg' : '0deg',
+                    }}
+                    transition={{
+                      type: 'timing',
+                      duration: 150,
+                    }}
+                  >
+                    <Pressable
+                      onPress={handleSaveMood}
+                      disabled={isSaving}
+                      className={`w-14 h-14 rounded-2xl items-center justify-center ${
+                        isSaving ? 'opacity-60' : ''
+                      }`}
+                      style={{
+                        backgroundColor: '#5A4A3A',
+                        shadowColor: '#5A4A3A',
+                        shadowOffset: { width: 0, height: 3 },
+                        shadowOpacity: 0.25,
+                        shadowRadius: 6,
+                        elevation: 4,
+                      }}
+                    >
+                      <Heart size={20} color="white" fill="white" />
+                    </Pressable>
+                  </MotiView>
+                </View>
+              </MotiView>
             )}
           </View>
         )}
@@ -522,14 +804,25 @@ export default function MoodScreen() {
       <View className="mb-8">
         <View className="flex-row items-center mb-4">
           <Calendar size={20} color="#5A4A3A" />
-          <Text variant="title3" className="text-[#5A4A3A] font-bold ml-2">
+          <Text
+            variant="title3"
+            className="text-[#2D3748] font-bold ml-2"
+            style={{ fontSize: 18, letterSpacing: 0.3 }}
+          >
             Mood History
           </Text>
         </View>
 
         <View
-          className="rounded-3xl p-6 shadow-sm"
-          style={{ backgroundColor: 'rgba(90, 74, 58, 0.08)' }}
+          className="rounded-3xl p-6 border border-gray-200"
+          style={{
+            backgroundColor: 'rgba(90, 74, 58, 0.12)',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.08,
+            shadowRadius: 6,
+            elevation: 4,
+          }}
         >
           {/* Month Navigation */}
           <View className="flex-row justify-between items-center mb-6">
@@ -607,7 +900,7 @@ export default function MoodScreen() {
             >
               <Text
                 variant="subhead"
-                className="text-gray-600 font-semibold mb-1"
+                className="text-gray-600 font-semibold mb-3"
               >
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
               </Text>
@@ -615,15 +908,51 @@ export default function MoodScreen() {
                 const selectedMoodData = getMoodForDate(selectedDate);
                 if (selectedMoodData) {
                   return (
-                    <View
-                      style={{ flexDirection: 'row', alignItems: 'center' }}
-                    >
-                      <View style={{ marginRight: 8 }}>
-                        {renderMoodIcon(selectedMoodData.mood, 20)}
+                    <View>
+                      <View
+                        style={{
+                          flexDirection: 'row',
+                          alignItems: 'center',
+                          marginBottom: 12,
+                        }}
+                      >
+                        <View
+                          className="w-12 h-12 rounded-2xl items-center justify-center mr-3 border-2"
+                          style={{
+                            backgroundColor: moodColors[selectedMoodData.mood],
+                            borderColor: moodChartColors[selectedMoodData.mood],
+                            shadowColor: moodChartColors[selectedMoodData.mood],
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.2,
+                            shadowRadius: 3,
+                            elevation: 3,
+                          }}
+                        >
+                          {renderMoodIcon(selectedMoodData.mood, 22)}
+                        </View>
+                        <Text
+                          variant="body"
+                          className="text-[#5A4A3A] capitalize font-medium"
+                        >
+                          Feeling {selectedMoodData.mood}
+                        </Text>
                       </View>
-                      <Text variant="body" className="text-[#5A4A3A]">
-                        You felt {selectedMoodData.mood}
-                      </Text>
+                      {selectedMoodData.note && (
+                        <View className="bg-white rounded-xl p-3 border border-gray-100">
+                          <Text
+                            variant="caption1"
+                            className="text-gray-500 mb-1 font-medium"
+                          >
+                            Insight
+                          </Text>
+                          <Text
+                            variant="body"
+                            className="text-[#5A4A3A] leading-5"
+                          >
+                            {selectedMoodData.note}
+                          </Text>
+                        </View>
+                      )}
                     </View>
                   );
                 } else {
@@ -640,18 +969,29 @@ export default function MoodScreen() {
       </View>
 
       {/* Insights Section */}
-      <View className="mb-8">
+      <View className="mb-8" style={{ paddingBottom: 80 }}>
         <View className="flex-row items-center mb-4">
           <BarChart3 size={20} color="#5A4A3A" />
-          <Text variant="title3" className="text-[#5A4A3A] font-bold ml-2">
+          <Text
+            variant="title3"
+            className="text-[#2D3748] font-bold ml-2"
+            style={{ fontSize: 18, letterSpacing: 0.3 }}
+          >
             Insights
           </Text>
         </View>
 
         {/* Mood Distribution */}
         <View
-          className="rounded-2xl p-6 shadow-sm"
-          style={{ backgroundColor: 'rgba(90, 74, 58, 0.08)' }}
+          className="rounded-2xl p-6 border border-gray-200"
+          style={{
+            backgroundColor: 'rgba(90, 74, 58, 0.12)',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: 0.08,
+            shadowRadius: 6,
+            elevation: 4,
+          }}
         >
           <Text variant="heading" className="text-[#5A4A3A] font-semibold mb-6">
             Mood Distribution
@@ -682,24 +1022,6 @@ export default function MoodScreen() {
             return <SimpleMoodVisualization data={chartData} />;
           })()}
         </View>
-
-        {/* Most Common Mood */}
-        {moodStats?.mostCommonMood && (
-          <View className="bg-yellow-100 rounded-2xl p-5 flex-row items-center justify-between mt-4">
-            <View>
-              <Text
-                variant="subhead"
-                className="text-[#92400E] opacity-80 mb-1"
-              >
-                Most Common Mood
-              </Text>
-              <Text variant="heading" className="text-[#92400E] font-semibold">
-                {moodStats.mostCommonMood}
-              </Text>
-            </View>
-            <View>{renderMoodIcon(moodStats.mostCommonMood, 48)}</View>
-          </View>
-        )}
       </View>
     </DashboardLayout>
   );

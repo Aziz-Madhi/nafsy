@@ -30,16 +30,16 @@ function getCategoryIcon(category: string): string {
 }
 
 function getCategoryColor(category: string): string {
-  // More vibrant colors for better visual appeal
+  // Ultra vibrant colors for better visual appeal
   const colors: Record<string, string> = {
-    mindfulness: '#FF6B6B', // Coral red
-    breathing: '#4ECDC4', // Turquoise
-    movement: '#45B7D1', // Sky blue
-    journaling: '#96CEB4', // Mint green
-    relaxation: '#FFEAA7', // Warm yellow
-    reminders: '#DDA0DD', // Plum
+    mindfulness: '#EF4444', // Ultra vibrant coral red
+    breathing: '#06B6D4', // Ultra vibrant turquoise
+    movement: '#3B82F6', // Ultra vibrant sky blue
+    journaling: '#10B981', // Ultra vibrant mint green
+    relaxation: '#F59E0B', // Ultra vibrant warm yellow
+    reminders: '#A855F7', // Ultra vibrant plum
   };
-  return colors[category] || '#FF6B6B';
+  return colors[category] || '#EF4444';
 }
 
 function getBenefitsForCategory(category: string, t: any): string[] {
@@ -171,17 +171,21 @@ function ExercisesScreen() {
           }
           statsSection={statsSection}
         >
-          <CategoryGrid onCategorySelect={handleCategorySelect} />
+          <View style={{ paddingBottom: 80 }}>
+            <CategoryGrid onCategorySelect={handleCategorySelect} />
+          </View>
         </DashboardLayout>
       ) : (
         /* Exercise List View */
         <DashboardLayout scrollable={false}>
-          <CategoryExerciseList
-            categoryId={selectedCategory}
-            exercises={filteredExercises}
-            onExercisePress={handleExercisePress}
-            onBackPress={handleBackToCategories}
-          />
+          <View style={{ paddingBottom: 80 }}>
+            <CategoryExerciseList
+              categoryId={selectedCategory}
+              exercises={filteredExercises}
+              onExercisePress={handleExercisePress}
+              onBackPress={handleBackToCategories}
+            />
+          </View>
         </DashboardLayout>
       )}
 

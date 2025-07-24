@@ -212,8 +212,8 @@ export default function ProfileScreen() {
         return (
           <View className="mt-6">
             <Text
-              variant="caption1"
-              className="px-6 mb-3 uppercase text-muted-foreground"
+              variant="subhead"
+              className="px-6 mb-3 uppercase text-muted-foreground font-medium"
             >
               {item.data.title}
             </Text>
@@ -274,7 +274,7 @@ export default function ProfileScreen() {
               <SymbolView name="award.fill" size={16} tintColor="#2196F3" />
               <Text variant="title3">7</Text>
             </View>
-            <Text variant="caption2" className="text-muted-foreground">
+            <Text variant="footnote" className="text-muted-foreground">
               {t('profile.stats.dayStreak')}
             </Text>
           </View>
@@ -283,7 +283,7 @@ export default function ProfileScreen() {
               <SymbolView name="heart.fill" size={16} tintColor="#2196F3" />
               <Text variant="title3">24</Text>
             </View>
-            <Text variant="caption2" className="text-muted-foreground">
+            <Text variant="footnote" className="text-muted-foreground">
               {t('profile.stats.sessions')}
             </Text>
           </View>
@@ -292,7 +292,7 @@ export default function ProfileScreen() {
               <Text className="text-primary mr-1">🧘</Text>
               <Text variant="title3">3.5h</Text>
             </View>
-            <Text variant="caption2" className="text-muted-foreground">
+            <Text variant="footnote" className="text-muted-foreground">
               {t('profile.stats.totalTime')}
             </Text>
           </View>
@@ -344,8 +344,8 @@ export default function ProfileScreen() {
       </Animated.View>
 
       {/* Version Info */}
-      <View className="items-center">
-        <Text variant="caption2" className="text-muted-foreground">
+      <View className="items-center" style={{ paddingBottom: 80 }}>
+        <Text variant="footnote" className="text-muted-foreground">
           {t('profile.version')}
         </Text>
       </View>
@@ -383,11 +383,9 @@ function SettingRow({ item, isLast }: SettingRowProps) {
       </View>
 
       <View className="flex-1">
-        <Text variant="body" className="font-medium">
-          {item.title}
-        </Text>
+        <Text variant="callout">{item.title}</Text>
         {item.subtitle && (
-          <Text variant="subhead" className="text-muted-foreground mt-0.5">
+          <Text variant="body" className="text-muted-foreground mt-0.5">
             {item.subtitle}
           </Text>
         )}

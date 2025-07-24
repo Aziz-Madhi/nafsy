@@ -7,13 +7,21 @@ import { Text } from '~/components/ui/text';
 import { IconRenderer } from '~/components/ui/IconRenderer';
 import { MotiView, AnimatePresence } from 'moti';
 
-// Use the same mood colors as the calendar in mood screen
+// Enhanced mood colors for better visibility
 const moodColors: Record<string, string> = {
-  sad: '#DED2F9', // Light purple
-  anxious: '#FDC9D2', // Light pink
-  neutral: '#FDEBC9', // Light yellow
-  happy: '#D0F1EB', // Light teal
-  angry: '#F5D4C1', // Light orange
+  sad: '#B39DED', // Ultra vibrant light purple
+  anxious: '#F472B6', // Ultra vibrant light pink
+  neutral: '#FDE047', // Ultra vibrant light yellow
+  happy: '#34D399', // Ultra vibrant light teal
+  angry: '#FB923C', // Ultra vibrant light orange
+};
+
+const moodChartColors: Record<string, string> = {
+  sad: '#8B5CF6',
+  anxious: '#EF4444',
+  neutral: '#F59E0B',
+  happy: '#10B981',
+  angry: '#F97316',
 };
 
 const moodNames: Record<string, string> = {
@@ -59,19 +67,15 @@ export function WeekView({ moodData }: WeekViewProps) {
   const getPointerPosition = () => {
     if (selectedDayIndex === null) return { left: '50%' };
 
-    // Each dot has 48px width, calculate center position
-    const containerPadding = 16; // px-4 = 16px
-    const totalWidth = 48 * 7; // 7 dots * 48px width
-    const availableWidth = totalWidth;
-    const dotCenterOffset = selectedDayIndex * 48 + 24; // center of selected dot
-    const percentageFromLeft = (dotCenterOffset / availableWidth) * 100;
+    // Simple percentage calculation for justify-around layout
+    const percentageFromLeft = ((selectedDayIndex + 0.5) / 7) * 100;
 
-    return { left: `${Math.min(Math.max(percentageFromLeft, 10), 90)}%` };
+    return { left: `${percentageFromLeft}%` };
   };
 
   return (
-    <View>
-      <View className="flex-row justify-around px-4">
+    <View className="py-4">
+      <View className="flex-row justify-around">
         {last7Days.map((day, index) => (
           <WeekDayDot
             key={index}
@@ -91,42 +95,34 @@ export function WeekView({ moodData }: WeekViewProps) {
             key="insights-container"
             from={{
               opacity: 0,
-              scale: 0.9,
-              translateY: -10,
+              translateY: -5,
             }}
             animate={{
               opacity: 1,
-              scale: 1,
               translateY: 0,
             }}
             exit={{
               opacity: 0,
-              scale: 0.9,
-              translateY: -10,
+              translateY: -5,
             }}
             transition={{
-              type: 'spring',
-              damping: 20,
-              stiffness: 300,
+              type: 'timing',
+              duration: 200,
             }}
-            style={{ marginTop: 16, marginHorizontal: 16 }}
+            style={{ marginTop: 20, marginHorizontal: 8 }}
           >
             {/* Triangular Pointer */}
             <MotiView
               from={{
                 opacity: 0,
-                scale: 0.8,
               }}
               animate={{
                 opacity: 1,
-                scale: 1,
                 ...getPointerPosition(),
               }}
               transition={{
-                type: 'spring',
-                damping: 20,
-                stiffness: 400,
-                delay: 0,
+                type: 'timing',
+                duration: 150,
               }}
               style={{
                 position: 'absolute',
@@ -144,53 +140,52 @@ export function WeekView({ moodData }: WeekViewProps) {
               }}
             />
 
-            <MotiView
-              from={{
-                opacity: 0,
-                scale: 0.95,
-              }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-              }}
-              transition={{
-                type: 'spring',
-                damping: 20,
-                stiffness: 300,
-                delay: 0,
-              }}
+            <View
               style={{
-                padding: 16,
-                backgroundColor: 'rgba(90, 74, 58, 0.05)',
-                borderRadius: 16,
+                padding: 24,
+                backgroundColor: 'rgba(90, 74, 58, 0.12)',
+                borderRadius: 24,
                 borderWidth: 1,
-                borderColor: 'rgba(90, 74, 58, 0.1)',
-                shadowColor: '#5A4A3A',
-                shadowOffset: { width: 0, height: 2 },
+                borderColor: '#E5E7EB',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 3 },
                 shadowOpacity: 0.08,
-                shadowRadius: 8,
-                elevation: 3,
+                shadowRadius: 6,
+                elevation: 4,
               }}
             >
               <Text
                 variant="subhead"
-                className="text-[#5A4A3A] font-semibold mb-2"
+                className="text-[#2D3748] font-bold mb-3"
+                style={{ fontSize: 16, letterSpacing: 0.3 }}
               >
                 {format(selectedDay.date, 'EEEE, MMMM d')}
               </Text>
 
-              <View className="flex-row items-center mb-3">
+              <View className="flex-row items-center mb-4">
                 <View
-                  className="rounded-full p-2 mr-3"
-                  style={{ backgroundColor: moodColors[selectedDay.mood.mood] }}
+                  className="w-14 h-14 rounded-2xl items-center justify-center mr-4 border-2"
+                  style={{
+                    backgroundColor: moodColors[selectedDay.mood.mood],
+                    borderColor: moodChartColors[selectedDay.mood.mood],
+                    shadowColor: moodChartColors[selectedDay.mood.mood],
+                    shadowOffset: { width: 0, height: 2 },
+                    shadowOpacity: 0.2,
+                    shadowRadius: 4,
+                    elevation: 3,
+                  }}
                 >
                   <IconRenderer
                     iconType="mood"
                     iconName={selectedDay.mood.mood}
-                    size={20}
+                    size={24}
                   />
                 </View>
-                <Text variant="body" className="text-[#5A4A3A] font-medium">
+                <Text
+                  variant="body"
+                  className="text-[#2D3748] font-bold"
+                  style={{ fontSize: 16, letterSpacing: 0.3 }}
+                >
                   Feeling {moodNames[selectedDay.mood.mood]}
                 </Text>
               </View>
@@ -199,23 +194,29 @@ export function WeekView({ moodData }: WeekViewProps) {
                 <View className="bg-white/50 rounded-xl p-3">
                   <Text
                     variant="caption1"
-                    className="text-[#5A4A3A] opacity-70 mb-1"
+                    className="text-gray-600 font-medium mb-1"
+                    style={{ fontSize: 13 }}
                   >
                     Note:
                   </Text>
-                  <Text variant="body" className="text-[#5A4A3A]">
+                  <Text
+                    variant="body"
+                    className="text-[#2D3748]"
+                    style={{ fontSize: 15, lineHeight: 20 }}
+                  >
                     {selectedDay.mood.note}
                   </Text>
                 </View>
               ) : (
                 <Text
                   variant="body"
-                  className="text-[#5A4A3A] opacity-60 italic"
+                  className="text-gray-500 italic font-medium"
+                  style={{ fontSize: 15 }}
                 >
                   No notes for this day
                 </Text>
               )}
-            </MotiView>
+            </View>
           </MotiView>
         )}
       </AnimatePresence>

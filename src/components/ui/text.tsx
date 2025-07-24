@@ -13,18 +13,18 @@ const textVariants = cva(
     variants: {
       variant: {
         default: '',
-        // iOS Typography Scale - Aligned with iOS HID Guidelines with CrimsonPro
-        title1: 'text-4xl font-crimson-bold', // iOS Large Title - 28pt
-        title2: 'text-3xl font-crimson-bold', // iOS Title 1 - 24pt
-        title3: 'text-2xl font-crimson-bold', // iOS Title 2 - 20pt
-        title4: 'text-xl font-crimson-bold', // iOS Title 3 - 18pt (screen titles)
-        heading: 'text-lg font-crimson-bold', // iOS Headline - 17pt (nav titles)
-        body: 'text-base font-crimson', // iOS Body - 16pt (primary text)
-        callout: 'text-base font-crimson-bold', // iOS Callout - 16pt (emphasized body)
-        subhead: 'text-sm font-crimson', // iOS Subheadline - 14pt (list descriptions)
-        footnote: 'text-sm font-crimson', // iOS Footnote - 13pt (tertiary text)
-        caption1: 'text-xs font-crimson', // iOS Caption 1 - 12pt (labels)
-        caption2: 'text-xs font-crimson', // iOS Caption 2 - 11pt (smallest text)
+        // iOS Typography Scale - Aligned with iOS HID Guidelines with CrimsonPro (Enhanced for better readability)
+        title1: 'text-5xl font-crimson-bold', // iOS Large Title - 32pt (enhanced from 28pt)
+        title2: 'text-4xl font-crimson-bold', // iOS Title 1 - 28pt (enhanced from 24pt)
+        title3: 'text-3xl font-crimson-bold', // iOS Title 2 - 24pt (enhanced from 20pt)
+        title4: 'text-2xl font-crimson-bold', // iOS Title 3 - 20pt (enhanced from 18pt)
+        heading: 'text-xl font-crimson-bold', // iOS Headline - 18pt (enhanced from 17pt)
+        body: 'text-lg font-crimson', // iOS Body - 17pt (enhanced from 16pt)
+        callout: 'text-lg font-crimson', // iOS Callout - 17pt (enhanced from 16pt)
+        subhead: 'text-base font-crimson', // iOS Subheadline - 15pt (enhanced from 14pt)
+        footnote: 'text-sm font-crimson', // iOS Footnote - 14pt (enhanced from 13pt)
+        caption1: 'text-sm font-crimson', // iOS Caption 1 - 13pt (enhanced from 12pt)
+        caption2: 'text-xs font-crimson', // iOS Caption 2 - 12pt (enhanced from 11pt)
         // Legacy variants for backward compatibility
         large: 'text-xl font-crimson-bold',
         small: 'text-sm font-crimson leading-none',

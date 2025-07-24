@@ -7,9 +7,9 @@ import { useSegments } from 'expo-router';
 
 // Navigation bar height constants
 const NAV_BAR_HEIGHT = {
-  CHAT: 180, // Chat tab with input
-  OTHER: 90, // Other tabs without input
-  BOTTOM_MARGIN: 25, // Bottom margin from container positioning
+  CHAT: 180, // Chat tab with input (matches MorphingTabBar)
+  OTHER: 90, // Other tabs without input (matches MorphingTabBar)
+  BOTTOM_MARGIN: 50, // Increased bottom margin for safe area and spacing
 } as const;
 
 // Calculate bottom padding based on current route
@@ -21,7 +21,17 @@ function useNavigationBarPadding(): number {
     const currentTab = segments.length > 1 ? segments[1] : 'mood';
     const baseHeight =
       currentTab === 'chat' ? NAV_BAR_HEIGHT.CHAT : NAV_BAR_HEIGHT.OTHER;
-    return baseHeight + NAV_BAR_HEIGHT.BOTTOM_MARGIN;
+    const padding = baseHeight + NAV_BAR_HEIGHT.BOTTOM_MARGIN;
+
+    // Debug logging to see if this is being called
+    console.log('Navigation bar padding:', {
+      currentTab,
+      baseHeight,
+      padding,
+      segments,
+    });
+
+    return padding;
   }, [segments]);
 }
 

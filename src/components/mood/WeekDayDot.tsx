@@ -19,7 +19,7 @@ export function WeekDayDot({
   day,
   color = '#E5E7EB',
   isToday = false,
-  size = 32,
+  size = 44,
   hasData = false,
   onPress,
   isSelected = false,
@@ -35,10 +35,10 @@ export function WeekDayDot({
 
   const todayIndicatorStyle = React.useMemo(
     () => ({
-      width: 6,
-      height: 6,
-      backgroundColor: '#374151', // Dark gray dot
-      borderRadius: 3,
+      width: 10,
+      height: 10,
+      backgroundColor: '#1F2937', // Darker gray dot
+      borderRadius: 5,
     }),
     []
   );
@@ -56,7 +56,7 @@ export function WeekDayDot({
   };
 
   return (
-    <View style={{ width: 48, alignItems: 'center' }}>
+    <View style={{ alignItems: 'center' }}>
       <MotiPressable
         onPress={handlePress}
         disabled={!hasData && !isToday}
@@ -75,22 +75,29 @@ export function WeekDayDot({
       >
         <View
           className={cn(
-            'rounded-full items-center justify-center',
-            isSelected && 'border-2 border-primary',
-            !hasData && !isToday && !isSelected && 'border border-gray-300'
+            'rounded-2xl items-center justify-center',
+            isSelected && 'border-3 border-primary',
+            !hasData && !isToday && !isSelected && 'border-2 border-gray-300'
           )}
-          style={dotStyle}
+          style={{
+            ...dotStyle,
+            shadowColor: hasData ? '#000' : 'transparent',
+            shadowOffset: { width: 0, height: 3 },
+            shadowOpacity: hasData ? 0.15 : 0,
+            shadowRadius: 6,
+            elevation: hasData ? 4 : 0,
+          }}
         >
           {isToday && <View style={todayIndicatorStyle} />}
         </View>
       </MotiPressable>
       <Text
-        variant="caption2"
+        variant="caption1"
         className={cn(
-          'mt-2',
-          isSelected ? 'text-primary font-semibold' : 'text-gray-500'
+          'mt-3',
+          isSelected ? 'text-primary font-bold' : 'text-gray-600 font-medium'
         )}
-        style={{ textAlign: 'center', width: 48 }}
+        style={{ textAlign: 'center', fontSize: 12, letterSpacing: 0.1 }}
       >
         {isToday ? 'Today' : day}
       </Text>
