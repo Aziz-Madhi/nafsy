@@ -123,7 +123,7 @@ export const ChatBubble = React.memo(function ChatBubble({
 // =====================
 // TYPING INDICATOR
 // =====================
-export function TypingIndicator() {
+export const TypingIndicator = React.memo(function TypingIndicator() {
   const dot1 = useSharedValue(0);
   const dot2 = useSharedValue(0);
   const dot3 = useSharedValue(0);
@@ -226,7 +226,7 @@ export function TypingIndicator() {
       </View>
     </Animated.View>
   );
-}
+});
 
 // =====================
 // QUICK REPLY BUTTON
@@ -238,7 +238,7 @@ interface QuickReplyButtonProps {
   delay?: number;
 }
 
-export function QuickReplyButton({
+export const QuickReplyButton = React.memo(function QuickReplyButton({
   text,
   onPress,
   icon,
@@ -277,12 +277,12 @@ export function QuickReplyButton({
       </View>
     </AnimatedContainer>
   );
-}
+});
 
 // =====================
 // CHAT INPUT COMPONENT
 // =====================
-export function ChatInput({
+export const ChatInput = React.memo(function ChatInput({
   onSendMessage,
   placeholder = 'Type a message...',
   disabled = false,
@@ -439,4 +439,4 @@ export function ChatInput({
       </View>
     </KeyboardAvoidingView>
   );
-}
+});

@@ -1,11 +1,15 @@
 module.exports = {
-  preset: 'react-native',
-  setupFilesAfterEnv: ['<rootDir>/jest-setup.js'],
-  testEnvironment: 'node',
+  setupFilesAfterEnv: ['<rootDir>/jest-setup.simple.js'],
+  testEnvironment: 'jsdom',
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx', 'json'],
-  transformIgnorePatterns: [
-    'node_modules/(?!(react-native|@react-native|react-native-mmkv|zustand|expo-.*|@expo/.*|react-native-reanimated|moti|@shopify)/)',
-  ],
+  transform: {
+    '^.+\\.(ts|tsx)$': [
+      'babel-jest',
+      { presets: ['@babel/preset-env', '@babel/preset-typescript'] },
+    ],
+    '^.+\\.(js|jsx)$': 'babel-jest',
+  },
+  transformIgnorePatterns: ['node_modules/(?!(zustand|react-native-mmkv)/)'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/*.d.ts',

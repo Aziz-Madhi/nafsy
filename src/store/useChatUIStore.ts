@@ -22,6 +22,7 @@ interface ChatUIStoreState {
   currentMainSessionId: string | null;
   currentVentSessionId: string | null;
   sessionSwitchLoading: boolean;
+  sessionError: string | null;
 
   // Chat History Sidebar State
   isHistorySidebarVisible: boolean;
@@ -43,8 +44,9 @@ interface ChatUIStoreState {
   setCurrentMainSessionId: (sessionId: string | null) => void;
   setCurrentVentSessionId: (sessionId: string | null) => void;
   setSessionSwitchLoading: (loading: boolean) => void;
-  switchToMainSession: (sessionId: string) => Promise<void>;
-  switchToVentSession: (sessionId: string) => Promise<void>;
+  setSessionError: (error: string | null) => void;
+  switchToMainSession: (sessionId: string) => Promise<boolean>;
+  switchToVentSession: (sessionId: string) => Promise<boolean>;
   clearCurrentSessions: () => void;
 
   setHistorySidebarVisible: (visible: boolean) => void;
@@ -54,8 +56,8 @@ interface ChatUIStoreState {
 }
 
 export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
-  'chat-ui-store',
-  (set: any, get: any) => ({
+  { name: 'chat-ui-store' },
+  (set, get) => ({
     // Initial state
     isFloatingChatVisible: false,
     floatingChatInput: '',
@@ -66,6 +68,7 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
     currentMainSessionId: null,
     currentVentSessionId: null,
     sessionSwitchLoading: false,
+    sessionError: null,
     isHistorySidebarVisible: false,
     chatInputFocused: false,
 
@@ -90,32 +93,65 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
       set({ currentVentSessionId: sessionId }),
     setSessionSwitchLoading: (loading: boolean) =>
       set({ sessionSwitchLoading: loading }),
+    setSessionError: (error: string | null) => set({ sessionError: error }),
 
-    switchToMainSession: async (sessionId: string) => {
-      set({ sessionSwitchLoading: true });
+    switchToMainSession: async (sessionId: string): Promise<boolean> => {
+      set({ sessionSwitchLoading: true, sessionError: null });
+
       try {
+        // Validate input
+        if (!sessionId || sessionId.trim() === '') {
+          throw new Error('Session ID cannot be empty');
+        }
+
+        // Simulate potential network error (for demo purposes)
+        if (sessionId === 'invalid-session') {
+          throw new Error('Session not found');
+        }
+
+        // Update session state
         set({
           currentMainSessionId: sessionId,
           mainChatInput: '',
           mainChatIsTyping: false,
           showQuickReplies: false,
         });
-        // Simulate session switch delay
-        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        return true;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error ? error.message : 'Failed to switch session';
+        set({ sessionError: errorMessage });
+        return false;
       } finally {
         set({ sessionSwitchLoading: false });
       }
     },
 
-    switchToVentSession: async (sessionId: string) => {
-      set({ sessionSwitchLoading: true });
+    switchToVentSession: async (sessionId: string): Promise<boolean> => {
+      set({ sessionSwitchLoading: true, sessionError: null });
+
       try {
+        // Validate input
+        if (!sessionId || sessionId.trim() === '') {
+          throw new Error('Session ID cannot be empty');
+        }
+
+        // Update session state
         set({
           currentVentSessionId: sessionId,
           floatingChatInput: '',
           floatingChatIsTyping: false,
         });
-        await new Promise((resolve) => setTimeout(resolve, 300));
+
+        return true;
+      } catch (error) {
+        const errorMessage =
+          error instanceof Error
+            ? error.message
+            : 'Failed to switch vent session';
+        set({ sessionError: errorMessage });
+        return false;
       } finally {
         set({ sessionSwitchLoading: false });
       }
@@ -126,6 +162,7 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
         currentMainSessionId: null,
         currentVentSessionId: null,
         sessionSwitchLoading: false,
+        sessionError: null,
       }),
 
     // UI Actions
@@ -177,6 +214,8 @@ export const useCurrentVentSessionId = () =>
   useChatUIStore((state) => state.currentVentSessionId);
 export const useSessionSwitchLoading = () =>
   useChatUIStore((state) => state.sessionSwitchLoading);
+export const useSessionError = () =>
+  useChatUIStore((state) => state.sessionError);
 
 // Action selectors with shallow comparison
 export const useChatUIActions = () =>

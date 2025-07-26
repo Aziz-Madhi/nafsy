@@ -9,6 +9,7 @@ import { Text } from '~/components/ui/text';
 import { StoreErrorBoundary } from '~/components/StoreErrorBoundary';
 import { useAppStore } from '~/store/useAppStore';
 import { useChatUIStore } from '~/store/useChatUIStore';
+import { logger } from '~/lib/logger';
 
 interface StoreProviderProps {
   children: ReactNode;
@@ -50,10 +51,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
             isHydrated: true,
             hasError: false,
           });
-          console.log('Store initialization completed');
+          logger.info('Store initialization completed', 'StoreProvider');
         }
       } catch (error) {
-        console.error('Store initialization failed:', error);
+        logger.error('Store initialization failed', 'StoreProvider', error);
 
         if (isMounted) {
           setHydrationState({
@@ -91,7 +92,10 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
   return (
     <StoreErrorBoundary
       onError={(error, errorInfo) => {
-        console.error('Store Runtime Error:', error, errorInfo);
+        logger.error('Store Runtime Error', 'StoreProvider', {
+          error,
+          errorInfo,
+        });
       }}
     >
       <SystemThemeListener />

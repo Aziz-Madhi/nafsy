@@ -1,26 +1,30 @@
 require('@testing-library/jest-native/extend-expect');
 
-// Mock react-native core
-jest.mock('react-native', () => ({
-  Platform: {
-    OS: 'ios',
-    select: jest.fn((obj) => obj.ios),
-  },
-  Dimensions: {
-    get: jest.fn(() => ({ width: 375, height: 812 })),
-  },
-  StyleSheet: {
-    create: jest.fn((styles) => styles),
-  },
-  Alert: {
-    alert: jest.fn(),
-  },
-  Appearance: {
-    getColorScheme: jest.fn(() => 'light'),
-    addChangeListener: jest.fn(),
-    removeChangeListener: jest.fn(),
-  },
-}));
+// Mock react-native with proper module structure
+jest.mock('react-native', () => {
+  const reactNative = jest.requireActual('react-native');
+  return {
+    ...reactNative,
+    Platform: {
+      OS: 'ios',
+      select: jest.fn((obj) => obj.ios),
+    },
+    Dimensions: {
+      get: jest.fn(() => ({ width: 375, height: 812 })),
+    },
+    StyleSheet: {
+      create: jest.fn((styles) => styles),
+    },
+    Alert: {
+      alert: jest.fn(),
+    },
+    Appearance: {
+      getColorScheme: jest.fn(() => 'light'),
+      addChangeListener: jest.fn(() => ({ remove: jest.fn() })),
+      removeChangeListener: jest.fn(),
+    },
+  };
+});
 
 // Create a shared mock MMKV instance
 const createMockMMKV = () => {

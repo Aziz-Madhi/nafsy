@@ -50,8 +50,8 @@ interface AppStoreState {
 }
 
 export const useAppStore = createPersistedStore<AppStoreState>(
-  'app-store',
-  (set: any, get: any) => ({
+  { name: 'app-store' },
+  (set, get) => ({
     // Initial state
     activeTab: 'mood',
     currentTheme: resolveCurrentTheme(defaultSettings.theme),
@@ -70,18 +70,6 @@ export const useAppStore = createPersistedStore<AppStoreState>(
     updateSettings: (newSettings: Partial<AppSettings>) => {
       const currentSettings = get().settings;
       const updatedSettings = { ...currentSettings, ...newSettings };
-
-      // Handle language updates
-      if (
-        newSettings.language &&
-        newSettings.language !== currentSettings.language
-      ) {
-        import('~/lib/i18n')
-          .then(({ setLocale }) => setLocale(newSettings.language!))
-          .catch((error) =>
-            console.warn('Failed to update i18n locale:', error)
-          );
-      }
 
       // Handle theme updates
       if (newSettings.theme && newSettings.theme !== currentSettings.theme) {

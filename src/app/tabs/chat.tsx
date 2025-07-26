@@ -1,44 +1,21 @@
-import React, {
-  useRef,
-  useCallback,
-  useEffect,
-  Suspense,
-  useMemo,
-} from 'react';
-import { View, Pressable, Dimensions } from 'react-native';
-// import { LinearGradient } from 'expo-linear-gradient'; // Unused - commented out
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { FlashList } from '@shopify/flash-list';
-import { Text } from '~/components/ui/text';
-import {
-  ChatBubble,
-  TypingIndicator,
-  QuickReplyButton,
-  FloatingChat,
-} from '~/components/chat';
-import { ChatHistorySidebar } from '~/components/chat/ChatHistorySidebar';
-import Animated, {
-  runOnJS,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
-import { SymbolView } from 'expo-symbols';
+import React, { useCallback, useMemo, useEffect } from 'react';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import {
-  useFloatingChatVisible,
   useMainChatTyping,
   useShowQuickReplies,
   useHistorySidebarVisible,
   useCurrentMainSessionId,
+  useSessionError,
+  useSessionSwitchLoading,
   useChatUIStore,
 } from '~/store';
 import { useTranslation } from '~/hooks/useTranslation';
 import { useSegments } from 'expo-router';
+import { ChatScreen } from '~/components/chat';
 
 // Auth is now handled at tab layout level - no need for wrapper
 
@@ -50,10 +27,10 @@ const NAV_BAR_HEIGHT = {
 } as const;
 
 interface Message {
-  id: string;
-  text: string;
-  isUser: boolean;
-  timestamp: string;
+  _id: string;
+  content: string;
+  role: 'user' | 'assistant';
+  _creationTime: number;
 }
 
 const getWelcomeMessage = (t: any) =>
@@ -89,7 +66,7 @@ function useNavigationBarPadding(): number {
   }, [segments]);
 }
 
-export default function ChatScreen() {
+export default function ChatTab() {
   // ===== ALL HOOKS FIRST (before any early returns) =====
   const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
@@ -100,23 +77,19 @@ export default function ChatScreen() {
 
   // Zustand hooks
   const isTyping = useMainChatTyping();
-  const showFloatingChat = useFloatingChatVisible();
   const showQuickReplies = useShowQuickReplies();
   const showHistorySidebar = useHistorySidebarVisible();
-  const {
-    setFloatingChatVisible,
-    setMainChatTyping,
-    setShowQuickReplies,
-    setHistorySidebarVisible,
-  } = useChatUIStore();
+  const { setMainChatTyping, setShowQuickReplies, setHistorySidebarVisible } =
+    useChatUIStore();
 
   // Session management
   const currentMainSessionId = useCurrentMainSessionId();
+  const sessionError = useSessionError();
+  const sessionSwitchLoading = useSessionSwitchLoading();
   const switchToMainSession = useChatUIStore(
     (state) => state.switchToMainSession
   );
-
-  const flashListRef = useRef<FlashList<Message>>(null);
+  const setSessionError = useChatUIStore((state) => state.setSessionError);
 
   // Convex hooks - only execute when auth is stable
   const currentUser = useQuery(
@@ -183,82 +156,19 @@ export default function ChatScreen() {
     t,
   ]);
 
-  // Transform Convex main chat messages to UI format
-  const messages: Message[] =
-    mainChatMessages
-      ?.map((msg) => ({
-        id: msg._id,
-        text: msg.content || '', // Ensure text is never undefined
-        isUser: msg.role === 'user',
-        timestamp: new Date(msg.createdAt).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-        }),
-      }))
-      .reverse() || [];
-
-  // FlashList render functions
-  const renderMessage = useCallback(
-    ({ item, index }: { item: Message; index: number }) => (
-      <ChatBubble
-        message={item.text}
-        isUser={item.isUser}
-        timestamp={item.timestamp}
-        index={index}
-      />
-    ),
-    []
+  // Transform Convex main chat messages to UI format with memoization
+  const messages: Message[] = useMemo(
+    () =>
+      mainChatMessages
+        ?.map((msg) => ({
+          _id: msg._id,
+          content: msg.content || '', // Ensure content is never undefined
+          role: msg.role,
+          _creationTime: msg._creationTime,
+        }))
+        .reverse() || [],
+    [mainChatMessages]
   );
-
-  const keyExtractor = useCallback((item: Message) => item.id, []);
-
-  const getItemType = useCallback(
-    (item: Message) => (item.isUser ? 'user' : 'assistant'),
-    []
-  );
-
-  // Simple chat content animation
-  const chatTranslateX = useSharedValue(0);
-
-  // Compute sidebar width (must match ChatHistorySidebar)
-  const SIDEBAR_WIDTH = Dimensions.get('window').width * 0.85;
-
-  // Trigger animation when sidebar state changes
-  useEffect(() => {
-    if (showHistorySidebar) {
-      // Slide chat content right by sidebar width
-      chatTranslateX.value = withTiming(SIDEBAR_WIDTH, { duration: 300 });
-    } else {
-      // Slide chat content back to original position
-      chatTranslateX.value = withTiming(0, { duration: 300 });
-    }
-  }, [showHistorySidebar, chatTranslateX, SIDEBAR_WIDTH]);
-
-  const chatAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: chatTranslateX.value }],
-  }));
-
-  // Auto-scroll to end when new messages arrive with smooth animation
-  useEffect(() => {
-    if (messages.length > 0) {
-      setTimeout(() => {
-        flashListRef.current?.scrollToEnd({ animated: true });
-      }, 100);
-    }
-  }, [messages.length]);
-
-  // Native gesture handler for double-tap (worklet-optimized)
-  const openFloatingChat = useCallback(() => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    setFloatingChatVisible(true);
-  }, [setFloatingChatVisible]);
-
-  const doubleTapGesture = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => {
-      'worklet';
-      runOnJS(openFloatingChat)();
-    });
 
   // Simple sidebar handlers
   const handleOpenSidebar = useCallback(() => {
@@ -272,24 +182,26 @@ export default function ChatScreen() {
 
   const handleSessionSelect = useCallback(
     async (sessionId: string) => {
-      try {
-        // Switch to the selected session using Zustand store
-        await switchToMainSession(sessionId);
+      // Clear any existing errors before starting
+      setSessionError(null);
 
-        // Close sidebar
+      const success = await switchToMainSession(sessionId);
+
+      if (success) {
+        // Close sidebar on success
         setHistorySidebarVisible(false);
 
         // Scroll to top after session loads
         setTimeout(() => {
           flashListRef.current?.scrollToOffset({ offset: 0, animated: true });
         }, 300);
-      } catch (error) {
-        console.error('Failed to switch session:', error);
-        // Still close sidebar on error
+      } else {
+        // Error is already set in the store, but we still close the sidebar
+        // This allows the user to see the error message in the main UI
         setHistorySidebarVisible(false);
       }
     },
-    [switchToMainSession, setHistorySidebarVisible]
+    [switchToMainSession, setHistorySidebarVisible, setSessionError]
   );
 
   // Note: handleSendMessage is now managed by MorphingTabBar
@@ -360,103 +272,37 @@ export default function ChatScreen() {
     ]
   );
 
+  // Memoize quick replies to prevent recreation on translation changes
+  const quickReplies = useMemo(() => getQuickReplies(t), [t]);
+
+  // Memoize welcome subtitle
+  const welcomeSubtitle = useMemo(
+    () => t('chat.welcomeSubtitle') || 'Your safe space for mental wellness',
+    [t]
+  );
+
+  // Memoize error dismiss handler
+  const handleDismissError = useCallback(
+    () => setSessionError(null),
+    [setSessionError]
+  );
+
   return (
-    <View className="flex-1 bg-[#F2FAF9]">
-      <Animated.View style={[chatAnimatedStyle, { flex: 1 }]}>
-        <GestureDetector gesture={doubleTapGesture}>
-          <Animated.View className="flex-1">
-            {/* Floating sidebar button */}
-            <Pressable
-              onPress={handleOpenSidebar}
-              className="absolute top-16 left-4 p-2 z-10"
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
-              <SymbolView
-                name="line.horizontal.3"
-                size={24}
-                tintColor="#2D7D6E"
-              />
-            </Pressable>
-            <FlashList
-              ref={flashListRef}
-              data={messages}
-              renderItem={renderMessage}
-              keyExtractor={keyExtractor}
-              getItemType={getItemType}
-              estimatedItemSize={100}
-              showsVerticalScrollIndicator={false}
-              contentContainerStyle={{
-                paddingHorizontal: 20,
-                paddingTop: 0,
-              }}
-              ListHeaderComponent={() => (
-                <View className="items-center mb-8 mt-4">
-                  <View
-                    className="w-20 h-20 rounded-full items-center justify-center mb-4"
-                    style={{
-                      backgroundColor: 'rgba(45, 125, 110, 0.1)',
-                      shadowColor: '#2D7D6E',
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.15,
-                      shadowRadius: 12,
-                      elevation: 6,
-                    }}
-                  >
-                    <Text variant="title1">🌱</Text>
-                  </View>
-                  <Text
-                    variant="body"
-                    className="text-gray-600 text-center px-8"
-                    enableRTL={false}
-                  >
-                    {t('chat.welcomeSubtitle') ||
-                      'Your safe space for mental wellness'}
-                  </Text>
-                </View>
-              )}
-              ListFooterComponent={() => (
-                <View className="pb-6">
-                  {isTyping && <TypingIndicator />}
-
-                  {/* Quick Replies */}
-                  {showQuickReplies && messages.length === 1 && (
-                    <View className="flex-row flex-wrap mt-4">
-                      {getQuickReplies(t).map((reply: any) => (
-                        <QuickReplyButton
-                          key={reply.text}
-                          text={reply.text}
-                          icon={reply.icon}
-                          onPress={() => handleQuickReply(reply.text)}
-                          delay={0}
-                        />
-                      ))}
-                    </View>
-                  )}
-
-                  {/* Dynamic padding for navigation bar */}
-                  <View style={{ height: navigationBarPadding }} />
-                </View>
-              )}
-            />
-          </Animated.View>
-        </GestureDetector>
-
-        {/* Floating Chat */}
-        <Suspense fallback={null}>
-          <FloatingChat
-            visible={showFloatingChat}
-            onClose={() => setFloatingChatVisible(false)}
-          />
-        </Suspense>
-      </Animated.View>
-
-      {/* Chat History Sidebar (always mounted for smooth animations) */}
-      <ChatHistorySidebar
-        visible={showHistorySidebar}
-        onClose={handleCloseSidebar}
-        onSessionSelect={handleSessionSelect}
-        currentSessionId={currentMainSessionId || undefined}
-      />
-    </View>
+    <ChatScreen
+      messages={messages}
+      isTyping={isTyping}
+      showQuickReplies={showQuickReplies}
+      showHistorySidebar={showHistorySidebar}
+      sessionSwitchLoading={sessionSwitchLoading}
+      sessionError={sessionError}
+      quickReplies={quickReplies}
+      welcomeSubtitle={welcomeSubtitle}
+      navigationBarPadding={navigationBarPadding}
+      onOpenSidebar={handleOpenSidebar}
+      onCloseSidebar={handleCloseSidebar}
+      onSessionSelect={handleSessionSelect}
+      onQuickReply={handleQuickReply}
+      onDismissError={handleDismissError}
+    />
   );
 }
