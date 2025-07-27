@@ -44,6 +44,8 @@ export default function RootLayout() {
     'CrimsonPro-Regular': require('../../assets/fonts/CrimsonPro-Regular.ttf'),
     'CrimsonPro-Bold': require('../../assets/fonts/CrimsonPro-Bold.ttf'),
     'CrimsonPro-Italic': require('../../assets/fonts/CrimsonPro-Italic.ttf'),
+    'CrimsonPro-VariableFont': require('../../assets/fonts/CrimsonPro-VariableFont_wght.ttf'),
+    'CrimsonPro-Italic-VariableFont': require('../../assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf'),
   });
 
   // Mark app start for performance monitoring

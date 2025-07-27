@@ -1,10 +1,16 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { View } from 'react-native';
-import { Text } from '~/components/ui/text';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  runOnJS,
+} from 'react-native-reanimated';
 import { DashboardLayout } from '~/components/ui/ScreenLayout';
 import { ExerciseDetail, CategoryExerciseList } from '~/components/exercises';
-// Temporarily use direct imports to debug missing CategoryGrid
-import { CategoryGrid } from '~/components/exercises/CategoryGrid';
+// Import new premium components
+import { PremiumCategoryGrid } from '~/components/exercises/PremiumCategoryGrid';
+import { PremiumStatsSection } from '~/components/exercises/PremiumStatsSection';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import {
@@ -14,6 +20,7 @@ import {
 } from '~/hooks/useSharedData';
 import { useTranslation } from '~/hooks/useTranslation';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { colors } from '~/lib/design-tokens';
 import type { Exercise } from '~/types';
 
 function getCategoryIcon(category: string): string {
@@ -30,16 +37,16 @@ function getCategoryIcon(category: string): string {
 }
 
 function getCategoryColor(category: string): string {
-  // Ultra vibrant colors for better visual appeal
-  const colors: Record<string, string> = {
-    mindfulness: '#EF4444', // Ultra vibrant coral red
-    breathing: '#06B6D4', // Ultra vibrant turquoise
-    movement: '#3B82F6', // Ultra vibrant sky blue
-    journaling: '#10B981', // Ultra vibrant mint green
-    relaxation: '#F59E0B', // Ultra vibrant warm yellow
-    reminders: '#A855F7', // Ultra vibrant plum
+  // Use premium design token colors
+  const categoryColors: Record<string, string> = {
+    mindfulness: colors.wellness.mindfulness.primary,
+    breathing: colors.wellness.breathing.primary,
+    movement: colors.wellness.movement.primary,
+    journaling: colors.wellness.journaling.primary,
+    relaxation: colors.wellness.relaxation.primary,
+    reminders: colors.wellness.reminders.primary,
   };
-  return colors[category] || '#EF4444';
+  return categoryColors[category] || colors.wellness.mindfulness.primary;
 }
 
 function getBenefitsForCategory(category: string, t: any): string[] {
@@ -63,6 +70,14 @@ function ExercisesScreen() {
     null
   );
   const [showDetail, setShowDetail] = useState(false);
+  const [showExerciseOverlay, setShowExerciseOverlay] = useState(false);
+
+  // Simple spring animation - no complex timing
+  const translateX = useSharedValue(0);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ translateX: translateX.value }],
+  }));
 
   // Data - auth is handled at tab layout level
   const currentUser = useCurrentUser();
@@ -112,12 +127,30 @@ function ExercisesScreen() {
     impactAsync(ImpactFeedbackStyle.Medium);
     setSelectedCategory(categoryId);
     setCurrentView('exercises');
+    setShowExerciseOverlay(true);
+    
+    // Start from right and spring to center - no timing needed
+    translateX.value = 100;
+    translateX.value = withSpring(0);
+  };
+
+  const completeBackTransition = () => {
+    setShowExerciseOverlay(false);
+    setCurrentView('categories');
+    setSelectedCategory('');
+    translateX.value = 0;
   };
 
   const handleBackToCategories = () => {
     impactAsync(ImpactFeedbackStyle.Light);
-    setCurrentView('categories');
-    setSelectedCategory('');
+    
+    // Animate slide out and wait for ACTUAL completion
+    translateX.value = withSpring(100, undefined, (finished) => {
+      'worklet';
+      if (finished) {
+        runOnJS(completeBackTransition)();
+      }
+    });
   };
 
   const handleExercisePress = (exercise: Exercise) => {
@@ -138,57 +171,58 @@ function ExercisesScreen() {
     }
   };
 
-  // Stats section component
+  // Premium stats section component
   const statsSection = (
-    <View className="flex-row justify-between mb-4">
-      <View className="flex-1 bg-white rounded-2xl p-4 mr-2 shadow-sm">
-        <Text variant="caption1" className="text-[#5A4A3A]/60 mb-1">
-          This Week
-        </Text>
-        <Text variant="title2" className="text-[#5A4A3A] font-bold">
-          {userStats?.completionsThisWeek || 0}
-        </Text>
-      </View>
-      <View className="flex-1 bg-white rounded-2xl p-4 ml-2 shadow-sm">
-        <Text variant="caption1" className="text-[#5A4A3A]/60 mb-1">
-          Current Streak
-        </Text>
-        <Text variant="title2" className="text-[#5A4A3A] font-bold">
-          {userStats?.currentStreak || 0} days
-        </Text>
-      </View>
-    </View>
+    <PremiumStatsSection
+      completionsThisWeek={userStats?.completionsThisWeek || 0}
+      currentStreak={userStats?.currentStreak || 0}
+      totalCompletions={(userStats as any)?.totalCompletions || 0}
+      weeklyGoal={7}
+    />
   );
 
   return (
     <>
-      {/* Categories View */}
-      {currentView === 'categories' ? (
-        <DashboardLayout
-          title={t('exercises.title') || 'Exercises'}
-          subtitle={
-            t('exercises.subtitle') || 'Guided activities for your wellbeing'
-          }
-          statsSection={statsSection}
-        >
-          <View style={{ paddingBottom: 80 }}>
-            <CategoryGrid onCategorySelect={handleCategorySelect} />
-          </View>
-        </DashboardLayout>
-      ) : (
-        /* Exercise List View */
-        <DashboardLayout scrollable={false}>
-          <View style={{ paddingBottom: 80 }}>
+      <DashboardLayout
+        statsSection={currentView === 'categories' ? statsSection : undefined}
+        // Show header only on category grid view for consistency
+        title={
+          currentView === 'categories'
+            ? t('exercises.title') || 'Exercises'
+            : undefined
+        }
+        showHeader={currentView === 'categories'}
+        scrollable={true}
+        contentStyle={{ paddingHorizontal: 0 }}
+      >
+        {/* Base layer - category grid always visible and mounted */}
+        <PremiumCategoryGrid onCategorySelect={handleCategorySelect} />
+        
+        {/* Overlay layer - exercise list slides over categories when active */}
+        {showExerciseOverlay && (
+          <Animated.View 
+            style={[
+              {
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+                backgroundColor: '#F2FAF9', // Match background to cover categories
+                zIndex: 1,
+              },
+              animatedStyle
+            ]}
+          >
             <CategoryExerciseList
               categoryId={selectedCategory}
               exercises={filteredExercises}
               onExercisePress={handleExercisePress}
               onBackPress={handleBackToCategories}
             />
-          </View>
-        </DashboardLayout>
-      )}
-
+          </Animated.View>
+        )}
+      </DashboardLayout>
       {/* Exercise Detail Modal */}
       <ExerciseDetail
         exercise={selectedExercise}

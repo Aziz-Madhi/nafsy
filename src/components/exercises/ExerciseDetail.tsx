@@ -55,7 +55,14 @@ export function ExerciseDetail({
               >
                 <Text className="text-5xl">{exercise.icon}</Text>
               </View>
-              <Text variant="title1" className="text-center mb-2">
+              <Text
+                className="text-center mb-2"
+                style={{
+                  fontFamily: 'CrimsonPro-Bold',
+                  fontSize: 28,
+                  fontWeight: 'normal',
+                }}
+              >
                 {exercise.title}
               </Text>
               <Text variant="muted" className="text-center">

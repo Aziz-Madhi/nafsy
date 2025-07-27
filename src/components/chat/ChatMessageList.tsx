@@ -30,6 +30,7 @@ interface ChatMessageListProps {
   isTyping: boolean;
   showQuickReplies: boolean;
   quickReplies: QuickReply[];
+  horizontalPadding: number;
   onQuickReply: (text: string) => void;
 }
 
@@ -43,6 +44,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   isTyping,
   showQuickReplies,
   quickReplies,
+  horizontalPadding,
   onQuickReply,
 }: ChatMessageListProps) {
   // Memoize header component to prevent unnecessary re-renders
@@ -72,10 +74,10 @@ export const ChatMessageList = memo(function ChatMessageList({
   // Memoize content container style
   const contentContainerStyle = useMemo(
     () => ({
-      paddingHorizontal: 20,
+      paddingHorizontal: horizontalPadding,
       paddingTop: 0,
     }),
-    []
+    [horizontalPadding]
   );
 
   return (

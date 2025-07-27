@@ -130,7 +130,16 @@
       "mindfulness": "Mindfulness",
       "movement": "Movement",
       "journaling": "Journaling",
-      "relaxation": "Relaxation"
+      "relaxation": "Relaxation",
+      "reminders": "Reminders"
+    },
+    "descriptions": {
+      "breathing": "Calm your mind with breath",
+      "mindfulness": "Stay present & aware",
+      "movement": "Move your body gently",
+      "journaling": "Express your thoughts",
+      "relaxation": "Find your inner peace",
+      "reminders": "Daily wellness wisdom"
     },
     "stats": {
       "completed": "Completed",

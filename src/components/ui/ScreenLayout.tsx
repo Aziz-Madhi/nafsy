@@ -1,37 +1,36 @@
 import React, { useMemo } from 'react';
-import { View, ScrollView, ViewStyle, RefreshControl } from 'react-native';
+import {
+  View,
+  ScrollView,
+  ViewStyle,
+  RefreshControl,
+  Platform,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSegments } from 'expo-router';
+import { useScreenPadding } from '~/hooks/useScreenPadding';
 
-// Navigation bar height constants
-const NAV_BAR_HEIGHT = {
-  CHAT: 180, // Chat tab with input (matches MorphingTabBar)
-  OTHER: 90, // Other tabs without input (matches MorphingTabBar)
-  BOTTOM_MARGIN: 50, // Increased bottom margin for safe area and spacing
-} as const;
+// Calculate top padding for navigation bar only
+function useNavigationBarTopPadding(): number {
+  const screenPadding = useScreenPadding('list');
+  return screenPadding.top;
+}
 
-// Calculate bottom padding based on current route
+// Calculate bottom padding based on current route (unchanged)
 function useNavigationBarPadding(): number {
   const segments = useSegments();
 
   return useMemo(() => {
     // Get the current tab from segments (e.g., ['tabs', 'chat'])
     const currentTab = segments.length > 1 ? segments[1] : 'mood';
-    const baseHeight =
-      currentTab === 'chat' ? NAV_BAR_HEIGHT.CHAT : NAV_BAR_HEIGHT.OTHER;
-    const padding = baseHeight + NAV_BAR_HEIGHT.BOTTOM_MARGIN;
 
-    // Debug logging to see if this is being called
-    console.log('Navigation bar padding:', {
-      currentTab,
-      baseHeight,
-      padding,
-      segments,
-    });
+    // Use smaller, more reasonable values for bottom padding
+    const baseHeight = currentTab === 'chat' ? 100 : 80; // Reduced from 180/90
+    const bottomMargin = 25; // Reduced from 50
 
-    return padding;
+    return baseHeight + bottomMargin;
   }, [segments]);
 }
 
@@ -86,7 +85,7 @@ function ScreenHeader({
 
   return (
     <View
-      className="flex-row justify-between items-center px-6 py-4"
+      className="flex-row justify-between items-center px-6 py-1"
       style={style}
     >
       {/* Left section - Title goes here */}
@@ -94,7 +93,16 @@ function ScreenHeader({
         {headerLeft || (
           <View>
             {title && (
-              <Text variant="title1" className="text-[#5A4A3A] font-bold">
+              <Text
+                className="text-[#5A4A3A]"
+                style={{
+                  fontFamily: 'CrimsonPro-Bold',
+                  fontSize: 34,
+                  fontWeight: 'normal',
+                  // Ensure enough vertical space so glyph ascenders aren’t clipped
+                  lineHeight: 42,
+                }}
+              >
                 {title}
               </Text>
             )}
@@ -119,7 +127,7 @@ function ScreenHeader({
 // Stats section wrapper (common across mood/exercises/profile screens)
 // Note: No horizontal padding since ContentWrapper handles it
 function StatsSection({ children }: { children: React.ReactNode }) {
-  return <View className="py-4 mb-4">{children}</View>;
+  return <View>{children}</View>;
 }
 
 // Content wrapper based on variant
@@ -187,7 +195,7 @@ function ContentWrapper({
   }
 
   // Dashboard/default variants - with padding and navigation bar clearance
-  const paddingClass = variant === 'dashboard' ? 'px-6' : 'px-4';
+  const paddingClass = variant === 'dashboard' ? 'px-2' : 'px-4';
   const dashboardContentStyle = [
     contentStyle,
     { paddingBottom: navigationBarPadding },
@@ -236,10 +244,13 @@ export function ScreenLayout({
   safeAreaStyle,
   animated = false,
 }: ScreenLayoutProps) {
+  const topPadding = useNavigationBarTopPadding();
+
   const content = (
     <SafeAreaView
       className="flex-1"
-      style={[{ backgroundColor }, safeAreaStyle]}
+      style={[{ backgroundColor, paddingTop: topPadding }, safeAreaStyle]}
+      edges={[]}
     >
       {/* Header */}
       {showHeader && (

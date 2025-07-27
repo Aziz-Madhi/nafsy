@@ -32,6 +32,21 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     favicon: './assets/favicon.png',
     bundler: 'metro',
   },
+  plugins: [
+    [
+      'expo-font',
+      {
+        fonts: [
+          './assets/fonts/CrimsonPro-Regular.ttf',
+          './assets/fonts/CrimsonPro-Bold.ttf',
+          './assets/fonts/CrimsonPro-Italic.ttf',
+          './assets/fonts/CrimsonPro-VariableFont_wght.ttf',
+          './assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf',
+        ],
+      },
+    ],
+  ],
+  assetBundlePatterns: ['assets/fonts/*'],
   experiments: {
     typedRoutes: true,
   },

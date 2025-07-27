@@ -143,6 +143,7 @@ export const ChatScreen = memo(function ChatScreen({
               isTyping={isTyping}
               showQuickReplies={showQuickReplies}
               quickReplies={quickReplies}
+              horizontalPadding={20}
               onQuickReply={onQuickReply}
             />
           </View>

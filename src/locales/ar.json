@@ -124,7 +124,16 @@
       "mindfulness": "اليقظة الذهنية",
       "movement": "الحركة",
       "journaling": "كتابة اليوميات",
-      "relaxation": "الاسترخاء"
+      "relaxation": "الاسترخاء",
+      "reminders": "التذكيرات"
+    },
+    "descriptions": {
+      "breathing": "اهدأ عقلك بالتنفس",
+      "mindfulness": "ابق حاضراً وواعياً",
+      "movement": "حرك جسدك برفق",
+      "journaling": "عبر عن أفكارك",
+      "relaxation": "اعثر على سلامك الداخلي",
+      "reminders": "حكمة العافية اليومية"
     },
     "stats": {
       "completed": "مكتمل",

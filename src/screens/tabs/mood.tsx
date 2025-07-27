@@ -613,10 +613,7 @@ export default function MoodScreen() {
   const getItemType = useCallback((item: any) => item.type, []);
 
   return (
-    <DashboardLayout
-      title="Mood Tracker"
-      subtitle="Track your emotional wellbeing"
-    >
+    <DashboardLayout title="Mood">
       {/* Week View Section */}
       <View className="mb-8 mx-2">
         <WeekView moodData={moodData} />

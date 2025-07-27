@@ -14,17 +14,11 @@ import {
   useChatUIStore,
 } from '~/store';
 import { useTranslation } from '~/hooks/useTranslation';
-import { useSegments } from 'expo-router';
 import { ChatScreen } from '~/components/chat';
 
 // Auth is now handled at tab layout level - no need for wrapper
 
-// Navigation bar height constants (same as ScreenLayout)
-const NAV_BAR_HEIGHT = {
-  CHAT: 180, // Chat tab with input
-  OTHER: 90, // Other tabs without input
-  BOTTOM_MARGIN: 25, // Bottom margin from container positioning
-} as const;
+// Chat screen handles its own spacing
 
 interface Message {
   _id: string;
@@ -53,18 +47,7 @@ const getQuickReplies = (t: any) => [
   },
 ];
 
-// Calculate navigation bar padding for chat screen
-function useNavigationBarPadding(): number {
-  const segments = useSegments();
-
-  return useMemo(() => {
-    // Get the current tab from segments (e.g., ['tabs', 'chat'])
-    const currentTab = segments.length > 1 ? segments[1] : 'mood';
-    const baseHeight =
-      currentTab === 'chat' ? NAV_BAR_HEIGHT.CHAT : NAV_BAR_HEIGHT.OTHER;
-    return baseHeight + NAV_BAR_HEIGHT.BOTTOM_MARGIN;
-  }, [segments]);
-}
+// Screen padding is handled by useScreenPadding hook
 
 export default function ChatTab() {
   // ===== ALL HOOKS FIRST (before any early returns) =====
@@ -72,8 +55,7 @@ export default function ChatTab() {
   const { isSignedIn } = useAuth();
   const { t } = useTranslation();
 
-  // Navigation bar padding
-  const navigationBarPadding = useNavigationBarPadding();
+  // No specific spacing needed - chat handles its own
 
   // Zustand hooks
   const isTyping = useMainChatTyping();
@@ -190,11 +172,6 @@ export default function ChatTab() {
       if (success) {
         // Close sidebar on success
         setHistorySidebarVisible(false);
-
-        // Scroll to top after session loads
-        setTimeout(() => {
-          flashListRef.current?.scrollToOffset({ offset: 0, animated: true });
-        }, 300);
       } else {
         // Error is already set in the store, but we still close the sidebar
         // This allows the user to see the error message in the main UI
@@ -297,7 +274,7 @@ export default function ChatTab() {
       sessionError={sessionError}
       quickReplies={quickReplies}
       welcomeSubtitle={welcomeSubtitle}
-      navigationBarPadding={navigationBarPadding}
+      navigationBarPadding={120}
       onOpenSidebar={handleOpenSidebar}
       onCloseSidebar={handleCloseSidebar}
       onSessionSelect={handleSessionSelect}
