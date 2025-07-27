@@ -1,5 +1,12 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { View } from 'react-native';
+import React, {
+  useState,
+  useMemo,
+  useEffect,
+  useCallback,
+  useRef,
+} from 'react';
+import { Dimensions, ScrollView, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -21,6 +28,7 @@ import {
 import { useTranslation } from '~/hooks/useTranslation';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { colors } from '~/lib/design-tokens';
+import { useScreenPadding } from '~/hooks/useScreenPadding';
 import type { Exercise } from '~/types';
 
 function getCategoryIcon(category: string): string {
@@ -71,9 +79,41 @@ function ExercisesScreen() {
   );
   const [showDetail, setShowDetail] = useState(false);
   const [showExerciseOverlay, setShowExerciseOverlay] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
-  // Simple spring animation - no complex timing
+  // ScrollView reference with debugging
+  const scrollViewRef = useRef<ScrollView>(null);
+
+  // Get proper safe area padding for the overlay
+  const screenPadding = useScreenPadding('list');
+
+  // Memoize contentStyle to prevent ContentWrapper re-renders
+  const dashboardContentStyle = useMemo(() => ({ paddingHorizontal: 0 }), []);
+
+  // Screen width used for slide animations - memoized to prevent handleCategorySelect recreation
+  const SCREEN_WIDTH = useMemo(() => Dimensions.get('window').width, []);
+
+  // Shared value controlling horizontal slide animation
   const translateX = useSharedValue(0);
+
+  // Cleanup animation on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      'worklet';
+      // Cancel any ongoing animations and reset shared value
+      translateX.value = 0;
+    };
+  }, [translateX]);
+
+  // Consistent spring configuration for smooth animations - Memoized to prevent recreation
+  const SPRING_CONFIG = useMemo(
+    () => ({
+      damping: 20,
+      stiffness: 150,
+      mass: 1,
+    }),
+    []
+  );
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ translateX: translateX.value }],
@@ -86,9 +126,34 @@ function ExercisesScreen() {
   const recordCompletion = useMutation(api.userProgress.recordCompletion);
   const seedExercises = useMutation(api.seed.seedExercises);
 
-  // Transform Convex exercises to UI format
-  const exercises: Exercise[] =
-    exercisesWithProgress?.map((ex) => ({
+  // Store hydration stability guard - prevent renders during MMKV migration
+  // CRITICAL FIX: Remove artificial delay that causes race conditions with animations
+  const [isStoreStable, setIsStoreStable] = useState(true);
+
+  // Cache translated benefits to prevent exercises array recreation when t changes
+  const translatedBenefits = useMemo(() => {
+    const benefitsMap: Record<string, string[]> = {};
+    const categories = [
+      'breathing',
+      'mindfulness',
+      'movement',
+      'journaling',
+      'relaxation',
+    ];
+
+    categories.forEach((category) => {
+      benefitsMap[category] = getBenefitsForCategory(category, t);
+    });
+
+    return benefitsMap;
+  }, [t]);
+
+  // Transform Convex exercises to UI format - Memoized to prevent re-creation
+  const exercises: Exercise[] = useMemo(() => {
+    // Guard against premature rendering during store hydration
+    if (!exercisesWithProgress || !isStoreStable) return [];
+
+    return exercisesWithProgress.map((ex) => ({
       id: ex._id,
       title: locale === 'ar' ? ex.titleAr : ex.title,
       description: locale === 'ar' ? ex.descriptionAr : ex.description,
@@ -98,8 +163,9 @@ function ExercisesScreen() {
       icon: getCategoryIcon(ex.category),
       color: getCategoryColor(ex.category),
       steps: locale === 'ar' ? ex.instructionsAr : ex.instructions,
-      benefits: getBenefitsForCategory(ex.category, t),
-    })) || [];
+      benefits: translatedBenefits[ex.category] || [],
+    }));
+  }, [exercisesWithProgress, locale, translatedBenefits, isStoreStable]);
 
   // Seed exercises if none exist
   useEffect(() => {
@@ -123,96 +189,158 @@ function ExercisesScreen() {
     );
   }, [selectedCategory, exercises]);
 
-  const handleCategorySelect = (categoryId: string) => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    setSelectedCategory(categoryId);
-    setCurrentView('exercises');
-    setShowExerciseOverlay(true);
-    
-    // Start from right and spring to center - no timing needed
-    translateX.value = 100;
-    translateX.value = withSpring(0);
-  };
+  const handleCategorySelect = useCallback(
+    (categoryId: string) => {
+      // Prevent multiple transitions - critical guard
+      if (isAnimating) {
+        return;
+      }
 
-  const completeBackTransition = () => {
+      impactAsync(ImpactFeedbackStyle.Medium);
+      setSelectedCategory(categoryId);
+      setCurrentView('exercises');
+      setShowExerciseOverlay(true);
+      setIsAnimating(true);
+
+      // Start just off-screen and spring to center
+      translateX.value = SCREEN_WIDTH;
+      translateX.value = withSpring(0, SPRING_CONFIG, (finished) => {
+        'worklet';
+        // Always complete the transition to prevent state desync
+        runOnJS(setIsAnimating)(false);
+      });
+    },
+    [SCREEN_WIDTH, SPRING_CONFIG, translateX, isAnimating]
+  );
+
+  const completeBackTransition = useCallback(() => {
+    // Synchronous state updates to prevent concurrent feature conflicts
+    setIsAnimating(false);
     setShowExerciseOverlay(false);
     setCurrentView('categories');
     setSelectedCategory('');
-    translateX.value = 0;
-  };
-
-  const handleBackToCategories = () => {
-    impactAsync(ImpactFeedbackStyle.Light);
     
-    // Animate slide out and wait for ACTUAL completion
-    translateX.value = withSpring(100, undefined, (finished) => {
-      'worklet';
-      if (finished) {
+    // Leave translateX at its last value; it will be re-initialized on next entry
+  }, [translateX]);
+
+  const handleBackToCategories = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+
+    // Prevent multiple back transitions - critical guard
+    if (isAnimating) {
+      return;
+    }
+
+    setIsAnimating(true);
+
+    // Animate the overlay fully off-screen with optimized spring config
+    translateX.value = withSpring(
+      SCREEN_WIDTH,
+      {
+        damping: 25, // Increased for faster settling
+        stiffness: 200, // Increased for quicker response
+        mass: 0.8, // Reduced for lighter feel
+      },
+      (finished) => {
+        'worklet';
+        // Always call completion to prevent animation state desync
         runOnJS(completeBackTransition)();
       }
-    });
-  };
+    );
+  }, [isAnimating, SCREEN_WIDTH, translateX, completeBackTransition]);
 
-  const handleExercisePress = (exercise: Exercise) => {
+  const handleExercisePress = useCallback((exercise: Exercise) => {
     setSelectedExercise(exercise);
     setShowDetail(true);
-  };
+  }, []);
 
-  const handleStartExercise = async (exercise: Exercise) => {
-    setShowDetail(false);
+  const handleStartExercise = useCallback(
+    async (exercise: Exercise) => {
+      setShowDetail(false);
 
-    // Record exercise completion (in real app, this would happen after actual completion)
-    if (currentUser) {
-      await recordCompletion({
-        exerciseId: exercise.id as any,
-        duration: parseInt(exercise.duration),
-        feedback: 'Completed successfully',
-      });
-    }
-  };
-
-  // Premium stats section component
-  const statsSection = (
-    <PremiumStatsSection
-      completionsThisWeek={userStats?.completionsThisWeek || 0}
-      currentStreak={userStats?.currentStreak || 0}
-      totalCompletions={(userStats as any)?.totalCompletions || 0}
-      weeklyGoal={7}
-    />
+      // Record exercise completion (in real app, this would happen after actual completion)
+      if (currentUser) {
+        await recordCompletion({
+          exerciseId: exercise.id as any,
+          duration: parseInt(exercise.duration),
+          feedback: 'Completed successfully',
+        });
+      }
+    },
+    [currentUser, recordCompletion]
   );
+
+  // Stabilize stats values to prevent unnecessary recreations during transitions
+  const statsValues = useMemo(
+    () => ({
+      completionsThisWeek: userStats?.completionsThisWeek ?? 0,
+      currentStreak: userStats?.currentStreak ?? 0,
+      totalCompletions: (userStats as any)?.totalCompletions ?? 0,
+    }),
+    [
+      userStats?.completionsThisWeek,
+      userStats?.currentStreak,
+      (userStats as any)?.totalCompletions,
+    ]
+  );
+
+  // Premium stats section component - Memoized to prevent re-renders
+  const statsSection = useMemo(
+    () => (
+      <PremiumStatsSection
+        completionsThisWeek={statsValues.completionsThisWeek}
+        currentStreak={statsValues.currentStreak}
+        totalCompletions={statsValues.totalCompletions}
+        weeklyGoal={7}
+      />
+    ),
+    [statsValues]
+  );
+
+  // Memoize title to prevent re-renders from translation changes
+  const screenTitle = useMemo(() => t('exercises.title') || 'Exercises', [t]);
 
   return (
     <>
       <DashboardLayout
-        statsSection={currentView === 'categories' ? statsSection : undefined}
-        // Show header only on category grid view for consistency
-        title={
-          currentView === 'categories'
-            ? t('exercises.title') || 'Exercises'
-            : undefined
-        }
-        showHeader={currentView === 'categories'}
+        statsSection={statsSection}
+        title={screenTitle}
+        showHeader={true}
         scrollable={true}
-        contentStyle={{ paddingHorizontal: 0 }}
+        contentStyle={dashboardContentStyle}
       >
         {/* Base layer - category grid always visible and mounted */}
-        <PremiumCategoryGrid onCategorySelect={handleCategorySelect} />
-        
-        {/* Overlay layer - exercise list slides over categories when active */}
-        {showExerciseOverlay && (
-          <Animated.View 
-            style={[
-              {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-                backgroundColor: '#F2FAF9', // Match background to cover categories
-                zIndex: 1,
-              },
-              animatedStyle
-            ]}
+        {useMemo(
+          () => (
+            <PremiumCategoryGrid onCategorySelect={handleCategorySelect} />
+          ),
+          [handleCategorySelect]
+        )}
+      </DashboardLayout>
+
+      {/* Completely isolated overlay layer - independent scroll context */}
+      {/* CRITICAL FIX: Simplified overlay rendering to prevent timing conflicts */}
+      {showExerciseOverlay && (
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              backgroundColor: '#F2FAF9', // Match background to cover categories
+              zIndex: 1000, // High z-index to ensure it's above everything
+            },
+            animatedStyle,
+          ]}
+        >
+          <SafeAreaView
+            style={{
+              flex: 1,
+              paddingTop: screenPadding.top,
+            }}
+            edges={[]}
           >
             <CategoryExerciseList
               categoryId={selectedCategory}
@@ -220,9 +348,10 @@ function ExercisesScreen() {
               onExercisePress={handleExercisePress}
               onBackPress={handleBackToCategories}
             />
-          </Animated.View>
-        )}
-      </DashboardLayout>
+          </SafeAreaView>
+        </Animated.View>
+      )}
+
       {/* Exercise Detail Modal */}
       <ExerciseDetail
         exercise={selectedExercise}

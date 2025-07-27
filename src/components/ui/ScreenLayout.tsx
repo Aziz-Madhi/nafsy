@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import {
   View,
   ScrollView,
@@ -63,6 +63,10 @@ interface ScreenLayoutProps {
 
   // Animation
   animated?: boolean;
+
+  // Scroll control
+  scrollViewRef?: React.RefObject<ScrollView>;
+  onScroll?: (event: any) => void;
 }
 
 // Header component
@@ -139,6 +143,8 @@ function ContentWrapper({
   onRefresh,
   contentStyle,
   statsSection,
+  scrollViewRef,
+  onScroll,
 }: {
   children: React.ReactNode;
   variant: 'default' | 'chat' | 'dashboard' | 'list';
@@ -147,6 +153,8 @@ function ContentWrapper({
   onRefresh?: () => void;
   contentStyle?: ViewStyle;
   statsSection?: React.ReactNode;
+  scrollViewRef?: React.RefObject<ScrollView>;
+  onScroll?: (event: any) => void;
 }) {
   const navigationBarPadding = useNavigationBarPadding();
 
@@ -174,10 +182,13 @@ function ContentWrapper({
     if (scrollable) {
       return (
         <ScrollView
+          ref={scrollViewRef}
           className="flex-1"
           style={listContentStyle}
           refreshControl={refreshControl}
           showsVerticalScrollIndicator={false}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
         >
           {/* Stats section at top of scrollable content */}
           {statsSection && <StatsSection>{statsSection}</StatsSection>}
@@ -204,10 +215,13 @@ function ContentWrapper({
   if (scrollable) {
     return (
       <ScrollView
+        ref={scrollViewRef}
         className={`flex-1 ${paddingClass}`}
         style={dashboardContentStyle}
         refreshControl={refreshControl}
         showsVerticalScrollIndicator={false}
+        onScroll={onScroll}
+        scrollEventThrottle={16}
       >
         {/* Stats section at top of scrollable content */}
         {statsSection && <StatsSection>{statsSection}</StatsSection>}
@@ -243,6 +257,8 @@ export function ScreenLayout({
   headerStyle,
   safeAreaStyle,
   animated = false,
+  scrollViewRef,
+  onScroll,
 }: ScreenLayoutProps) {
   const topPadding = useNavigationBarTopPadding();
 
@@ -272,6 +288,8 @@ export function ScreenLayout({
         onRefresh={onRefresh}
         contentStyle={contentStyle}
         statsSection={statsSection}
+        scrollViewRef={scrollViewRef}
+        onScroll={onScroll}
       >
         {children}
       </ContentWrapper>

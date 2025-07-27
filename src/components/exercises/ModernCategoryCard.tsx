@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useState, useCallback, useMemo } from 'react';
 import {
   View,
   Pressable,
@@ -32,13 +32,15 @@ const CATEGORY_BACKGROUNDS: Record<string, ImageSourcePropType> = {
   Reminders: require('../../../assets/reminders-card.png'),
 };
 
-export function ModernCategoryCard({
+function ModernCategoryCardComponent({
   category,
   onPress,
   index,
   height,
 }: ModernCategoryCardProps) {
-  const [imageLoading, setImageLoading] = useState(true);
+  // CRITICAL FIX: Initialize image as loaded to prevent flicker during navigation
+  // Only show loading for genuinely slow-loading images
+  const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
 
   const backgroundImage = CATEGORY_BACKGROUNDS[category.name];
@@ -60,13 +62,18 @@ export function ModernCategoryCard({
   const baseColor = getMoodColor(category.id);
   const textBackgroundColor = baseColor + '15'; // 15% opacity for readability
 
-  const handlePress = () => {
+  const handlePress = useCallback(() => {
     onPress(category.id);
-  };
+  }, [onPress, category.id]);
 
-  // Calculate proportions - 65% image, 35% text
-  const imageHeight = height * 0.65;
-  const textHeight = height * 0.35;
+  // Calculate proportions - 65% image, 35% text - Memoized for performance
+  const { imageHeight, textHeight } = useMemo(
+    () => ({
+      imageHeight: height * 0.65,
+      textHeight: height * 0.35,
+    }),
+    [height]
+  );
 
   return (
     <Pressable
@@ -102,6 +109,7 @@ export function ModernCategoryCard({
             source={backgroundImage}
             style={{ height: imageHeight, width: '100%' }}
             resizeMode="cover"
+            onLoadStart={() => setImageLoading(true)}
             onLoadEnd={() => setImageLoading(false)}
             onError={() => {
               setImageError(true);
@@ -155,5 +163,8 @@ export function ModernCategoryCard({
     </Pressable>
   );
 }
+
+// Memoize component to prevent re-renders when props haven't changed
+export const ModernCategoryCard = memo(ModernCategoryCardComponent);
 
 export default ModernCategoryCard;

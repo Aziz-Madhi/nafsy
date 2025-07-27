@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { View, ScrollView, Dimensions } from 'react-native';
 import { spacing } from '~/lib/design-tokens';
 
@@ -22,7 +22,7 @@ const VERTICAL_GAP = spacing.md; // 16px following design system
 // Height patterns with slightly more space for movement and reminders cards
 const HEIGHT_PATTERNS = [220, 280, 240, 240, 260, 260];
 
-export function SimpleMasonryGrid({
+function SimpleMasonryGridComponent({
   data,
   renderItem,
   keyExtractor,
@@ -121,5 +121,8 @@ export function SimpleMasonryGrid({
     </ScrollView>
   );
 }
+
+// Memoize component to prevent re-renders when props haven't changed
+export const SimpleMasonryGrid = memo(SimpleMasonryGridComponent);
 
 export default SimpleMasonryGrid;

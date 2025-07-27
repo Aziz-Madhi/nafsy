@@ -8,12 +8,6 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppProviders } from '~/providers/AppProviders';
 import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
-import {
-  markAppStart,
-  markFirstRender,
-  markInteractive,
-  recordMemory,
-} from '~/lib/performance-monitor';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -48,20 +42,6 @@ export default function RootLayout() {
     'CrimsonPro-Italic-VariableFont': require('../../assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf'),
   });
 
-  // Mark app start for performance monitoring
-  React.useEffect(() => {
-    markAppStart();
-    recordMemory('app_start');
-
-    // Mark first render
-    setTimeout(markFirstRender, 0);
-
-    // Mark interactive after brief delay
-    setTimeout(() => {
-      markInteractive();
-      recordMemory('app_interactive');
-    }, 1000);
-  }, []);
 
   // Handle font loading completion
   React.useEffect(() => {

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import { View, Pressable } from 'react-native';
 import { VerticalList } from '~/components/ui/GenericList';
 import { Text } from '~/components/ui/text';
@@ -48,31 +48,37 @@ const getCategoryName = (categoryId: string, t: any): string => {
   );
 };
 
-export function CategoryExerciseList({
+function CategoryExerciseListComponent({
   categoryId,
   exercises,
   onExercisePress,
   onBackPress,
 }: CategoryExerciseListProps) {
   const { t } = useTranslation();
-  const categoryName = getCategoryName(categoryId, t);
 
-  const handleBackPress = () => {
+  // Memoize category name computation
+  const categoryName = useMemo(
+    () => getCategoryName(categoryId, t),
+    [categoryId, t]
+  );
+
+  const handleBackPress = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
     onBackPress();
-  };
+  }, [onBackPress]);
 
-  // Filter exercises by category (handle reminders -> relaxation mapping if needed)
-  const filteredExercises = exercises.filter((exercise) => {
-    if (categoryId === 'reminders') {
-      // Map "reminders" to existing category or handle separately
-      return (
-        exercise.category === 'relaxation' ||
-        exercise.category === 'mindfulness'
-      );
-    }
-    return exercise.category === categoryId;
-  });
+  // Memoize filtered exercises to prevent re-computation
+  const filteredExercises = useMemo(() => {
+    return exercises.filter((exercise) => {
+      if (categoryId === 'reminders') {
+        return (
+          exercise.category === 'relaxation' ||
+          exercise.category === 'mindfulness'
+        );
+      }
+      return exercise.category === categoryId;
+    });
+  }, [exercises, categoryId]);
 
   return (
     <View className="flex-1 bg-[#F2FAF9]">
@@ -110,3 +116,6 @@ export function CategoryExerciseList({
     </View>
   );
 }
+
+// Memoize component to prevent re-renders when props haven't changed
+export const CategoryExerciseList = memo(CategoryExerciseListComponent);

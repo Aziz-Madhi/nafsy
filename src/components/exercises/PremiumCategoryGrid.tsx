@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo, useMemo, useCallback } from 'react';
 import { View } from 'react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ModernCategoryCard } from './ModernCategoryCard';
@@ -18,65 +18,98 @@ interface Category {
   icon: string;
 }
 
-const getCategoriesWithTranslations = (t: any): Category[] => {
-  const baseCategories = [
-    {
-      id: 'mindfulness' as const,
-      name: t('exercises.categories.mindfulness') || 'Mindfulness',
-      color: colors.wellness.mindfulness.primary,
-      description: t('exercises.descriptions.mindfulness') || 'Stay present',
-      icon: '🧘‍♀️',
-    },
-    {
-      id: 'breathing' as const,
-      name: t('exercises.categories.breathing') || 'Breathing',
-      color: colors.wellness.breathing.primary,
-      description: t('exercises.descriptions.breathing') || 'Breathe deeply',
-      icon: '🌬️',
-    },
-    {
-      id: 'movement' as const,
-      name: t('exercises.categories.movement') || 'Movement',
-      color: colors.wellness.movement.primary,
-      description: t('exercises.descriptions.movement') || 'Move gently',
-      icon: '🚶‍♀️',
-    },
-    {
-      id: 'journaling' as const,
-      name: t('exercises.categories.journaling') || 'Journaling',
-      color: colors.wellness.journaling.primary,
-      description: t('exercises.descriptions.journaling') || 'Write freely',
-      icon: '✍️',
-    },
-    {
-      id: 'relaxation' as const,
-      name: t('exercises.categories.relaxation') || 'Relaxation',
-      color: colors.wellness.relaxation.primary,
-      description: t('exercises.descriptions.relaxation') || 'Find peace',
-      icon: '🛀',
-    },
-    {
-      id: 'reminders' as const,
-      name: t('exercises.categories.reminders') || 'Reminders',
-      color: colors.wellness.reminders.primary,
-      description: t('exercises.descriptions.reminders') || 'Daily wisdom',
-      icon: '💭',
-    },
-  ];
-
-  return baseCategories;
-};
-
-export function PremiumCategoryGrid({
+function PremiumCategoryGridComponent({
   onCategorySelect,
 }: PremiumCategoryGridProps) {
   const { t } = useTranslation();
-  const categories = getCategoriesWithTranslations(t);
 
-  const handleCategorySelect = (categoryId: string) => {
-    impactAsync(ImpactFeedbackStyle.Medium);
-    onCategorySelect(categoryId);
-  };
+  // Cache translated strings to prevent categories recreation when t function changes
+  const translatedStrings = useMemo(() => {
+    return {
+      mindfulness: {
+        name: t('exercises.categories.mindfulness') || 'Mindfulness',
+        description: t('exercises.descriptions.mindfulness') || 'Stay present',
+      },
+      breathing: {
+        name: t('exercises.categories.breathing') || 'Breathing',
+        description: t('exercises.descriptions.breathing') || 'Breathe deeply',
+      },
+      movement: {
+        name: t('exercises.categories.movement') || 'Movement',
+        description: t('exercises.descriptions.movement') || 'Move gently',
+      },
+      journaling: {
+        name: t('exercises.categories.journaling') || 'Journaling',
+        description: t('exercises.descriptions.journaling') || 'Write freely',
+      },
+      relaxation: {
+        name: t('exercises.categories.relaxation') || 'Relaxation',
+        description: t('exercises.descriptions.relaxation') || 'Find peace',
+      },
+      reminders: {
+        name: t('exercises.categories.reminders') || 'Reminders',
+        description: t('exercises.descriptions.reminders') || 'Daily wisdom',
+      },
+    };
+  }, [t]);
+
+  // Memoize categories using cached translations
+  const categories = useMemo(() => {
+    const baseCategories = [
+      {
+        id: 'mindfulness' as const,
+        name: translatedStrings.mindfulness.name,
+        color: colors.wellness.mindfulness.primary,
+        description: translatedStrings.mindfulness.description,
+        icon: '🧘‍♀️',
+      },
+      {
+        id: 'breathing' as const,
+        name: translatedStrings.breathing.name,
+        color: colors.wellness.breathing.primary,
+        description: translatedStrings.breathing.description,
+        icon: '🌬️',
+      },
+      {
+        id: 'movement' as const,
+        name: translatedStrings.movement.name,
+        color: colors.wellness.movement.primary,
+        description: translatedStrings.movement.description,
+        icon: '🚶‍♀️',
+      },
+      {
+        id: 'journaling' as const,
+        name: translatedStrings.journaling.name,
+        color: colors.wellness.journaling.primary,
+        description: translatedStrings.journaling.description,
+        icon: '✍️',
+      },
+      {
+        id: 'relaxation' as const,
+        name: translatedStrings.relaxation.name,
+        color: colors.wellness.relaxation.primary,
+        description: translatedStrings.relaxation.description,
+        icon: '🛀',
+      },
+      {
+        id: 'reminders' as const,
+        name: translatedStrings.reminders.name,
+        color: colors.wellness.reminders.primary,
+        description: translatedStrings.reminders.description,
+        icon: '💭',
+      },
+    ];
+
+    return baseCategories;
+  }, [translatedStrings]);
+
+  const handleCategorySelect = useCallback(
+    (categoryId: string) => {
+      impactAsync(ImpactFeedbackStyle.Medium);
+      onCategorySelect(categoryId);
+    },
+    [onCategorySelect]
+  );
 
   return (
     <SimpleMasonryGrid
@@ -94,5 +127,8 @@ export function PremiumCategoryGrid({
     />
   );
 }
+
+// Memoize the component to prevent re-renders when props haven't changed
+export const PremiumCategoryGrid = memo(PremiumCategoryGridComponent);
 
 export default PremiumCategoryGrid;
