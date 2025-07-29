@@ -173,3 +173,77 @@ export const getExercisesWithProgress = query({
     return exercisesWithProgress;
   },
 });
+
+// Get daily exercise for the authenticated user
+export const getDailyExercise = query({
+  args: {},
+  handler: async (ctx) => {
+    // Authenticate user and get their ID
+    const user = await getAuthenticatedUser(ctx);
+
+    // Get all exercises
+    const exercises = await ctx.db.query('exercises').collect();
+
+    if (exercises.length === 0) {
+      return null;
+    }
+
+    // Get user's progress to prioritize uncompleted exercises
+    const progress = await ctx.db
+      .query('userProgress')
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
+      .collect();
+
+    // Create a set of completed exercise IDs for today
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayTimestamp = today.getTime();
+
+    const completedTodayIds = new Set(
+      progress
+        .filter((p) => p.completedAt >= todayTimestamp)
+        .map((p) => p.exerciseId)
+    );
+
+    // Filter out exercises completed today
+    const availableExercises = exercises.filter(
+      (e) => !completedTodayIds.has(e._id)
+    );
+
+    // If all exercises are completed today, use all exercises
+    const exercisePool =
+      availableExercises.length > 0 ? availableExercises : exercises;
+
+    // Use a deterministic daily selection based on date and user ID
+    const dayOfYear = Math.floor(
+      (today.getTime() - new Date(today.getFullYear(), 0, 0).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    // Simple hash of user ID for personalization
+    let hash = 0;
+    for (let i = 0; i < user._id.length; i++) {
+      hash = (hash << 5) - hash + user._id.charCodeAt(i);
+      hash = hash & hash; // Convert to 32-bit integer
+    }
+
+    // Combine day and user hash for personalized daily selection
+    const seed = dayOfYear + Math.abs(hash);
+    const selectedIndex = seed % exercisePool.length;
+
+    // Get completion count for the selected exercise
+    const selectedExercise = exercisePool[selectedIndex];
+    const exerciseProgress = progress.filter(
+      (p) => p.exerciseId === selectedExercise._id
+    );
+
+    return {
+      ...selectedExercise,
+      completionCount: exerciseProgress.length,
+      lastCompleted:
+        exerciseProgress.length > 0
+          ? Math.max(...exerciseProgress.map((p) => p.completedAt))
+          : undefined,
+    };
+  },
+});

@@ -9,3 +9,4 @@ export { ExerciseDetail } from './ExerciseDetail';
 export { PremiumCategoryCard } from './PremiumCategoryCard';
 export { PremiumCategoryGrid } from './PremiumCategoryGrid';
 export { PremiumStatsSection } from './PremiumStatsSection';
+export { DailyExerciseCard } from './DailyExerciseCard';

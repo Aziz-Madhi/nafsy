@@ -614,13 +614,13 @@ export default function MoodScreen() {
 
   return (
     <DashboardLayout title="Mood">
-      {/* Week View Section */}
-      <View className="mb-8 mx-2">
+      {/* Week View Section with exercise-screen-style horizontal spacing */}
+      <View className="mb-8" style={{ marginHorizontal: 6 }}>
         <WeekView moodData={moodData} />
       </View>
 
       {/* Today's Mood Log Section */}
-      <View className="mb-8">
+      <View className="mb-8" style={{ marginHorizontal: 6 }}>
         {hasLoggedToday ? (
           <View
             className="rounded-3xl overflow-hidden border border-gray-200"
@@ -798,7 +798,7 @@ export default function MoodScreen() {
       </View>
 
       {/* Calendar History Section */}
-      <View className="mb-8">
+      <View className="mb-8" style={{ marginHorizontal: 6 }}>
         <View className="flex-row items-center mb-4">
           <Calendar size={20} color="#5A4A3A" />
           <Text
@@ -966,7 +966,7 @@ export default function MoodScreen() {
       </View>
 
       {/* Insights Section */}
-      <View className="mb-8" style={{ paddingBottom: 80 }}>
+      <View className="mb-8" style={{ marginHorizontal: 6, paddingBottom: 80 }}>
         <View className="flex-row items-center mb-4">
           <BarChart3 size={20} color="#5A4A3A" />
           <Text

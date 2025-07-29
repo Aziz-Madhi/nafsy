@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Nafsy** is a mental health React Native app built with Expo, featuring AI-powered chat, mood tracking, wellness exercises, and multilingual support (English/Arabic). The app uses Clerk for authentication, Convex for real-time backend, and follows iOS design patterns.
 
-You are an expert in TypeScript, React Native, Expo, Nativewind v4, and React Native Reanimated 4 development.
+You are an expert in TypeScript, React Native, Expo, Tailwind CSS, Nativewind v4, and React Native Reanimated 4 development.
 
 ## Development Commands
 

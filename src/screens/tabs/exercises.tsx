@@ -18,7 +18,8 @@ import { ExerciseDetail, CategoryExerciseList } from '~/components/exercises';
 // Import new premium components
 import { PremiumCategoryGrid } from '~/components/exercises/PremiumCategoryGrid';
 import { PremiumStatsSection } from '~/components/exercises/PremiumStatsSection';
-import { useMutation } from 'convex/react';
+import { DailyExerciseCard } from '~/components/exercises/DailyExerciseCard';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import {
   useCurrentUser,
@@ -27,8 +28,12 @@ import {
 } from '~/hooks/useSharedData';
 import { useTranslation } from '~/hooks/useTranslation';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { colors } from '~/lib/design-tokens';
+import { colors, spacing } from '~/lib/design-tokens';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
+import {
+  getTimeBasedGreeting,
+  getMotivationalMessage,
+} from '~/lib/daily-exercise-utils';
 import type { Exercise } from '~/types';
 
 function getCategoryIcon(category: string): string {
@@ -126,6 +131,9 @@ function ExercisesScreen() {
   const recordCompletion = useMutation(api.userProgress.recordCompletion);
   const seedExercises = useMutation(api.seed.seedExercises);
 
+  // Get daily exercise
+  const dailyExerciseData = useQuery(api.exercises.getDailyExercise);
+
   // Store hydration stability guard - prevent renders during MMKV migration
   // CRITICAL FIX: Remove artificial delay that causes race conditions with animations
   const [isStoreStable, setIsStoreStable] = useState(true);
@@ -219,7 +227,7 @@ function ExercisesScreen() {
     setShowExerciseOverlay(false);
     setCurrentView('categories');
     setSelectedCategory('');
-    
+
     // Leave translateX at its last value; it will be re-initialized on next entry
   }, [translateX]);
 
@@ -300,6 +308,40 @@ function ExercisesScreen() {
   // Memoize title to prevent re-renders from translation changes
   const screenTitle = useMemo(() => t('exercises.title') || 'Exercises', [t]);
 
+  // Daily exercise data
+  const dailyExercise = useMemo(() => {
+    if (!dailyExerciseData || !isStoreStable) return null;
+
+    return {
+      id: dailyExerciseData._id,
+      title:
+        locale === 'ar' ? dailyExerciseData.titleAr : dailyExerciseData.title,
+      description:
+        locale === 'ar'
+          ? dailyExerciseData.descriptionAr
+          : dailyExerciseData.description,
+      duration: `${dailyExerciseData.duration} min`,
+      difficulty: dailyExerciseData.difficulty,
+      category: dailyExerciseData.category,
+      icon: getCategoryIcon(dailyExerciseData.category),
+      color: getCategoryColor(dailyExerciseData.category),
+      steps:
+        locale === 'ar'
+          ? dailyExerciseData.instructionsAr
+          : dailyExerciseData.instructions,
+      benefits: translatedBenefits[dailyExerciseData.category] || [],
+    };
+  }, [dailyExerciseData, locale, translatedBenefits, isStoreStable]);
+
+  const greeting = useMemo(() => getTimeBasedGreeting(locale), [locale]);
+  const motivationalMessage = useMemo(
+    () =>
+      dailyExercise
+        ? getMotivationalMessage(dailyExercise.category, locale)
+        : '',
+    [dailyExercise, locale]
+  );
+
   return (
     <>
       <DashboardLayout
@@ -309,6 +351,14 @@ function ExercisesScreen() {
         scrollable={true}
         contentStyle={dashboardContentStyle}
       >
+        {/* Daily Exercise Card */}
+        <DailyExerciseCard
+          exercise={dailyExercise}
+          onPress={() => dailyExercise ? handleExercisePress(dailyExercise) : () => {}}
+          greeting={greeting}
+          motivationalMessage={motivationalMessage}
+        />
+
         {/* Base layer - category grid always visible and mounted */}
         {useMemo(
           () => (

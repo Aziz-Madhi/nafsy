@@ -189,6 +189,10 @@
         "Lowers stress hormones",
         "Promotes calmness"
       ]
+    },
+    "dailyExercise": {
+      "title": "Today's Exercise",
+      "startNow": "Start Now"
     }
   },
   "profile": {

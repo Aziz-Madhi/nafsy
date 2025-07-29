@@ -42,7 +42,6 @@ export default function RootLayout() {
     'CrimsonPro-Italic-VariableFont': require('../../assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf'),
   });
 
-
   // Handle font loading completion
   React.useEffect(() => {
     if (fontsLoaded || fontError) {
