@@ -51,8 +51,7 @@ export default function TabsLayout() {
         tabBar={(props) => <MorphingTabBar {...props} />}
         screenOptions={{
           headerShown: false,
-          // Disable animation to prevent conflicts with exercise screen animations
-          animation: 'none',
+          animation: 'fade',
         }}
       >
         <Tabs.Screen

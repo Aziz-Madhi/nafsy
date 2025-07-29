@@ -92,7 +92,8 @@ src/
 ├── store/                 # Zustand stores with MMKV
 ├── lib/                   # Utilities and optimization tools
 │   ├── animations/        # Animation presets and utilities
-│   └── performance monitoring, MMKV, lazy loading
+│   ├── daily-exercise-utils.ts # Time-based greetings and daily exercise selection
+│   └── performance monitoring, MMKV, lazy loading, store factory
 ├── hooks/                 # Custom React hooks
 ├── config/                # Environment configuration
 ├── types/                 # TypeScript type definitions
@@ -103,16 +104,17 @@ src/
 
 **Modern Zustand + MMKV Implementation:**
 
-- **Store Factory Pattern**: `createPersistedStore()` factory for consistent MMKV persistence
+- **Store Factory Pattern**: `createPersistedStore()` factory in `~/lib/store-factory` for consistent MMKV persistence
 - **Primary Stores**:
-  - `useAppStore`: Global app state, themes, settings, language with smart theme resolution
-  - `useChatUIStore`: Chat UI state, session management, floating chat, typing indicators
+  - `useAppStore`: Global app state, themes, settings, language with smart theme resolution and system theme support
+  - `useChatUIStore`: Chat UI state, session management, floating chat, typing indicators, history sidebar
 - **MMKV Integration**:
   - Custom `mmkv-storage.ts` with encryption and error handling
   - Synchronous persistence with fallback mechanisms
   - Health checks and storage optimization
 - **Store Provider**: Simplified hydration with error boundaries and system theme listeners
 - **Optimized Selectors**: Shallow comparison selectors and action grouping for performance
+- **Session Management**: Async session switching with error handling for both main and vent chats
 
 ### Database Schema (Convex)
 
@@ -133,10 +135,11 @@ src/
 
 1. **AI Chat**: Two types - structured therapy sessions and quick emotional vents
 2. **Mood Tracking**: Daily mood logging with calendar visualization
-3. **Wellness Exercises**: Categorized exercises with progress tracking
-4. **Multilingual**: Full Arabic/English support
+3. **Wellness Exercises**: Categorized exercises with progress tracking and daily recommendations
+4. **Multilingual**: Full Arabic/English support with RTL layout
 5. **Real-time**: Live chat updates via Convex subscriptions
 6. **Offline Support**: MMKV caching for offline functionality
+7. **Daily Exercise System**: Personalized daily exercise selection with time-based greetings
 
 ## Code Style and Structure
 

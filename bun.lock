@@ -4,7 +4,6 @@
     "": {
       "name": "naf",
       "dependencies": {
-        "naf": ".",
         "@clerk/clerk-expo": "2.14.2",
         "@react-navigation/native": "^7.1.14",
         "@rn-primitives/avatar": "^1.2.0",
