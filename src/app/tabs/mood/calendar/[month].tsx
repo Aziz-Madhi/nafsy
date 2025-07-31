@@ -18,33 +18,26 @@ import {
   subMonths,
 } from 'date-fns';
 import { cn } from '~/lib/cn';
+import { colors } from '~/lib/design-tokens';
+import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 
-const moodColors: Record<string, string> = {
-  sad: '#B39DED',
-  anxious: '#F472B6',
-  neutral: '#FDE047',
-  happy: '#34D399',
-  angry: '#FB923C',
-};
+const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
+  const iconProps = { size, color: color || colors.neutral[700], fill: 'none' };
 
-const moodChartColors: Record<string, string> = {
-  sad: '#8B5CF6',
-  anxious: '#EF4444',
-  neutral: '#F59E0B',
-  happy: '#10B981',
-  angry: '#F97316',
-};
-
-const renderMoodIcon = (moodId: string, size: number = 32) => {
-  // Simple mood icons - you can enhance this with proper icon library
-  const icons: Record<string, string> = {
-    sad: '😢',
-    anxious: '😰',
-    neutral: '😐',
-    happy: '😊',
-    angry: '😠',
-  };
-  return icons[moodId] || '😐';
+  switch (moodId) {
+    case 'sad':
+      return <Frown {...iconProps} />;
+    case 'anxious':
+      return <Zap {...iconProps} />;
+    case 'neutral':
+      return <Minus {...iconProps} />;
+    case 'happy':
+      return <Smile {...iconProps} />;
+    case 'angry':
+      return <Flame {...iconProps} />;
+    default:
+      return <Minus {...iconProps} />;
+  }
 };
 
 export default function CalendarModal() {
@@ -142,15 +135,15 @@ export default function CalendarModal() {
               justifyContent: 'center',
               borderRadius: 12,
               backgroundColor: mood
-                ? moodColors[mood.mood]
+                ? colors.mood[mood.mood].primary
                 : isSelected
                   ? '#E0F2FE'
                   : isToday
                     ? '#F3F4F6'
                     : 'transparent',
               borderWidth: mood ? 2 : isSelected ? 2 : 0,
-              borderColor: mood ? moodChartColors[mood.mood] : '#2196F3',
-              shadowColor: mood ? moodChartColors[mood.mood] : '#000',
+              borderColor: mood ? colors.mood[mood.mood].dark : '#2196F3',
+              shadowColor: mood ? colors.mood[mood.mood].primary : '#000',
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: mood ? 0.2 : 0,
               shadowRadius: 2,
@@ -158,9 +151,7 @@ export default function CalendarModal() {
             }}
           >
             {mood ? (
-              <Text style={{ fontSize: 20 }}>
-                {renderMoodIcon(mood.mood, 20)}
-              </Text>
+              renderMoodIcon(mood.mood, 20, colors.neutral[900])
             ) : (
               <Text
                 variant="body"
@@ -285,20 +276,17 @@ export default function CalendarModal() {
                         }}
                       >
                         <View
-                          className="w-12 h-12 rounded-2xl items-center justify-center mr-3 border-2"
+                          className="w-12 h-12 rounded-2xl items-center justify-center mr-3 overflow-hidden"
                           style={{
-                            backgroundColor: moodColors[selectedMoodData.mood],
-                            borderColor: moodChartColors[selectedMoodData.mood],
-                            shadowColor: moodChartColors[selectedMoodData.mood],
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.2,
-                            shadowRadius: 3,
-                            elevation: 3,
+                            backgroundColor:
+                              colors.mood[selectedMoodData.mood].primary,
                           }}
                         >
-                          <Text style={{ fontSize: 22 }}>
-                            {renderMoodIcon(selectedMoodData.mood, 22)}
-                          </Text>
+                          {renderMoodIcon(
+                            selectedMoodData.mood,
+                            22,
+                            colors.neutral[900]
+                          )}
                         </View>
                         <Text
                           variant="body"

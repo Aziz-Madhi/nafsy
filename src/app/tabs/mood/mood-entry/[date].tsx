@@ -9,26 +9,55 @@ import { useMutation } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { useCurrentUser } from '~/hooks/useSharedData';
 import { MotiView } from 'moti';
-import { Heart } from 'lucide-react-native';
+import { Heart, Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
+import { colors } from '~/lib/design-tokens';
 
 const moods = [
-  { id: 'very-sad', label: 'Very Sad', value: 'sad', color: '#6366F1' },
-  { id: 'sad', label: 'Sad', value: 'sad', color: '#8B5CF6' },
-  { id: 'neutral', label: 'Neutral', value: 'neutral', color: '#F59E0B' },
-  { id: 'happy', label: 'Happy', value: 'happy', color: '#10B981' },
-  { id: 'very-happy', label: 'Very Happy', value: 'happy', color: '#EF4444' },
-];
+  { id: 'sad', label: 'Sad', value: 'sad', color: colors.mood.sad.primary },
+  {
+    id: 'anxious',
+    label: 'Anxious',
+    value: 'anxious',
+    color: colors.mood.anxious.primary,
+  },
+  {
+    id: 'neutral',
+    label: 'Neutral',
+    value: 'neutral',
+    color: colors.mood.neutral.primary,
+  },
+  {
+    id: 'happy',
+    label: 'Happy',
+    value: 'happy',
+    color: colors.mood.happy.primary,
+  },
+  {
+    id: 'angry',
+    label: 'Angry',
+    value: 'angry',
+    color: colors.mood.angry.primary,
+  },
+] as const;
 
-const renderMoodIcon = (moodId: string, size: number = 32) => {
-  const icons: Record<string, string> = {
-    'very-sad': '😭',
-    sad: '😢',
-    neutral: '😐',
-    happy: '😊',
-    'very-happy': '😄',
-  };
-  return icons[moodId] || '😐';
+const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
+  const iconProps = { size, color: color || colors.neutral[700], fill: 'none' };
+
+  switch (moodId) {
+    case 'sad':
+      return <Frown {...iconProps} />;
+    case 'anxious':
+      return <Zap {...iconProps} />;
+    case 'neutral':
+      return <Minus {...iconProps} />;
+    case 'happy':
+      return <Smile {...iconProps} />;
+    case 'angry':
+      return <Flame {...iconProps} />;
+    default:
+      return <Minus {...iconProps} />;
+  }
 };
 
 // Animated Mood Button Component using MOTI
@@ -60,13 +89,13 @@ function AnimatedMoodButton({
       style={{ width: '20%' }}
     >
       <MotiView
-        className={`mb-3 items-center justify-center ${
+        className={`mb-3 items-center justify-center overflow-hidden ${
           isSelected ? 'w-16 h-16 rounded-full' : ''
         }`}
         style={{
-          backgroundColor: isSelected ? mood.color + '20' : 'transparent',
-          borderWidth: isSelected ? 2 : 0,
-          borderColor: isSelected ? mood.color : 'transparent',
+          backgroundColor: isSelected
+            ? colors.mood[mood.id].primary
+            : 'transparent',
         }}
         animate={{
           scale: isPressed ? 0.9 : isSelected ? 1.05 : 1,
@@ -79,9 +108,11 @@ function AnimatedMoodButton({
           mass: 0.8,
         }}
       >
-        <Text style={{ fontSize: isSelected ? 36 : 42 }}>
-          {renderMoodIcon(mood.id, isSelected ? 36 : 42)}
-        </Text>
+        {renderMoodIcon(
+          mood.id,
+          isSelected ? 32 : 36,
+          colors.neutral[900]
+        )}
       </MotiView>
       <Text
         variant="body"
@@ -124,8 +155,12 @@ export default function MoodEntryModal() {
       setIsSaving(true);
       impactAsync(ImpactFeedbackStyle.Medium);
 
+      // Find the selected mood object to get the correct value for backend
+      const selectedMoodObj = moods.find((m) => m.id === selectedMood);
+      const moodValue = selectedMoodObj?.id || selectedMood;
+
       await createMood({
-        mood: selectedMood,
+        mood: moodValue as 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry',
         note: moodNote.trim(),
         createdAt: selectedDate.getTime(),
       });
@@ -140,7 +175,11 @@ export default function MoodEntryModal() {
   }, [selectedMood, moodNote, currentUser, createMood, selectedDate, isSaving]);
 
   return (
-    <SafeAreaView className="flex-1 bg-background" edges={['top']}>
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: '#F8F9FA' }}
+      edges={['top']}
+    >
       {/* Header */}
       <View className="flex-row items-center px-6 py-4 border-b border-border/20">
         <Pressable onPress={handleBack} className="mr-4">
@@ -158,14 +197,14 @@ export default function MoodEntryModal() {
 
       <View className="flex-1 p-6">
         <View
-          className="rounded-3xl p-6 border border-gray-200"
+          className="rounded-3xl p-6"
           style={{
             backgroundColor: 'rgba(90, 74, 58, 0.12)',
             shadowColor: '#000',
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.08,
-            shadowRadius: 6,
-            elevation: 4,
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.06,
+            shadowRadius: 8,
+            elevation: 3,
           }}
         >
           <Text
@@ -205,13 +244,13 @@ export default function MoodEntryModal() {
                 <View
                   className="flex-1 rounded-2xl p-4 border"
                   style={{
-                    backgroundColor: 'rgba(90, 74, 58, 0.08)',
-                    borderColor: 'rgba(90, 74, 58, 0.15)',
-                    shadowColor: '#5A4A3A',
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.08,
-                    shadowRadius: 8,
-                    elevation: 2,
+                    backgroundColor: '#F9FAFB',
+                    borderColor: '#E5E7EB',
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 1 },
+                    shadowOpacity: 0.05,
+                    shadowRadius: 4,
+                    elevation: 1,
                   }}
                 >
                   <TextInput

@@ -6,23 +6,7 @@ import { subDays, isSameDay, format } from 'date-fns';
 import { Text } from '~/components/ui/text';
 import { IconRenderer } from '~/components/ui/IconRenderer';
 import { MotiView, AnimatePresence } from 'moti';
-
-// Enhanced mood colors for better visibility
-const moodColors: Record<string, string> = {
-  sad: '#B39DED', // Ultra vibrant light purple
-  anxious: '#F472B6', // Ultra vibrant light pink
-  neutral: '#FDE047', // Ultra vibrant light yellow
-  happy: '#34D399', // Ultra vibrant light teal
-  angry: '#FB923C', // Ultra vibrant light orange
-};
-
-const moodChartColors: Record<string, string> = {
-  sad: '#8B5CF6',
-  anxious: '#EF4444',
-  neutral: '#F59E0B',
-  happy: '#10B981',
-  angry: '#F97316',
-};
+import { colors } from '~/lib/design-tokens';
 
 const moodNames: Record<string, string> = {
   sad: 'Sad',
@@ -80,7 +64,7 @@ export function WeekView({ moodData }: WeekViewProps) {
           <WeekDayDot
             key={index}
             day={day.dayName}
-            color={day.mood ? moodColors[day.mood.mood] : '#E5E7EB'}
+            color={day.mood ? colors.mood[day.mood.mood].primary : '#E5E7EB'}
             isToday={day.isToday}
             hasData={!!day.mood}
             onPress={() => handleDayPress(index)}
@@ -164,21 +148,16 @@ export function WeekView({ moodData }: WeekViewProps) {
 
               <View className="flex-row items-center mb-4">
                 <View
-                  className="w-14 h-14 rounded-2xl items-center justify-center mr-4 border-2"
+                  className="w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden"
                   style={{
-                    backgroundColor: moodColors[selectedDay.mood.mood],
-                    borderColor: moodChartColors[selectedDay.mood.mood],
-                    shadowColor: moodChartColors[selectedDay.mood.mood],
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.2,
-                    shadowRadius: 4,
-                    elevation: 3,
+                    backgroundColor: colors.mood[selectedDay.mood.mood].primary,
                   }}
                 >
                   <IconRenderer
                     iconType="mood"
                     iconName={selectedDay.mood.mood}
                     size={24}
+                    color={colors.neutral[900]}
                   />
                 </View>
                 <Text

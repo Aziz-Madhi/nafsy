@@ -13,6 +13,8 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
+import { colors } from '~/lib/design-tokens';
+import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 
 interface MoodData {
   mood: string;
@@ -21,23 +23,23 @@ interface MoodData {
   color: string;
 }
 
-const moodChartColors: Record<string, string> = {
-  sad: '#8B5CF6',
-  anxious: '#EF4444',
-  neutral: '#F59E0B',
-  happy: '#10B981',
-  angry: '#F97316',
-};
+const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
+  const iconProps = { size, color: color || colors.neutral[700], fill: 'none' };
 
-const renderMoodIcon = (moodId: string, size: number = 32) => {
-  const icons: Record<string, string> = {
-    sad: '😢',
-    anxious: '😰',
-    neutral: '😐',
-    happy: '😊',
-    angry: '😠',
-  };
-  return icons[moodId] || '😐';
+  switch (moodId) {
+    case 'sad':
+      return <Frown {...iconProps} />;
+    case 'anxious':
+      return <Zap {...iconProps} />;
+    case 'neutral':
+      return <Minus {...iconProps} />;
+    case 'happy':
+      return <Smile {...iconProps} />;
+    case 'angry':
+      return <Flame {...iconProps} />;
+    default:
+      return <Minus {...iconProps} />;
+  }
 };
 
 // Simple Mood Bar Chart Component
@@ -110,19 +112,13 @@ function SimpleMoodChart({
       <View
         style={{
           marginTop: 10,
-          backgroundColor: color + '20',
+          backgroundColor: colors.mood[mood]?.primary || color,
           borderRadius: 18,
           padding: 10,
-          borderWidth: 2,
-          borderColor: color + '40',
-          shadowColor: color,
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.2,
-          shadowRadius: 4,
-          elevation: 3,
+          overflow: 'hidden',
         }}
       >
-        <Text style={{ fontSize: 20 }}>{renderMoodIcon(mood, 20)}</Text>
+        {renderMoodIcon(mood, 20, colors.neutral[900])}
       </View>
 
       {/* Labels */}
@@ -211,7 +207,7 @@ export default function AnalyticsModal() {
         mood,
         count,
         percentage,
-        color: moodChartColors[mood] || '#7ED321',
+        color: colors.mood[mood]?.primary || '#7ED321',
       };
     });
   }, [moodData]);

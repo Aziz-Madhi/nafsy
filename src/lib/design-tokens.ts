@@ -51,6 +51,40 @@ export const colors = {
     },
   },
 
+  // Mood tracking color system - evidence-based color psychology
+  mood: {
+    sad: {
+      primary: '#6B7FDE', // Calming blue - associated with sadness but not too dark
+      light: '#E0E7FF', // Light background for cards
+      dark: '#4C5EBD', // Darker variant for borders/emphasis
+      background: '#F5F7FF', // Very light background
+    },
+    anxious: {
+      primary: '#9370DB', // Medium slate blue - calming purple for anxiety
+      light: '#F3F4F6', // Light background for cards
+      dark: '#6B7280', // Darker variant for borders/emphasis
+      background: '#F9FAFB', // Very light background
+    },
+    neutral: {
+      primary: '#94A3B8', // Cool gray-blue - represents emotional neutrality
+      light: '#E2E8F0', // Light background for cards
+      dark: '#64748B', // Darker variant for borders/emphasis
+      background: '#F8FAFC', // Very light background
+    },
+    happy: {
+      primary: '#FCD34D', // Warm yellow - universally associated with happiness
+      light: '#FEF3C7', // Light background for cards
+      dark: '#F59E0B', // Darker variant for borders/emphasis
+      background: '#FFFBEB', // Very light background
+    },
+    angry: {
+      primary: '#F87171', // Muted red - anger without being too aggressive
+      light: '#FEE2E2', // Light background for cards
+      dark: '#EF4444', // Darker variant for borders/emphasis
+      background: '#FEF2F2', // Very light background
+    },
+  },
+
   // Neutral system for backgrounds and text
   neutral: {
     50: '#FAFAFA',

@@ -13,6 +13,9 @@ import {
   Star,
   AlertTriangle,
   Zap,
+  Flame,
+  Frown,
+  Smile,
 } from 'lucide-react-native';
 
 interface IconRendererProps {
@@ -36,12 +39,12 @@ const categoryIconMap = {
 
 const moodIconMap = {
   'very-sad': CloudRain,
-  sad: TrendingDown,
+  sad: Frown,
   neutral: Minus,
-  happy: TrendingUp,
+  happy: Smile,
   'very-happy': Star,
-  anxious: AlertTriangle,
-  angry: Zap,
+  anxious: Zap,
+  angry: Flame,
 };
 
 export const IconRenderer = React.memo(function IconRenderer({
@@ -74,26 +77,9 @@ export const IconRenderer = React.memo(function IconRenderer({
     ...(fill && { fill }),
   };
 
-  // Special handling for mood icons with default colors/fills
+  // For mood icons, use the color passed in without any fill
   if (iconType === 'mood') {
-    switch (iconName) {
-      case 'very-sad':
-        return <IconComponent {...baseProps} color="#1F2937" fill="#93C5FD" />;
-      case 'sad':
-        return <IconComponent {...baseProps} color="#374151" fill="#DBEAFE" />;
-      case 'neutral':
-        return <IconComponent {...baseProps} color="#374151" strokeWidth={4} />;
-      case 'happy':
-        return <IconComponent {...baseProps} color="#065F46" fill="#A7F3D0" />;
-      case 'very-happy':
-        return <IconComponent {...baseProps} color="#DC2626" fill="#FEF3C7" />;
-      case 'anxious':
-        return <IconComponent {...baseProps} color="#7C2D12" fill="#FED7AA" />;
-      case 'angry':
-        return <IconComponent {...baseProps} color="#991B1B" fill="#FECACA" />;
-      default:
-        return <IconComponent {...baseProps} color="#374151" strokeWidth={4} />;
-    }
+    return <IconComponent {...baseProps} />;
   }
 
   return <IconComponent {...baseProps} />;

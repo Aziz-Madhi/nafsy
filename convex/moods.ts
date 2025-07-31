@@ -14,6 +14,7 @@ export const createMood = mutation({
       v.literal('angry')
     ),
     note: v.optional(v.string()),
+    createdAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
@@ -23,7 +24,7 @@ export const createMood = mutation({
       userId: user._id,
       mood: args.mood,
       note: args.note,
-      createdAt: Date.now(),
+      createdAt: args.createdAt || Date.now(),
     });
     return moodId;
   },
