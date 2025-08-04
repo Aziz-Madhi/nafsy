@@ -86,8 +86,14 @@ export const getTextAlign = (): 'left' | 'right' => {
   return isRTL() ? 'right' : 'left';
 };
 
-// Get flex direction based on locale
+// Get flex direction based on locale - now defaults to 'row' to keep layout consistent
+// Use getFlexDirectionRTL() when you explicitly want RTL layout behavior
 export const getFlexDirection = (): 'row' | 'row-reverse' => {
+  return 'row'; // Always return 'row' to keep layout direction consistent
+};
+
+// Get RTL-aware flex direction for components that explicitly want RTL layout behavior
+export const getFlexDirectionRTL = (): 'row' | 'row-reverse' => {
   return isRTL() ? 'row-reverse' : 'row';
 };
 

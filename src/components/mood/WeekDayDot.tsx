@@ -4,6 +4,7 @@ import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
 import { MotiPressable } from 'moti/interactions';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { IconRenderer } from '~/components/ui/IconRenderer';
 
 interface WeekDayDotProps {
   day: string;
@@ -13,6 +14,7 @@ interface WeekDayDotProps {
   hasData?: boolean;
   onPress?: () => void;
   isSelected?: boolean;
+  mood?: string;
 }
 
 export function WeekDayDot({
@@ -23,6 +25,7 @@ export function WeekDayDot({
   hasData = false,
   onPress,
   isSelected = false,
+  mood,
 }: WeekDayDotProps) {
   const dotStyle = React.useMemo(
     () => ({
@@ -88,7 +91,16 @@ export function WeekDayDot({
             elevation: hasData ? 4 : 0,
           }}
         >
-          {isToday && <View style={todayIndicatorStyle} />}
+          {hasData && mood ? (
+            <IconRenderer
+              iconType="mood"
+              iconName={mood}
+              size={size * 0.45}
+              color="#000000"
+            />
+          ) : isToday ? (
+            <View style={todayIndicatorStyle} />
+          ) : null}
         </View>
       </MotiPressable>
       <Text

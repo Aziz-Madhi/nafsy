@@ -6,34 +6,33 @@ import {
   isRTL,
   getTextDirection,
   getTextAlign,
-  getFlexDirection,
   type Language,
   type TranslationKeyPath,
 } from '../lib/i18n';
-import { useAppStore, useLanguage, useSettings } from '../store/useAppStore';
+import { useAppStore, useLanguage } from '../store/useAppStore';
 
 export interface TranslationHook {
   t: (key: TranslationKeyPath, options?: any) => string;
   locale: Language;
+  language: Language; // Added for backward compatibility
   isRTL: boolean;
   textDirection: 'ltr' | 'rtl';
   textAlign: 'left' | 'right';
-  flexDirection: 'row' | 'row-reverse';
+  // Removed flexDirection - use useRTLSupport() hook when RTL layout is needed
   setLanguage: (language: Language) => void;
 }
 
 export const useTranslation = (): TranslationHook => {
   // Use Zustand selectors for optimal performance
   const language = useLanguage();
-  const settings = useSettings();
   const updateSettings = useAppStore((state) => state.updateSettings);
-  const isStoreHydrated = useAppStore(
-    (state) => state.persist?.hasHydrated?.() ?? false
-  );
+
+  // Force component re-render when language changes
+  const [, forceUpdate] = useState({});
 
   // Initialize with safe defaults, prioritizing store values once hydrated
   const [locale, setLocaleState] = useState<Language>(() => {
-    if (isStoreHydrated && language) {
+    if (language) {
       return language;
     }
     try {
@@ -51,47 +50,32 @@ export const useTranslation = (): TranslationHook => {
     }
   });
 
-  // Sync with store once it's hydrated
-  useEffect(() => {
-    if (isStoreHydrated && language && language !== locale) {
-      try {
-        setLocale(language);
-        setLocaleState(language);
-        setRtlState(isRTL());
-      } catch (error) {
-        console.warn('Failed to sync locale with store:', error);
-      }
-    }
-  }, [isStoreHydrated, language, locale]);
-
-  // Update locale when store language changes
+  // Sync language changes and force re-render
   useEffect(() => {
     if (language && language !== locale) {
       try {
         setLocale(language);
         setLocaleState(language);
-        setRtlState(isRTL());
+        setRtlState(language === 'ar');
+        // Force all components using this hook to re-render
+        forceUpdate({});
       } catch (error) {
-        console.warn('Failed to update locale:', error);
+        console.warn('Failed to sync locale with store:', error);
       }
     }
   }, [language, locale]);
 
-  // Initialize locale from store on mount (with fallback)
+  // Initialize locale from store on mount
   useEffect(() => {
     const targetLanguage = language || 'en';
-    const currentI18nLocale = getCurrentLocale();
-
-    if (targetLanguage !== currentI18nLocale) {
-      try {
-        setLocale(targetLanguage);
-        setLocaleState(targetLanguage);
-        setRtlState(isRTL());
-      } catch (error) {
-        console.warn('Failed to initialize locale:', error);
-      }
+    try {
+      setLocale(targetLanguage);
+      setLocaleState(targetLanguage);
+      setRtlState(targetLanguage === 'ar');
+    } catch (error) {
+      console.warn('Failed to initialize locale:', error);
     }
-  }, [language]);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setLanguage = useCallback(
     (newLanguage: Language) => {
@@ -143,21 +127,16 @@ export const useTranslation = (): TranslationHook => {
     }
   };
 
-  const getFlexDirectionSafe = (): 'row' | 'row-reverse' => {
-    try {
-      return getFlexDirection();
-    } catch {
-      return rtlState ? 'row-reverse' : 'row';
-    }
-  };
+  // Removed getFlexDirectionSafe - flex direction is no longer part of main translation hook
 
   return {
     t: translate,
     locale: locale || 'en',
+    language: locale || 'en', // Added for backward compatibility
     isRTL: rtlState,
     textDirection: getTextDirectionSafe(),
     textAlign: getTextAlignSafe(),
-    flexDirection: getFlexDirectionSafe(),
+    // Removed flexDirection - use useRTLSupport() when explicit RTL layout is needed
     setLanguage,
   };
 };
@@ -168,15 +147,18 @@ export const useT = () => {
   return t;
 };
 
-// Hook specifically for RTL support
+// Hook specifically for RTL support - includes RTL-aware flex direction
 export const useRTLSupport = () => {
-  const { isRTL, textDirection, textAlign, flexDirection } = useTranslation();
+  const { isRTL, textDirection, textAlign } = useTranslation();
+
+  // Get RTL-aware flex direction for components that explicitly want RTL layout
+  const flexDirection = isRTL ? 'row-reverse' : 'row';
 
   return {
     isRTL,
     textDirection,
     textAlign,
-    flexDirection,
+    flexDirection, // RTL-aware flex direction for explicit RTL layout needs
     getMarginStart: (value: number) =>
       isRTL ? { marginRight: value } : { marginLeft: value },
     getMarginEnd: (value: number) =>

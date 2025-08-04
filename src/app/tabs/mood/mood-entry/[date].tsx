@@ -108,11 +108,7 @@ function AnimatedMoodButton({
           mass: 0.8,
         }}
       >
-        {renderMoodIcon(
-          mood.id,
-          isSelected ? 32 : 36,
-          colors.neutral[900]
-        )}
+        {renderMoodIcon(mood.id, isSelected ? 32 : 36, colors.neutral[900])}
       </MotiView>
       <Text
         variant="body"
@@ -240,79 +236,67 @@ export default function MoodEntryModal() {
                 duration: 150,
               }}
             >
-              <View className="flex-row items-center gap-3">
-                <View
-                  className="flex-1 rounded-2xl p-4 border"
+              <View
+                className="rounded-2xl p-4 border"
+                style={{
+                  backgroundColor: '#F9FAFB',
+                  borderColor: '#E5E7EB',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.05,
+                  shadowRadius: 4,
+                  elevation: 1,
+                }}
+              >
+                <TextInput
+                  value={moodNote}
+                  onChangeText={setMoodNote}
+                  placeholder="Share what's on your mind..."
+                  placeholderTextColor="#8B7355"
+                  multiline
+                  numberOfLines={3}
+                  maxLength={200}
+                  className="text-base"
                   style={{
-                    backgroundColor: '#F9FAFB',
-                    borderColor: '#E5E7EB',
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.05,
-                    shadowRadius: 4,
-                    elevation: 1,
+                    textAlignVertical: 'top',
+                    minHeight: 70,
+                    fontSize: 16,
+                    lineHeight: 22,
+                    color: '#2D3748',
+                    fontFamily: 'CrimsonPro-Regular',
+                  }}
+                />
+                <Text
+                  variant="caption1"
+                  className="text-right mt-1"
+                  style={{
+                    fontSize: 12,
+                    color: 'rgba(90, 74, 58, 0.6)',
                   }}
                 >
-                  <TextInput
-                    value={moodNote}
-                    onChangeText={setMoodNote}
-                    placeholder="Share what's on your mind..."
-                    placeholderTextColor="#8B7355"
-                    multiline
-                    numberOfLines={3}
-                    maxLength={200}
-                    className="text-base"
-                    style={{
-                      textAlignVertical: 'top',
-                      minHeight: 70,
-                      fontSize: 16,
-                      lineHeight: 22,
-                      color: '#2D3748',
-                      fontFamily: 'CrimsonPro-Regular',
-                    }}
-                  />
-                  <Text
-                    variant="caption1"
-                    className="text-right mt-1"
-                    style={{
-                      fontSize: 12,
-                      color: 'rgba(90, 74, 58, 0.6)',
-                    }}
-                  >
-                    {moodNote.length}/200
-                  </Text>
-                </View>
-
-                {/* Save Button */}
-                <MotiView
-                  animate={{
-                    scale: isSaving ? 0.9 : 1,
-                    rotate: isSaving ? '180deg' : '0deg',
-                  }}
-                  transition={{
-                    type: 'timing',
-                    duration: 150,
-                  }}
-                >
-                  <Pressable
-                    onPress={handleSaveMood}
-                    disabled={isSaving || !selectedMood}
-                    className={`w-14 h-14 rounded-2xl items-center justify-center ${
-                      isSaving || !selectedMood ? 'opacity-60' : ''
-                    }`}
-                    style={{
-                      backgroundColor: '#5A4A3A',
-                      shadowColor: '#5A4A3A',
-                      shadowOffset: { width: 0, height: 3 },
-                      shadowOpacity: 0.25,
-                      shadowRadius: 6,
-                      elevation: 4,
-                    }}
-                  >
-                    <Heart size={20} color="white" fill="white" />
-                  </Pressable>
-                </MotiView>
+                  {moodNote.length}/200
+                </Text>
               </View>
+
+              <Pressable
+                onPress={handleSaveMood}
+                disabled={isSaving || !selectedMood}
+                className={`py-4 rounded-2xl items-center mt-4 ${
+                  isSaving || !selectedMood ? 'opacity-60' : ''
+                }`}
+                style={{
+                  backgroundColor: colors.brand.oxfordBlue,
+                  shadowColor: colors.brand.oxfordBlue,
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }}
+              >
+                <Text variant="callout" className="text-white font-bold">
+                  {isSaving ? 'Saving...' : 'Save Mood'}
+                </Text>
+              </Pressable>
             </MotiView>
           )}
 

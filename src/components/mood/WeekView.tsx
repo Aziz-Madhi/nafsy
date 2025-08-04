@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View } from 'react-native';
+import { View, Pressable } from 'react-native';
 import { WeekDayDot } from './WeekDayDot';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { subDays, isSameDay, format } from 'date-fns';
@@ -44,6 +44,10 @@ export function WeekView({ moodData }: WeekViewProps) {
     setSelectedDayIndex(selectedDayIndex === index ? null : index);
   };
 
+  const handleCloseOverlay = () => {
+    setSelectedDayIndex(null);
+  };
+
   const selectedDay =
     selectedDayIndex !== null ? last7Days[selectedDayIndex] : null;
 
@@ -58,147 +62,207 @@ export function WeekView({ moodData }: WeekViewProps) {
   };
 
   return (
-    <View className="py-4">
-      <View className="flex-row justify-around">
-        {last7Days.map((day, index) => (
-          <WeekDayDot
-            key={index}
-            day={day.dayName}
-            color={day.mood ? colors.mood[day.mood.mood].primary : '#E5E7EB'}
-            isToday={day.isToday}
-            hasData={!!day.mood}
-            onPress={() => handleDayPress(index)}
-            isSelected={selectedDayIndex === index}
-          />
-        ))}
+    <>
+      <View className="py-4">
+        <View className="flex-row justify-around">
+          {last7Days.map((day, index) => (
+            <WeekDayDot
+              key={index}
+              day={day.dayName}
+              color={day.mood ? colors.mood[day.mood.mood].primary : '#E5E7EB'}
+              isToday={day.isToday}
+              hasData={!!day.mood}
+              onPress={() => handleDayPress(index)}
+              isSelected={selectedDayIndex === index}
+              mood={day.mood?.mood}
+            />
+          ))}
+        </View>
       </View>
 
+      {/* Overlay Detail View */}
       <AnimatePresence>
         {selectedDay && selectedDay.mood && (
-          <MotiView
-            key="insights-container"
-            from={{
-              opacity: 0,
-              translateY: -5,
+          <Pressable
+            onPress={handleCloseOverlay}
+            style={{
+              position: 'absolute',
+              top: 120,
+              left: 8,
+              right: 8,
+              zIndex: 1001,
             }}
-            animate={{
-              opacity: 1,
-              translateY: 0,
-            }}
-            exit={{
-              opacity: 0,
-              translateY: -5,
-            }}
-            transition={{
-              type: 'timing',
-              duration: 200,
-            }}
-            style={{ marginTop: 20, marginHorizontal: 8 }}
           >
-            {/* Triangular Pointer */}
             <MotiView
+              key="insights-container"
               from={{
                 opacity: 0,
+                translateY: -5,
               }}
               animate={{
                 opacity: 1,
-                ...getPointerPosition(),
+                translateY: 0,
+              }}
+              exit={{
+                opacity: 0,
+                translateY: -5,
               }}
               transition={{
                 type: 'timing',
-                duration: 150,
-              }}
-              style={{
-                position: 'absolute',
-                top: -8,
-                marginLeft: -8,
-                width: 0,
-                height: 0,
-                borderLeftWidth: 8,
-                borderRightWidth: 8,
-                borderBottomWidth: 8,
-                borderLeftColor: 'transparent',
-                borderRightColor: 'transparent',
-                borderBottomColor: 'rgba(90, 74, 58, 0.1)',
-                zIndex: 1,
-              }}
-            />
-
-            <View
-              style={{
-                padding: 24,
-                backgroundColor: 'rgba(90, 74, 58, 0.12)',
-                borderRadius: 24,
-                borderWidth: 1,
-                borderColor: '#E5E7EB',
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 3 },
-                shadowOpacity: 0.08,
-                shadowRadius: 6,
-                elevation: 4,
+                duration: 200,
               }}
             >
-              <Text
-                variant="subhead"
-                className="text-[#2D3748] font-bold mb-3"
-                style={{ fontSize: 16, letterSpacing: 0.3 }}
-              >
-                {format(selectedDay.date, 'EEEE, MMMM d')}
-              </Text>
+              {/* Triangular Pointer */}
+              <MotiView
+                from={{
+                  opacity: 0,
+                }}
+                animate={{
+                  opacity: 1,
+                  ...getPointerPosition(),
+                }}
+                transition={{
+                  type: 'timing',
+                  duration: 150,
+                }}
+                style={{
+                  position: 'absolute',
+                  top: -8,
+                  marginLeft: -8,
+                  width: 0,
+                  height: 0,
+                  borderLeftWidth: 8,
+                  borderRightWidth: 8,
+                  borderBottomWidth: 8,
+                  borderLeftColor: 'transparent',
+                  borderRightColor: 'transparent',
+                  borderBottomColor: '#F4F1ED',
+                  zIndex: 1,
+                }}
+              />
 
-              <View className="flex-row items-center mb-4">
-                <View
-                  className="w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden"
-                  style={{
-                    backgroundColor: colors.mood[selectedDay.mood.mood].primary,
-                  }}
-                >
-                  <IconRenderer
-                    iconType="mood"
-                    iconName={selectedDay.mood.mood}
-                    size={24}
-                    color={colors.neutral[900]}
-                  />
-                </View>
+              <View
+                style={{
+                  padding: 24,
+                  backgroundColor: '#F4F1ED',
+                  borderRadius: 24,
+                  borderWidth: 1,
+                  borderColor: '#E5E7EB',
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 8,
+                  elevation: 6,
+                }}
+              >
                 <Text
-                  variant="body"
-                  className="text-[#2D3748] font-bold"
+                  variant="subhead"
+                  className="text-[#2D3748] font-bold mb-3"
                   style={{ fontSize: 16, letterSpacing: 0.3 }}
                 >
-                  Feeling {moodNames[selectedDay.mood.mood]}
+                  {format(selectedDay.date, 'EEEE, MMMM d')}
                 </Text>
-              </View>
 
-              {selectedDay.mood.note ? (
-                <View className="bg-white/50 rounded-xl p-3">
-                  <Text
-                    variant="caption1"
-                    className="text-gray-600 font-medium mb-1"
-                    style={{ fontSize: 13 }}
+                <View className="flex-row items-center mb-4">
+                  <View
+                    className="w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden"
+                    style={{
+                      backgroundColor:
+                        colors.mood[selectedDay.mood.mood].primary,
+                    }}
                   >
-                    Note:
-                  </Text>
+                    <IconRenderer
+                      iconType="mood"
+                      iconName={selectedDay.mood.mood}
+                      size={24}
+                      color={colors.neutral[900]}
+                    />
+                  </View>
                   <Text
                     variant="body"
-                    className="text-[#2D3748]"
-                    style={{ fontSize: 15, lineHeight: 20 }}
+                    className="text-[#2D3748] font-bold"
+                    style={{ fontSize: 16, letterSpacing: 0.3 }}
                   >
-                    {selectedDay.mood.note}
+                    Feeling {moodNames[selectedDay.mood.mood]}
                   </Text>
                 </View>
-              ) : (
-                <Text
-                  variant="body"
-                  className="text-gray-500 italic font-medium"
-                  style={{ fontSize: 15 }}
-                >
-                  No notes for this day
-                </Text>
-              )}
-            </View>
-          </MotiView>
+
+                {selectedDay.mood.note ? (
+                  <View
+                    style={{
+                      backgroundColor: 'white',
+                      borderRadius: 16,
+                      padding: 16,
+                      borderWidth: 1,
+                      borderColor: 'rgba(90, 74, 58, 0.2)',
+                      shadowColor: 'rgba(90, 74, 58, 0.3)',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 4,
+                      elevation: 2,
+                    }}
+                  >
+                    <View
+                      style={{
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        marginBottom: 8,
+                      }}
+                    >
+                      <View
+                        style={{
+                          width: 4,
+                          height: 16,
+                          backgroundColor: 'rgba(90, 74, 58, 0.6)',
+                          borderRadius: 2,
+                          marginRight: 8,
+                        }}
+                      />
+                      <Text
+                        variant="caption1"
+                        className="text-[#5A4A3A] font-bold"
+                        style={{ fontSize: 13, letterSpacing: 0.5 }}
+                      >
+                        NOTE
+                      </Text>
+                    </View>
+                    <Text
+                      variant="body"
+                      className="text-[#2D3748]"
+                      style={{
+                        fontSize: 15,
+                        lineHeight: 22,
+                        fontStyle: 'italic',
+                      }}
+                    >
+                      "{selectedDay.mood.note}"
+                    </Text>
+                  </View>
+                ) : (
+                  <View
+                    style={{
+                      backgroundColor: 'rgba(255, 255, 255, 0.7)',
+                      borderRadius: 12,
+                      padding: 12,
+                      borderWidth: 1,
+                      borderColor: 'rgba(90, 74, 58, 0.15)',
+                      borderStyle: 'dashed',
+                    }}
+                  >
+                    <Text
+                      variant="body"
+                      className="text-gray-500 italic font-medium text-center"
+                      style={{ fontSize: 14 }}
+                    >
+                      No notes for this day
+                    </Text>
+                  </View>
+                )}
+              </View>
+            </MotiView>
+          </Pressable>
         )}
       </AnimatePresence>
-    </View>
+    </>
   );
 }

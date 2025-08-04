@@ -68,6 +68,21 @@ export const ChatScreen = memo(function ChatScreen({
 }: ChatScreenProps) {
   const flashListRef = useRef<FlashList<Message>>(null);
 
+  // Auto-scroll to bottom when messages change or new messages arrive
+  const scrollToBottom = useCallback(() => {
+    if (flashListRef.current && messages.length > 0) {
+      // Use setTimeout to ensure FlashList has rendered the new data
+      setTimeout(() => {
+        flashListRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  }, [messages.length]);
+
+  // Scroll to bottom when messages change (session switch or new messages)
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
   // Gesture handling
   const chatOffset = useSharedValue(0);
   const { width: screenWidth } = Dimensions.get('window');
@@ -121,7 +136,7 @@ export const ChatScreen = memo(function ChatScreen({
   const getItemType = useCallback((item: Message) => item.role, []);
 
   return (
-    <View className="flex-1 bg-[#F2FAF9]">
+    <View className="flex-1 bg-[#F8F9FA]">
       <Animated.View style={[chatAnimatedStyle, { flex: 1 }]}>
         <GestureDetector gesture={doubleTapGesture}>
           <View className="flex-1">

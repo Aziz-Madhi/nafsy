@@ -11,6 +11,7 @@ import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSegments } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
+import { useTranslation } from '~/hooks/useTranslation';
 
 // Calculate top padding for navigation bar only
 function useNavigationBarTopPadding(): number {
@@ -85,33 +86,51 @@ function ScreenHeader({
   headerCenter?: React.ReactNode;
   style?: ViewStyle;
 }) {
+  const { isRTL } = useTranslation();
+
   if (!title && !headerCenter && !headerLeft && !headerRight) return null;
 
   return (
     <View
       className="flex-row justify-between items-center px-6 py-1"
-      style={style}
+      style={[style, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
     >
-      {/* Left section - Title goes here */}
-      <View className="flex-1 items-start">
+      {/* Title section - positioned based on language direction */}
+      <View
+        className="flex-1"
+        style={{ alignItems: isRTL ? 'flex-start' : 'flex-start' }}
+      >
         {headerLeft || (
-          <View>
+          <View
+            style={{
+              alignItems: isRTL ? 'flex-start' : 'flex-start',
+              width: '100%',
+            }}
+          >
             {title && (
               <Text
                 className="text-[#5A4A3A]"
                 style={{
                   fontFamily: 'CrimsonPro-Bold',
-                  fontSize: 34,
+                  fontSize: 28, // Reduced from 34 to prevent wrapping
                   fontWeight: 'normal',
-                  // Ensure enough vertical space so glyph ascenders aren’t clipped
-                  lineHeight: 42,
+                  lineHeight: 34, // Reduced from 42 for better mobile spacing
+                  textAlign: isRTL ? 'right' : 'left',
+                  width: '100%',
                 }}
               >
                 {title}
               </Text>
             )}
             {subtitle && (
-              <Text variant="caption1" className="text-[#5A4A3A]/70 mt-1">
+              <Text
+                variant="caption1"
+                className="text-[#5A4A3A]/70 mt-1"
+                style={{
+                  textAlign: isRTL ? 'right' : 'left',
+                  width: '100%',
+                }}
+              >
                 {subtitle}
               </Text>
             )}
@@ -122,7 +141,7 @@ function ScreenHeader({
       {/* Center section */}
       <View className="flex-2 items-center">{headerCenter}</View>
 
-      {/* Right section */}
+      {/* Right section (becomes left in RTL) */}
       <View className="flex-1 items-end">{headerRight}</View>
     </View>
   );

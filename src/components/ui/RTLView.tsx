@@ -8,6 +8,15 @@ interface RTLViewProps extends ViewProps {
   ltrStyle?: any;
 }
 
+/**
+ * RTLView - Optional RTL-aware container component
+ *
+ * Use this component when you explicitly want different styles or layouts
+ * based on the current language direction. This is opt-in behavior.
+ *
+ * Note: After the RTL layout fix, most components should NOT need RTL layout changes.
+ * Text components automatically handle RTL text alignment without affecting overall layout.
+ */
 export function RTLView({
   children,
   style,
@@ -28,7 +37,15 @@ export function RTLView({
   );
 }
 
-// Helper component for RTL-aware flex direction
+/**
+ * RTLFlex - Optional RTL-aware flex direction component
+ *
+ * Use this component ONLY when you explicitly need the flex direction to change
+ * based on language direction. This is now opt-in behavior.
+ *
+ * Most UI components should maintain consistent layout regardless of language.
+ * Use this only for specific content like text flow or directional navigation.
+ */
 interface RTLFlexProps extends ViewProps {
   children: React.ReactNode;
   reverse?: boolean;
@@ -59,7 +76,14 @@ export function RTLFlex({
   );
 }
 
-// Helper component for RTL-aware text alignment
+/**
+ * RTLTextContainer - Optional RTL-aware container alignment
+ *
+ * Use this for containers that need different alignment based on text direction.
+ * This is now opt-in behavior - most containers should maintain consistent alignment.
+ *
+ * Note: Regular Text components handle their own RTL alignment automatically.
+ */
 interface RTLTextContainerProps extends ViewProps {
   children: React.ReactNode;
   align?: 'start' | 'end' | 'center';

@@ -1,6 +1,5 @@
 import React, { useMemo, useCallback, useState } from 'react';
 import { View, Pressable, TextInput } from 'react-native';
-import { router } from 'expo-router';
 import { DashboardLayout } from '~/components/ui/ScreenLayout';
 import { Text } from '~/components/ui/text';
 import { WeekView } from '~/components/mood/WeekView';
@@ -11,7 +10,6 @@ import {
   useCurrentUser,
 } from '~/hooks/useSharedData';
 import { useTranslation } from '~/hooks/useTranslation';
-import { format } from 'date-fns';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 import { colors } from '~/lib/design-tokens';
 import { MotiView } from 'moti';
@@ -51,6 +49,56 @@ const moods = [
     label: 'Angry',
     value: 'angry',
     color: colors.mood.angry.primary,
+  },
+] as const;
+
+// Encouraging messages configuration
+const encouragingMessages = [
+  {
+    id: 1,
+    prefix: 'Building',
+    highlight: 'SELF-AWARENESS',
+    suffix:
+      'Each mood entry reveals patterns that lead to deeper understanding.',
+  },
+  {
+    id: 2,
+    prefix: 'Discovering',
+    highlight: 'PATTERNS',
+    suffix: 'Your emotional patterns will guide your wellness journey.',
+  },
+  {
+    id: 3,
+    prefix: 'Finding',
+    highlight: 'CLARITY',
+    suffix: 'Regular mood tracking brings clarity to your emotional landscape.',
+  },
+  {
+    id: 4,
+    prefix: 'Tracking',
+    highlight: 'PROGRESS',
+    suffix: 'Your mood log is becoming a powerful tool for personal growth.',
+  },
+  {
+    id: 5,
+    prefix: 'Building',
+    highlight: 'HABITS',
+    suffix:
+      'This daily practice helps you understand yourself better each day.',
+  },
+  {
+    id: 6,
+    prefix: 'Experiencing',
+    highlight: 'GROWTH',
+    suffix:
+      'Every mood entry contributes to your emotional intelligence journey.',
+  },
+  {
+    id: 7,
+    prefix: '',
+    highlight: 'KEEP GOING!',
+    suffix:
+      'Your commitment to tracking moods is the foundation of emotional wellness.',
   },
 ] as const;
 
@@ -289,6 +337,14 @@ export default function MoodIndex() {
 
   const hasLoggedToday = !!todayMood;
 
+  // Select encouraging message based on day of week
+  const selectedEncouragingMessage = useMemo(() => {
+    const today = new Date().getDay(); // 0 = Sunday, 6 = Saturday
+    // Use day of week to select message (ensures same message throughout the day)
+    const messageIndex = today % encouragingMessages.length;
+    return encouragingMessages[messageIndex];
+  }, []);
+
   // Save mood handler
   const handleSaveMood = useCallback(async () => {
     if (!selectedMood || !currentUser || isSaving) return;
@@ -349,11 +405,14 @@ export default function MoodIndex() {
         </View>
 
         {/* Mood Logging Card */}
-        <View className="mb-4" style={{ marginHorizontal: 6 }}>
+        <View className="mb-6" style={{ marginHorizontal: 6 }}>
           <View
             className="rounded-3xl p-6 border border-gray-200"
             style={{
-              backgroundColor: 'rgba(90, 74, 58, 0.12)',
+              backgroundColor:
+                hasLoggedToday && todayMood
+                  ? `${colors.mood[todayMood.mood].primary}30`
+                  : 'rgba(90, 74, 58, 0.12)',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 4 },
               shadowOpacity: 0.1,
@@ -362,115 +421,73 @@ export default function MoodIndex() {
             }}
           >
             {hasLoggedToday ? (
-              // Today's mood logged view
-              <View>
-                <View className="flex-row items-center mb-5">
-                  {todayMood && (
-                    <View
-                      className="w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden"
-                      style={{
-                        backgroundColor: colors.mood[todayMood.mood].primary,
-                      }}
-                    >
-                      {renderMoodIcon(todayMood.mood, 28, colors.neutral[900])}
-                    </View>
-                  )}
-                  <View className="flex-1">
+              // Encouraging message after mood logged - matching base mood entry structure
+              <MotiView
+                from={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ type: 'timing', duration: 300 }}
+              >
+                <View className="items-center justify-center flex-1">
+                  {/* Prefix text */}
+                  {selectedEncouragingMessage.prefix && (
                     <Text
-                      variant="body"
+                      className="text-center mb-1"
                       style={{
-                        fontSize: 17,
-                        color: colors.neutral[900],
-                        fontWeight: '600',
-                        letterSpacing: -0.4,
-                      }}
-                    >
-                      Today&apos;s mood captured
-                    </Text>
-                    {todayMood && (
-                      <Text
-                        variant="caption1"
-                        style={{
-                          color: colors.neutral[600],
-                          fontSize: 15,
-                          fontWeight: '500',
-                          marginTop: 8,
-                        }}
-                        className="capitalize"
-                      >
-                        Feeling {todayMood.mood}
-                      </Text>
-                    )}
-                  </View>
-                  <Pressable
-                    onPress={() => {
-                      const today = format(new Date(), 'yyyy-MM-dd');
-                      router.push(`/tabs/mood/mood-entry/${today}`);
-                    }}
-                    className="px-4 py-2 rounded-full"
-                    style={({ pressed }) => ({
-                      backgroundColor: pressed
-                        ? colors.neutral[100]
-                        : colors.neutral[50],
-                      borderWidth: 1,
-                      borderColor: colors.neutral[200],
-                    })}
-                  >
-                    <Text
-                      variant="caption1"
-                      style={{
-                        color: colors.neutral[900],
-                        fontWeight: '600',
-                        fontSize: 15,
-                      }}
-                    >
-                      Edit
-                    </Text>
-                  </Pressable>
-                </View>
-
-                {todayMood?.note && (
-                  <View
-                    className="rounded-2xl p-4"
-                    style={{
-                      backgroundColor: 'rgba(90, 74, 58, 0.04)',
-                      borderWidth: 1,
-                      borderColor: 'rgba(90, 74, 58, 0.08)',
-                    }}
-                  >
-                    <View className="flex-row items-center mb-2">
-                      <View
-                        className="w-6 h-6 rounded-lg items-center justify-center mr-2"
-                        style={{ backgroundColor: 'rgba(90, 74, 58, 0.08)' }}
-                      >
-                        <Text style={{ fontSize: 12 }}>📝</Text>
-                      </View>
-                      <Text
-                        style={{
-                          fontSize: 13,
-                          fontWeight: '600',
-                          color: colors.neutral[600],
-                          letterSpacing: -0.2,
-                          textTransform: 'uppercase',
-                        }}
-                      >
-                        Today&apos;s reflection
-                      </Text>
-                    </View>
-                    <Text
-                      style={{
-                        fontSize: 16,
+                        fontFamily: 'CrimsonPro-Regular',
+                        fontSize: 18,
                         lineHeight: 24,
-                        color: colors.neutral[900],
-                        fontStyle: 'italic',
-                        letterSpacing: -0.3,
+                        color: colors.neutral[600],
+                        letterSpacing: 0.5,
                       }}
                     >
-                      {todayMood.note}
+                      {selectedEncouragingMessage.prefix}
                     </Text>
-                  </View>
-                )}
-              </View>
+                  )}
+
+                  {/* Highlighted key phrase */}
+                  <Text
+                    className="text-center mb-4"
+                    style={{
+                      fontFamily: 'CrimsonPro-Bold',
+                      fontSize: 32,
+                      lineHeight: 38,
+                      color: todayMood
+                        ? colors.mood[todayMood.mood].primary
+                        : '#059669',
+                      letterSpacing: 1.5,
+                    }}
+                  >
+                    {selectedEncouragingMessage.highlight}
+                  </Text>
+
+                  {/* Visual separator */}
+                  <View
+                    className="mb-4"
+                    style={{
+                      width: 40,
+                      height: 2,
+                      backgroundColor: todayMood
+                        ? `${colors.mood[todayMood.mood].primary}50`
+                        : 'rgba(5, 150, 105, 0.3)',
+                      borderRadius: 1,
+                    }}
+                  />
+
+                  {/* Supporting text */}
+                  <Text
+                    className="text-center px-6"
+                    style={{
+                      fontFamily: 'CrimsonPro-Italic-VariableFont',
+                      fontSize: 16,
+                      lineHeight: 24,
+                      color: colors.neutral[700],
+                      letterSpacing: 0,
+                    }}
+                  >
+                    {selectedEncouragingMessage.suffix}
+                  </Text>
+                </View>
+              </MotiView>
             ) : (
               // Mood selection view
               <View>
@@ -559,8 +576,8 @@ export default function MoodIndex() {
                         isSaving || !selectedMood ? 'opacity-60' : ''
                       }`}
                       style={{
-                        backgroundColor: '#5A4A3A',
-                        shadowColor: '#5A4A3A',
+                        backgroundColor: colors.brand.oxfordBlue,
+                        shadowColor: colors.brand.oxfordBlue,
                         shadowOffset: { width: 0, height: 2 },
                         shadowOpacity: 0.15,
                         shadowRadius: 4,

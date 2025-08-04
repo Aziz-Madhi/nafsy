@@ -107,6 +107,11 @@ export const colors = {
     info: '#3B82F6',
   },
 
+  // Brand colors
+  brand: {
+    oxfordBlue: '#002147',
+  },
+
   // Glass effect colors
   glass: {
     light: 'rgba(255, 255, 255, 0.25)',

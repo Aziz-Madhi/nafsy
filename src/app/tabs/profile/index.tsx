@@ -1,6 +1,11 @@
 import React, { useEffect, useState, useCallback } from 'react';
-import { View, Pressable, ActivityIndicator } from 'react-native';
-import { router } from 'expo-router';
+import {
+  View,
+  Pressable,
+  ActivityIndicator,
+  Switch,
+  ScrollView,
+} from 'react-native';
 import { ProfileLayout } from '~/components/ui/ScreenLayout';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
@@ -9,7 +14,12 @@ import { api } from '../../../../convex/_generated/api';
 import { Text } from '~/components/ui/text';
 import { Avatar } from '~/components/ui/avatar';
 import { SymbolView } from 'expo-symbols';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  FadeInDown,
+  useAnimatedStyle,
+  useSharedValue,
+  withSpring,
+} from 'react-native-reanimated';
 import {
   impactAsync,
   notificationAsync,
@@ -18,49 +28,133 @@ import {
 } from 'expo-haptics';
 import { cn } from '~/lib/cn';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useAppStore } from '~/store/app-store';
+import { router } from 'expo-router';
 
-// Quick Action Card Component
-function QuickActionCard({
-  title,
-  subtitle,
-  iconName,
-  iconColor,
-  onPress,
-}: {
-  title: string;
-  subtitle: string;
-  iconName: string;
-  iconColor: string;
-  onPress: () => void;
-}) {
+// Section Header Component - iOS native style
+function SectionHeader({ title }: { title: string }) {
   return (
-    <Pressable
-      onPress={onPress}
-      className="bg-white/80 rounded-2xl p-4 shadow-sm mb-3"
-      style={({ pressed }) => ({
-        opacity: pressed ? 0.8 : 1,
-      })}
+    <Text
+      variant="footnote"
+      className="text-[#8E8E93] mb-2 mt-4 px-4 uppercase tracking-wide font-medium"
     >
-      <View className="flex-row items-center">
-        <View
-          className="w-12 h-12 rounded-xl items-center justify-center mr-4"
-          style={{ backgroundColor: iconColor + '20' }}
+      {title}
+    </Text>
+  );
+}
+
+// Setting Row Component - iOS native list style
+function SettingRow({
+  icon,
+  label,
+  value,
+  onPress,
+  type = 'navigation',
+  switchValue,
+  onSwitchChange,
+  destructive = false,
+  isFirst = false,
+  isLast = false,
+}: {
+  icon?: string;
+  label: string;
+  value?: string;
+  onPress?: () => void;
+  type?: 'navigation' | 'switch';
+  switchValue?: boolean;
+  onSwitchChange?: (value: boolean) => void;
+  destructive?: boolean;
+  isFirst?: boolean;
+  isLast?: boolean;
+}) {
+  const scale = useSharedValue(1);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: scale.value }],
+  }));
+
+  const handlePressIn = () => {
+    scale.value = withSpring(0.98);
+  };
+
+  const handlePressOut = () => {
+    scale.value = withSpring(1);
+  };
+
+  return (
+    <Animated.View style={animatedStyle}>
+      <Pressable
+        onPress={type === 'navigation' ? onPress : undefined}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        className={cn(
+          'px-4 py-3.5 flex-row items-center',
+          isFirst && 'rounded-t-xl',
+          isLast && 'rounded-b-xl',
+          !isLast && 'border-b border-gray-200'
+        )}
+        style={{
+          backgroundColor: 'rgba(90, 74, 58, 0.12)',
+          ...(isFirst && { 
+            borderWidth: 1, 
+            borderColor: '#e5e7eb',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+            elevation: 3,
+          }),
+          ...(isLast && { 
+            borderWidth: 1, 
+            borderColor: '#e5e7eb',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.08,
+            shadowRadius: 4,
+            elevation: 3,
+          }),
+          ...(!isFirst && !isLast && {
+            borderLeftWidth: 1,
+            borderRightWidth: 1,
+            borderLeftColor: '#e5e7eb',
+            borderRightColor: '#e5e7eb',
+          }),
+        }}
+        disabled={type === 'switch'}
+      >
+        {icon && (
+          <SymbolView
+            name={icon as any}
+            size={20}
+            tintColor={destructive ? '#FF3B30' : '#007AFF'}
+            className="mr-3"
+          />
+        )}
+        <Text
+          variant="body"
+          className={cn('flex-1 text-[17px]', destructive && 'text-[#FF3B30]')}
         >
-          <SymbolView name={iconName} size={20} tintColor={iconColor} />
-        </View>
-
-        <View className="flex-1">
-          <Text variant="callout" className="font-semibold mb-1">
-            {title}
-          </Text>
-          <Text variant="body" className="text-muted-foreground">
-            {subtitle}
-          </Text>
-        </View>
-
-        <SymbolView name="chevron.right" size={20} tintColor="#9CA3AF" />
-      </View>
-    </Pressable>
+          {label}
+        </Text>
+        {type === 'navigation' ? (
+          <View className="flex-row items-center">
+            {value && (
+              <Text variant="body" className="text-[#8E8E93] mr-2 text-[17px]">
+                {value}
+              </Text>
+            )}
+            <SymbolView name="chevron.right" size={14} tintColor="#C7C7CC" />
+          </View>
+        ) : (
+          <Switch
+            value={switchValue}
+            onValueChange={onSwitchChange}
+            trackColor={{ false: '#E9E9EA', true: '#34C759' }}
+            thumbColor="white"
+          />
+        )}
+      </Pressable>
+    </Animated.View>
   );
 }
 
@@ -69,7 +163,15 @@ export default function ProfileIndex() {
   const { signOut, isSignedIn } = useAuth();
   const { user, isLoaded } = useUserSafe();
   const [isSigningOut, setIsSigningOut] = useState(false);
-  const { t } = useTranslation();
+  const { t, language, setLanguage } = useTranslation();
+
+  // ===== STATE MANAGEMENT =====
+  const theme = useAppStore((state) => state.settings.theme);
+  const notificationsEnabled = useAppStore(
+    (state) => state.settings.notificationsEnabled
+  );
+  const setTheme = useAppStore((state) => state.setTheme);
+  const updateSettings = useAppStore((state) => state.updateSettings);
 
   // ===== CONVEX: Server data =====
   const createUser = useMutation(api.users.createUser);
@@ -90,25 +192,43 @@ export default function ProfileIndex() {
     }
   }, [user, currentUser, createUser]);
 
-  // Navigation handlers
-  const handleAccountSettings = useCallback(() => {
+  // Settings handlers
+  const handleLanguageChange = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
-    router.push('/tabs/profile/account-settings');
+    const newLang = language === 'en' ? 'ar' : 'en';
+    setLanguage(newLang);
+  }, [language, setLanguage]);
+
+  const handleThemeChange = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    const themes = ['light', 'dark', 'system'] as const;
+    const currentIndex = themes.indexOf(theme);
+    const nextIndex = (currentIndex + 1) % themes.length;
+    setTheme(themes[nextIndex]);
+  }, [theme, setTheme]);
+
+  const handleNotificationsToggle = useCallback(
+    (value: boolean) => {
+      impactAsync(ImpactFeedbackStyle.Light);
+      updateSettings({ notificationsEnabled: value });
+    },
+    [updateSettings]
+  );
+
+  // Support handlers
+  const handleHelpCenter = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    router.push('/help-center');
   }, []);
 
-  const handlePrivacySettings = useCallback(() => {
+  const handleCrisisResources = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
-    router.push('/tabs/profile/privacy-settings');
+    router.push('/crisis-resources');
   }, []);
 
-  const handleSupport = useCallback(() => {
+  const handleFeedback = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
-    router.push('/tabs/profile/support');
-  }, []);
-
-  const handleEditProfile = useCallback(() => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    router.push('/tabs/profile/edit-profile');
+    router.push('/feedback');
   }, []);
 
   // Sign out handler
@@ -127,15 +247,26 @@ export default function ProfileIndex() {
     }
   }, [isSigningOut, signOut]);
 
-  // User info card component (stats section)
-  const userInfoCard = user ? (
+  // Account Section Component - Clean iOS style
+  const AccountSection = user ? (
     <Animated.View entering={FadeInDown.springify()}>
-      <View className="bg-white/80 rounded-2xl p-6 shadow-sm">
-        <View className="flex-row items-center">
-          <Avatar alt={user.fullName || 'User'} className="h-20 w-20 mr-4">
+      {/* User Info */}
+      <View 
+        className="rounded-xl mx-4 mb-2 border border-gray-200"
+        style={{
+          backgroundColor: 'rgba(90, 74, 58, 0.12)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 5,
+        }}
+      >
+        <View className="px-4 py-4 flex-row items-center">
+          <Avatar alt={user.fullName || 'User'} className="h-12 w-12 mr-3">
             <Avatar.Image source={{ uri: user.imageUrl }} />
             <Avatar.Fallback>
-              <Text variant="title3">
+              <Text variant="body" className="text-white">
                 {user.fullName?.charAt(0) ||
                   user.firstName?.charAt(0) ||
                   user.emailAddresses?.[0]?.emailAddress
@@ -145,43 +276,67 @@ export default function ProfileIndex() {
               </Text>
             </Avatar.Fallback>
           </Avatar>
-
           <View className="flex-1">
-            <Text variant="title3" className="mb-1">
+            <Text className="text-[17px] font-medium text-black mb-0.5">
               {user.fullName || 'Anonymous User'}
             </Text>
-            <Text variant="muted">
+            <Text className="text-[15px] text-[#8E8E93]">
               {user.emailAddresses?.[0]?.emailAddress}
             </Text>
           </View>
         </View>
+      </View>
 
-        {/* Stats */}
-        <View className="flex-row justify-around mt-6 pt-6 border-t border-border/50">
-          <View className="items-center">
-            <View className="flex-row items-center mb-1">
-              <SymbolView name="award.fill" size={16} tintColor="#2196F3" />
-              <Text variant="title3">7</Text>
+      {/* Stats Section */}
+      <View 
+        className="rounded-xl mx-4 mb-2 px-4 py-4 border border-gray-200"
+        style={{
+          backgroundColor: 'rgba(90, 74, 58, 0.12)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.1,
+          shadowRadius: 8,
+          elevation: 5,
+        }}
+      >
+        <Text className="text-[17px] font-medium text-black mb-4">
+          Usage Statistics
+        </Text>
+        <View className="flex-row justify-between">
+          <View className="flex-1 items-center">
+            <View className="bg-[#FF9500]/10 w-10 h-10 rounded-full items-center justify-center mb-2">
+              <SymbolView name="flame.fill" size={18} tintColor="#FF9500" />
             </View>
-            <Text variant="footnote" className="text-muted-foreground">
+            <Text className="text-[22px] font-semibold text-black mb-0.5">
+              7
+            </Text>
+            <Text className="text-[13px] text-[#8E8E93] text-center">
               {t('profile.stats.dayStreak')}
             </Text>
           </View>
-          <View className="items-center">
-            <View className="flex-row items-center mb-1">
-              <SymbolView name="heart.fill" size={16} tintColor="#2196F3" />
-              <Text variant="title3">24</Text>
+          <View className="flex-1 items-center">
+            <View className="bg-[#007AFF]/10 w-10 h-10 rounded-full items-center justify-center mb-2">
+              <SymbolView
+                name="bubble.left.fill"
+                size={18}
+                tintColor="#007AFF"
+              />
             </View>
-            <Text variant="footnote" className="text-muted-foreground">
+            <Text className="text-[22px] font-semibold text-black mb-0.5">
+              24
+            </Text>
+            <Text className="text-[13px] text-[#8E8E93] text-center">
               {t('profile.stats.sessions')}
             </Text>
           </View>
-          <View className="items-center">
-            <View className="flex-row items-center mb-1">
-              <Text className="text-primary mr-1">🧘</Text>
-              <Text variant="title3">3.5h</Text>
+          <View className="flex-1 items-center">
+            <View className="bg-[#34C759]/10 w-10 h-10 rounded-full items-center justify-center mb-2">
+              <SymbolView name="clock.fill" size={18} tintColor="#34C759" />
             </View>
-            <Text variant="footnote" className="text-muted-foreground">
+            <Text className="text-[22px] font-semibold text-black mb-0.5">
+              3.5h
+            </Text>
+            <Text className="text-[13px] text-[#8E8E93] text-center">
               {t('profile.stats.totalTime')}
             </Text>
           </View>
@@ -191,88 +346,84 @@ export default function ProfileIndex() {
   ) : null;
 
   return (
-    <ProfileLayout title={t('profile.title')} statsSection={userInfoCard}>
-      {/* Quick Actions */}
-      <View className="px-6">
-        <Text
-          variant="subhead"
-          className="mb-4 uppercase text-muted-foreground font-medium"
-        >
-          {t('profile.sections.quickActions') || 'Quick Actions'}
-        </Text>
+    <ProfileLayout title={t('profile.title')}>
+      <ScrollView
+        className="flex-1 bg-[#F8F9FA]"
+        showsVerticalScrollIndicator={false}
+        contentInsetAdjustmentBehavior="automatic"
+      >
+        {/* Account Section */}
+        {AccountSection}
 
-        <QuickActionCard
-          title={t('profile.sections.account')}
-          subtitle="Manage notifications, language, theme settings"
-          iconName="person.circle"
-          iconColor="#3B82F6"
-          onPress={handleAccountSettings}
-        />
+        {/* Settings Section */}
+        <SectionHeader title={t('profile.sections.settings')} />
+        <View className="mx-4 mb-2">
+          <SettingRow
+            icon="globe"
+            label={t('profile.settings.language')}
+            value={language === 'en' ? 'English' : 'العربية'}
+            onPress={handleLanguageChange}
+            isFirst={true}
+          />
+          <SettingRow
+            icon="moon"
+            label={t('profile.settings.theme')}
+            value={t(`profile.themes.${theme}`)}
+            onPress={handleThemeChange}
+            isLast={true}
+          />
+        </View>
 
-        <QuickActionCard
-          title="Edit Profile"
-          subtitle="Update your personal information and preferences"
-          iconName="pencil.circle"
-          iconColor="#10B981"
-          onPress={handleEditProfile}
-        />
+        {/* Support Section */}
+        <SectionHeader title={t('profile.sections.support')} />
+        <View className="mx-4 mb-2">
+          <SettingRow
+            icon="questionmark.circle"
+            label={t('profile.support.helpCenter')}
+            onPress={handleHelpCenter}
+            isFirst={true}
+          />
+          <SettingRow
+            icon="heart.circle"
+            label={t('profile.support.crisisResources')}
+            onPress={handleCrisisResources}
+          />
+          <SettingRow
+            icon="envelope"
+            label={t('profile.support.feedback')}
+            onPress={handleFeedback}
+            isLast={true}
+          />
+        </View>
 
-        <QuickActionCard
-          title={t('profile.sections.preferences')}
-          subtitle="Privacy settings and data management"
-          iconName="shield.fill"
-          iconColor="#8B5CF6"
-          onPress={handlePrivacySettings}
-        />
-
-        <QuickActionCard
-          title={t('profile.sections.support')}
-          subtitle="Get help, access crisis resources, and feedback"
-          iconName="questionmark.circle"
-          iconColor="#06B6D4"
-          onPress={handleSupport}
-        />
-      </View>
-
-      {/* Sign Out Button */}
-      <Animated.View entering={FadeInDown.springify()} className="mt-8 px-6">
+        {/* Sign Out Button */}
         <Pressable
           onPress={handleSignOut}
           disabled={isSigningOut}
-          className={cn(
-            'rounded-xl px-6 py-4 flex-row items-center justify-center',
-            isSigningOut ? 'bg-gray-400' : 'bg-destructive'
-          )}
+          className="mx-4 mb-4 bg-red-600 rounded-xl p-4 flex-row items-center justify-center"
         >
           {isSigningOut ? (
             <>
               <ActivityIndicator size="small" color="white" className="mr-2" />
-              <Text className="text-white font-medium">
+              <Text className="text-white text-[17px] font-bold">
                 {t('profile.signingOut') || 'Signing Out...'}
               </Text>
             </>
           ) : (
             <>
               <SymbolView
-                name="power"
-                size={20}
+                name="rectangle.portrait.and.arrow.right"
+                size={18}
                 tintColor="white"
                 className="mr-2"
               />
-              <Text className="text-white font-medium">
+              <Text className="text-white text-[17px] font-bold">
                 {t('profile.signOut') || 'Sign Out'}
               </Text>
             </>
           )}
         </Pressable>
-      </Animated.View>
-
-      {/* Version Info */}
-      <View className="items-center px-6" style={{ paddingBottom: 80 }}>
-        <Text variant="footnote" className="text-muted-foreground">
-          {t('profile.version')}
-        </Text>
-      </View>
+      </ScrollView>
     </ProfileLayout>
   );
 }

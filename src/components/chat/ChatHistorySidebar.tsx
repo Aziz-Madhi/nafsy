@@ -20,7 +20,7 @@ import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
-const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.85; // 85% of screen width
+const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width
 
 interface ChatHistorySidebarProps {
   visible: boolean;
@@ -269,7 +269,7 @@ export function ChatHistorySidebar({
             left: 0,
             bottom: 0,
             width: SIDEBAR_WIDTH,
-            backgroundColor: '#F2FAF9',
+            backgroundColor: '#F8F9FA',
             borderTopRightRadius: 25,
             borderBottomRightRadius: 25,
             shadowColor: '#000000',

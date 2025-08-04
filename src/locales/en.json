@@ -153,7 +153,6 @@
     },
     "duration": "Duration",
     "instructions": "Instructions",
-    "benefits": "Benefits",
     "startExercise": "Start Exercise",
     "completeExercise": "Complete Exercise",
     "exerciseCompleted": "Exercise completed successfully!",
@@ -200,7 +199,8 @@
     "sections": {
       "account": "Account",
       "preferences": "Preferences",
-      "support": "Support"
+      "support": "Support",
+      "settings": "Settings"
     },
     "settings": {
       "editProfile": "Edit Profile",
@@ -214,7 +214,8 @@
       "help": "Help & Support",
       "helpSubtitle": "Get help with the app",
       "crisis": "Crisis Resources",
-      "crisisSubtitle": "Emergency mental health support"
+      "crisisSubtitle": "Emergency mental health support",
+      "theme": "Theme"
     },
     "stats": {
       "dayStreak": "Day Streak",
@@ -225,7 +226,93 @@
       "english": "English",
       "arabic": "العربية"
     },
-    "version": "Nafsy v1.0.0"
+    "version": "Nafsy v1.0.0",
+    "signOut": "Sign Out",
+    "signingOut": "Signing Out...",
+    "themes": {
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "support": {
+      "helpCenter": "Help Center",
+      "crisisResources": "Crisis Resources",
+      "feedback": "Send Feedback"
+    }
+  },
+  "helpCenter": {
+    "title": "Help Center",
+    "searchPlaceholder": "Search for help...",
+    "quickActions": "Quick Actions",
+    "chatSupport": "Chat with Support",
+    "chatSupportDesc": "Get instant help from our support team",
+    "customerSupport": "Customer Support",
+    "chatGreeting": "Hello! I'm here to help. What can I assist you with today?",
+    "chatPlaceholder": "Type your message...",
+    "faq": "Frequently Asked Questions",
+    "faqs": {
+      "mood": {
+        "question": "How do I track my mood?",
+        "answer": "Navigate to the Mood tab and tap on today's date. Select the emotion that best represents how you're feeling and optionally add notes about your day."
+      },
+      "exercises": {
+        "question": "What are wellness exercises?",
+        "answer": "Wellness exercises are guided activities designed to improve your mental health. They include breathing exercises, mindfulness practices, journaling prompts, and gentle movement activities."
+      },
+      "privacy": {
+        "question": "Is my data private and secure?",
+        "answer": "Yes, your data is encrypted and stored securely. We follow industry best practices for data protection and never share your personal information with third parties."
+      },
+      "language": {
+        "question": "How do I change the app language?",
+        "answer": "Go to your Profile tab, tap on Settings, and select Language. You can switch between English and Arabic at any time."
+      },
+      "export": {
+        "question": "Can I export my mood data?",
+        "answer": "Currently, you can view your mood history in the Analytics section. Export functionality is coming in a future update."
+      },
+      "usage": {
+        "question": "How often should I use the app?",
+        "answer": "We recommend daily check-ins for mood tracking and completing at least one wellness exercise per day. However, use the app as much or as little as feels right for you."
+      }
+    }
+  },
+  "crisisResources": {
+    "title": "Crisis Resources",
+    "emergency": "EMERGENCY",
+    "immediateHelp": "If you are in immediate danger",
+    "callEmergency": "Please call emergency services (911) or go to your nearest emergency room",
+    "hotlines": "Crisis Hotlines",
+    "warningSigns": "Warning Signs",
+    "seekHelp": "Seek help immediately if you notice:",
+    "remember": "Remember",
+    "notAlone": "You are not alone. Help is available, and people care about you. Reaching out is a sign of strength, not weakness.",
+    "alertCall": "Call",
+    "alertCancel": "Cancel",
+    "confirmCall": "Are you sure you want to call {{phoneNumber}}?"
+  },
+  "feedback": {
+    "title": "Send Feedback",
+    "feedbackType": "Feedback Type",
+    "bugReport": "Bug Report",
+    "featureRequest": "Feature Request",
+    "improvement": "Improvement",
+    "other": "Other",
+    "rateExperience": "Rate Your Experience",
+    "ratingQuestion": "How would you rate your experience with Nafsy?",
+    "yourFeedback": "Your Feedback",
+    "subject": "Subject",
+    "messagePlaceholder": "Tell us more about your feedback...",
+    "emailOptional": "Email (optional - for follow-up)",
+    "emailPlaceholder": "your@email.com",
+    "submit": "Submit Feedback",
+    "submitting": "Submitting...",
+    "privacyNote": "Your feedback helps us improve Nafsy. We take your privacy seriously and will only use your email if you provide it for follow-up purposes.",
+    "missingInfo": "Missing Information",
+    "missingInfoDesc": "Please provide a subject and message for your feedback.",
+    "thankYou": "Thank You!",
+    "thankYouDesc": "Your feedback has been submitted successfully. We appreciate your input!",
+    "ok": "OK"
   },
   "notifications": {
     "moodReminder": "Time to track your mood!",

@@ -76,6 +76,7 @@ export const ChatMessageList = memo(function ChatMessageList({
     () => ({
       paddingHorizontal: horizontalPadding,
       paddingTop: 0,
+      paddingBottom: 40, // Add extra bottom padding to prevent text input overlap
     }),
     [horizontalPadding]
   );

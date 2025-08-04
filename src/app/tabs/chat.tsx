@@ -78,21 +78,46 @@ export default function ChatTab() {
     api.users.getCurrentUser,
     isSignedIn && isLoaded ? {} : 'skip'
   );
-  const mainChatMessages = useQuery(
-    api.mainChat.getMainChatMessages,
-    isSignedIn ? { limit: 50 } : 'skip'
-  );
-  const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
-  const createUser = useMutation(api.users.createUser);
   const serverMainSessionId = useQuery(
     api.mainChat.getCurrentMainSessionId,
     isSignedIn ? {} : 'skip'
   );
 
-  // Sync server session with local store
+  // Use the current session ID from store, fallback to server session ID
+  const activeSessionId = currentMainSessionId || serverMainSessionId;
+
+  console.log('🔍 Query params:', {
+    isSignedIn,
+    isLoaded,
+    activeSessionId,
+    currentMainSessionId,
+    serverMainSessionId,
+  });
+
+  // Memoize query args to ensure proper reactivity
+  const queryArgs = useMemo(() => {
+    if (!isSignedIn || !isLoaded || !activeSessionId) {
+      return 'skip' as const;
+    }
+    return {
+      limit: 50,
+      sessionId: activeSessionId,
+    };
+  }, [isSignedIn, isLoaded, activeSessionId]);
+
+  const mainChatMessages = useQuery(
+    api.mainChat.getMainChatMessages,
+    queryArgs
+  );
+
+  console.log('📨 Messages count:', mainChatMessages?.length || 0);
+  const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
+  const createUser = useMutation(api.users.createUser);
+
+  // Sync server session with local store - only on initial load
   useEffect(() => {
-    if (serverMainSessionId && serverMainSessionId !== currentMainSessionId) {
-      // Update store with server session ID
+    if (serverMainSessionId && !currentMainSessionId) {
+      // Only set server session if no local session is selected
       const { setCurrentMainSessionId } = useChatUIStore.getState();
       setCurrentMainSessionId(serverMainSessionId);
     }
@@ -164,10 +189,19 @@ export default function ChatTab() {
 
   const handleSessionSelect = useCallback(
     async (sessionId: string) => {
+      console.log('🔄 Switching to session:', sessionId);
+      console.log('📱 Current session ID before switch:', currentMainSessionId);
+
       // Clear any existing errors before starting
       setSessionError(null);
 
       const success = await switchToMainSession(sessionId);
+
+      console.log('✅ Session switch success:', success);
+      console.log(
+        '📱 Current session ID after switch:',
+        useChatUIStore.getState().currentMainSessionId
+      );
 
       if (success) {
         // Close sidebar on success
@@ -178,7 +212,12 @@ export default function ChatTab() {
         setHistorySidebarVisible(false);
       }
     },
-    [switchToMainSession, setHistorySidebarVisible, setSessionError]
+    [
+      switchToMainSession,
+      setHistorySidebarVisible,
+      setSessionError,
+      currentMainSessionId,
+    ]
   );
 
   // Note: handleSendMessage is now managed by MorphingTabBar
