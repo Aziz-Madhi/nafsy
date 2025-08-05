@@ -36,7 +36,7 @@ function SectionHeader({ title }: { title: string }) {
   return (
     <Text
       variant="footnote"
-      className="text-[#8E8E93] mb-2 mt-4 px-4 uppercase tracking-wide font-medium"
+      className="text-[#6B7280] mb-3 mt-6 px-4 uppercase tracking-wide font-semibold text-[13px]"
     >
       {title}
     </Text>
@@ -89,57 +89,37 @@ function SettingRow({
         onPressOut={handlePressOut}
         className={cn(
           'px-4 py-3.5 flex-row items-center',
-          isFirst && 'rounded-t-xl',
-          isLast && 'rounded-b-xl',
-          !isLast && 'border-b border-gray-200'
+          !isLast && 'border-b border-gray-100'
         )}
-        style={{
-          backgroundColor: 'rgba(90, 74, 58, 0.12)',
-          ...(isFirst && { 
-            borderWidth: 1, 
-            borderColor: '#e5e7eb',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 4,
-            elevation: 3,
-          }),
-          ...(isLast && { 
-            borderWidth: 1, 
-            borderColor: '#e5e7eb',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.08,
-            shadowRadius: 4,
-            elevation: 3,
-          }),
-          ...(!isFirst && !isLast && {
-            borderLeftWidth: 1,
-            borderRightWidth: 1,
-            borderLeftColor: '#e5e7eb',
-            borderRightColor: '#e5e7eb',
-          }),
-        }}
         disabled={type === 'switch'}
       >
         {icon && (
-          <SymbolView
-            name={icon as any}
-            size={20}
-            tintColor={destructive ? '#FF3B30' : '#007AFF'}
-            className="mr-3"
-          />
+          <View
+            className={cn(
+              'w-8 h-8 rounded-lg items-center justify-center mr-3',
+              destructive ? 'bg-red-50' : 'bg-blue-50'
+            )}
+          >
+            <SymbolView
+              name={icon as any}
+              size={20}
+              tintColor={destructive ? '#FF3B30' : '#007AFF'}
+            />
+          </View>
         )}
         <Text
           variant="body"
-          className={cn('flex-1 text-[17px]', destructive && 'text-[#FF3B30]')}
+          className={cn(
+            'flex-1 text-[17px] font-medium',
+            destructive && 'text-[#FF3B30]'
+          )}
         >
           {label}
         </Text>
         {type === 'navigation' ? (
           <View className="flex-row items-center">
             {value && (
-              <Text variant="body" className="text-[#8E8E93] mr-2 text-[17px]">
+              <Text variant="body" className="text-[#8E8E93] mr-2 text-[16px]">
                 {value}
               </Text>
             )}
@@ -250,23 +230,21 @@ export default function ProfileIndex() {
   // Account Section Component - Clean iOS style
   const AccountSection = user ? (
     <Animated.View entering={FadeInDown.springify()}>
-      {/* User Info */}
-      <View 
-        className="rounded-xl mx-4 mb-2 border border-gray-200"
+      {/* User Info Card */}
+      <View
+        className="mx-4 mb-4 bg-white rounded-2xl shadow-sm"
         style={{
-          backgroundColor: 'rgba(90, 74, 58, 0.12)',
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 5,
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.05,
+          shadowRadius: 3,
         }}
       >
-        <View className="px-4 py-4 flex-row items-center">
-          <Avatar alt={user.fullName || 'User'} className="h-12 w-12 mr-3">
+        <View className="px-4 py-5 flex-row items-center">
+          <Avatar alt={user.fullName || 'User'} className="h-16 w-16 mr-4">
             <Avatar.Image source={{ uri: user.imageUrl }} />
-            <Avatar.Fallback>
-              <Text variant="body" className="text-white">
+            <Avatar.Fallback className="bg-gradient-to-br from-purple-500 to-purple-600">
+              <Text variant="body" className="text-white text-xl font-semibold">
                 {user.fullName?.charAt(0) ||
                   user.firstName?.charAt(0) ||
                   user.emailAddresses?.[0]?.emailAddress
@@ -277,10 +255,10 @@ export default function ProfileIndex() {
             </Avatar.Fallback>
           </Avatar>
           <View className="flex-1">
-            <Text className="text-[17px] font-medium text-black mb-0.5">
+            <Text className="text-[19px] font-semibold text-black mb-1">
               {user.fullName || 'Anonymous User'}
             </Text>
-            <Text className="text-[15px] text-[#8E8E93]">
+            <Text className="text-[15px] text-[#6B7280]">
               {user.emailAddresses?.[0]?.emailAddress}
             </Text>
           </View>
@@ -288,67 +266,66 @@ export default function ProfileIndex() {
       </View>
 
       {/* Stats Section */}
-      <View 
-        className="rounded-xl mx-4 mb-2 px-4 py-4 border border-gray-200"
-        style={{
-          backgroundColor: 'rgba(90, 74, 58, 0.12)',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.1,
-          shadowRadius: 8,
-          elevation: 5,
-        }}
+      <Animated.View
+        entering={FadeInDown.delay(200).springify()}
+        className="mx-4 mb-4"
       >
-        <Text className="text-[17px] font-medium text-black mb-4">
+        <Text className="text-[15px] font-semibold text-[#6B7280] mb-3 uppercase tracking-wide">
           Usage Statistics
         </Text>
-        <View className="flex-row justify-between">
-          <View className="flex-1 items-center">
-            <View className="bg-[#FF9500]/10 w-10 h-10 rounded-full items-center justify-center mb-2">
-              <SymbolView name="flame.fill" size={18} tintColor="#FF9500" />
+        <View
+          className="bg-white rounded-2xl shadow-sm p-5"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 3,
+          }}
+        >
+          <View className="flex-row justify-between">
+            <View className="flex-1 items-center">
+              <View className="bg-[#FF9500]/10 w-14 h-14 rounded-full items-center justify-center mb-3">
+                <SymbolView name="flame.fill" size={24} tintColor="#FF9500" />
+              </View>
+              <Text className="text-[26px] font-bold text-black mb-1">7</Text>
+              <Text className="text-[13px] text-[#6B7280] text-center font-medium">
+                {t('profile.stats.dayStreak')}
+              </Text>
             </View>
-            <Text className="text-[22px] font-semibold text-black mb-0.5">
-              7
-            </Text>
-            <Text className="text-[13px] text-[#8E8E93] text-center">
-              {t('profile.stats.dayStreak')}
-            </Text>
-          </View>
-          <View className="flex-1 items-center">
-            <View className="bg-[#007AFF]/10 w-10 h-10 rounded-full items-center justify-center mb-2">
-              <SymbolView
-                name="bubble.left.fill"
-                size={18}
-                tintColor="#007AFF"
-              />
+            <View className="flex-1 items-center">
+              <View className="bg-[#007AFF]/10 w-14 h-14 rounded-full items-center justify-center mb-3">
+                <SymbolView
+                  name="bubble.left.fill"
+                  size={24}
+                  tintColor="#007AFF"
+                />
+              </View>
+              <Text className="text-[26px] font-bold text-black mb-1">24</Text>
+              <Text className="text-[13px] text-[#6B7280] text-center font-medium">
+                {t('profile.stats.sessions')}
+              </Text>
             </View>
-            <Text className="text-[22px] font-semibold text-black mb-0.5">
-              24
-            </Text>
-            <Text className="text-[13px] text-[#8E8E93] text-center">
-              {t('profile.stats.sessions')}
-            </Text>
-          </View>
-          <View className="flex-1 items-center">
-            <View className="bg-[#34C759]/10 w-10 h-10 rounded-full items-center justify-center mb-2">
-              <SymbolView name="clock.fill" size={18} tintColor="#34C759" />
+            <View className="flex-1 items-center">
+              <View className="bg-[#34C759]/10 w-14 h-14 rounded-full items-center justify-center mb-3">
+                <SymbolView name="clock.fill" size={24} tintColor="#34C759" />
+              </View>
+              <Text className="text-[26px] font-bold text-black mb-1">
+                3.5h
+              </Text>
+              <Text className="text-[13px] text-[#6B7280] text-center font-medium">
+                {t('profile.stats.totalTime')}
+              </Text>
             </View>
-            <Text className="text-[22px] font-semibold text-black mb-0.5">
-              3.5h
-            </Text>
-            <Text className="text-[13px] text-[#8E8E93] text-center">
-              {t('profile.stats.totalTime')}
-            </Text>
           </View>
         </View>
-      </View>
+      </Animated.View>
     </Animated.View>
   ) : null;
 
   return (
     <ProfileLayout title={t('profile.title')}>
       <ScrollView
-        className="flex-1 bg-[#F8F9FA]"
+        className="flex-1 bg-[#F5F5F7]"
         showsVerticalScrollIndicator={false}
         contentInsetAdjustmentBehavior="automatic"
       >
@@ -357,7 +334,15 @@ export default function ProfileIndex() {
 
         {/* Settings Section */}
         <SectionHeader title={t('profile.sections.settings')} />
-        <View className="mx-4 mb-2">
+        <View
+          className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 3,
+          }}
+        >
           <SettingRow
             icon="globe"
             label={t('profile.settings.language')}
@@ -376,7 +361,15 @@ export default function ProfileIndex() {
 
         {/* Support Section */}
         <SectionHeader title={t('profile.sections.support')} />
-        <View className="mx-4 mb-2">
+        <View
+          className="mx-4 mb-6 bg-white rounded-2xl shadow-sm overflow-hidden"
+          style={{
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.05,
+            shadowRadius: 3,
+          }}
+        >
           <SettingRow
             icon="questionmark.circle"
             label={t('profile.support.helpCenter')}
@@ -397,32 +390,47 @@ export default function ProfileIndex() {
         </View>
 
         {/* Sign Out Button */}
-        <Pressable
-          onPress={handleSignOut}
-          disabled={isSigningOut}
-          className="mx-4 mb-4 bg-red-600 rounded-xl p-4 flex-row items-center justify-center"
-        >
-          {isSigningOut ? (
-            <>
-              <ActivityIndicator size="small" color="white" className="mr-2" />
-              <Text className="text-white text-[17px] font-bold">
-                {t('profile.signingOut') || 'Signing Out...'}
-              </Text>
-            </>
-          ) : (
-            <>
-              <SymbolView
-                name="rectangle.portrait.and.arrow.right"
-                size={18}
-                tintColor="white"
-                className="mr-2"
-              />
-              <Text className="text-white text-[17px] font-bold">
-                {t('profile.signOut') || 'Sign Out'}
-              </Text>
-            </>
-          )}
-        </Pressable>
+        <Animated.View entering={FadeInDown.delay(400).springify()}>
+          <Pressable
+            onPress={async () => {
+              impactAsync(ImpactFeedbackStyle.Medium);
+              await handleSignOut();
+            }}
+            disabled={isSigningOut}
+            className="mx-4 mb-8 bg-red-500 rounded-2xl p-4 flex-row items-center justify-center shadow-sm active:scale-95 transition-transform"
+            style={{
+              shadowColor: '#FF3B30',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.15,
+              shadowRadius: 4,
+            }}
+          >
+            {isSigningOut ? (
+              <>
+                <ActivityIndicator
+                  size="small"
+                  color="white"
+                  className="mr-2"
+                />
+                <Text className="text-white text-[17px] font-semibold">
+                  {t('profile.signingOut') || 'Signing Out...'}
+                </Text>
+              </>
+            ) : (
+              <>
+                <SymbolView
+                  name="rectangle.portrait.and.arrow.right"
+                  size={20}
+                  tintColor="white"
+                  className="mr-2"
+                />
+                <Text className="text-white text-[17px] font-semibold">
+                  {t('profile.signOut') || 'Sign Out'}
+                </Text>
+              </>
+            )}
+          </Pressable>
+        </Animated.View>
       </ScrollView>
     </ProfileLayout>
   );

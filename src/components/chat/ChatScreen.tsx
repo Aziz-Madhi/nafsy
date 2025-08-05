@@ -19,7 +19,7 @@ import { ChatHeader } from './ChatHeader';
 import { SessionStatusDisplay } from './SessionStatusDisplay';
 import { ChatMessageList, Message } from './ChatMessageList';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
-import { FloatingChat } from './FloatingChat';
+import { FloatingChatMinimal } from './FloatingChatMinimal';
 import { ChatBubble } from './ChatComponents';
 import { useChatUIStore } from '~/store';
 
@@ -173,7 +173,7 @@ export const ChatScreen = memo(function ChatScreen({
       />
 
       {/* Floating Chat */}
-      <FloatingChat />
+      <FloatingChatMinimal />
     </View>
   );
 });

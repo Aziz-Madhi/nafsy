@@ -90,7 +90,7 @@ const SessionItem = ({
         className={cn(
           'rounded-2xl p-4 border-2',
           isActive
-            ? 'bg-[#2D7D6E]/10 border-[#2D7D6E]/30'
+            ? 'bg-[#2F6A8D]/10 border-[#2F6A8D]/30'
             : 'bg-white border-gray-100'
         )}
         style={{
@@ -103,12 +103,12 @@ const SessionItem = ({
       >
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center flex-1">
-            <View className="w-3 h-3 rounded-full mr-3 bg-[#2D7D6E]" />
+            <View className="w-3 h-3 rounded-full mr-3 bg-[#2F6A8D]" />
             <Text
               variant="subhead"
               className={cn(
                 'font-semibold flex-1',
-                isActive ? 'text-[#2D7D6E]' : 'text-gray-800'
+                isActive ? 'text-[#2F6A8D]' : 'text-gray-800'
               )}
               numberOfLines={1}
             >

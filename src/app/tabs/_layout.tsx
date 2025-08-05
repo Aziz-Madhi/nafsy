@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Tabs, router } from 'expo-router';
-import { SymbolView } from 'expo-symbols';
 import { View, ActivityIndicator } from 'react-native';
+import { MessageCircle, Heart, Activity, User } from 'lucide-react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -59,10 +59,10 @@ export default function TabsLayout() {
           options={{
             title: '',
             tabBarIcon: ({ color, focused }) => (
-              <SymbolView
-                name={focused ? 'bubble.left.fill' : 'bubble.left'}
+              <MessageCircle
                 size={28}
-                tintColor={color}
+                color={color}
+                fill={focused ? color : 'none'}
               />
             ),
           }}
@@ -72,11 +72,7 @@ export default function TabsLayout() {
           options={{
             title: '',
             tabBarIcon: ({ color, focused }) => (
-              <SymbolView
-                name={focused ? 'heart.fill' : 'heart'}
-                size={28}
-                tintColor={color}
-              />
+              <Heart size={28} color={color} fill={focused ? color : 'none'} />
             ),
           }}
         />
@@ -85,10 +81,10 @@ export default function TabsLayout() {
           options={{
             title: '',
             tabBarIcon: ({ color, focused }) => (
-              <SymbolView
-                name={focused ? 'leaf.fill' : 'leaf'}
+              <Activity
                 size={28}
-                tintColor={color}
+                color={color}
+                fill={focused ? color : 'none'}
               />
             ),
           }}
@@ -98,11 +94,7 @@ export default function TabsLayout() {
           options={{
             title: '',
             tabBarIcon: ({ color, focused }) => (
-              <SymbolView
-                name={focused ? 'person.fill' : 'person'}
-                size={28}
-                tintColor={color}
-              />
+              <User size={28} color={color} fill={focused ? color : 'none'} />
             ),
           }}
         />

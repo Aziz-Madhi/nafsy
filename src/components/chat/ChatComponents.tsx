@@ -56,12 +56,12 @@ export const ChatBubble = React.memo(function ChatBubble({
         <View
           className={cn(
             'px-4 py-3 rounded-2xl',
-            isUser ? 'bg-[#2D7D6E]' : 'bg-transparent'
+            isUser ? 'bg-[#2F6A8D]' : 'bg-transparent'
           )}
           style={{
             ...(isUser
               ? {
-                  shadowColor: '#2D7D6E',
+                  shadowColor: '#2F6A8D',
                   shadowOffset: { width: 0, height: 3 },
                   shadowOpacity: 0.2,
                   shadowRadius: 8,
@@ -212,15 +212,15 @@ export const TypingIndicator = React.memo(function TypingIndicator() {
         }}
       >
         <Animated.View
-          style={[dot1Style, { backgroundColor: '#2D7D6E' }]}
+          style={[dot1Style, { backgroundColor: '#2F6A8D' }]}
           className="w-3 h-3 rounded-full"
         />
         <Animated.View
-          style={[dot2Style, { backgroundColor: '#2D7D6E' }]}
+          style={[dot2Style, { backgroundColor: '#2F6A8D' }]}
           className="w-3 h-3 rounded-full mx-1.5"
         />
         <Animated.View
-          style={[dot3Style, { backgroundColor: '#2D7D6E' }]}
+          style={[dot3Style, { backgroundColor: '#2F6A8D' }]}
           className="w-3 h-3 rounded-full"
         />
       </View>
@@ -336,106 +336,101 @@ export const ChatInput = React.memo(function ChatInput({
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
-      <View className={cn('px-4 py-4', !hideBorder && 'bg-transparent')}>
-        <Animated.View
-          style={[
-            containerStyle,
-            {
-              // Elegant glassmorphism effect with subtle tint
-              backgroundColor: 'rgba(248, 250, 252, 0.95)', // Very subtle blue-gray tint
-              borderRadius: 28,
-              paddingHorizontal: 20,
-              paddingVertical: 14,
-              // Sophisticated shadow system
-              shadowColor: '#1e293b',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.08,
-              shadowRadius: 20,
-              elevation: 12,
-              // Subtle border for definition
-              borderWidth: 1,
-              borderColor: 'rgba(226, 232, 240, 0.8)',
-              minHeight: 66,
-            },
-          ]}
-        >
-          <View className="flex-row items-center">
-            {/* Text input - takes full width when button is hidden */}
+      <View
+        className={cn(hideBorder ? 'px-0 py-0' : 'px-4 py-3', 'bg-transparent')}
+      >
+        <View style={{ position: 'relative', minHeight: 48 }}>
+          {/* Text input - full width with button positioned absolutely inside */}
+          <Animated.View style={containerStyle}>
+            <TextInput
+              value={message}
+              onChangeText={setMessage}
+              placeholder={placeholder}
+              placeholderTextColor="#94a3b8" // More refined slate color
+              multiline
+              maxLength={1000}
+              editable={!disabled}
+              onFocus={handleFocus}
+              onBlur={handleBlur}
+              className="text-base"
+              style={{
+                fontFamily: 'CrimsonPro-Regular',
+                textAlignVertical: 'center',
+                minHeight: 48,
+                maxHeight: 80,
+                fontSize: 16,
+                lineHeight: 20,
+                color: '#1e293b', // Rich, sophisticated text color
+                fontWeight: '400',
+                paddingLeft: 16,
+                paddingRight: !hideButton ? 52 : 16, // Make space for the button
+                paddingTop: 12,
+                paddingBottom: 12,
+                backgroundColor: 'transparent',
+                borderRadius: 24,
+                borderWidth: 1,
+                borderColor: hideBorder
+                  ? 'rgba(226, 232, 240, 0.3)'
+                  : 'rgba(226, 232, 240, 0.6)',
+              }}
+            />
+          </Animated.View>
+
+          {/* Button positioned absolutely inside the input */}
+          {!hideButton && (
             <View
-              className={`flex-1 justify-center ${!hideButton ? 'mr-4' : ''}`}
+              style={{
+                position: 'absolute',
+                right: 8,
+                top: '50%',
+                transform: [{ translateY: -16 }], // Center vertically (32px height / 2)
+              }}
+              className="w-8 h-8"
             >
-              <TextInput
-                value={message}
-                onChangeText={setMessage}
-                placeholder={placeholder}
-                placeholderTextColor="#94a3b8" // More refined slate color
-                multiline
-                maxLength={1000}
-                editable={!disabled}
-                onFocus={handleFocus}
-                onBlur={handleBlur}
-                className="text-base"
-                style={{
-                  fontFamily: 'CrimsonPro-Regular',
-                  textAlignVertical: 'center',
-                  minHeight: 38,
-                  maxHeight: 100,
-                  fontSize: 16,
-                  lineHeight: 22,
-                  color: '#1e293b', // Rich, sophisticated text color
-                  fontWeight: '400',
+              {/* Always render both, control visibility with Moti */}
+              <MotiView
+                animate={{
+                  opacity: hasText ? 0 : 1,
+                  scale: hasText ? 0.9 : 1,
                 }}
-              />
-            </View>
+                transition={{
+                  type: 'timing',
+                  duration: 150,
+                }}
+                style={{ position: 'absolute', top: 0, left: 0 }}
+              >
+                <Pressable className="w-8 h-8 rounded-full items-center justify-center">
+                  <SymbolView name="mic.fill" size={20} tintColor="#6B7280" />
+                </Pressable>
+              </MotiView>
 
-            {/* Right side - Send/Microphone button (conditionally rendered) */}
-            {!hideButton && (
-              <View className="w-8 h-8 relative">
-                {/* Always render both, control visibility with Moti */}
-                <MotiView
-                  animate={{
-                    opacity: hasText ? 0 : 1,
-                    scale: hasText ? 0.9 : 1,
-                  }}
-                  transition={{
-                    type: 'timing',
-                    duration: 150,
-                  }}
-                  style={{ position: 'absolute', top: 0, left: 0 }}
-                >
-                  <Pressable className="w-8 h-8 rounded-full items-center justify-center">
-                    <SymbolView name="mic.fill" size={20} tintColor="#6B7280" />
+              <MotiView
+                animate={{
+                  opacity: hasText ? 1 : 0,
+                  scale: hasText ? 1 : 0.9,
+                }}
+                transition={{
+                  type: 'timing',
+                  duration: 150,
+                }}
+                style={{ position: 'absolute', top: 0, left: 0 }}
+              >
+                <Animated.View style={sendButtonStyle}>
+                  <Pressable
+                    onPress={handleSend}
+                    disabled={disabled}
+                    className="w-8 h-8 rounded-full items-center justify-center"
+                    style={{
+                      backgroundColor: '#2F6A8D',
+                    }}
+                  >
+                    <SymbolView name="arrow.up" size={18} tintColor="white" />
                   </Pressable>
-                </MotiView>
-
-                <MotiView
-                  animate={{
-                    opacity: hasText ? 1 : 0,
-                    scale: hasText ? 1 : 0.9,
-                  }}
-                  transition={{
-                    type: 'timing',
-                    duration: 150,
-                  }}
-                  style={{ position: 'absolute', top: 0, left: 0 }}
-                >
-                  <Animated.View style={sendButtonStyle}>
-                    <Pressable
-                      onPress={handleSend}
-                      disabled={disabled}
-                      className="w-8 h-8 rounded-full items-center justify-center"
-                      style={{
-                        backgroundColor: '#2D7D6E',
-                      }}
-                    >
-                      <SymbolView name="arrow.up" size={18} tintColor="white" />
-                    </Pressable>
-                  </Animated.View>
-                </MotiView>
-              </View>
-            )}
-          </View>
-        </Animated.View>
+                </Animated.View>
+              </MotiView>
+            </View>
+          )}
+        </View>
       </View>
     </KeyboardAvoidingView>
   );

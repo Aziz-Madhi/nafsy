@@ -9,6 +9,9 @@ export { default as SendingSpinner } from './SendingSpinner';
 
 export { ChatHistorySidebar } from './ChatHistorySidebar';
 export { FloatingChat } from './FloatingChat';
+export { FloatingChatSimplified } from './FloatingChatSimplified';
+export { FloatingChatPersonal } from './FloatingChatPersonal';
+export { FloatingChatMinimal } from './FloatingChatMinimal';
 
 // New modular components
 export { ChatScreen } from './ChatScreen';
