@@ -29,7 +29,7 @@ export default function TabsLayout() {
   // Show loading until auth is resolved
   if (!isLoaded) {
     return (
-      <SafeAreaView className="flex-1 bg-[#F2FAF9]" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-[#F4F1ED]" edges={['top']}>
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color={activeColor} />
           <Text variant="body" className="text-muted-foreground mt-4">
@@ -46,7 +46,7 @@ export default function TabsLayout() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F2FAF9' }}>
+    <View style={{ flex: 1, backgroundColor: '#F4F1ED' }}>
       <Tabs
         tabBar={(props) => <MorphingTabBar {...props} />}
         screenOptions={{

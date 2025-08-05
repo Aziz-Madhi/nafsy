@@ -201,7 +201,7 @@ export function MorphingTabBar({
   const containerStyle = useAnimatedStyle(() => ({
     height: containerHeight.value,
     backgroundColor:
-      backgroundColor.value > 0 ? 'rgba(255, 255, 255, 0.95)' : 'transparent',
+      backgroundColor.value > 0 ? '#F5F5F7' : 'transparent',
     borderRadius: borderRadius.value,
     shadowOpacity: backgroundColor.value * 0.1,
     transform: [{ translateX: tabTranslateX.value }],

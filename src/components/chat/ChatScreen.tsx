@@ -19,7 +19,7 @@ import { ChatHeader } from './ChatHeader';
 import { SessionStatusDisplay } from './SessionStatusDisplay';
 import { ChatMessageList, Message } from './ChatMessageList';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
-import { FloatingChatMinimal } from './FloatingChatMinimal';
+import FloatingChatMinimal from './FloatingChatMinimal';
 import { ChatBubble } from './ChatComponents';
 import { useChatUIStore } from '~/store';
 
@@ -86,20 +86,22 @@ export const ChatScreen = memo(function ChatScreen({
   // Gesture handling
   const chatOffset = useSharedValue(0);
   const { width: screenWidth } = Dimensions.get('window');
-  const { setFloatingChatVisible } = useChatUIStore();
+  const { setFloatingChatVisible, isFloatingChatVisible } = useChatUIStore();
 
   // Memoize gesture to prevent recreation on every render
+  // Only enable when floating chat is NOT visible to prevent conflicts
   const doubleTapGesture = useMemo(
     () =>
       Gesture.Tap()
         .numberOfTaps(2)
+        .enabled(!isFloatingChatVisible) // Disable when floating chat is visible
         .onStart(() => {
           runOnJS(impactAsync)(ImpactFeedbackStyle.Light);
         })
         .onEnd(() => {
           runOnJS(setFloatingChatVisible)(true);
         }),
-    [setFloatingChatVisible]
+    [setFloatingChatVisible, isFloatingChatVisible]
   );
 
   const chatAnimatedStyle = useAnimatedStyle(
@@ -136,7 +138,7 @@ export const ChatScreen = memo(function ChatScreen({
   const getItemType = useCallback((item: Message) => item.role, []);
 
   return (
-    <View className="flex-1 bg-[#F8F9FA]">
+    <View className="flex-1 bg-[#F4F1ED]">
       <Animated.View style={[chatAnimatedStyle, { flex: 1 }]}>
         <GestureDetector gesture={doubleTapGesture}>
           <View className="flex-1">

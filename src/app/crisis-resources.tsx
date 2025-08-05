@@ -6,6 +6,7 @@ import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTranslation } from '~/hooks/useTranslation';
+import { ProfileLayout } from '~/components/ui/ScreenLayout';
 
 // Resource Card Component
 function ResourceCard({
@@ -188,9 +189,9 @@ export default function CrisisResources() {
         ];
 
   return (
-    <View className="flex-1 bg-[#F2F2F7]">
-      {/* Header */}
-      <View className="bg-white pt-14 pb-4 px-6 border-b border-border/10">
+    <View className="flex-1 bg-[#F4F1ED]">
+      {/* Manual Header - matching ProfileLayout styling */}
+      <View className="bg-[#F4F1ED]" style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}>
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
@@ -199,7 +200,16 @@ export default function CrisisResources() {
           >
             <SymbolView name="chevron.left" size={24} tintColor="#2196F3" />
           </Pressable>
-          <Text variant="title2" className="flex-1">
+          <Text
+            className="text-[#5A4A3A] flex-1"
+            style={{
+              fontFamily: 'CrimsonPro-Bold',
+              fontSize: 28,
+              fontWeight: 'normal',
+              lineHeight: 34,
+              textAlign: 'left',
+            }}
+          >
             {t('crisisResources.title')}
           </Text>
         </View>

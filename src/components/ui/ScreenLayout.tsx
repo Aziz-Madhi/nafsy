@@ -271,7 +271,7 @@ export function ScreenLayout({
   onRefresh,
   statsSection,
   variant = 'default',
-  backgroundColor = '#F8F9FA', // Default light gray background
+  backgroundColor = '#F4F1ED', // Default warm beige background
   contentStyle,
   headerStyle,
   safeAreaStyle,
@@ -333,7 +333,7 @@ export const ScreenPresets = {
     variant: 'dashboard' as const,
     scrollable: true,
     animated: true,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F1ED',
   },
 
   // Chat layout
@@ -348,14 +348,14 @@ export const ScreenPresets = {
   profile: {
     variant: 'default' as const,
     scrollable: true,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F1ED',
   },
 
   // List layout (exercise details, etc.)
   list: {
     variant: 'list' as const,
     scrollable: false,
-    backgroundColor: '#F8F9FA',
+    backgroundColor: '#F4F1ED',
   },
 };
 

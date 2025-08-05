@@ -33,7 +33,7 @@ export function ExerciseDetail({
       presentationStyle="pageSheet"
       onRequestClose={onClose}
     >
-      <SafeAreaView className="flex-1 bg-[#F2FAF9]">
+      <SafeAreaView className="flex-1 bg-[#F4F1ED]">
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           {/* Header */}
           <View className="px-6 pt-4 pb-6">

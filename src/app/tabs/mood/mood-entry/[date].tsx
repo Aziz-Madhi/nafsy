@@ -173,7 +173,7 @@ export default function MoodEntryModal() {
   return (
     <SafeAreaView
       className="flex-1"
-      style={{ backgroundColor: '#F8F9FA' }}
+      style={{ backgroundColor: '#F4F1ED' }}
       edges={['top']}
     >
       {/* Header */}

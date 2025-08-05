@@ -81,7 +81,7 @@ function CategoryExerciseListComponent({
   }, [exercises, categoryId]);
 
   return (
-    <View className="flex-1 bg-[#F2FAF9]">
+    <View className="flex-1 bg-[#F4F1ED]">
       {/* Header */}
       <View className="flex-row justify-between items-center px-6 py-4 mb-4">
         <Pressable onPress={handleBackPress} className="flex-row items-center">

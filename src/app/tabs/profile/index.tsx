@@ -6,6 +6,7 @@ import {
   Switch,
   ScrollView,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { ProfileLayout } from '~/components/ui/ScreenLayout';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
@@ -55,6 +56,8 @@ function SettingRow({
   destructive = false,
   isFirst = false,
   isLast = false,
+  iconColor,
+  iconBgColor,
 }: {
   icon?: string;
   label: string;
@@ -66,6 +69,8 @@ function SettingRow({
   destructive?: boolean;
   isFirst?: boolean;
   isLast?: boolean;
+  iconColor?: string;
+  iconBgColor?: string;
 }) {
   const scale = useSharedValue(1);
 
@@ -95,15 +100,19 @@ function SettingRow({
       >
         {icon && (
           <View
-            className={cn(
-              'w-8 h-8 rounded-lg items-center justify-center mr-3',
-              destructive ? 'bg-red-50' : 'bg-blue-50'
-            )}
+            className="w-8 h-8 rounded-lg items-center justify-center mr-3"
+            style={{
+              backgroundColor: destructive 
+                ? '#FF3B30' + '15' 
+                : iconBgColor 
+                  ? iconBgColor + '15' 
+                  : '#007AFF15'
+            }}
           >
             <SymbolView
               name={icon as any}
               size={20}
-              tintColor={destructive ? '#FF3B30' : '#007AFF'}
+              tintColor={destructive ? '#FF3B30' : iconColor || '#007AFF'}
             />
           </View>
         )}
@@ -144,6 +153,7 @@ export default function ProfileIndex() {
   const { user, isLoaded } = useUserSafe();
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { t, language, setLanguage } = useTranslation();
+  const insets = useSafeAreaInsets();
 
   // ===== STATE MANAGEMENT =====
   const theme = useAppStore((state) => state.settings.theme);
@@ -232,8 +242,9 @@ export default function ProfileIndex() {
     <Animated.View entering={FadeInDown.springify()}>
       {/* User Info Card */}
       <View
-        className="mx-4 mb-4 bg-white rounded-2xl shadow-sm"
+        className="mx-4 mb-4 rounded-2xl shadow-sm"
         style={{
+          backgroundColor: 'rgba(90, 74, 58, 0.12)',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.05,
@@ -274,8 +285,9 @@ export default function ProfileIndex() {
           Usage Statistics
         </Text>
         <View
-          className="bg-white rounded-2xl shadow-sm p-5"
+          className="rounded-2xl shadow-sm p-5"
           style={{
+            backgroundColor: 'rgba(90, 74, 58, 0.12)',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.05,
@@ -325,9 +337,11 @@ export default function ProfileIndex() {
   return (
     <ProfileLayout title={t('profile.title')}>
       <ScrollView
-        className="flex-1 bg-[#F5F5F7]"
+        className="flex-1 bg-[#F4F1ED]"
         showsVerticalScrollIndicator={false}
-        contentInsetAdjustmentBehavior="automatic"
+        contentContainerStyle={{ 
+          paddingBottom: insets.bottom + 40 // Safe area + reduced tab bar clearance
+        }}
       >
         {/* Account Section */}
         {AccountSection}
@@ -335,8 +349,9 @@ export default function ProfileIndex() {
         {/* Settings Section */}
         <SectionHeader title={t('profile.sections.settings')} />
         <View
-          className="mx-4 mb-4 bg-white rounded-2xl shadow-sm overflow-hidden"
+          className="mx-4 mb-4 rounded-2xl shadow-sm overflow-hidden"
           style={{
+            backgroundColor: 'rgba(90, 74, 58, 0.12)',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.05,
@@ -344,26 +359,31 @@ export default function ProfileIndex() {
           }}
         >
           <SettingRow
-            icon="globe"
+            icon="globe.americas.fill"
             label={t('profile.settings.language')}
             value={language === 'en' ? 'English' : 'العربية'}
             onPress={handleLanguageChange}
             isFirst={true}
+            iconColor="#007AFF"
+            iconBgColor="#007AFF"
           />
           <SettingRow
-            icon="moon"
+            icon="moon.fill"
             label={t('profile.settings.theme')}
             value={t(`profile.themes.${theme}`)}
             onPress={handleThemeChange}
             isLast={true}
+            iconColor="#5856D6"
+            iconBgColor="#5856D6"
           />
         </View>
 
         {/* Support Section */}
         <SectionHeader title={t('profile.sections.support')} />
         <View
-          className="mx-4 mb-6 bg-white rounded-2xl shadow-sm overflow-hidden"
+          className="mx-4 mb-6 rounded-2xl shadow-sm overflow-hidden"
           style={{
+            backgroundColor: 'rgba(90, 74, 58, 0.12)',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
             shadowOpacity: 0.05,
@@ -371,21 +391,27 @@ export default function ProfileIndex() {
           }}
         >
           <SettingRow
-            icon="questionmark.circle"
+            icon="questionmark.circle.fill"
             label={t('profile.support.helpCenter')}
             onPress={handleHelpCenter}
             isFirst={true}
+            iconColor="#34C759"
+            iconBgColor="#34C759"
           />
           <SettingRow
-            icon="heart.circle"
+            icon="heart.fill"
             label={t('profile.support.crisisResources')}
             onPress={handleCrisisResources}
+            iconColor="#FF3B30"
+            iconBgColor="#FF3B30"
           />
           <SettingRow
-            icon="envelope"
+            icon="envelope.fill"
             label={t('profile.support.feedback')}
             onPress={handleFeedback}
             isLast={true}
+            iconColor="#FF9500"
+            iconBgColor="#FF9500"
           />
         </View>
 

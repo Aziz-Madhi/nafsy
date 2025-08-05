@@ -67,7 +67,7 @@ export class SafeErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F2FAF9',
+    backgroundColor: '#F4F1ED',
     justifyContent: 'center',
     alignItems: 'center',
   },

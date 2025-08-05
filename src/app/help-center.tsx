@@ -19,6 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
+import { ProfileLayout } from '~/components/ui/ScreenLayout';
 
 // FAQ Item Component
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -124,12 +125,9 @@ export default function HelpCenter() {
   };
 
   return (
-    <KeyboardAvoidingView
-      behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-      className="flex-1 bg-[#F2F2F7]"
-    >
-      {/* Header */}
-      <View className="bg-white pt-14 pb-4 px-6 border-b border-border/10">
+    <View className="flex-1 bg-[#F4F1ED]">
+      {/* Manual Header - matching ProfileLayout styling */}
+      <View className="bg-[#F4F1ED]" style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}>
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
@@ -138,13 +136,26 @@ export default function HelpCenter() {
           >
             <SymbolView name="chevron.left" size={24} tintColor="#2196F3" />
           </Pressable>
-          <Text variant="title2" className="flex-1">
+          <Text
+            className="text-[#5A4A3A] flex-1"
+            style={{
+              fontFamily: 'CrimsonPro-Bold',
+              fontSize: 28,
+              fontWeight: 'normal',
+              lineHeight: 34,
+              textAlign: 'left',
+            }}
+          >
             {t('helpCenter.title')}
           </Text>
         </View>
       </View>
 
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        className="flex-1"
+      >
+        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="p-6">
           {/* Search Bar */}
           <View className="bg-white rounded-xl px-4 py-3 mb-6 flex-row items-center">
@@ -239,16 +250,16 @@ export default function HelpCenter() {
             ))}
           </View>
         </View>
-      </ScrollView>
+        </ScrollView>
 
-      {/* Chat Modal */}
+        {/* Chat Modal */}
       {showChat && (
         <Animated.View
           entering={FadeInDown.springify()}
-          className="absolute inset-0 bg-white"
+          className="absolute inset-0 bg-[#F4F1ED]"
         >
           {/* Chat Header */}
-          <View className="bg-white pt-14 pb-4 px-6 border-b border-border/10">
+          <View className="bg-[#F4F1ED] pt-12 pb-4 px-6">
             <View className="flex-row items-center">
               <Pressable
                 onPress={() => setShowChat(false)}
@@ -257,7 +268,16 @@ export default function HelpCenter() {
               >
                 <SymbolView name="xmark" size={24} tintColor="#2196F3" />
               </Pressable>
-              <Text variant="title3" className="flex-1">
+              <Text 
+                className="text-[#5A4A3A] flex-1"
+                style={{
+                  fontFamily: 'CrimsonPro-Bold',
+                  fontSize: 28,
+                  fontWeight: 'normal',
+                  lineHeight: 34,
+                  textAlign: 'left',
+                }}
+              >
                 {t('helpCenter.customerSupport')}
               </Text>
             </View>
@@ -271,7 +291,7 @@ export default function HelpCenter() {
           </ScrollView>
 
           {/* Chat Input */}
-          <View className="bg-white border-t border-border/10 p-4">
+          <View className="bg-[#F4F1ED] border-t border-border/10 p-4">
             <View className="flex-row items-end">
               <TextInput
                 placeholder={t('helpCenter.chatPlaceholder')}
@@ -298,7 +318,8 @@ export default function HelpCenter() {
             </View>
           </View>
         </Animated.View>
-      )}
-    </KeyboardAvoidingView>
+        )}
+      </KeyboardAvoidingView>
+    </View>
   );
 }

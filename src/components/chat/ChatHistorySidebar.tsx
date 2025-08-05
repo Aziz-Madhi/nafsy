@@ -269,7 +269,7 @@ export function ChatHistorySidebar({
             left: 0,
             bottom: 0,
             width: SIDEBAR_WIDTH,
-            backgroundColor: '#F8F9FA',
+            backgroundColor: '#F4F1ED',
             borderTopRightRadius: 25,
             borderBottomRightRadius: 25,
             shadowColor: '#000000',
@@ -286,7 +286,7 @@ export function ChatHistorySidebar({
             <Text variant="title3" className="text-gray-800 font-bold mb-3">
               History
             </Text>
-            <View className="flex-row items-center bg-gray-50 rounded-xl px-4 py-3">
+            <View className="flex-row items-center bg-white rounded-xl px-4 py-3">
               <SymbolView
                 name="magnifyingglass"
                 size={18}
