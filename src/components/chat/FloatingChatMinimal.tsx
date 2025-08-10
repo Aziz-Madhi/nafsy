@@ -33,6 +33,7 @@ import { useChatUIStore } from '~/store';
 import { StreamingText } from './StreamingText';
 import { AnimatedWelcomeText } from './AnimatedWelcomeText';
 import { SPRING_PRESETS } from '~/lib/animations';
+import { useColors } from '~/hooks/useColors';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -90,8 +91,10 @@ const MinimalMessage = memo(function MinimalMessage({
             lineHeight: 26,
             textAlign: 'center',
             letterSpacing: 0.3,
-            fontFamily: isUser 
-              ? (Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto')
+            fontFamily: isUser
+              ? Platform.OS === 'ios'
+                ? 'SF Pro Display'
+                : 'Roboto'
               : 'CrimsonPro-Regular', // AI uses serif font for differentiation
           }}
           baseSpeed={25}
@@ -108,8 +111,10 @@ const MinimalMessage = memo(function MinimalMessage({
             lineHeight: 26,
             textAlign: 'center',
             letterSpacing: 0.3,
-            fontFamily: isUser 
-              ? (Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto')
+            fontFamily: isUser
+              ? Platform.OS === 'ios'
+                ? 'SF Pro Display'
+                : 'Roboto'
               : 'CrimsonPro-Regular', // AI uses serif font for differentiation
             ...(isUser
               ? {}
@@ -306,9 +311,11 @@ const EnhancedTypingIndicator = memo(function EnhancedTypingIndicator() {
 
 // Main floating chat component - minimal design
 export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
+  const colors = useColors();
+
   // Component mount tracking to prevent state updates on unmounted component
   const isMountedRef = React.useRef(true);
-  
+
   // Zustand store
   const visible = useChatUIStore((state) => state.isFloatingChatVisible);
   const { setFloatingChatVisible } = useChatUIStore();
@@ -321,7 +328,7 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
   const [isAITyping, setIsAITyping] = React.useState(false);
   const [isStreaming, setIsStreaming] = React.useState(false);
   const MAX_VISIBLE_MESSAGES = 6; // Show max 3 exchanges (6 messages)
-  
+
   // Store timeout refs for cleanup
   const timeoutRefs = React.useRef<NodeJS.Timeout[]>([]);
 
@@ -341,12 +348,7 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
 
   const inputContainerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: inputScale.value }],
-    shadowOpacity: interpolate(
-      inputGlow.value,
-      [0, 1],
-      [0.1, 0.3],
-      'clamp'
-    ),
+    shadowOpacity: interpolate(inputGlow.value, [0, 1], [0.1, 0.3], 'clamp'),
   }));
 
   const sendButtonStyle = useAnimatedStyle(() => ({
@@ -402,7 +404,7 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
       // Generate AI response with timeout tracking
       const timeoutId = setTimeout(async () => {
         if (!isMountedRef.current) return;
-        
+
         try {
           const aiResponse = getContextualResponse(message);
 
@@ -436,10 +438,9 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
           }
         }
       }, 1500);
-      
+
       // Track timeout for cleanup
       timeoutRefs.current.push(timeoutId);
-      
     } catch (error) {
       console.error('Error sending message:', error);
       if (isMountedRef.current) {
@@ -479,7 +480,7 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
         setIsAITyping(false);
         setIsStreaming(false);
       }
-      
+
       // Clear all pending timeouts
       timeoutRefs.current.forEach(clearTimeout);
       timeoutRefs.current = [];
@@ -491,11 +492,11 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
     return () => {
       // Mark component as unmounted
       isMountedRef.current = false;
-      
+
       // Clear all pending timeouts
       timeoutRefs.current.forEach(clearTimeout);
       timeoutRefs.current = [];
-      
+
       // Don't set animation values during unmount as it can cause crashes
       // The worklets may already be deallocated
     };
@@ -526,11 +527,11 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
 
   // Double tap tracking
   const lastTapRef = React.useRef(0);
-  
+
   const handleDoubleTap = () => {
     const now = Date.now();
     const DOUBLE_TAP_DELAY = 300;
-    
+
     if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
       handleClose();
     }
@@ -552,24 +553,24 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
         from={{ opacity: 0 }}
         animate={{ opacity: isAnimating ? 1 : 0 }}
         transition={{ type: 'timing', duration: 250 }}
-        style={{ 
+        style={{
           position: 'absolute',
           top: 0,
           left: 0,
           right: 0,
           bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.1)' 
+          backgroundColor: 'rgba(0, 0, 0, 0.1)',
         }}
       />
-      
+
       {/* Modal container - fade only, no scale to avoid box edges */}
       <MotiView
         from={{ opacity: 0 }}
         animate={{ opacity: isAnimating ? 1 : 0 }}
-        transition={{ 
-          type: 'timing', 
+        transition={{
+          type: 'timing',
           duration: 300,
-          delay: isAnimating ? 50 : 0 // Slight delay on enter for smoother effect
+          delay: isAnimating ? 50 : 0, // Slight delay on enter for smoother effect
         }}
         style={{
           position: 'absolute',
@@ -580,198 +581,191 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
           backgroundColor: 'rgba(20, 20, 20, 0.95)',
         }}
       >
-
-            <Pressable onPress={handleDoubleTap} style={{ flex: 1 }}>
-              <KeyboardAvoidingView
-                behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-                style={{ flex: 1 }}
+        <Pressable onPress={handleDoubleTap} style={{ flex: 1 }}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={{ flex: 1 }}
+          >
+            {/* Content container with delayed fade-in */}
+            <MotiView
+              from={{ opacity: 0 }}
+              animate={{ opacity: isAnimating ? 1 : 0 }}
+              transition={{
+                type: 'timing',
+                duration: 400,
+                delay: isAnimating ? 200 : 0, // Content appears after background
+              }}
+              style={{ flex: 1 }}
+            >
+              {/* Conversation area with iOS-style layout */}
+              <View
+                style={{
+                  flex: 1,
+                  justifyContent: 'center',
+                  paddingHorizontal: 24, // iOS spacing
+                  paddingBottom: 120,
+                  paddingTop: StatusBar.currentHeight || 44, // Safe area
+                }}
               >
-                {/* Content container with delayed fade-in */}
-                <MotiView
-                  from={{ opacity: 0 }}
-                  animate={{ opacity: isAnimating ? 1 : 0 }}
-                  transition={{ 
-                    type: 'timing', 
-                    duration: 400,
-                    delay: isAnimating ? 200 : 0 // Content appears after background
-                  }}
-                  style={{ flex: 1 }}
-                >
-                    {/* Conversation area with iOS-style layout */}
-                    <View
+                {/* Enhanced welcome state with animated text */}
+                {messages.length === 0 && (
+                  <Animated.View
+                    entering={FadeIn.duration(600).delay(300)}
+                    style={{ alignItems: 'center' }}
+                  >
+                    <AnimatedWelcomeText
+                      text="This is your private space. Share what's on your mind."
+                      style={{
+                        color: 'rgba(255, 255, 255, 0.6)',
+                        fontSize: 17,
+                        textAlign: 'center',
+                        lineHeight: 26,
+                        letterSpacing: 0.5,
+                        fontFamily:
+                          Platform.OS === 'ios' ? 'SF Pro Display' : 'Roboto',
+                      }}
+                      wordDelay={100}
+                    />
+                  </Animated.View>
+                )}
+
+                {/* Message history */}
+                {messages.length > 0 && (
+                  <MessageHistoryDisplay
+                    messages={messages}
+                    isStreaming={isStreaming}
+                    onStreamComplete={() => {
+                      setIsStreaming(false);
+                      impactAsync(ImpactFeedbackStyle.Light);
+                    }}
+                  />
+                )}
+
+                {/* Enhanced typing indicator */}
+                {isAITyping && (
+                  <Animated.View
+                    entering={FadeIn.duration(300)}
+                    style={{ marginTop: 20, alignItems: 'center' }}
+                  >
+                    <EnhancedTypingIndicator />
+                  </Animated.View>
+                )}
+              </View>
+
+              {/* iOS-style input area with native blur */}
+              <Animated.View
+                style={{
+                  position: 'absolute',
+                  bottom: Platform.OS === 'ios' ? 44 : 30, // iOS safe area
+                  left: 20,
+                  right: 20,
+                }}
+              >
+                {/* Input container */}
+                <View style={{ borderRadius: 32, overflow: 'hidden' }}>
+                  <Animated.View
+                    style={[
+                      {
+                        flexDirection: 'row',
+                        alignItems: 'center',
+                        backgroundColor: 'rgba(255, 255, 255, 0.05)',
+                        borderRadius: 32,
+                        paddingLeft: 20,
+                        paddingRight: 4,
+                        paddingVertical: 4,
+                        borderWidth: 0.5,
+                        borderColor: 'rgba(255, 255, 255, 0.15)',
+                        // iOS-style shadow
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 8,
+                        elevation: 4,
+                      },
+                      inputContainerStyle,
+                    ]}
+                  >
+                    <TextInput
+                      value={inputText}
+                      onChangeText={setInputText}
+                      placeholder="Type your thoughts..."
+                      placeholderTextColor="rgba(255, 255, 255, 0.4)"
                       style={{
                         flex: 1,
-                        justifyContent: 'center',
-                        paddingHorizontal: 24, // iOS spacing
-                        paddingBottom: 120,
-                        paddingTop: StatusBar.currentHeight || 44, // Safe area
+                        color: 'rgba(255, 255, 255, 0.95)',
+                        fontSize: 17, // iOS standard
+                        paddingVertical: 14,
+                        letterSpacing: -0.1, // iOS tight spacing
+                        fontFamily:
+                          Platform.OS === 'ios' ? 'SF Pro Text' : 'Roboto',
+                        fontWeight: '400',
                       }}
-                    >
-                      {/* Enhanced welcome state with animated text */}
-                      {messages.length === 0 && (
-                        <Animated.View
-                          entering={FadeIn.duration(600).delay(300)}
-                          style={{ alignItems: 'center' }}
-                        >
-                          <AnimatedWelcomeText
-                            text="This is your private space. Share what's on your mind."
-                            style={{
-                              color: 'rgba(255, 255, 255, 0.6)',
-                              fontSize: 17,
-                              textAlign: 'center',
-                              lineHeight: 26,
-                              letterSpacing: 0.5,
-                              fontFamily:
-                                Platform.OS === 'ios'
-                                  ? 'SF Pro Display'
-                                  : 'Roboto',
-                            }}
-                            wordDelay={100}
-                          />
-                        </Animated.View>
-                      )}
-
-                      {/* Message history */}
-                      {messages.length > 0 && (
-                        <MessageHistoryDisplay
-                          messages={messages}
-                          isStreaming={isStreaming}
-                          onStreamComplete={() => {
-                            setIsStreaming(false);
-                            impactAsync(ImpactFeedbackStyle.Light);
-                          }}
+                      autoFocus
+                      returnKeyType="send"
+                      onSubmitEditing={handleSend}
+                      onFocus={handleInputFocus}
+                      onBlur={handleInputBlur}
+                      maxLength={500}
+                      multiline={false}
+                      textAlignVertical="center"
+                    />
+                    <Animated.View style={sendButtonStyle}>
+                      <Pressable
+                        onPress={handleSend}
+                        onPressIn={() => {
+                          if (inputText.trim()) {
+                            sendButtonScale.value = withSpring(
+                              0.88,
+                              SPRING_PRESETS.quick
+                            );
+                          }
+                        }}
+                        onPressOut={() => {
+                          if (inputText.trim()) {
+                            sendButtonScale.value = withSpring(
+                              1,
+                              SPRING_PRESETS.bouncy
+                            );
+                          }
+                        }}
+                        disabled={!inputText.trim()}
+                        style={{
+                          width: 52, // Slightly larger for iOS
+                          height: 52,
+                          backgroundColor: inputText.trim()
+                            ? 'rgba(0, 122, 255, 0.8)' // iOS blue
+                            : 'rgba(255, 255, 255, 0.08)',
+                          borderRadius: 26,
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          borderWidth: inputText.trim() ? 0 : 0.5,
+                          borderColor: 'rgba(255, 255, 255, 0.15)',
+                          // iOS button shadow
+                          shadowColor: inputText.trim() ? '#007AFF' : '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: inputText.trim() ? 0.3 : 0.05,
+                          shadowRadius: inputText.trim() ? 4 : 2,
+                        }}
+                      >
+                        <SymbolView
+                          name="arrow.up"
+                          size={22}
+                          tintColor={
+                            inputText.trim()
+                              ? 'rgba(255, 255, 255, 0.95)'
+                              : 'rgba(255, 255, 255, 0.5)'
+                          }
+                          weight="semibold"
                         />
-                      )}
-
-                      {/* Enhanced typing indicator */}
-                      {isAITyping && (
-                        <Animated.View
-                          entering={FadeIn.duration(300)}
-                          style={{ marginTop: 20, alignItems: 'center' }}
-                        >
-                          <EnhancedTypingIndicator />
-                        </Animated.View>
-                      )}
-                    </View>
-
-                    {/* iOS-style input area with native blur */}
-                    <Animated.View
-                      style={{
-                        position: 'absolute',
-                        bottom: Platform.OS === 'ios' ? 44 : 30, // iOS safe area
-                        left: 20,
-                        right: 20,
-                      }}
-                    >
-                      {/* Input container */}
-                      <View style={{ borderRadius: 32, overflow: 'hidden' }}>
-                        <Animated.View
-                          style={[
-                            {
-                              flexDirection: 'row',
-                              alignItems: 'center',
-                              backgroundColor: 'rgba(255, 255, 255, 0.05)',
-                              borderRadius: 32,
-                              paddingLeft: 20,
-                              paddingRight: 4,
-                              paddingVertical: 4,
-                              borderWidth: 0.5,
-                              borderColor: 'rgba(255, 255, 255, 0.15)',
-                              // iOS-style shadow
-                              shadowColor: '#000',
-                              shadowOffset: { width: 0, height: 2 },
-                              shadowOpacity: 0.1,
-                              shadowRadius: 8,
-                              elevation: 4,
-                            },
-                            inputContainerStyle,
-                          ]}
-                        >
-                          <TextInput
-                            value={inputText}
-                            onChangeText={setInputText}
-                            placeholder="Type your thoughts..."
-                            placeholderTextColor="rgba(255, 255, 255, 0.4)"
-                            style={{
-                              flex: 1,
-                              color: 'rgba(255, 255, 255, 0.95)',
-                              fontSize: 17, // iOS standard
-                              paddingVertical: 14,
-                              letterSpacing: -0.1, // iOS tight spacing
-                              fontFamily:
-                                Platform.OS === 'ios'
-                                  ? 'SF Pro Text'
-                                  : 'Roboto',
-                              fontWeight: '400',
-                            }}
-                            autoFocus
-                            returnKeyType="send"
-                            onSubmitEditing={handleSend}
-                            onFocus={handleInputFocus}
-                            onBlur={handleInputBlur}
-                            maxLength={500}
-                            multiline={false}
-                            textAlignVertical="center"
-                          />
-                          <Animated.View style={sendButtonStyle}>
-                            <Pressable
-                              onPress={handleSend}
-                              onPressIn={() => {
-                                if (inputText.trim()) {
-                                  sendButtonScale.value = withSpring(
-                                    0.88,
-                                    SPRING_PRESETS.quick
-                                  );
-                                }
-                              }}
-                              onPressOut={() => {
-                                if (inputText.trim()) {
-                                  sendButtonScale.value = withSpring(
-                                    1,
-                                    SPRING_PRESETS.bouncy
-                                  );
-                                }
-                              }}
-                              disabled={!inputText.trim()}
-                              style={{
-                                width: 52, // Slightly larger for iOS
-                                height: 52,
-                                backgroundColor: inputText.trim()
-                                  ? 'rgba(0, 122, 255, 0.8)' // iOS blue
-                                  : 'rgba(255, 255, 255, 0.08)',
-                                borderRadius: 26,
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                borderWidth: inputText.trim() ? 0 : 0.5,
-                                borderColor: 'rgba(255, 255, 255, 0.15)',
-                                // iOS button shadow
-                                shadowColor: inputText.trim()
-                                  ? '#007AFF'
-                                  : '#000',
-                                shadowOffset: { width: 0, height: 1 },
-                                shadowOpacity: inputText.trim() ? 0.3 : 0.05,
-                                shadowRadius: inputText.trim() ? 4 : 2,
-                              }}
-                            >
-                              <SymbolView
-                                name="arrow.up"
-                                size={22}
-                                tintColor={
-                                  inputText.trim()
-                                    ? 'rgba(255, 255, 255, 0.95)'
-                                    : 'rgba(255, 255, 255, 0.5)'
-                                }
-                                weight="semibold"
-                              />
-                            </Pressable>
-                          </Animated.View>
-                        </Animated.View>
-                      </View>
+                      </Pressable>
                     </Animated.View>
-                </MotiView>
-              </KeyboardAvoidingView>
-            </Pressable>
-        </MotiView>
+                  </Animated.View>
+                </View>
+              </Animated.View>
+            </MotiView>
+          </KeyboardAvoidingView>
+        </Pressable>
+      </MotiView>
     </Modal>
   );
 });

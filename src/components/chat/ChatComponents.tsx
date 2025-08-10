@@ -28,6 +28,7 @@ import {
   usePressAnimation,
   SPRING_PRESETS,
 } from '~/lib/animations';
+import { useColors } from '~/hooks/useColors';
 
 // =====================
 // CHAT BUBBLE COMPONENT
@@ -40,6 +41,7 @@ export const ChatBubble = React.memo(function ChatBubble({
   index = 0,
   status,
 }: ChatBubbleProps) {
+  const colors = useColors();
   const shouldJustifyEnd = isUser;
 
   return (
@@ -56,12 +58,12 @@ export const ChatBubble = React.memo(function ChatBubble({
         <View
           className={cn(
             'px-4 py-3 rounded-2xl',
-            isUser ? 'bg-[#2F6A8D]' : 'bg-transparent'
+            isUser ? 'bg-primary' : 'bg-transparent'
           )}
           style={{
             ...(isUser
               ? {
-                  shadowColor: '#2F6A8D',
+                  shadowColor: colors.primary,
                   shadowOffset: { width: 0, height: 3 },
                   shadowOpacity: 0.2,
                   shadowRadius: 8,
@@ -73,7 +75,9 @@ export const ChatBubble = React.memo(function ChatBubble({
           <View className="relative">
             <Text
               variant="callout"
-              className={cn(isUser ? 'text-white' : 'text-[#2E3A59]')}
+              className={cn(
+                isUser ? 'text-primary-foreground' : 'text-foreground'
+              )}
               enableRTL={isUser}
             >
               {message}
@@ -84,7 +88,9 @@ export const ChatBubble = React.memo(function ChatBubble({
                 variant="footnote"
                 className={cn(
                   'mt-2',
-                  isUser ? 'text-white/70' : 'text-[#2E3A59]/70'
+                  isUser
+                    ? 'text-primary-foreground/70'
+                    : 'text-muted-foreground'
                 )}
                 enableRTL={isUser}
               >

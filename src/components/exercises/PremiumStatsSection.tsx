@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Pressable } from 'react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Text } from '~/components/ui/text';
-import { colors, spacing, typography } from '~/lib/design-tokens';
+import { useColors } from '~/hooks/useColors';
 
 interface PremiumStatsSectionProps {
   completionsThisWeek: number;
@@ -28,6 +28,8 @@ function StatCard({
   index: number;
   onPress?: () => void;
 }) {
+  const colors = useColors();
+
   const handlePress = () => {
     impactAsync(ImpactFeedbackStyle.Light);
     onPress?.();
@@ -36,12 +38,10 @@ function StatCard({
   return (
     <View style={{ flex: 1, marginHorizontal: 6 }}>
       <Pressable
+        className="rounded-2xl overflow-hidden bg-card"
         style={{
-          borderRadius: 20,
-          overflow: 'hidden',
           height: 120,
-          backgroundColor: 'rgba(90, 74, 58, 0.12)',
-          shadowColor: '#000',
+          shadowColor: colors.shadow,
           shadowOffset: { width: 0, height: 2 },
           shadowOpacity: 0.05,
           shadowRadius: 8,
@@ -57,12 +57,8 @@ function StatCard({
           {/* Header */}
           <View>
             <Text
+              className="text-foreground opacity-80 text-xs font-semibold uppercase tracking-wide"
               style={{
-                ...typography.caption1,
-                color: '#5A4A3A',
-                fontWeight: '600',
-                opacity: 0.8,
-                textTransform: 'uppercase',
                 letterSpacing: 0.5,
               }}
               numberOfLines={1}
@@ -74,23 +70,14 @@ function StatCard({
           {/* Value */}
           <View style={{ alignItems: 'flex-start' }}>
             <Text
-              style={{
-                ...typography.largeTitle,
-                color: '#5A4A3A',
-                fontWeight: '800',
-              }}
+              className="text-foreground text-3xl font-extrabold"
               numberOfLines={1}
             >
               {value}
             </Text>
             {subtitle && (
               <Text
-                style={{
-                  ...typography.caption1,
-                  color: '#5A4A3A',
-                  fontWeight: '500',
-                  marginTop: 2,
-                }}
+                className="text-foreground font-medium mt-0.5 text-xs"
                 numberOfLines={1}
               >
                 {subtitle}
@@ -141,8 +128,7 @@ function InsightBadge({ text, index }: { text: string; index: number }) {
     >
       <Text
         style={{
-          ...typography.caption1,
-          color: colors.semantic.success,
+          color: colors.success,
           fontWeight: '600',
         }}
       >
@@ -158,6 +144,7 @@ export function PremiumStatsSection({
   totalCompletions = 0,
   weeklyGoal = 7,
 }: PremiumStatsSectionProps) {
+  const colors = useColors();
   const weekProgress = completionsThisWeek / weeklyGoal;
 
   const getStreakMessage = (streak: number) => {
@@ -178,7 +165,7 @@ export function PremiumStatsSection({
 
   return (
     // Reduce bottom margin to align spacing with adjacent cards (now 8px)
-    <View style={{ marginBottom: spacing.sm }}>
+    <View className="mb-2">
       {/* Main Stats Cards */}
       <View style={{ flexDirection: 'row', marginBottom: 0 }}>
         <StatCard
@@ -201,7 +188,7 @@ export function PremiumStatsSection({
 
       {/* Insights */}
       {(completionsThisWeek > 0 || currentStreak > 0) && (
-        <View style={{ marginTop: spacing.sm }}>
+        <View className="mt-2">
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {currentStreak >= 7 && (
               <InsightBadge text="⭐ Weekly champion" index={1} />

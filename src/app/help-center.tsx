@@ -20,6 +20,7 @@ import Animated, {
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
 import { ProfileLayout } from '~/components/ui/ScreenLayout';
+import { useColors } from '~/hooks/useColors';
 
 // FAQ Item Component
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -127,7 +128,10 @@ export default function HelpCenter() {
   return (
     <View className="flex-1 bg-[#F4F1ED]">
       {/* Manual Header - matching ProfileLayout styling */}
-      <View className="bg-[#F4F1ED]" style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}>
+      <View
+        className="bg-[#F4F1ED]"
+        style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}
+      >
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
@@ -156,168 +160,180 @@ export default function HelpCenter() {
         className="flex-1"
       >
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="p-6">
-          {/* Search Bar */}
-          <View className="bg-white rounded-xl px-4 py-3 mb-6 flex-row items-center">
-            <SymbolView name="magnifyingglass" size={20} tintColor="#9CA3AF" />
-            <TextInput
-              placeholder={t('helpCenter.searchPlaceholder')}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              className="flex-1 ml-3 text-base"
-              placeholderTextColor="#9CA3AF"
-            />
-          </View>
+          <View className="p-6">
+            {/* Search Bar */}
+            <View className="bg-white rounded-xl px-4 py-3 mb-6 flex-row items-center">
+              <SymbolView
+                name="magnifyingglass"
+                size={20}
+                tintColor="#9CA3AF"
+              />
+              <TextInput
+                placeholder={t('helpCenter.searchPlaceholder')}
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                className="flex-1 ml-3 text-base"
+                placeholderTextColor="#9CA3AF"
+              />
+            </View>
 
-          {/* Quick Actions */}
-          <View className="mb-8">
-            <Text
-              variant="footnote"
-              className="text-muted-foreground mb-3 uppercase tracking-wide"
-            >
-              {t('helpCenter.quickActions')}
-            </Text>
+            {/* Quick Actions */}
+            <View className="mb-8">
+              <Text
+                variant="footnote"
+                className="text-muted-foreground mb-3 uppercase tracking-wide"
+              >
+                {t('helpCenter.quickActions')}
+              </Text>
 
-            <Pressable
-              onPress={handleStartChat}
-              className="bg-primary rounded-xl p-4 mb-3"
-              style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
-            >
-              <View className="flex-row items-center">
-                <View className="bg-white/20 w-10 h-10 rounded-full items-center justify-center mr-3">
+              <Pressable
+                onPress={handleStartChat}
+                className="bg-primary rounded-xl p-4 mb-3"
+                style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+              >
+                <View className="flex-row items-center">
+                  <View className="bg-white/20 w-10 h-10 rounded-full items-center justify-center mr-3">
+                    <SymbolView
+                      name="bubble.left.fill"
+                      size={20}
+                      tintColor="white"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text
+                      variant="callout"
+                      className="text-white font-semibold mb-0.5"
+                    >
+                      {t('helpCenter.chatSupport')}
+                    </Text>
+                    <Text variant="caption1" className="text-white/80">
+                      {t('helpCenter.chatSupportDesc')}
+                    </Text>
+                  </View>
                   <SymbolView
-                    name="bubble.left.fill"
-                    size={20}
+                    name="chevron.right"
+                    size={16}
                     tintColor="white"
                   />
                 </View>
-                <View className="flex-1">
-                  <Text
-                    variant="callout"
-                    className="text-white font-semibold mb-0.5"
-                  >
-                    {t('helpCenter.chatSupport')}
-                  </Text>
-                  <Text variant="caption1" className="text-white/80">
-                    {t('helpCenter.chatSupportDesc')}
-                  </Text>
-                </View>
-                <SymbolView name="chevron.right" size={16} tintColor="white" />
-              </View>
-            </Pressable>
+              </Pressable>
 
-            <Pressable
-              onPress={() => router.push('/crisis-resources')}
-              className="bg-white rounded-xl p-4"
-              style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
-            >
-              <View className="flex-row items-center">
-                <View className="bg-red-50 w-10 h-10 rounded-full items-center justify-center mr-3">
-                  <SymbolView name="heart.fill" size={20} tintColor="#EF4444" />
+              <Pressable
+                onPress={() => router.push('/crisis-resources')}
+                className="bg-white rounded-xl p-4"
+                style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+              >
+                <View className="flex-row items-center">
+                  <View className="bg-red-50 w-10 h-10 rounded-full items-center justify-center mr-3">
+                    <SymbolView
+                      name="heart.fill"
+                      size={20}
+                      tintColor="#EF4444"
+                    />
+                  </View>
+                  <View className="flex-1">
+                    <Text variant="callout" className="font-semibold mb-0.5">
+                      {t('profile.support.crisisResources')}
+                    </Text>
+                    <Text variant="caption1" className="text-muted-foreground">
+                      {t('crisisResources.hotlines')}
+                    </Text>
+                  </View>
+                  <SymbolView
+                    name="chevron.right"
+                    size={16}
+                    tintColor="#C6C6C8"
+                  />
                 </View>
-                <View className="flex-1">
-                  <Text variant="callout" className="font-semibold mb-0.5">
-                    {t('profile.support.crisisResources')}
-                  </Text>
-                  <Text variant="caption1" className="text-muted-foreground">
-                    {t('crisisResources.hotlines')}
-                  </Text>
-                </View>
-                <SymbolView
-                  name="chevron.right"
-                  size={16}
-                  tintColor="#C6C6C8"
+              </Pressable>
+            </View>
+
+            {/* FAQs */}
+            <View>
+              <Text
+                variant="footnote"
+                className="text-muted-foreground mb-3 uppercase tracking-wide"
+              >
+                {t('helpCenter.faq')}
+              </Text>
+
+              {filteredFAQs.map((faq, index) => (
+                <FAQItem
+                  key={index}
+                  question={faq.question}
+                  answer={faq.answer}
                 />
-              </View>
-            </Pressable>
+              ))}
+            </View>
           </View>
-
-          {/* FAQs */}
-          <View>
-            <Text
-              variant="footnote"
-              className="text-muted-foreground mb-3 uppercase tracking-wide"
-            >
-              {t('helpCenter.faq')}
-            </Text>
-
-            {filteredFAQs.map((faq, index) => (
-              <FAQItem
-                key={index}
-                question={faq.question}
-                answer={faq.answer}
-              />
-            ))}
-          </View>
-        </View>
         </ScrollView>
 
         {/* Chat Modal */}
-      {showChat && (
-        <Animated.View
-          entering={FadeInDown.springify()}
-          className="absolute inset-0 bg-[#F4F1ED]"
-        >
-          {/* Chat Header */}
-          <View className="bg-[#F4F1ED] pt-12 pb-4 px-6">
-            <View className="flex-row items-center">
-              <Pressable
-                onPress={() => setShowChat(false)}
-                className="mr-4"
-                style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
-              >
-                <SymbolView name="xmark" size={24} tintColor="#2196F3" />
-              </Pressable>
-              <Text 
-                className="text-[#5A4A3A] flex-1"
-                style={{
-                  fontFamily: 'CrimsonPro-Bold',
-                  fontSize: 28,
-                  fontWeight: 'normal',
-                  lineHeight: 34,
-                  textAlign: 'left',
-                }}
-              >
-                {t('helpCenter.customerSupport')}
-              </Text>
+        {showChat && (
+          <Animated.View
+            entering={FadeInDown.springify()}
+            className="absolute inset-0 bg-[#F4F1ED]"
+          >
+            {/* Chat Header */}
+            <View className="bg-[#F4F1ED] pt-12 pb-4 px-6">
+              <View className="flex-row items-center">
+                <Pressable
+                  onPress={() => setShowChat(false)}
+                  className="mr-4"
+                  style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
+                >
+                  <SymbolView name="xmark" size={24} tintColor="#2196F3" />
+                </Pressable>
+                <Text
+                  className="text-[#5A4A3A] flex-1"
+                  style={{
+                    fontFamily: 'CrimsonPro-Bold',
+                    fontSize: 28,
+                    fontWeight: 'normal',
+                    lineHeight: 34,
+                    textAlign: 'left',
+                  }}
+                >
+                  {t('helpCenter.customerSupport')}
+                </Text>
+              </View>
             </View>
-          </View>
 
-          {/* Chat Content */}
-          <ScrollView className="flex-1 p-6">
-            <View className="bg-gray-100 rounded-2xl p-4 mb-4 self-start max-w-[80%]">
-              <Text variant="body">{t('helpCenter.chatGreeting')}</Text>
-            </View>
-          </ScrollView>
+            {/* Chat Content */}
+            <ScrollView className="flex-1 p-6">
+              <View className="bg-gray-100 rounded-2xl p-4 mb-4 self-start max-w-[80%]">
+                <Text variant="body">{t('helpCenter.chatGreeting')}</Text>
+              </View>
+            </ScrollView>
 
-          {/* Chat Input */}
-          <View className="bg-[#F4F1ED] border-t border-border/10 p-4">
-            <View className="flex-row items-end">
-              <TextInput
-                placeholder={t('helpCenter.chatPlaceholder')}
-                value={chatMessage}
-                onChangeText={setChatMessage}
-                multiline
-                className="flex-1 bg-gray-100 rounded-2xl px-4 py-3 max-h-32 text-base"
-                placeholderTextColor="#9CA3AF"
-              />
-              <Pressable
-                onPress={handleSendMessage}
-                disabled={!chatMessage.trim()}
-                className={cn(
-                  'ml-2 w-10 h-10 rounded-full items-center justify-center',
-                  chatMessage.trim() ? 'bg-primary' : 'bg-gray-200'
-                )}
-              >
-                <SymbolView
-                  name="arrow.up"
-                  size={20}
-                  tintColor={chatMessage.trim() ? 'white' : '#9CA3AF'}
+            {/* Chat Input */}
+            <View className="bg-[#F4F1ED] border-t border-border/10 p-4">
+              <View className="flex-row items-end">
+                <TextInput
+                  placeholder={t('helpCenter.chatPlaceholder')}
+                  value={chatMessage}
+                  onChangeText={setChatMessage}
+                  multiline
+                  className="flex-1 bg-gray-100 rounded-2xl px-4 py-3 max-h-32 text-base"
+                  placeholderTextColor="#9CA3AF"
                 />
-              </Pressable>
+                <Pressable
+                  onPress={handleSendMessage}
+                  disabled={!chatMessage.trim()}
+                  className={cn(
+                    'ml-2 w-10 h-10 rounded-full items-center justify-center',
+                    chatMessage.trim() ? 'bg-primary' : 'bg-gray-200'
+                  )}
+                >
+                  <SymbolView
+                    name="arrow.up"
+                    size={20}
+                    tintColor={chatMessage.trim() ? 'white' : '#9CA3AF'}
+                  />
+                </Pressable>
+              </View>
             </View>
-          </View>
-        </Animated.View>
+          </Animated.View>
         )}
       </KeyboardAvoidingView>
     </View>

@@ -3,7 +3,7 @@ import { View, Pressable } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTranslation } from '~/hooks/useTranslation';
-import { colors, spacing } from '~/lib/design-tokens';
+import { useColors } from '~/hooks/useColors';
 import { RTLView } from '~/components/ui/RTLView';
 import type { Exercise } from '~/types';
 
@@ -21,6 +21,7 @@ export function DailyExerciseCard({
   motivationalMessage,
 }: DailyExerciseCardProps) {
   const { t } = useTranslation();
+  const colors = useColors();
 
   const handlePress = useCallback(() => {
     if (exercise) {
@@ -38,7 +39,7 @@ export function DailyExerciseCard({
         marginHorizontal: 6,
         // Balanced spacing: 16px top gap (from stats section outer margin) & 16px below this card
         marginTop: 0,
-        marginBottom: spacing.md, // 16px
+        marginBottom: 16, // 16px
       }}
     >
       <Pressable onPress={handlePress} disabled={!exercise}>
@@ -57,22 +58,19 @@ export function DailyExerciseCard({
             <View>
               <Text
                 className="mb-1"
+                className="text-gray-700 text-sm font-medium"
                 style={{
                   fontFamily: 'Inter_500Medium',
-                  fontSize: 14,
-                  color: colors.neutral[700],
                 }}
               >
                 {greeting}
               </Text>
 
               <Text
-                className="mb-4"
+                className="mb-4 text-gray-900 text-2xl"
                 style={{
                   fontFamily: 'CrimsonPro-Bold',
-                  fontSize: 28,
                   lineHeight: 34,
-                  color: colors.neutral[900],
                 }}
               >
                 {t('exercises.dailyExercise.title')}
@@ -92,10 +90,9 @@ export function DailyExerciseCard({
                       }}
                     >
                       <Text
+                        className="text-gray-800 text-xs font-semibold"
                         style={{
                           fontFamily: 'Inter_600SemiBold',
-                          fontSize: 12,
-                          color: colors.neutral[800],
                         }}
                       >
                         {exercise.category.charAt(0).toUpperCase() +
@@ -103,18 +100,12 @@ export function DailyExerciseCard({
                       </Text>
                     </View>
 
-                    <View
-                      className="mx-2 w-1 h-1 rounded-full"
-                      style={{
-                        backgroundColor: colors.neutral[400],
-                      }}
-                    />
+                    <View className="mx-2 w-1 h-1 rounded-full bg-gray-400" />
 
                     <Text
+                      className="text-gray-700 text-sm"
                       style={{
                         fontFamily: 'Inter_400Regular',
-                        fontSize: 14,
-                        color: colors.neutral[700],
                       }}
                     >
                       {exercise.duration}
@@ -122,11 +113,10 @@ export function DailyExerciseCard({
                   </RTLView>
 
                   <Text
+                    className="text-gray-900 text-lg"
                     style={{
                       fontFamily: 'Inter_600SemiBold',
-                      fontSize: 18,
                       lineHeight: 24,
-                      color: colors.neutral[900],
                     }}
                   >
                     {exercise.title}
@@ -138,8 +128,8 @@ export function DailyExerciseCard({
                       fontFamily: 'Inter_400Regular',
                       fontSize: 14,
                       lineHeight: 20,
-                      color: colors.neutral[700],
                     }}
+                    className="text-gray-700 text-sm"
                     numberOfLines={2}
                   >
                     {exercise.description}
@@ -153,16 +143,15 @@ export function DailyExerciseCard({
                       fontFamily: 'Inter_400Regular',
                       fontSize: 13,
                       fontStyle: 'italic',
-                      color: colors.neutral[600],
                     }}
+                    className="text-gray-600 text-xs italic"
                   >
                     {motivationalMessage}
                   </Text>
 
                   <View
-                    className="px-5 py-3 rounded-full"
+                    className="px-5 py-3 rounded-full bg-gray-900"
                     style={{
-                      backgroundColor: colors.neutral[900],
                       shadowColor: '#000',
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.1,
@@ -194,12 +183,7 @@ export function DailyExerciseCard({
                       height: 28,
                     }}
                   />
-                  <View
-                    className="mx-2 w-1 h-1 rounded-full"
-                    style={{
-                      backgroundColor: colors.neutral[400],
-                    }}
-                  />
+                  <View className="mx-2 w-1 h-1 rounded-full bg-gray-400" />
                   <View
                     style={{
                       backgroundColor: '#F3F4F6',
@@ -241,10 +225,8 @@ export function DailyExerciseCard({
                   />
 
                   <View
-                    className="px-5 py-3 rounded-full"
+                    className="px-5 py-3 rounded-full bg-gray-900 opacity-50"
                     style={{
-                      backgroundColor: colors.neutral[900],
-                      opacity: 0.5,
                       shadowColor: '#000',
                       shadowOffset: { width: 0, height: 2 },
                       shadowOpacity: 0.1,

@@ -11,38 +11,12 @@ import { useCurrentUser } from '~/hooks/useSharedData';
 import { MotiView } from 'moti';
 import { Heart, Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 import { format, parseISO } from 'date-fns';
-import { colors } from '~/lib/design-tokens';
+import { useMoodColor, useColors } from '~/hooks/useColors';
 
-const moods = [
-  { id: 'sad', label: 'Sad', value: 'sad', color: colors.mood.sad.primary },
-  {
-    id: 'anxious',
-    label: 'Anxious',
-    value: 'anxious',
-    color: colors.mood.anxious.primary,
-  },
-  {
-    id: 'neutral',
-    label: 'Neutral',
-    value: 'neutral',
-    color: colors.mood.neutral.primary,
-  },
-  {
-    id: 'happy',
-    label: 'Happy',
-    value: 'happy',
-    color: colors.mood.happy.primary,
-  },
-  {
-    id: 'angry',
-    label: 'Angry',
-    value: 'angry',
-    color: colors.mood.angry.primary,
-  },
-] as const;
+// Moods will be defined inside the component with hook colors
 
 const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
-  const iconProps = { size, color: color || colors.neutral[700], fill: 'none' };
+  const iconProps = { size, color: color || '#6B7280', fill: 'none' };
 
   switch (moodId) {
     case 'sad':
@@ -93,9 +67,7 @@ function AnimatedMoodButton({
           isSelected ? 'w-16 h-16 rounded-full' : ''
         }`}
         style={{
-          backgroundColor: isSelected
-            ? colors.mood[mood.id].primary
-            : 'transparent',
+          backgroundColor: isSelected ? mood.color : 'transparent',
         }}
         animate={{
           scale: isPressed ? 0.9 : isSelected ? 1.05 : 1,
@@ -108,7 +80,7 @@ function AnimatedMoodButton({
           mass: 0.8,
         }}
       >
-        {renderMoodIcon(mood.id, isSelected ? 32 : 36, colors.neutral[900])}
+        {renderMoodIcon(mood.id, isSelected ? 32 : 36, colors.foreground)}
       </MotiView>
       <Text
         variant="body"
@@ -131,6 +103,7 @@ export default function MoodEntryModal() {
   const { date: dateParam } = useLocalSearchParams<{ date: string }>();
   const currentUser = useCurrentUser();
   const createMood = useMutation(api.moods.createMood);
+  const colors = useColors();
 
   const [selectedMood, setSelectedMood] = useState('');
   const [moodNote, setMoodNote] = useState('');
@@ -138,6 +111,35 @@ export default function MoodEntryModal() {
 
   // Parse date from URL parameter
   const selectedDate = dateParam ? parseISO(dateParam) : new Date();
+
+  // Moods with dynamic colors
+  const moods = [
+    { id: 'sad', label: 'Sad', value: 'sad', color: useMoodColor('sad') },
+    {
+      id: 'anxious',
+      label: 'Anxious',
+      value: 'anxious',
+      color: useMoodColor('anxious'),
+    },
+    {
+      id: 'neutral',
+      label: 'Neutral',
+      value: 'neutral',
+      color: useMoodColor('neutral'),
+    },
+    {
+      id: 'happy',
+      label: 'Happy',
+      value: 'happy',
+      color: useMoodColor('happy'),
+    },
+    {
+      id: 'angry',
+      label: 'Angry',
+      value: 'angry',
+      color: useMoodColor('angry'),
+    },
+  ] as const;
 
   const handleBack = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -239,7 +241,7 @@ export default function MoodEntryModal() {
               <View
                 className="rounded-2xl p-4 border"
                 style={{
-                  backgroundColor: '#F9FAFB',
+                  backgroundColor: '#F4F1ED',
                   borderColor: '#E5E7EB',
                   shadowColor: '#000',
                   shadowOffset: { width: 0, height: 1 },
@@ -285,8 +287,8 @@ export default function MoodEntryModal() {
                   isSaving || !selectedMood ? 'opacity-60' : ''
                 }`}
                 style={{
-                  backgroundColor: colors.brand.oxfordBlue,
-                  shadowColor: colors.brand.oxfordBlue,
+                  backgroundColor: colors.primary,
+                  shadowColor: colors.primary,
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.15,
                   shadowRadius: 4,

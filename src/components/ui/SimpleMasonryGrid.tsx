@@ -1,6 +1,5 @@
 import React, { memo, useMemo } from 'react';
 import { View, ScrollView, Dimensions } from 'react-native';
-import { spacing } from '~/lib/design-tokens';
 
 interface SimpleMasonryGridProps {
   data: any[];
@@ -16,8 +15,8 @@ interface SimpleMasonryGridProps {
 
 const { width: screenWidth } = Dimensions.get('window');
 const SIDE_PADDING = 0; // No side padding for edge-to-edge design
-const CARD_GAP = spacing.lg; // 24px wide gap between columns for clear separation
-const VERTICAL_GAP = spacing.md; // 16px following design system
+const CARD_GAP = 24; // 24px wide gap between columns for clear separation
+const VERTICAL_GAP = 16; // 16px following design system
 
 // Height patterns with slightly more space for movement and reminders cards
 const HEIGHT_PATTERNS = [220, 280, 240, 240, 260, 260];

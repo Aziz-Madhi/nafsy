@@ -1,0 +1,253 @@
+import React, { useMemo, useEffect } from 'react';
+import { View, Pressable } from 'react-native';
+import { Text } from '~/components/ui/text';
+import { useMoodColor, useColors } from '~/hooks/useColors';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import {
+  startOfMonth,
+  endOfMonth,
+  format,
+  isToday,
+  isFuture,
+  getDay,
+  startOfWeek,
+  endOfWeek,
+  eachDayOfInterval,
+} from 'date-fns';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+
+interface MoodEntry {
+  createdAt: string;
+  mood: 'sad' | 'anxious' | 'neutral' | 'happy' | 'angry';
+}
+
+interface PixelCalendarProps {
+  moodData?: MoodEntry[];
+  onPress?: () => void;
+  currentDate?: Date;
+}
+
+export function PixelCalendar({
+  moodData = [],
+  onPress,
+  currentDate = new Date(),
+}: PixelCalendarProps) {
+  // Animation for entire calendar
+  const opacity = useSharedValue(0);
+
+  // Colors for React Native styling (need hex values)
+  const colors = useColors();
+  const moodColors = {
+    happy: useMoodColor('happy'),
+    sad: useMoodColor('sad'),
+    anxious: useMoodColor('anxious'),
+    neutral: useMoodColor('neutral'),
+    angry: useMoodColor('angry'),
+  };
+
+  useEffect(() => {
+    opacity.value = withTiming(1, { duration: 400 });
+  }, [currentDate, opacity]);
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      opacity: opacity.value,
+    };
+  });
+  // Get current month range with complete weeks
+  const monthStart = startOfMonth(currentDate);
+  const monthEnd = endOfMonth(currentDate);
+
+  // Get complete weeks (Sunday to Saturday)
+  const calendarStart = startOfWeek(monthStart);
+  const calendarEnd = endOfWeek(monthEnd);
+
+  // Get all days in the calendar view
+  const allDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
+
+  // Create mood map for quick lookup
+  const moodDataMap = useMemo(() => {
+    const map = new Map<string, string>();
+    moodData?.forEach((entry) => {
+      const dateKey = format(new Date(entry.createdAt), 'yyyy-MM-dd');
+      map.set(dateKey, entry.mood);
+    });
+    return map;
+  }, [moodData]);
+
+  // Organize days into rows of 7 (standard calendar layout)
+  const weekRows = useMemo(() => {
+    const rows: Date[][] = [];
+    let currentRow: Date[] = [];
+
+    allDays.forEach((day, index) => {
+      currentRow.push(day);
+      if ((index + 1) % 7 === 0) {
+        rows.push(currentRow);
+        currentRow = [];
+      }
+    });
+
+    if (currentRow.length > 0) {
+      rows.push(currentRow);
+    }
+
+    return rows;
+  }, [allDays]);
+
+  const getDayColor = (day: Date, isInMonth: boolean) => {
+    // Days outside the current month should always be very light
+    if (!isInMonth) {
+      return 'rgba(229, 231, 235, 0.5)';
+    }
+
+    const dateKey = format(day, 'yyyy-MM-dd');
+    const mood = moodDataMap.get(dateKey) as
+      | keyof typeof moodColors
+      | undefined;
+
+    // If there's a mood, use the EXACT mood color
+    if (mood && moodColors[mood]) {
+      return moodColors[mood];
+    }
+
+    // No mood entry for this day
+    if (isFuture(day)) {
+      return '#E5E7EB'; // Gray for future untracked days
+    }
+
+    return '#E5E7EB'; // Gray for past untracked days
+  };
+
+  const handlePress = () => {
+    if (onPress) {
+      impactAsync(ImpactFeedbackStyle.Light);
+      onPress();
+    }
+  };
+
+  // Fixed pixel size and gap
+  const pixelSize = 38;
+  const gap = 8;
+
+  return (
+    <Pressable onPress={handlePress} disabled={!onPress}>
+      <View className="p-4">
+        {/* Month Header */}
+        <View className="mb-5 flex-row justify-between items-center">
+          <Text variant="body" className="font-semibold text-gray-900 text-lg">
+            {format(currentDate, 'MMMM yyyy')}
+          </Text>
+          {onPress && (
+            <Text variant="caption1" className="text-gray-500 text-sm">
+              Tap to view year →
+            </Text>
+          )}
+        </View>
+
+        {/* Calendar Grid Container - CENTERED */}
+        <View className="items-center">
+          <View>
+            {/* Day Labels on Top */}
+            <View className="flex-row mb-3" style={{ gap }}>
+              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((label, index) => (
+                <View
+                  key={index}
+                  style={{
+                    width: pixelSize,
+                    alignItems: 'center',
+                  }}
+                >
+                  <Text
+                    variant="caption1"
+                    className="text-gray-500 text-xs font-semibold"
+                  >
+                    {label}
+                  </Text>
+                </View>
+              ))}
+            </View>
+
+            {/* Calendar Grid - Rows */}
+            <Animated.View style={[{ gap }, animatedStyle]}>
+              {weekRows.map((week, weekIndex) => (
+                <View key={weekIndex} className="flex-row" style={{ gap }}>
+                  {week.map((day) => {
+                    const isInMonth = day >= monthStart && day <= monthEnd;
+                    const color = getDayColor(day, isInMonth);
+                    const isTodayDate = isToday(day);
+                    const dateKey = format(day, 'yyyy-MM-dd');
+
+                    return (
+                      <View
+                        key={dateKey}
+                        style={{
+                          width: pixelSize,
+                          height: pixelSize,
+                          backgroundColor: color,
+                          borderRadius: 8,
+                          borderWidth: isTodayDate ? 2 : 0,
+                          borderColor: isTodayDate
+                            ? colors.primary
+                            : 'transparent',
+                          opacity: isInMonth ? 1 : 0.3,
+                        }}
+                      />
+                    );
+                  })}
+                </View>
+              ))}
+            </Animated.View>
+          </View>
+        </View>
+
+        {/* Mood Legend - Compact */}
+        <View className="mt-5">
+          <View
+            className="flex-row flex-wrap justify-center"
+            style={{ gap: 12 }}
+          >
+            {/* Empty state */}
+            <View className="flex-row items-center">
+              <View
+                style={{
+                  width: 12,
+                  height: 12,
+                  backgroundColor: '#E5E7EB',
+                  borderRadius: 4,
+                }}
+              />
+              <Text variant="caption2" className="text-gray-600 text-xs ml-1">
+                No mood
+              </Text>
+            </View>
+
+            {/* Mood colors */}
+            {Object.entries(moodColors).map(([mood, color]) => (
+              <View key={mood} className="flex-row items-center">
+                <View
+                  style={{
+                    width: 12,
+                    height: 12,
+                    backgroundColor: color,
+                    borderRadius: 4,
+                  }}
+                />
+                <Text
+                  variant="caption2"
+                  className="capitalize text-gray-600 text-xs ml-1"
+                >
+                  {mood}
+                </Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </View>
+    </Pressable>
+  );
+}

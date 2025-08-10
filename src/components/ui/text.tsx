@@ -3,12 +3,35 @@ import * as React from 'react';
 import { Text as RNText, Platform } from 'react-native';
 import { cn } from '~/lib/cn';
 import { useTranslation } from '~/hooks/useTranslation';
-import {
-  typography,
-  mentalHealthTypography,
-  getFontFamily,
-  fontFamilies,
-} from '~/lib/design-tokens';
+// Typography system - simplified without design-tokens
+const typography = {
+  therapeutic: {
+    heading: { fontSize: 28, fontFamily: 'CrimsonPro-Bold' },
+    title1: { fontSize: 24, fontFamily: 'CrimsonPro-Bold' },
+    title2: { fontSize: 20, fontFamily: 'CrimsonPro-Bold' },
+    title3: { fontSize: 18, fontFamily: 'CrimsonPro-SemiBold' },
+    body: { fontSize: 16, fontFamily: 'CrimsonPro-Regular' },
+    callout: { fontSize: 15, fontFamily: 'SF Pro Display' },
+    subhead: { fontSize: 14, fontFamily: 'SF Pro Display' },
+    footnote: { fontSize: 12, fontFamily: 'SF Pro Display' },
+    caption1: { fontSize: 11, fontFamily: 'SF Pro Display' },
+    caption2: { fontSize: 10, fontFamily: 'SF Pro Display' },
+  },
+  ui: {
+    heading: { fontSize: 28, fontFamily: 'SF Pro Display' },
+    title1: { fontSize: 24, fontFamily: 'SF Pro Display' },
+    title2: { fontSize: 20, fontFamily: 'SF Pro Display' },
+    title3: { fontSize: 18, fontFamily: 'SF Pro Display' },
+    body: { fontSize: 16, fontFamily: 'SF Pro Display' },
+    callout: { fontSize: 15, fontFamily: 'SF Pro Display' },
+    subhead: { fontSize: 14, fontFamily: 'SF Pro Display' },
+    footnote: { fontSize: 12, fontFamily: 'SF Pro Display' },
+    caption1: { fontSize: 11, fontFamily: 'SF Pro Display' },
+    caption2: { fontSize: 10, fontFamily: 'SF Pro Display' },
+  },
+};
+
+const getFontFamily = (family: string) => family;
 
 // Keep this context for backward compatibility with button, card, tooltip
 const TextClassContext = React.createContext<string | undefined>(undefined);

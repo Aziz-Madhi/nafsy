@@ -32,7 +32,7 @@ const BlinkingCursor = memo(function BlinkingCursor({
     if (isMountedRef.current) {
       opacity.value = withRepeat(withTiming(0, { duration: 500 }), -1, true);
     }
-    
+
     return () => {
       isMountedRef.current = false;
       // Don't cancel animation here as it may cause crashes
@@ -96,7 +96,11 @@ export const StreamingText = memo(function StreamingText({
       }, delay);
 
       return () => clearTimeout(timer);
-    } else if (currentIndex === text.length && currentIndex > 0 && isMountedRef.current) {
+    } else if (
+      currentIndex === text.length &&
+      currentIndex > 0 &&
+      isMountedRef.current
+    ) {
       // Text complete
       setShowCursor(false);
       onComplete?.();
@@ -111,7 +115,7 @@ export const StreamingText = memo(function StreamingText({
       setShowCursor(true);
     }
   }, [text]);
-  
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {

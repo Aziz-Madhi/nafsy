@@ -3,6 +3,7 @@ import { View, Pressable, TextInput } from 'react-native';
 import { DashboardLayout } from '~/components/ui/ScreenLayout';
 import { Text } from '~/components/ui/text';
 import { WeekView } from '~/components/mood/WeekView';
+import { PixelCalendar } from '~/components/mood/PixelCalendar';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   useMoodData,
@@ -11,45 +12,26 @@ import {
 } from '~/hooks/useSharedData';
 import { useTranslation } from '~/hooks/useTranslation';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
-import { colors } from '~/lib/design-tokens';
+import { getMoodColor } from '~/lib/color-helpers';
+import { cn } from '~/lib/cn';
 import { MotiView } from 'moti';
+import { useColors, useShadowStyle } from '~/hooks/useColors';
+import { withOpacity } from '~/lib/colors';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
+import { router } from 'expo-router';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  interpolate,
-  Extrapolation,
   withSpring,
 } from 'react-native-reanimated';
-import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 
 const moods = [
-  { id: 'sad', label: 'Sad', value: 'sad', color: colors.mood.sad.primary },
-  {
-    id: 'anxious',
-    label: 'Anxious',
-    value: 'anxious',
-    color: colors.mood.anxious.primary,
-  },
-  {
-    id: 'neutral',
-    label: 'Neutral',
-    value: 'neutral',
-    color: colors.mood.neutral.primary,
-  },
-  {
-    id: 'happy',
-    label: 'Happy',
-    value: 'happy',
-    color: colors.mood.happy.primary,
-  },
-  {
-    id: 'angry',
-    label: 'Angry',
-    value: 'angry',
-    color: colors.mood.angry.primary,
-  },
+  { id: 'sad', label: 'Sad', value: 'sad' },
+  { id: 'anxious', label: 'Anxious', value: 'anxious' },
+  { id: 'neutral', label: 'Neutral', value: 'neutral' },
+  { id: 'happy', label: 'Happy', value: 'happy' },
+  { id: 'angry', label: 'Angry', value: 'angry' },
 ] as const;
 
 // Encouraging messages configuration
@@ -102,8 +84,17 @@ const encouragingMessages = [
   },
 ] as const;
 
-const renderMoodIcon = (moodId: string, size: number = 24, color?: string) => {
-  const iconProps = { size, color: color || colors.neutral[900], fill: 'none' };
+const renderMoodIcon = (
+  moodId: string,
+  size: number = 24,
+  color?: string,
+  colors?: ReturnType<typeof useColors>
+) => {
+  const iconProps = {
+    size,
+    color: color || colors?.foreground || '#5A4A3A',
+    fill: 'none',
+  };
 
   switch (moodId) {
     case 'sad':
@@ -132,6 +123,7 @@ function AnimatedMoodButton({
   onPress: () => void;
 }) {
   const scale = useSharedValue(1);
+  const colors = useColors();
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -157,170 +149,30 @@ function AnimatedMoodButton({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor: isSelected
-              ? colors.mood[mood.id].primary
-              : 'rgba(0,0,0,0.05)',
+              ? colors[
+                  `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
+                ]
+              : withOpacity(colors.shadow, 0.05),
             overflow: 'hidden',
           },
         ]}
       >
-        {renderMoodIcon(mood.id, 28, colors.neutral[900])}
+        {renderMoodIcon(mood.id, 28, colors.foreground, colors)}
       </Animated.View>
       <Text
         variant="caption1"
         className="mt-2 text-center font-medium"
         style={{
           color: isSelected
-            ? colors.mood[mood.id].primary
-            : colors.neutral[700],
+            ? colors[
+                `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
+              ]
+            : colors.foreground,
         }}
       >
         {mood.label}
       </Text>
     </Pressable>
-  );
-}
-
-// Enhanced Mood Chart Component
-function SimpleMoodChart({
-  mood,
-  percentage,
-  color,
-  count,
-}: {
-  mood: string;
-  percentage: number;
-  color: string;
-  count: number;
-}) {
-  const barHeight = useSharedValue(percentage);
-  const opacity = useSharedValue(1);
-
-  const animatedBarStyle = useAnimatedStyle(() => {
-    'worklet';
-    const height = interpolate(
-      barHeight.value,
-      [0, 100],
-      [4, 100],
-      Extrapolation.CLAMP
-    );
-
-    return {
-      height,
-      opacity: opacity.value,
-    };
-  });
-
-  return (
-    <View style={{ alignItems: 'center', margin: 8 }}>
-      {/* Chart Bar */}
-      <View
-        style={{
-          width: 44,
-          height: 110,
-          backgroundColor: '#F1F5F9',
-          borderRadius: 22,
-          justifyContent: 'flex-end',
-          overflow: 'hidden',
-          borderWidth: 2,
-          borderColor: '#E2E8F0',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 4,
-          elevation: 2,
-        }}
-      >
-        <Animated.View
-          style={[
-            {
-              backgroundColor: color,
-              borderRadius: 20,
-              width: '100%',
-              shadowColor: color,
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.3,
-              shadowRadius: 2,
-            },
-            animatedBarStyle,
-          ]}
-        />
-      </View>
-
-      {/* Mood Icon */}
-      <View
-        style={{
-          marginTop: 10,
-          backgroundColor: colors.mood[mood]?.primary || color,
-          borderRadius: 18,
-          padding: 10,
-          overflow: 'hidden',
-        }}
-      >
-        {renderMoodIcon(mood, 20, colors.neutral[900])}
-      </View>
-
-      {/* Labels */}
-      <View style={{ alignItems: 'center', marginTop: 8 }}>
-        <Text variant="body" className="font-bold" style={{ color }}>
-          {percentage.toFixed(0)}%
-        </Text>
-        <Text variant="muted" className="text-xs capitalize mt-1">
-          {mood}
-        </Text>
-      </View>
-    </View>
-  );
-}
-
-// Simple Mood Chart Visualization
-function SimpleMoodVisualization({ data }: { data: any[] }) {
-  if (data.every((item) => item.count === 0)) {
-    return (
-      <View className="items-center justify-center py-12">
-        <View className="mb-6">
-          <Svg width="120" height="80" viewBox="0 0 120 80">
-            <Defs>
-              <LinearGradient
-                id="empty-gradient"
-                x1="0%"
-                y1="0%"
-                x2="0%"
-                y2="100%"
-              >
-                <Stop offset="0%" stopColor="#E5E7EB" stopOpacity="0.3" />
-                <Stop offset="100%" stopColor="#9CA3AF" stopOpacity="0.1" />
-              </LinearGradient>
-            </Defs>
-            <Path
-              d="M20 60 Q60 20 100 60 L100 70 Q60 30 20 70 Z"
-              fill="url(#empty-gradient)"
-              stroke="#D1D5DB"
-              strokeWidth="1"
-            />
-          </Svg>
-        </View>
-        <Text variant="title3" className="text-gray-500 font-semibold mb-2">
-          No Mood Data Yet
-        </Text>
-        <Text variant="body" className="text-center text-gray-400 max-w-xs">
-          Start logging your daily moods to see insights and patterns here.
-        </Text>
-      </View>
-    );
-  }
-
-  return (
-    <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
-      {data.map((item) => (
-        <SimpleMoodChart
-          key={item.mood}
-          mood={item.mood}
-          percentage={item.percentage}
-          color={item.color}
-          count={item.count}
-        />
-      ))}
-    </View>
   );
 }
 
@@ -330,10 +182,13 @@ export default function MoodIndex() {
   const todayMood = useTodayMood();
   const currentUser = useCurrentUser();
   const createMood = useMutation(api.moods.createMood);
+  const colors = useColors();
+  const shadowMedium = useShadowStyle('medium');
 
   const [selectedMood, setSelectedMood] = useState('');
   const [moodNote, setMoodNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const hasLoggedToday = !!todayMood;
 
@@ -374,28 +229,6 @@ export default function MoodIndex() {
 
   const screenTitle = 'Mood';
 
-  // Calculate mood distribution
-  const chartData = useMemo(() => {
-    return ['sad', 'anxious', 'neutral', 'happy', 'angry'].map((mood) => {
-      const count = moodData?.filter((m) => m.mood === mood).length || 0;
-      const percentage = moodData?.length ? (count / moodData.length) * 100 : 0;
-
-      return {
-        mood,
-        count,
-        percentage,
-        color: colors.mood[mood]?.primary || '#7ED321',
-      };
-    });
-  }, [moodData]);
-
-  const mostFrequentMood = useMemo(() => {
-    if (!chartData.length) return null;
-    return chartData.reduce((prev, current) =>
-      current.count > prev.count ? current : prev
-    );
-  }, [chartData]);
-
   return (
     <DashboardLayout title={screenTitle}>
       <View>
@@ -407,17 +240,14 @@ export default function MoodIndex() {
         {/* Mood Logging Card */}
         <View className="mb-6" style={{ marginHorizontal: 6 }}>
           <View
-            className="rounded-3xl p-6 border border-gray-200"
+            className={cn(
+              'rounded-3xl p-6 border border-border/20',
+              hasLoggedToday && todayMood
+                ? `bg-mood-${todayMood.mood}/30`
+                : 'bg-card'
+            )}
             style={{
-              backgroundColor:
-                hasLoggedToday && todayMood
-                  ? `${colors.mood[todayMood.mood].primary}30`
-                  : 'rgba(90, 74, 58, 0.12)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.1,
-              shadowRadius: 8,
-              elevation: 5,
+              ...shadowMedium,
             }}
           >
             {hasLoggedToday ? (
@@ -436,7 +266,7 @@ export default function MoodIndex() {
                         fontFamily: 'CrimsonPro-Regular',
                         fontSize: 18,
                         lineHeight: 24,
-                        color: colors.neutral[600],
+                        color: colors.foreground,
                         letterSpacing: 0.5,
                       }}
                     >
@@ -452,8 +282,8 @@ export default function MoodIndex() {
                       fontSize: 32,
                       lineHeight: 38,
                       color: todayMood
-                        ? colors.mood[todayMood.mood].primary
-                        : '#059669',
+                        ? getMoodColor(todayMood.mood as any, 'primary')
+                        : '#22C55E', // success
                       letterSpacing: 1.5,
                     }}
                   >
@@ -467,8 +297,8 @@ export default function MoodIndex() {
                       width: 40,
                       height: 2,
                       backgroundColor: todayMood
-                        ? `${colors.mood[todayMood.mood].primary}50`
-                        : 'rgba(5, 150, 105, 0.3)',
+                        ? getMoodColor(todayMood.mood as any, 'primary') + '30'
+                        : 'rgba(34, 197, 94, 0.3)', // success with opacity
                       borderRadius: 1,
                     }}
                   />
@@ -480,7 +310,7 @@ export default function MoodIndex() {
                       fontFamily: 'CrimsonPro-Italic-VariableFont',
                       fontSize: 16,
                       lineHeight: 24,
-                      color: colors.neutral[700],
+                      color: withOpacity(colors.foreground, 0.7),
                       letterSpacing: 0,
                     }}
                   >
@@ -497,7 +327,7 @@ export default function MoodIndex() {
                     fontFamily: 'CrimsonPro-Bold',
                     fontSize: 28,
                     lineHeight: 34,
-                    color: colors.neutral[900],
+                    color: colors.foreground,
                   }}
                 >
                   How are you feeling today?
@@ -528,22 +358,19 @@ export default function MoodIndex() {
                     <View className="mb-4">
                       <Text
                         variant="caption1"
-                        style={{ color: colors.neutral[700], marginBottom: 8 }}
+                        className="text-muted-foreground mb-2"
                       >
                         Add a note (optional)
                       </Text>
-                      <View
-                        className="rounded-2xl p-4 border"
-                        style={{
-                          backgroundColor: 'rgba(90, 74, 58, 0.04)',
-                          borderColor: 'rgba(90, 74, 58, 0.1)',
-                        }}
-                      >
+                      <View className="rounded-2xl p-4 border border-border/10 bg-black/[0.02]">
                         <TextInput
                           value={moodNote}
                           onChangeText={setMoodNote}
                           placeholder="What's on your mind?"
-                          placeholderTextColor="#9CA3AF"
+                          placeholderTextColor={withOpacity(
+                            colors.foreground,
+                            0.6
+                          )}
                           multiline
                           numberOfLines={3}
                           maxLength={200}
@@ -553,7 +380,7 @@ export default function MoodIndex() {
                             minHeight: 60,
                             fontSize: 16,
                             lineHeight: 22,
-                            color: colors.neutral[900],
+                            color: colors.foreground,
                           }}
                         />
                         <Text
@@ -561,7 +388,7 @@ export default function MoodIndex() {
                           style={{
                             textAlign: 'right',
                             marginTop: 4,
-                            color: colors.neutral[600],
+                            color: colors.foreground,
                           }}
                         >
                           {moodNote.length}/200
@@ -576,8 +403,8 @@ export default function MoodIndex() {
                         isSaving || !selectedMood ? 'opacity-60' : ''
                       }`}
                       style={{
-                        backgroundColor: colors.brand.oxfordBlue,
-                        shadowColor: colors.brand.oxfordBlue,
+                        backgroundColor: colors.primary,
+                        shadowColor: colors.primary,
                         shadowOffset: { width: 0, height: 2 },
                         shadowOpacity: 0.15,
                         shadowRadius: 4,
@@ -595,50 +422,35 @@ export default function MoodIndex() {
           </View>
         </View>
 
-        {/* Mood Distribution Chart */}
+        {/* Pixel Calendar - Mood Visualization */}
         <View className="mb-6" style={{ marginHorizontal: 6 }}>
           <View
-            className="rounded-2xl p-5 border border-gray-200"
+            className="rounded-3xl p-6 border border-gray-200"
             style={{
-              backgroundColor: 'rgba(90, 74, 58, 0.12)',
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 3 },
-              shadowOpacity: 0.08,
-              shadowRadius: 6,
-              elevation: 4,
+              backgroundColor:
+                hasLoggedToday && todayMood
+                  ? withOpacity(
+                      colors[
+                        `mood${todayMood.mood.charAt(0).toUpperCase() + todayMood.mood.slice(1)}` as keyof typeof colors
+                      ],
+                      0.3
+                    )
+                  : colors.background,
+              ...shadowMedium,
             }}
           >
-            <SimpleMoodVisualization data={chartData} />
-
-            {/* Most Frequent Mood Section */}
-            {mostFrequentMood && mostFrequentMood.count > 0 && (
-              <View className="mt-3">
-                <View className="flex-row items-center">
-                  <View
-                    className="w-10 h-10 rounded-2xl items-center justify-center mr-3"
-                    style={{
-                      backgroundColor: mostFrequentMood.color + '20',
-                      borderWidth: 2,
-                      borderColor: mostFrequentMood.color,
-                    }}
-                  >
-                    {renderMoodIcon(mostFrequentMood.mood, 20)}
-                  </View>
-                  <View className="flex-1">
-                    <Text
-                      variant="body"
-                      className="text-[#5A4A3A] font-semibold capitalize"
-                    >
-                      Most Frequent: {mostFrequentMood.mood}
-                    </Text>
-                    <Text variant="caption1" className="text-gray-600 mt-1">
-                      {mostFrequentMood.count} times (
-                      {mostFrequentMood.percentage.toFixed(0)}%)
-                    </Text>
-                  </View>
-                </View>
-              </View>
-            )}
+            <PixelCalendar
+              moodData={moodData}
+              onPress={() => {
+                if (!isNavigating) {
+                  setIsNavigating(true);
+                  impactAsync(ImpactFeedbackStyle.Light);
+                  router.push('/tabs/mood/year-view');
+                  // Reset navigation flag after a delay
+                  setTimeout(() => setIsNavigating(false), 1000);
+                }
+              }}
+            />
           </View>
         </View>
       </View>

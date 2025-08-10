@@ -15,7 +15,6 @@ import {
   getMotivationalMessage,
 } from '~/lib/daily-exercise-utils';
 import type { Exercise } from '~/types';
-import { colors } from '~/lib/design-tokens';
 
 // Utility functions from original exercises.tsx
 function getCategoryIcon(category: string): string {
@@ -32,14 +31,14 @@ function getCategoryIcon(category: string): string {
 
 function getCategoryColor(category: string): string {
   const categoryColors: Record<string, string> = {
-    mindfulness: colors.wellness.mindfulness.primary,
-    breathing: colors.wellness.breathing.primary,
-    movement: colors.wellness.movement.primary,
-    journaling: colors.wellness.journaling.primary,
-    relaxation: colors.wellness.relaxation.primary,
-    reminders: colors.wellness.reminders.primary,
+    mindfulness: '#FF6B6B',
+    breathing: '#4ECDC4',
+    movement: '#45B7D1',
+    journaling: '#96CEB4',
+    relaxation: '#FFEAA7',
+    reminders: '#DDA0DD',
   };
-  return categoryColors[category] || colors.wellness.mindfulness.primary;
+  return categoryColors[category] || '#FF6B6B';
 }
 
 function getBenefitsForCategory(category: string, t: any): string[] {

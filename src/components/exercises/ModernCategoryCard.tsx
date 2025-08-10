@@ -7,11 +7,12 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { Text } from '~/components/ui/text';
-import { colors, typography, shadows, spacing } from '~/lib/design-tokens';
+import { useColors, useShadowStyle } from '~/hooks/useColors';
+import type { WellnessCategory } from '~/lib/colors';
 
 interface ModernCategoryCardProps {
   category: {
-    id: keyof typeof colors.wellness;
+    id: WellnessCategory;
     name: string;
     description: string;
     color: string;
@@ -45,6 +46,10 @@ function ModernCategoryCardComponent({
 
   const backgroundImage = CATEGORY_BACKGROUNDS[category.name];
 
+  // Colors for React Native styling
+  const colors = useColors();
+  const shadowStyle = useShadowStyle('medium');
+
   // Use actual mood screen colors with light opacity for text readability
   const getMoodColor = (categoryId: string) => {
     const exerciseColors: Record<string, string> = {
@@ -55,7 +60,7 @@ function ModernCategoryCardComponent({
       relaxation: '#F59E0B', // From your mood screen
       reminders: '#8B5CF6', // From your mood screen
     };
-    return exerciseColors[categoryId] || colors.neutral[50];
+    return exerciseColors[categoryId] || '#FAFAFA';
   };
 
   // Use light opacity so text is visible
@@ -77,12 +82,10 @@ function ModernCategoryCardComponent({
 
   return (
     <Pressable
+      className="bg-white rounded-3xl overflow-hidden"
       style={{
         height: height,
-        borderRadius: 24,
-        overflow: 'hidden',
-        backgroundColor: '#FFFFFF',
-        ...shadows.md,
+        ...shadowStyle,
       }}
       onPress={handlePress}
     >
@@ -133,16 +136,15 @@ function ModernCategoryCardComponent({
         style={{
           height: textHeight,
           backgroundColor: textBackgroundColor,
-          paddingHorizontal: spacing.md,
-          paddingTop: spacing.sm,
-          paddingBottom: spacing.md,
+          paddingHorizontal: 16,
+          paddingTop: 8,
+          paddingBottom: 16,
           justifyContent: 'space-between',
         }}
       >
         <Text
+          className="text-gray-900 text-lg font-semibold"
           style={{
-            ...typography.title3,
-            color: colors.neutral[900],
             marginBottom: 0,
           }}
           numberOfLines={1}
@@ -150,9 +152,8 @@ function ModernCategoryCardComponent({
           {category.name}
         </Text>
         <Text
+          className="text-gray-700 text-sm"
           style={{
-            ...typography.subheadline,
-            color: colors.neutral[700],
             lineHeight: 18,
           }}
           numberOfLines={2}

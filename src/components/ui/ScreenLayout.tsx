@@ -12,6 +12,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSegments } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useColors } from '~/hooks/useColors';
 
 // Calculate top padding for navigation bar only
 function useNavigationBarTopPadding(): number {
@@ -109,7 +110,7 @@ function ScreenHeader({
           >
             {title && (
               <Text
-                className="text-[#5A4A3A]"
+                className="text-foreground"
                 style={{
                   fontFamily: 'CrimsonPro-Bold',
                   fontSize: 28, // Reduced from 34 to prevent wrapping
@@ -125,7 +126,7 @@ function ScreenHeader({
             {subtitle && (
               <Text
                 variant="caption1"
-                className="text-[#5A4A3A]/70 mt-1"
+                className="text-muted-foreground mt-1"
                 style={{
                   textAlign: isRTL ? 'right' : 'left',
                   width: '100%',
@@ -279,6 +280,7 @@ export function ScreenLayout({
   scrollViewRef,
   onScroll,
 }: ScreenLayoutProps) {
+  const colors = useColors();
   const topPadding = useNavigationBarTopPadding();
 
   const content = (

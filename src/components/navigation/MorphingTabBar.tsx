@@ -16,6 +16,7 @@ import { useChatUIStore, useHistorySidebarVisible, useAppStore } from '~/store';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
+import { useNavigationColors, useColors } from '~/hooks/useColors';
 
 interface TabIconProps {
   route: string;
@@ -32,8 +33,10 @@ const TabIcon = ({
   onLongPress,
   index,
 }: TabIconProps) => {
+  const navColors = useNavigationColors();
+
   const getIcon = (routeName: string, focused: boolean) => {
-    const iconColor = focused ? '#2F6A8D' : '#9CA3AF';
+    const iconColor = focused ? navColors.active : navColors.inactive;
     const strokeWidth = focused ? 2.5 : 2;
     const size = 26;
 
@@ -198,10 +201,12 @@ export function MorphingTabBar({
 
   // Clean slate - no sidebar animations yet
 
+  const colors = useColors();
+
   const containerStyle = useAnimatedStyle(() => ({
     height: containerHeight.value,
     backgroundColor:
-      backgroundColor.value > 0 ? '#F5F5F7' : 'transparent',
+      backgroundColor.value > 0 ? colors.cardElevated : 'transparent',
     borderRadius: borderRadius.value,
     shadowOpacity: backgroundColor.value * 0.1,
     transform: [{ translateX: tabTranslateX.value }],
@@ -270,7 +275,7 @@ export function MorphingTabBar({
           bottom: 0,
           left: 0,
           right: 0,
-          shadowColor: '#000',
+          shadowColor: colors.shadow,
           shadowOffset: { width: 0, height: -2 },
           shadowRadius: 10,
           // Maintain consistent shadow; dimming handled via opacity

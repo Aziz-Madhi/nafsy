@@ -22,6 +22,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
 import { ProfileLayout } from '~/components/ui/ScreenLayout';
+import { useColors } from '~/hooks/useColors';
 
 // Feedback Type Card
 function FeedbackTypeCard({
@@ -29,11 +30,13 @@ function FeedbackTypeCard({
   title,
   isSelected,
   onPress,
+  colors,
 }: {
   icon: string;
   title: string;
   isSelected: boolean;
   onPress: () => void;
+  colors: any;
 }) {
   return (
     <Pressable
@@ -48,7 +51,7 @@ function FeedbackTypeCard({
         <SymbolView
           name={icon as any}
           size={24}
-          tintColor={isSelected ? '#2196F3' : '#6B7280'}
+          tintColor={isSelected ? colors.primary : colors.mutedForeground}
         />
         <Text
           variant="caption1"
@@ -68,16 +71,18 @@ function FeedbackTypeCard({
 function RatingStar({
   filled,
   onPress,
+  colors,
 }: {
   filled: boolean;
   onPress: () => void;
+  colors: any;
 }) {
   return (
     <Pressable onPress={onPress} className="p-1">
       <SymbolView
         name={filled ? 'star.fill' : 'star'}
         size={32}
-        tintColor={filled ? '#F59E0B' : '#E5E7EB'}
+        tintColor={filled ? colors.warning : colors.border}
       />
     </Pressable>
   );
@@ -85,6 +90,7 @@ function RatingStar({
 
 export default function Feedback() {
   const { t } = useTranslation();
+  const colors = useColors();
   const [feedbackType, setFeedbackType] = useState<
     'bug' | 'feature' | 'improvement' | 'other'
   >('improvement');
@@ -153,19 +159,26 @@ export default function Feedback() {
   };
 
   return (
-    <View className="flex-1 bg-[#F4F1ED]">
+    <View className="flex-1 bg-background">
       {/* Manual Header - matching ProfileLayout styling */}
-      <View className="bg-[#F4F1ED]" style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}>
+      <View
+        className="bg-background"
+        style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}
+      >
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
             className="mr-4"
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
-            <SymbolView name="chevron.left" size={24} tintColor="#2196F3" />
+            <SymbolView
+              name="chevron.left"
+              size={24}
+              tintColor={colors.primary}
+            />
           </Pressable>
           <Text
-            className="text-[#5A4A3A] flex-1"
+            className="text-foreground flex-1"
             style={{
               fontFamily: 'CrimsonPro-Bold',
               fontSize: 28,
@@ -188,146 +201,151 @@ export default function Feedback() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-        <View className="p-6">
-          <Animated.View entering={FadeInDown.delay(100).springify()}>
-            {/* Feedback Type */}
-            <Text
-              variant="footnote"
-              className="text-muted-foreground mb-3 uppercase tracking-wide"
-            >
-              {t('feedback.feedbackType')}
-            </Text>
-
-            <View className="flex-row gap-3 mb-6">
-              {feedbackTypes.map((type) => (
-                <FeedbackTypeCard
-                  key={type.id}
-                  icon={type.icon}
-                  title={type.title}
-                  isSelected={feedbackType === type.id}
-                  onPress={() => handleTypeSelect(type.id as any)}
-                />
-              ))}
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(200).springify()}>
-            {/* App Rating */}
-            <Text
-              variant="footnote"
-              className="text-muted-foreground mb-3 uppercase tracking-wide"
-            >
-              {t('feedback.rateExperience')}
-            </Text>
-
-            <View className="bg-white rounded-xl p-4 mb-6">
-              <Text variant="body" className="text-center mb-3">
-                {t('feedback.ratingQuestion')}
+          <View className="p-6">
+            <Animated.View entering={FadeInDown.delay(100).springify()}>
+              {/* Feedback Type */}
+              <Text
+                variant="footnote"
+                className="text-muted-foreground mb-3 uppercase tracking-wide"
+              >
+                {t('feedback.feedbackType')}
               </Text>
-              <View className="flex-row justify-center">
-                {[1, 2, 3, 4, 5].map((star) => (
-                  <RatingStar
-                    key={star}
-                    filled={star <= rating}
-                    onPress={() => handleRating(star)}
+
+              <View className="flex-row gap-3 mb-6">
+                {feedbackTypes.map((type) => (
+                  <FeedbackTypeCard
+                    key={type.id}
+                    icon={type.icon}
+                    title={type.title}
+                    isSelected={feedbackType === type.id}
+                    onPress={() => handleTypeSelect(type.id as any)}
+                    colors={colors}
                   />
                 ))}
               </View>
-            </View>
-          </Animated.View>
+            </Animated.View>
 
-          <Animated.View entering={FadeInDown.delay(300).springify()}>
-            {/* Feedback Form */}
-            <Text
-              variant="footnote"
-              className="text-muted-foreground mb-3 uppercase tracking-wide"
-            >
-              {t('feedback.yourFeedback')}
-            </Text>
-
-            <View className="bg-white rounded-xl p-4 mb-4">
-              <TextInput
-                placeholder={t('feedback.subject')}
-                value={subject}
-                onChangeText={setSubject}
-                className="text-base mb-3 pb-3 border-b border-gray-200"
-                placeholderTextColor="#9CA3AF"
-              />
-
-              <TextInput
-                placeholder={t('feedback.messagePlaceholder')}
-                value={message}
-                onChangeText={setMessage}
-                multiline
-                numberOfLines={6}
-                textAlignVertical="top"
-                className="text-base min-h-[120px]"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-          </Animated.View>
-
-          <Animated.View entering={FadeInDown.delay(400).springify()}>
-            {/* Contact Email (Optional) */}
-            <View className="bg-white rounded-xl p-4 mb-6">
-              <Text variant="caption1" className="text-muted-foreground mb-2">
-                {t('feedback.emailOptional')}
+            <Animated.View entering={FadeInDown.delay(200).springify()}>
+              {/* App Rating */}
+              <Text
+                variant="footnote"
+                className="text-muted-foreground mb-3 uppercase tracking-wide"
+              >
+                {t('feedback.rateExperience')}
               </Text>
-              <TextInput
-                placeholder={t('feedback.emailPlaceholder')}
-                value={email}
-                onChangeText={setEmail}
-                keyboardType="email-address"
-                autoCapitalize="none"
-                className="text-base"
-                placeholderTextColor="#9CA3AF"
-              />
-            </View>
-          </Animated.View>
 
-          {/* Submit Button */}
-          <Pressable
-            onPress={handleSubmit}
-            disabled={isSubmitting}
-            className={cn(
-              'rounded-xl px-6 py-4 flex-row items-center justify-center',
-              isSubmitting ? 'bg-gray-400' : 'bg-primary'
-            )}
-            style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
-          >
-            {isSubmitting ? (
-              <>
-                <ActivityIndicator
-                  size="small"
-                  color="white"
-                  className="mr-2"
-                />
-                <Text variant="callout" className="text-white font-medium">
-                  {t('feedback.submitting')}
+              <View className="bg-white rounded-xl p-4 mb-6">
+                <Text variant="body" className="text-center mb-3">
+                  {t('feedback.ratingQuestion')}
                 </Text>
-              </>
-            ) : (
-              <>
-                <SymbolView
-                  name="paperplane.fill"
-                  size={20}
-                  tintColor="white"
-                />
-                <Text variant="callout" className="text-white font-medium ml-2">
-                  {t('feedback.submit')}
-                </Text>
-              </>
-            )}
-          </Pressable>
+                <View className="flex-row justify-center">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <RatingStar
+                      key={star}
+                      filled={star <= rating}
+                      onPress={() => handleRating(star)}
+                      colors={colors}
+                    />
+                  ))}
+                </View>
+              </View>
+            </Animated.View>
 
-          {/* Privacy Note */}
-          <Text
-            variant="caption2"
-            className="text-muted-foreground text-center mt-4 px-4"
-          >
-            {t('feedback.privacyNote')}
-          </Text>
-        </View>
+            <Animated.View entering={FadeInDown.delay(300).springify()}>
+              {/* Feedback Form */}
+              <Text
+                variant="footnote"
+                className="text-muted-foreground mb-3 uppercase tracking-wide"
+              >
+                {t('feedback.yourFeedback')}
+              </Text>
+
+              <View className="bg-white rounded-xl p-4 mb-4">
+                <TextInput
+                  placeholder={t('feedback.subject')}
+                  value={subject}
+                  onChangeText={setSubject}
+                  className="text-base mb-3 pb-3 border-b border-gray-200"
+                  placeholderTextColor={colors.mutedForeground}
+                />
+
+                <TextInput
+                  placeholder={t('feedback.messagePlaceholder')}
+                  value={message}
+                  onChangeText={setMessage}
+                  multiline
+                  numberOfLines={6}
+                  textAlignVertical="top"
+                  className="text-base min-h-[120px]"
+                  placeholderTextColor={colors.mutedForeground}
+                />
+              </View>
+            </Animated.View>
+
+            <Animated.View entering={FadeInDown.delay(400).springify()}>
+              {/* Contact Email (Optional) */}
+              <View className="bg-white rounded-xl p-4 mb-6">
+                <Text variant="caption1" className="text-muted-foreground mb-2">
+                  {t('feedback.emailOptional')}
+                </Text>
+                <TextInput
+                  placeholder={t('feedback.emailPlaceholder')}
+                  value={email}
+                  onChangeText={setEmail}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  className="text-base"
+                  placeholderTextColor={colors.mutedForeground}
+                />
+              </View>
+            </Animated.View>
+
+            {/* Submit Button */}
+            <Pressable
+              onPress={handleSubmit}
+              disabled={isSubmitting}
+              className={cn(
+                'rounded-xl px-6 py-4 flex-row items-center justify-center',
+                isSubmitting ? 'bg-gray-400' : 'bg-primary'
+              )}
+              style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
+            >
+              {isSubmitting ? (
+                <>
+                  <ActivityIndicator
+                    size="small"
+                    color="white"
+                    className="mr-2"
+                  />
+                  <Text variant="callout" className="text-white font-medium">
+                    {t('feedback.submitting')}
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <SymbolView
+                    name="paperplane.fill"
+                    size={20}
+                    tintColor="white"
+                  />
+                  <Text
+                    variant="callout"
+                    className="text-white font-medium ml-2"
+                  >
+                    {t('feedback.submit')}
+                  </Text>
+                </>
+              )}
+            </Pressable>
+
+            {/* Privacy Note */}
+            <Text
+              variant="caption2"
+              className="text-muted-foreground text-center mt-4 px-4"
+            >
+              {t('feedback.privacyNote')}
+            </Text>
+          </View>
         </ScrollView>
       </KeyboardAvoidingView>
     </View>

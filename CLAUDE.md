@@ -47,22 +47,24 @@ You are an expert in TypeScript, React Native, Expo, Tailwind CSS, Nativewind v4
 
 - **Frontend**: React Native with Expo SDK 53 (New Architecture enabled)
 - **Routing**: Expo Router v5 with typed routes
-- **Styling**: Nativewind v4 (Tailwind CSS for React Native)
-- **Animations**: React Native Reanimated 4 + Moti with preset library
-- **State Management**: Zustand with MMKV persistence via store factory
+- **Styling**: Nativewind v4 (Tailwind CSS for React Native) with unified color system
+- **Color System**: CSS variables + `useColors` hook for React Native-specific components
+- **Animations**: React Native Reanimated 4 + Moti with comprehensive preset library
+- **State Management**: Zustand with MMKV persistence via store factory pattern
 - **Backend**: Convex (real-time database and functions)
 - **Authentication**: Clerk with custom provider setup
 - **Localization**: react-native-i18n with RTL support
-- **Performance**: Comprehensive monitoring, lazy loading, bundle optimization
+- **Performance**: Bundle analysis, haptic optimization, MMKV health monitoring
 - **Package Manager**: Bun
 
 ### Performance Architecture
 
-- **Lazy Loading**: Component-based lazy loading with preload strategies
+- **Bundle Analysis**: Critical path analysis and bundle size monitoring
 - **Performance Monitoring**: Comprehensive metrics tracking (startup, navigation, memory)
-- **Bundle Optimization**: Critical path analysis and lazy bundle loading
-- **Animation Optimization**: Reanimated 4 with worklet optimization
-- **Memory Management**: MMKV with health checks and automatic cleanup
+- **MMKV Optimization**: Health checks, encryption, and automatic cleanup
+- **Animation Optimization**: Reanimated 4 with worklet optimization and preset library
+- **Haptic Optimization**: Efficient haptic feedback patterns
+- **Color System Optimization**: CSS variables for hot reload, minimal hex color usage
 
 ### Project Structure
 
@@ -73,31 +75,92 @@ src/
 │   ├── index.tsx          # Landing/auth check page
 │   ├── tabs/              # Tab navigation
 │   │   ├── chat.tsx       # Main chat screen
-│   │   ├── mood.tsx       # Mood tracking
-│   │   ├── exercises.tsx  # Wellness exercises
-│   │   └── profile.tsx    # User profile
+│   │   ├── mood/          # Mood tracking screens
+│   │   │   ├── index.tsx  # Main mood dashboard
+│   │   │   ├── calendar/[month].tsx # Monthly mood calendar
+│   │   │   ├── mood-entry/[date].tsx # Mood entry form
+│   │   │   ├── analytics.tsx # Mood analytics
+│   │   │   └── year-view.tsx # Full year mood view
+│   │   ├── exercises/     # Wellness exercises screens
+│   │   │   ├── index.tsx  # Exercise dashboard
+│   │   │   └── category/[id].tsx # Category exercises
+│   │   └── profile/       # User profile screens
+│   │       ├── index.tsx  # Profile dashboard
+│   │       ├── account-settings.tsx
+│   │       ├── edit-profile.tsx
+│   │       ├── privacy-settings.tsx
+│   │       └── support.tsx
 │   ├── auth/              # Authentication screens
-│   └── chat-history.tsx   # Chat history modal
+│   │   ├── sign-in.tsx
+│   │   └── sign-up.tsx
+│   ├── chat-history.tsx   # Chat history modal
+│   ├── crisis-resources.tsx # Crisis resources screen
+│   ├── feedback.tsx       # Feedback screen
+│   └── help-center.tsx    # Help center screen
 ├── components/            # Reusable UI components
 │   ├── chat/              # Chat-related components
+│   │   ├── ChatScreen.tsx, FloatingChatMinimal.tsx, StreamingText.tsx
+│   │   ├── ChatHistorySidebar.tsx, SessionStatusDisplay.tsx
+│   │   └── AnimatedWelcomeText.tsx, QuickRepliesSection.tsx
 │   ├── exercises/         # Exercise components
-│   ├── lazy/              # Lazy-loaded components
+│   │   ├── DailyExerciseCard.tsx, ExerciseCard.tsx, ExerciseDetail.tsx
+│   │   └── ModernCategoryCard.tsx, PremiumStatsSection.tsx
+│   ├── mood/              # Mood tracking components
+│   │   ├── PixelCalendar.tsx, FullYearPixelCalendar.tsx
+│   │   ├── WeekView.tsx, WeekDayDot.tsx
+│   │   └── StatCard.tsx
 │   ├── navigation/        # Navigation components
+│   │   └── MorphingTabBar.tsx # Animated tab bar with chat input
 │   ├── ui/                # Base UI components
+│   │   ├── ScreenLayout.tsx, InteractiveCard.tsx, GenericList.tsx
+│   │   ├── button.tsx, card.tsx, text.tsx, avatar.tsx
+│   │   └── FormField.tsx, RTLView.tsx, IconRenderer.tsx
 │   ├── auth/              # Authentication components
-│   └── dev/               # Development tools
-├── screens/               # Screen implementations
-│   └── tabs/              # Tab screen implementations
+│   │   └── AuthLayout.tsx
+│   └── SafeErrorBoundary.tsx, StoreErrorBoundary.tsx
 ├── providers/             # React context providers
-├── store/                 # Zustand stores with MMKV
-├── lib/                   # Utilities and optimization tools
-│   ├── animations/        # Animation presets and utilities
-│   ├── daily-exercise-utils.ts # Time-based greetings and daily exercise selection
-│   └── performance monitoring, MMKV, lazy loading, store factory
+│   ├── AppProviders.tsx   # Main provider wrapper
+│   ├── StoreProvider.tsx  # Zustand store hydration
+│   ├── ClerkProvider.tsx  # Authentication provider
+│   ├── ConvexProvider.tsx # Database provider
+│   └── LanguageProvider.tsx # i18n provider
+├── store/                 # Zustand stores with MMKV persistence
+│   ├── useAppStore.ts     # Global app state, themes, settings
+│   ├── useChatUIStore.ts  # Chat UI state, session management
+│   ├── app-store.ts       # Store implementations
+│   └── types.ts           # Store type definitions
+├── lib/                   # Utilities and core functionality
+│   ├── animations/        # Animation system
+│   │   ├── presets.ts     # Reanimated spring presets
+│   │   ├── hooks.ts       # Animation hooks
+│   │   └── utils.ts       # Animation utilities
+│   ├── color-helpers.ts   # Tailwind class generators and color utilities
+│   ├── colors.ts          # Color type definitions and withOpacity helper
+│   ├── store-factory.ts   # MMKV-persisted store factory pattern
+│   ├── mmkv-storage.ts    # MMKV storage with encryption and health checks
+│   ├── daily-exercise-utils.ts # Time-based greetings and exercise selection
+│   ├── i18n.ts            # Internationalization setup
+│   ├── haptic-optimizer.ts # Haptic feedback optimization
+│   ├── bundle-analyzer.ts  # Bundle size analysis
+│   ├── logger.ts          # Logging utilities
+│   └── useUserSafe.ts     # Safe user data access
 ├── hooks/                 # Custom React hooks
-├── config/                # Environment configuration
+│   ├── useColors.ts       # Color system hooks (useColors, useMoodColor, etc.)
+│   ├── useSharedData.ts   # Shared data access patterns
+│   ├── useTranslation.ts  # i18n hooks
+│   ├── useAuthForm.ts     # Authentication form utilities
+│   └── useScreenPadding.ts # Screen padding calculations
+├── config/                # Configuration
+│   └── env.ts             # Environment variables and configuration
 ├── types/                 # TypeScript type definitions
-└── locales/               # i18n translation files
+│   └── index.ts           # Shared type definitions
+├── locales/               # i18n translation files
+│   ├── en.json           # English translations
+│   ├── ar.json           # Arabic translations
+│   └── index.ts          # i18n exports
+└── __tests__/            # Test files
+    ├── lib/              # Library tests
+    └── stores/           # Store tests
 ```
 
 ### State Management Architecture
@@ -196,6 +259,80 @@ src/
 - Convex URL and Clerk keys configured via environment variables
 - Supports iOS 18.0+ and modern Android with edge-to-edge display
 
+## Color System Architecture
+
+**Unified Color System - Single Source of Truth**
+
+The app uses a modern, unified color system with CSS variables as the single source of truth, powering both Tailwind classes and React Native components.
+
+### Color System Structure
+
+- **Primary System**: CSS variables in `global.css` (RGB format for opacity support)
+- **Secondary System**: `useColors()` hook for React Native-specific components requiring hex values
+- **Integration**: Tailwind config maps all CSS variables to utility classes
+
+### Usage Guidelines
+
+#### 🎨 **Use Tailwind Classes for 90% of Components**
+```tsx
+// ✅ Preferred - Use Tailwind classes
+<View className="bg-primary text-primary-foreground">
+<Text className="text-mood-happy">Happy mood</Text>
+<View className="bg-card-elevated border-border">
+```
+
+#### 🔧 **Use useColors Hook for React Native Specific Components**
+```tsx
+// ✅ Only for React Native components requiring hex values
+import { useColors, useMoodColor, useShadowStyle } from '~/hooks/useColors';
+
+const colors = useColors();
+<SymbolView tintColor={colors.primary} />
+<View style={{ shadowColor: colors.shadow }} />
+<View style={useShadowStyle('medium')} />
+```
+
+### Available Color Categories
+
+- **Core Colors**: `primary`, `secondary`, `background`, `foreground`, `card`, `input`
+- **State Colors**: `success`, `warning`, `error`, `info`
+- **Mood Colors**: `mood-happy`, `mood-sad`, `mood-anxious`, `mood-neutral`, `mood-angry`
+- **Wellness Colors**: `wellness-mindfulness`, `wellness-breathing`, `wellness-movement`
+- **Navigation Colors**: `tab-active`, `tab-inactive`
+- **Chat Colors**: `chat-bubble-user`, `chat-bubble-ai`
+- **Brand Colors**: `brand-oxford`, `brand-primary`, `brand-brownish`
+
+### Specialized Color Hooks
+
+```tsx
+// Mood-specific colors
+const happyColor = useMoodColor('happy');
+
+// Navigation colors
+const navColors = useNavigationColors();
+const iconColor = focused ? navColors.active : navColors.inactive;
+
+// Chat colors
+const chatColors = useChatColors();
+
+// Shadow styling
+const shadowStyle = useShadowStyle('medium'); // 'light' | 'medium' | 'heavy'
+```
+
+### Color Helper Functions
+
+- `getMoodButtonClass(isSelected, moodType)` - Dynamic mood button styling
+- `getCardBackgroundClass(variant)` - Dynamic card backgrounds
+- `getChatBubbleClass(isUser)` - Dynamic chat bubble styling
+- `getNavigationIconClass(isActive)` - Navigation icon colors
+- `withOpacity(color, opacity)` - Safe opacity calculations for React Native
+
+### Dark Mode Support
+
+- Automatic theme switching via CSS variables
+- Both system preference (`@media (prefers-color-scheme: dark)`) and manual (`.dark` class) support
+- All color utilities automatically adapt to current theme
+
 ## Animation and UI Guidelines
 
 - Use React Native Reanimated 4 for complex animations
@@ -206,28 +343,32 @@ src/
 
 ## Performance and Optimization Guidelines
 
-- **Lazy Loading**: Use lazy components from `src/components/lazy/` for heavy screens
+- **Bundle Optimization**: Monitor critical path size using built-in bundle analyzer
 - **Performance Monitoring**: Leverage built-in performance monitoring for optimization insights
-- **MMKV Best Practices**: Use `mmkvJSON` helpers for object storage, check storage health
-- **Animation Performance**: Use Reanimated 4 worklets, avoid bridge communication
-- **Bundle Optimization**: Monitor critical path size, use lazy loading for non-essential features
+- **MMKV Best Practices**: Use `mmkv-storage.ts` with encryption, health checks, and `store-factory.ts` pattern
+- **Animation Performance**: Use Reanimated 4 worklets with animation presets from `~/lib/animations/`
 - **Memory Management**: Regular cleanup, monitor memory usage patterns
+- **Haptic Optimization**: Use `haptic-optimizer.ts` for efficient haptic feedback
 
 ## Component Architecture
 
 - **Screen Layout System**: `ScreenLayout` component with presets (dashboard, chat, profile, list)
-- **Lazy Loading**: Components in `src/components/lazy/` with performance tracking
 - **UI Components**: Consistent design system in `src/components/ui/`
-- **Animation Library**: Preset animations in `src/lib/animations/`
-- **Generic Patterns**: `GenericList`, `LazyModal`, `InteractiveCard` for common use cases
+  - `InteractiveCard`, `GenericList`, `FormField`, `RTLView`
+  - `button.tsx`, `card.tsx`, `text.tsx`, `avatar.tsx`
+- **Animation Library**: Comprehensive animation system in `src/lib/animations/`
+  - Spring presets, animation hooks, and utilities
+- **Color System**: Unified color system with `useColors` hook and Tailwind integration
+- **Error Boundaries**: `SafeErrorBoundary` and `StoreErrorBoundary` for robust error handling
 
 ## Development Workflow
 
-- **Performance First**: Monitor bundle size and lazy load times during development
-- **State Management**: Use store factory pattern for new features requiring persistence
-- **Error Boundaries**: Implement proper error handling for store operations
-- **Testing**: Focus on store hydration, lazy loading, and performance metrics
-- **RTL Support**: Test Arabic layouts, use `RTLView` component for direction-aware layouts
+- **Performance First**: Monitor bundle size and animation performance during development
+- **State Management**: Use `store-factory.ts` pattern for new features requiring MMKV persistence
+- **Error Boundaries**: Implement proper error handling with provided error boundary components
+- **Testing**: Focus on store hydration, MMKV persistence, and color system integration
+- **RTL Support**: Test Arabic layouts using `RTLView` component for direction-aware layouts
+- **Color System**: Use Tailwind classes for 90% of styling, `useColors` hook for React Native-specific components
 
 ## Testing Framework
 

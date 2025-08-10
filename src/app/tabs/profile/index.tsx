@@ -31,13 +31,15 @@ import { cn } from '~/lib/cn';
 import { useTranslation } from '~/hooks/useTranslation';
 import { useAppStore } from '~/store/app-store';
 import { router } from 'expo-router';
+import { useColors, useShadowStyle } from '~/hooks/useColors';
+import { withOpacity } from '~/lib/colors';
 
 // Section Header Component - iOS native style
 function SectionHeader({ title }: { title: string }) {
   return (
     <Text
       variant="footnote"
-      className="text-[#6B7280] mb-3 mt-6 px-4 uppercase tracking-wide font-semibold text-[13px]"
+      className="text-muted-foreground mb-3 mt-6 px-4 uppercase tracking-wide font-semibold text-[13px]"
     >
       {title}
     </Text>
@@ -72,6 +74,7 @@ function SettingRow({
   iconColor?: string;
   iconBgColor?: string;
 }) {
+  const colors = useColors();
   const scale = useSharedValue(1);
 
   const animatedStyle = useAnimatedStyle(() => ({
@@ -94,7 +97,7 @@ function SettingRow({
         onPressOut={handlePressOut}
         className={cn(
           'px-4 py-3.5 flex-row items-center',
-          !isLast && 'border-b border-gray-100'
+          !isLast && 'border-b border-border/10'
         )}
         disabled={type === 'switch'}
       >
@@ -102,17 +105,17 @@ function SettingRow({
           <View
             className="w-8 h-8 rounded-lg items-center justify-center mr-3"
             style={{
-              backgroundColor: destructive 
-                ? '#FF3B30' + '15' 
-                : iconBgColor 
-                  ? iconBgColor + '15' 
-                  : '#007AFF15'
+              backgroundColor: destructive
+                ? withOpacity(colors.error, 0.1)
+                : iconBgColor
+                  ? withOpacity(iconBgColor, 0.1)
+                  : withOpacity(colors.info, 0.1),
             }}
           >
             <SymbolView
               name={icon as any}
               size={20}
-              tintColor={destructive ? '#FF3B30' : iconColor || '#007AFF'}
+              tintColor={destructive ? colors.error : iconColor || colors.info}
             />
           </View>
         )}
@@ -120,7 +123,7 @@ function SettingRow({
           variant="body"
           className={cn(
             'flex-1 text-[17px] font-medium',
-            destructive && 'text-[#FF3B30]'
+            destructive && 'text-error'
           )}
         >
           {label}
@@ -128,17 +131,27 @@ function SettingRow({
         {type === 'navigation' ? (
           <View className="flex-row items-center">
             {value && (
-              <Text variant="body" className="text-[#8E8E93] mr-2 text-[16px]">
+              <Text
+                variant="body"
+                className="text-muted-foreground mr-2 text-[16px]"
+              >
                 {value}
               </Text>
             )}
-            <SymbolView name="chevron.right" size={14} tintColor="#C7C7CC" />
+            <SymbolView
+              name="chevron.right"
+              size={14}
+              tintColor={colors.mutedForeground}
+            />
           </View>
         ) : (
           <Switch
             value={switchValue}
             onValueChange={onSwitchChange}
-            trackColor={{ false: '#E9E9EA', true: '#34C759' }}
+            trackColor={{
+              false: colors.muted,
+              true: colors.success,
+            }}
             thumbColor="white"
           />
         )}
@@ -154,6 +167,9 @@ export default function ProfileIndex() {
   const [isSigningOut, setIsSigningOut] = useState(false);
   const { t, language, setLanguage } = useTranslation();
   const insets = useSafeAreaInsets();
+  const colors = useColors();
+  const shadowLight = useShadowStyle('light');
+  const shadowMedium = useShadowStyle('medium');
 
   // ===== STATE MANAGEMENT =====
   const theme = useAppStore((state) => state.settings.theme);
@@ -244,18 +260,18 @@ export default function ProfileIndex() {
       <View
         className="mx-4 mb-4 rounded-2xl shadow-sm"
         style={{
-          backgroundColor: 'rgba(90, 74, 58, 0.12)',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.05,
-          shadowRadius: 3,
+          backgroundColor: colors.card,
+          ...shadowLight,
         }}
       >
         <View className="px-4 py-5 flex-row items-center">
           <Avatar alt={user.fullName || 'User'} className="h-16 w-16 mr-4">
             <Avatar.Image source={{ uri: user.imageUrl }} />
-            <Avatar.Fallback className="bg-gradient-to-br from-purple-500 to-purple-600">
-              <Text variant="body" className="text-white text-xl font-semibold">
+            <Avatar.Fallback className="bg-gradient-to-br from-primary to-primary/80">
+              <Text
+                variant="body"
+                className="text-primary-foreground text-xl font-semibold"
+              >
                 {user.fullName?.charAt(0) ||
                   user.firstName?.charAt(0) ||
                   user.emailAddresses?.[0]?.emailAddress
@@ -266,10 +282,10 @@ export default function ProfileIndex() {
             </Avatar.Fallback>
           </Avatar>
           <View className="flex-1">
-            <Text className="text-[19px] font-semibold text-black mb-1">
+            <Text className="text-[19px] font-semibold text-foreground mb-1">
               {user.fullName || 'Anonymous User'}
             </Text>
-            <Text className="text-[15px] text-[#6B7280]">
+            <Text className="text-[15px] text-muted-foreground">
               {user.emailAddresses?.[0]?.emailAddress}
             </Text>
           </View>
@@ -281,50 +297,59 @@ export default function ProfileIndex() {
         entering={FadeInDown.delay(200).springify()}
         className="mx-4 mb-4"
       >
-        <Text className="text-[15px] font-semibold text-[#6B7280] mb-3 uppercase tracking-wide">
+        <Text className="text-[15px] font-semibold text-muted-foreground mb-3 uppercase tracking-wide">
           Usage Statistics
         </Text>
         <View
           className="rounded-2xl shadow-sm p-5"
           style={{
-            backgroundColor: 'rgba(90, 74, 58, 0.12)',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 3,
+            backgroundColor: withOpacity(colors.brandBrownish, 0.12),
+            ...shadowLight,
           }}
         >
           <View className="flex-row justify-between">
             <View className="flex-1 items-center">
-              <View className="bg-[#FF9500]/10 w-14 h-14 rounded-full items-center justify-center mb-3">
-                <SymbolView name="flame.fill" size={24} tintColor="#FF9500" />
+              <View className="bg-warning/10 w-14 h-14 rounded-full items-center justify-center mb-3">
+                <SymbolView
+                  name="flame.fill"
+                  size={24}
+                  tintColor={colors.warning}
+                />
               </View>
-              <Text className="text-[26px] font-bold text-black mb-1">7</Text>
-              <Text className="text-[13px] text-[#6B7280] text-center font-medium">
+              <Text className="text-[26px] font-bold text-foreground mb-1">
+                7
+              </Text>
+              <Text className="text-[13px] text-muted-foreground text-center font-medium">
                 {t('profile.stats.dayStreak')}
               </Text>
             </View>
             <View className="flex-1 items-center">
-              <View className="bg-[#007AFF]/10 w-14 h-14 rounded-full items-center justify-center mb-3">
+              <View className="bg-info/10 w-14 h-14 rounded-full items-center justify-center mb-3">
                 <SymbolView
                   name="bubble.left.fill"
                   size={24}
-                  tintColor="#007AFF"
+                  tintColor={colors.info}
                 />
               </View>
-              <Text className="text-[26px] font-bold text-black mb-1">24</Text>
-              <Text className="text-[13px] text-[#6B7280] text-center font-medium">
+              <Text className="text-[26px] font-bold text-foreground mb-1">
+                24
+              </Text>
+              <Text className="text-[13px] text-muted-foreground text-center font-medium">
                 {t('profile.stats.sessions')}
               </Text>
             </View>
             <View className="flex-1 items-center">
-              <View className="bg-[#34C759]/10 w-14 h-14 rounded-full items-center justify-center mb-3">
-                <SymbolView name="clock.fill" size={24} tintColor="#34C759" />
+              <View className="bg-success/10 w-14 h-14 rounded-full items-center justify-center mb-3">
+                <SymbolView
+                  name="clock.fill"
+                  size={24}
+                  tintColor={colors.success}
+                />
               </View>
-              <Text className="text-[26px] font-bold text-black mb-1">
+              <Text className="text-[26px] font-bold text-foreground mb-1">
                 3.5h
               </Text>
-              <Text className="text-[13px] text-[#6B7280] text-center font-medium">
+              <Text className="text-[13px] text-muted-foreground text-center font-medium">
                 {t('profile.stats.totalTime')}
               </Text>
             </View>
@@ -337,10 +362,10 @@ export default function ProfileIndex() {
   return (
     <ProfileLayout title={t('profile.title')}>
       <ScrollView
-        className="flex-1 bg-[#F4F1ED]"
+        className="flex-1 bg-background"
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ 
-          paddingBottom: insets.bottom + 40 // Safe area + reduced tab bar clearance
+        contentContainerStyle={{
+          paddingBottom: insets.bottom + 40, // Safe area + reduced tab bar clearance
         }}
       >
         {/* Account Section */}
@@ -351,11 +376,8 @@ export default function ProfileIndex() {
         <View
           className="mx-4 mb-4 rounded-2xl shadow-sm overflow-hidden"
           style={{
-            backgroundColor: 'rgba(90, 74, 58, 0.12)',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 3,
+            backgroundColor: withOpacity(colors.brandBrownish, 0.12),
+            ...shadowLight,
           }}
         >
           <SettingRow
@@ -364,8 +386,8 @@ export default function ProfileIndex() {
             value={language === 'en' ? 'English' : 'العربية'}
             onPress={handleLanguageChange}
             isFirst={true}
-            iconColor="#007AFF"
-            iconBgColor="#007AFF"
+            iconColor={colors.info}
+            iconBgColor={colors.info}
           />
           <SettingRow
             icon="moon.fill"
@@ -373,8 +395,8 @@ export default function ProfileIndex() {
             value={t(`profile.themes.${theme}`)}
             onPress={handleThemeChange}
             isLast={true}
-            iconColor="#5856D6"
-            iconBgColor="#5856D6"
+            iconColor={colors.primary}
+            iconBgColor={colors.primary}
           />
         </View>
 
@@ -383,11 +405,8 @@ export default function ProfileIndex() {
         <View
           className="mx-4 mb-6 rounded-2xl shadow-sm overflow-hidden"
           style={{
-            backgroundColor: 'rgba(90, 74, 58, 0.12)',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.05,
-            shadowRadius: 3,
+            backgroundColor: withOpacity(colors.brandBrownish, 0.12),
+            ...shadowLight,
           }}
         >
           <SettingRow
@@ -395,23 +414,23 @@ export default function ProfileIndex() {
             label={t('profile.support.helpCenter')}
             onPress={handleHelpCenter}
             isFirst={true}
-            iconColor="#34C759"
-            iconBgColor="#34C759"
+            iconColor={colors.success}
+            iconBgColor={colors.success}
           />
           <SettingRow
             icon="heart.fill"
             label={t('profile.support.crisisResources')}
             onPress={handleCrisisResources}
-            iconColor="#FF3B30"
-            iconBgColor="#FF3B30"
+            iconColor={colors.error}
+            iconBgColor={colors.error}
           />
           <SettingRow
             icon="envelope.fill"
             label={t('profile.support.feedback')}
             onPress={handleFeedback}
             isLast={true}
-            iconColor="#FF9500"
-            iconBgColor="#FF9500"
+            iconColor={colors.warning}
+            iconBgColor={colors.warning}
           />
         </View>
 
@@ -425,7 +444,7 @@ export default function ProfileIndex() {
             disabled={isSigningOut}
             className="mx-4 mb-8 bg-red-500 rounded-2xl p-4 flex-row items-center justify-center shadow-sm active:scale-95 transition-transform"
             style={{
-              shadowColor: '#FF3B30',
+              shadowColor: colors.error,
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: 0.15,
               shadowRadius: 4,

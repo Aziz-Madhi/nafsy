@@ -4,14 +4,14 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ModernCategoryCard } from './ModernCategoryCard';
 import { SimpleMasonryGrid } from '~/components/ui/SimpleMasonryGrid';
 import { useTranslation } from '~/hooks/useTranslation';
-import { colors } from '~/lib/design-tokens';
+import type { WellnessCategory } from '~/lib/colors';
 
 interface PremiumCategoryGridProps {
   onCategorySelect: (categoryId: string) => void;
 }
 
 interface Category {
-  id: keyof typeof colors.wellness;
+  id: WellnessCategory;
   name: string;
   color: string;
   description: string;
@@ -59,42 +59,42 @@ function PremiumCategoryGridComponent({
       {
         id: 'mindfulness' as const,
         name: translatedStrings.mindfulness.name,
-        color: colors.wellness.mindfulness.primary,
+        color: '#FF6B6B',
         description: translatedStrings.mindfulness.description,
         icon: '🧘‍♀️',
       },
       {
         id: 'breathing' as const,
         name: translatedStrings.breathing.name,
-        color: colors.wellness.breathing.primary,
+        color: '#4ECDC4',
         description: translatedStrings.breathing.description,
         icon: '🌬️',
       },
       {
         id: 'movement' as const,
         name: translatedStrings.movement.name,
-        color: colors.wellness.movement.primary,
+        color: '#45B7D1',
         description: translatedStrings.movement.description,
         icon: '🚶‍♀️',
       },
       {
         id: 'journaling' as const,
         name: translatedStrings.journaling.name,
-        color: colors.wellness.journaling.primary,
+        color: '#96CEB4',
         description: translatedStrings.journaling.description,
         icon: '✍️',
       },
       {
         id: 'relaxation' as const,
         name: translatedStrings.relaxation.name,
-        color: colors.wellness.relaxation.primary,
+        color: '#FFEAA7',
         description: translatedStrings.relaxation.description,
         icon: '🛀',
       },
       {
         id: 'reminders' as const,
         name: translatedStrings.reminders.name,
-        color: colors.wellness.reminders.primary,
+        color: '#DDA0DD',
         description: translatedStrings.reminders.description,
         icon: '💭',
       },

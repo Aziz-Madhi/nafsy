@@ -18,11 +18,11 @@ import {
   subMonths,
 } from 'date-fns';
 import { cn } from '~/lib/cn';
-import { colors } from '~/lib/design-tokens';
+import { useColors } from '~/hooks/useColors';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 
 const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
-  const iconProps = { size, color: color || colors.neutral[700], fill: 'none' };
+  const iconProps = { size, color: color || '#6B7280', fill: 'none' };
 
   switch (moodId) {
     case 'sad':
@@ -43,6 +43,25 @@ const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
 export default function CalendarModal() {
   const { month: monthParam } = useLocalSearchParams<{ month: string }>();
   const moodData = useMoodData();
+  const colors = useColors();
+
+  // Helper function to get mood color
+  const getMoodColor = (mood: string) => {
+    switch (mood) {
+      case 'happy':
+        return colors.moodHappy;
+      case 'sad':
+        return colors.moodSad;
+      case 'anxious':
+        return colors.moodAnxious;
+      case 'neutral':
+        return colors.moodNeutral;
+      case 'angry':
+        return colors.moodAngry;
+      default:
+        return colors.moodNeutral;
+    }
+  };
 
   // Parse month from URL parameter (format: YYYY-MM)
   const currentMonth = useMemo(() => {
@@ -135,15 +154,15 @@ export default function CalendarModal() {
               justifyContent: 'center',
               borderRadius: 12,
               backgroundColor: mood
-                ? colors.mood[mood.mood].primary
+                ? getMoodColor(mood.mood)
                 : isSelected
                   ? '#E0F2FE'
                   : isToday
                     ? '#F3F4F6'
                     : 'transparent',
               borderWidth: mood ? 2 : isSelected ? 2 : 0,
-              borderColor: mood ? colors.mood[mood.mood].dark : '#2196F3',
-              shadowColor: mood ? colors.mood[mood.mood].primary : '#000',
+              borderColor: mood ? getMoodColor(mood.mood) : colors.primary,
+              shadowColor: mood ? getMoodColor(mood.mood) : '#000',
               shadowOffset: { width: 0, height: 1 },
               shadowOpacity: mood ? 0.2 : 0,
               shadowRadius: 2,
@@ -151,7 +170,7 @@ export default function CalendarModal() {
             }}
           >
             {mood ? (
-              renderMoodIcon(mood.mood, 20, colors.neutral[900])
+              renderMoodIcon(mood.mood, 20, colors.foreground)
             ) : (
               <Text
                 variant="body"
@@ -189,7 +208,7 @@ export default function CalendarModal() {
         <View
           className="rounded-3xl p-6 border border-gray-200"
           style={{
-            backgroundColor: 'rgba(90, 74, 58, 0.12)',
+            backgroundColor: colors.card,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.08,
@@ -253,7 +272,7 @@ export default function CalendarModal() {
               style={{
                 marginTop: 20,
                 padding: 16,
-                backgroundColor: '#F9FAFB',
+                backgroundColor: colors.muted,
                 borderRadius: 16,
               }}
             >
@@ -278,14 +297,15 @@ export default function CalendarModal() {
                         <View
                           className="w-12 h-12 rounded-2xl items-center justify-center mr-3 overflow-hidden"
                           style={{
-                            backgroundColor:
-                              colors.mood[selectedMoodData.mood].primary,
+                            backgroundColor: getMoodColor(
+                              selectedMoodData.mood
+                            ),
                           }}
                         >
                           {renderMoodIcon(
                             selectedMoodData.mood,
                             22,
-                            colors.neutral[900]
+                            colors.foreground
                           )}
                         </View>
                         <Text

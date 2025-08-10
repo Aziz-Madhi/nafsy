@@ -6,7 +6,7 @@ import { subDays, isSameDay, format } from 'date-fns';
 import { Text } from '~/components/ui/text';
 import { IconRenderer } from '~/components/ui/IconRenderer';
 import { MotiView, AnimatePresence } from 'moti';
-import { colors } from '~/lib/design-tokens';
+import { useMoodColor, useColors } from '~/hooks/useColors';
 
 const moodNames: Record<string, string> = {
   sad: 'Sad',
@@ -24,6 +24,34 @@ export function WeekView({ moodData }: WeekViewProps) {
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   const today = new Date();
   const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+
+  // Colors for React Native styling
+  const colors = useColors();
+
+  // Get all mood colors at the top level for all possible moods
+  const sadColor = useMoodColor('sad');
+  const anxiousColor = useMoodColor('anxious');
+  const neutralColor = useMoodColor('neutral');
+  const happyColor = useMoodColor('happy');
+  const angryColor = useMoodColor('angry');
+
+  // Helper function to get mood color without calling hooks
+  const getMoodColor = (mood: string): string => {
+    switch (mood) {
+      case 'sad':
+        return sadColor;
+      case 'anxious':
+        return anxiousColor;
+      case 'neutral':
+        return neutralColor;
+      case 'happy':
+        return happyColor;
+      case 'angry':
+        return angryColor;
+      default:
+        return '#E5E7EB';
+    }
+  };
 
   // Get last 7 days
   const last7Days = Array.from({ length: 7 }, (_, i) => {
@@ -69,7 +97,7 @@ export function WeekView({ moodData }: WeekViewProps) {
             <WeekDayDot
               key={index}
               day={day.dayName}
-              color={day.mood ? colors.mood[day.mood.mood].primary : '#E5E7EB'}
+              color={day.mood ? getMoodColor(day.mood.mood) : '#E5E7EB'}
               isToday={day.isToday}
               hasData={!!day.mood}
               onPress={() => handleDayPress(index)}
@@ -167,15 +195,14 @@ export function WeekView({ moodData }: WeekViewProps) {
                   <View
                     className="w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden"
                     style={{
-                      backgroundColor:
-                        colors.mood[selectedDay.mood.mood].primary,
+                      backgroundColor: getMoodColor(selectedDay.mood.mood),
                     }}
                   >
                     <IconRenderer
                       iconType="mood"
                       iconName={selectedDay.mood.mood}
                       size={24}
-                      color={colors.neutral[900]}
+                      color={colors.foreground}
                     />
                   </View>
                   <Text

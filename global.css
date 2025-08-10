@@ -2,49 +2,278 @@
 @tailwind components;
 @tailwind utilities;
 
-/* NativeWindUI CSS Variables */
+/* Unified Color System - RGB format for opacity support */
 :root {
-  --background: 40 25% 94%;
-  --foreground: 240 10% 3.9%;
-  --card: 0 0% 100%;
-  --card-foreground: 240 10% 3.9%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 240 10% 3.9%;
-  --primary: 240 5.9% 10%;
-  --primary-foreground: 0 0% 98%;
-  --secondary: 240 4.8% 95.9%;
-  --secondary-foreground: 240 5.9% 10%;
-  --muted: 240 4.8% 95.9%;
-  --muted-foreground: 240 3.8% 46.1%;
-  --accent: 240 4.8% 95.9%;
-  --accent-foreground: 240 5.9% 10%;
-  --destructive: 0 84.2% 60.2%;
-  --destructive-foreground: 0 0% 98%;
-  --border: 240 5.9% 90%;
-  --input: 240 5.9% 90%;
-  --ring: 240 5.9% 10%;
+  /* Core Brand Colors */
+  --brand-oxford: 0 33 71;
+  --brand-primary: 33 150 243;
+  --brand-brownish: 90 74 58;
+
+  /* Semantic Colors - Light Mode */
+  --primary: 33 150 243;
+  --primary-foreground: 255 255 255;
+
+  --secondary: 240 240 240;
+  --secondary-foreground: 90 74 58;
+
+  --background: 244 241 237;
+  --foreground: 90 74 58;
+
+  --card: 238 235 231;
+  --card-foreground: 90 74 58;
+  --card-elevated: 255 255 255;
+
+  --input: 248 246 243;
+  --input-focused: 255 255 255;
+
+  --border: 229 229 229;
+  --border-subtle: 245 245 245;
+  --ring: 33 150 243;
+
+  --muted: 245 245 245;
+  --muted-foreground: 115 115 115;
+
+  /* State Colors */
+  --success: 34 197 94;
+  --success-foreground: 255 255 255;
+
+  --warning: 245 158 11;
+  --warning-foreground: 255 255 255;
+
+  --error: 239 68 68;
+  --error-foreground: 255 255 255;
+
+  --info: 59 130 246;
+  --info-foreground: 255 255 255;
+
+  /* Mood Colors */
+  --mood-happy: 252 211 77;
+  --mood-happy-light: 254 243 199;
+  --mood-happy-dark: 245 158 11;
+  --mood-happy-bg: 255 251 235;
+
+  --mood-sad: 107 127 222;
+  --mood-sad-light: 224 231 255;
+  --mood-sad-dark: 76 94 189;
+  --mood-sad-bg: 245 247 255;
+
+  --mood-anxious: 147 112 219;
+  --mood-anxious-light: 243 244 246;
+  --mood-anxious-dark: 107 114 128;
+  --mood-anxious-bg: 249 250 251;
+
+  --mood-neutral: 148 163 184;
+  --mood-neutral-light: 226 232 240;
+  --mood-neutral-dark: 100 116 139;
+  --mood-neutral-bg: 248 250 252;
+
+  --mood-angry: 248 113 113;
+  --mood-angry-light: 254 226 226;
+  --mood-angry-dark: 239 68 68;
+  --mood-angry-bg: 254 242 242;
+
+  /* Wellness Category Colors */
+  --wellness-mindfulness: 255 107 107;
+  --wellness-breathing: 78 205 196;
+  --wellness-movement: 69 183 209;
+  --wellness-journaling: 150 206 180;
+  --wellness-relaxation: 255 234 167;
+  --wellness-reminders: 221 160 221;
+
+  /* Navigation Colors */
+  --tab-active: 29 78 216;
+  --tab-inactive: 163 163 163;
+
+  /* Chat Colors */
+  --chat-bubble-user: 47 106 141;
+  --chat-bubble-ai: 32 32 32;
+  --chat-text: 255 255 255;
+
+  /* Overlay Colors */
+  --overlay-light: 255 255 255;
+  --overlay-dark: 0 0 0;
+  --backdrop: 0 0 0;
 }
 
+/* Dark Mode Colors */
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
-    --card: 240 10% 3.9%;
-    --card-foreground: 0 0% 98%;
-    --popover: 240 10% 3.9%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 98%;
-    --primary-foreground: 240 5.9% 10%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 240 4.9% 83.9%;
+    /* Semantic Colors - Dark Mode */
+    --primary: 96 165 250;
+    --primary-foreground: 255 255 255;
+
+    --secondary: 64 64 64;
+    --secondary-foreground: 245 245 245;
+
+    --background: 23 23 23;
+    --foreground: 245 245 245;
+
+    --card: 38 38 38;
+    --card-foreground: 245 245 245;
+    --card-elevated: 64 64 64;
+
+    --input: 64 64 64;
+    --input-focused: 82 82 82;
+
+    --border: 82 82 82;
+    --border-subtle: 64 64 64;
+    --ring: 96 165 250;
+
+    --muted: 64 64 64;
+    --muted-foreground: 163 163 163;
+
+    /* State Colors remain vibrant in dark mode */
+    --success: 74 222 128;
+    --success-foreground: 255 255 255;
+
+    --warning: 251 191 36;
+    --warning-foreground: 255 255 255;
+
+    --error: 248 113 113;
+    --error-foreground: 255 255 255;
+
+    --info: 96 165 250;
+    --info-foreground: 255 255 255;
+
+    /* Mood Colors - adjusted for dark mode */
+    --mood-happy: 252 211 77;
+    --mood-happy-light: 251 191 36;
+    --mood-happy-dark: 245 158 11;
+    --mood-happy-bg: 120 53 15;
+
+    --mood-sad: 147 197 253;
+    --mood-sad-light: 191 219 254;
+    --mood-sad-dark: 59 130 246;
+    --mood-sad-bg: 30 58 138;
+
+    --mood-anxious: 192 132 252;
+    --mood-anxious-light: 216 180 254;
+    --mood-anxious-dark: 147 51 234;
+    --mood-anxious-bg: 88 28 135;
+
+    --mood-neutral: 148 163 184;
+    --mood-neutral-light: 203 213 225;
+    --mood-neutral-dark: 100 116 139;
+    --mood-neutral-bg: 51 65 85;
+
+    --mood-angry: 252 165 165;
+    --mood-angry-light: 254 202 202;
+    --mood-angry-dark: 248 113 113;
+    --mood-angry-bg: 127 29 29;
+
+    /* Navigation Colors - Dark Mode */
+    --tab-active: 96 165 250;
+    --tab-inactive: 115 115 115;
+
+    /* Chat Colors - Dark Mode */
+    --chat-bubble-user: 59 130 246;
+    --chat-bubble-ai: 64 64 64;
+    --chat-text: 245 245 245;
+  }
+}
+
+/* Manual dark mode class support */
+.dark {
+  /* Semantic Colors - Dark Mode */
+  --primary: 96 165 250;
+  --primary-foreground: 255 255 255;
+
+  --secondary: 64 64 64;
+  --secondary-foreground: 245 245 245;
+
+  --background: 23 23 23;
+  --foreground: 245 245 245;
+
+  --card: 38 38 38;
+  --card-foreground: 245 245 245;
+  --card-elevated: 64 64 64;
+
+  --input: 64 64 64;
+  --input-focused: 82 82 82;
+
+  --border: 82 82 82;
+  --border-subtle: 64 64 64;
+  --ring: 96 165 250;
+
+  --muted: 64 64 64;
+  --muted-foreground: 163 163 163;
+
+  /* State Colors remain vibrant in dark mode */
+  --success: 74 222 128;
+  --success-foreground: 255 255 255;
+
+  --warning: 251 191 36;
+  --warning-foreground: 255 255 255;
+
+  --error: 248 113 113;
+  --error-foreground: 255 255 255;
+
+  --info: 96 165 250;
+  --info-foreground: 255 255 255;
+
+  /* Mood Colors - adjusted for dark mode */
+  --mood-happy: 252 211 77;
+  --mood-happy-light: 251 191 36;
+  --mood-happy-dark: 245 158 11;
+  --mood-happy-bg: 120 53 15;
+
+  --mood-sad: 147 197 253;
+  --mood-sad-light: 191 219 254;
+  --mood-sad-dark: 59 130 246;
+  --mood-sad-bg: 30 58 138;
+
+  --mood-anxious: 192 132 252;
+  --mood-anxious-light: 216 180 254;
+  --mood-anxious-dark: 147 51 234;
+  --mood-anxious-bg: 88 28 135;
+
+  --mood-neutral: 148 163 184;
+  --mood-neutral-light: 203 213 225;
+  --mood-neutral-dark: 100 116 139;
+  --mood-neutral-bg: 51 65 85;
+
+  --mood-angry: 252 165 165;
+  --mood-angry-light: 254 202 202;
+  --mood-angry-dark: 248 113 113;
+  --mood-angry-bg: 127 29 29;
+
+  /* Navigation Colors - Dark Mode */
+  --tab-active: 96 165 250;
+  --tab-inactive: 115 115 115;
+
+  /* Chat Colors - Dark Mode */
+  --chat-bubble-user: 59 130 246;
+  --chat-bubble-ai: 64 64 64;
+  --chat-text: 245 245 245;
+}
+
+/* Utility classes for common opacity patterns */
+@layer utilities {
+  .glass-light {
+    @apply bg-white/15 backdrop-blur-xl;
+  }
+
+  .glass-medium {
+    @apply bg-white/25 backdrop-blur-xl;
+  }
+
+  .glass-dark {
+    @apply bg-black/10 backdrop-blur-xl;
+  }
+
+  .overlay-light {
+    @apply bg-white/20;
+  }
+
+  .overlay-medium {
+    @apply bg-white/40;
+  }
+
+  .overlay-heavy {
+    @apply bg-white/60;
+  }
+
+  .backdrop-overlay {
+    @apply bg-black/80;
   }
 }

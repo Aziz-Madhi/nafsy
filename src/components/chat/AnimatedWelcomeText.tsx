@@ -27,7 +27,7 @@ export const AnimatedWelcomeText = memo(function AnimatedWelcomeText({
 
     return () => clearTimeout(timer);
   }, [visibleWords, words.length, wordDelay]);
-  
+
   // Cleanup on unmount
   useEffect(() => {
     return () => {

@@ -13,7 +13,7 @@ import Animated, {
   Extrapolation,
 } from 'react-native-reanimated';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
-import { colors } from '~/lib/design-tokens';
+import { useColors } from '~/hooks/useColors';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 
 interface MoodData {
@@ -24,7 +24,7 @@ interface MoodData {
 }
 
 const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
-  const iconProps = { size, color: color || colors.neutral[700], fill: 'none' };
+  const iconProps = { size, color: color || '#6B7280', fill: 'none' };
 
   switch (moodId) {
     case 'sad':
@@ -112,13 +112,13 @@ function SimpleMoodChart({
       <View
         style={{
           marginTop: 10,
-          backgroundColor: colors.mood[mood]?.primary || color,
+          backgroundColor: color,
           borderRadius: 18,
           padding: 10,
           overflow: 'hidden',
         }}
       >
-        {renderMoodIcon(mood, 20, colors.neutral[900])}
+        {renderMoodIcon(mood, 20, '#1F2937')}
       </View>
 
       {/* Labels */}
@@ -191,6 +191,25 @@ function SimpleMoodVisualization({ data }: { data: MoodData[] }) {
 
 export default function AnalyticsModal() {
   const moodData = useMoodData();
+  const colors = useColors();
+
+  // Helper function to get mood color
+  const getMoodColor = (mood: string) => {
+    switch (mood) {
+      case 'happy':
+        return colors.moodHappy;
+      case 'sad':
+        return colors.moodSad;
+      case 'anxious':
+        return colors.moodAnxious;
+      case 'neutral':
+        return colors.moodNeutral;
+      case 'angry':
+        return colors.moodAngry;
+      default:
+        return colors.moodNeutral;
+    }
+  };
 
   const handleBack = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -207,7 +226,7 @@ export default function AnalyticsModal() {
         mood,
         count,
         percentage,
-        color: colors.mood[mood]?.primary || '#7ED321',
+        color: getMoodColor(mood),
       };
     });
   }, [moodData]);

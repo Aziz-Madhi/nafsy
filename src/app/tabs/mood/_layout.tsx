@@ -44,6 +44,15 @@ export default function MoodLayout() {
           gestureEnabled: true,
         }}
       />
+      <Stack.Screen
+        name="year-view"
+        options={{
+          presentation: 'modal',
+          animation: 'slide_from_bottom',
+          gestureEnabled: true,
+          contentStyle: { backgroundColor: '#F4F1ED' },
+        }}
+      />
     </Stack>
   );
 }

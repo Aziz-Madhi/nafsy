@@ -7,6 +7,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useTranslation } from '~/hooks/useTranslation';
 import { ProfileLayout } from '~/components/ui/ScreenLayout';
+import { useColors } from '~/hooks/useColors';
 
 // Resource Card Component
 function ResourceCard({
@@ -75,7 +76,11 @@ function ResourceCard({
             }`}
             style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
           >
-            <SymbolView name="phone.fill" size={18} tintColor="white" />
+            <SymbolView
+              name="phone.fill"
+              size={18}
+              tintColor={colors.primaryForeground}
+            />
             <Text variant="callout" className="text-white font-medium ml-2">
               {phoneNumber}
             </Text>
@@ -93,7 +98,7 @@ function WarningSign({ text }: { text: string }) {
       <SymbolView
         name="exclamationmark.triangle.fill"
         size={16}
-        tintColor="#EF4444"
+        tintColor={colors.destructive}
       />
       <Text variant="footnote" className="text-muted-foreground ml-2 flex-1">
         {text}
@@ -104,6 +109,7 @@ function WarningSign({ text }: { text: string }) {
 
 export default function CrisisResources() {
   const { t, language } = useTranslation();
+  const colors = useColors();
 
   const resources =
     language === 'en'
@@ -189,19 +195,26 @@ export default function CrisisResources() {
         ];
 
   return (
-    <View className="flex-1 bg-[#F4F1ED]">
+    <View className="flex-1 bg-background">
       {/* Manual Header - matching ProfileLayout styling */}
-      <View className="bg-[#F4F1ED]" style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}>
+      <View
+        className="bg-background"
+        style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}
+      >
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
             className="mr-4"
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
-            <SymbolView name="chevron.left" size={24} tintColor="#2196F3" />
+            <SymbolView
+              name="chevron.left"
+              size={24}
+              tintColor={colors.primary}
+            />
           </Pressable>
           <Text
-            className="text-[#5A4A3A] flex-1"
+            className="text-foreground flex-1"
             style={{
               fontFamily: 'CrimsonPro-Bold',
               fontSize: 28,
@@ -222,7 +235,7 @@ export default function CrisisResources() {
             <SymbolView
               name="exclamationmark.circle.fill"
               size={24}
-              tintColor="white"
+              tintColor={colors.primaryForeground}
             />
             <Text variant="title3" className="text-white ml-2">
               {t('crisisResources.immediateHelp')}
@@ -277,7 +290,11 @@ export default function CrisisResources() {
 
             <View className="bg-blue-50 rounded-xl p-4">
               <View className="flex-row items-start">
-                <SymbolView name="heart.fill" size={20} tintColor="#2196F3" />
+                <SymbolView
+                  name="heart.fill"
+                  size={20}
+                  tintColor={colors.primary}
+                />
                 <Text variant="body" className="text-gray-700 ml-3 flex-1">
                   {t('crisisResources.notAlone')}
                 </Text>
