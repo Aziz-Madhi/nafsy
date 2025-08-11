@@ -56,7 +56,10 @@ function ExerciseSuggestionCard({
         backgroundColor: categoryColor + '15',
       }}
     >
-      <Text variant="subhead" className="text-gray-500 mb-3 font-medium">
+      <Text
+        variant="subhead"
+        className="text-muted-foreground mb-3 font-medium"
+      >
         Try this to elevate your mood
       </Text>
 
@@ -81,20 +84,23 @@ function ExerciseSuggestionCard({
       <View className="flex-row items-center justify-between mb-5">
         <View className="flex-row items-center space-x-4">
           <View className="flex-row items-center">
-            <Text variant="caption1" className="text-gray-500 mr-1">
+            <Text variant="caption1" className="text-muted-foreground mr-1">
               ⏱️
             </Text>
-            <Text variant="caption1" className="text-gray-600 font-medium">
+            <Text
+              variant="caption1"
+              className="text-muted-foreground font-medium"
+            >
               {exercise.duration} min
             </Text>
           </View>
           <View className="flex-row items-center">
-            <Text variant="caption1" className="text-gray-500 mr-1">
+            <Text variant="caption1" className="text-muted-foreground mr-1">
               📊
             </Text>
             <Text
               variant="caption1"
-              className="text-gray-600 font-medium capitalize"
+              className="text-muted-foreground font-medium capitalize"
             >
               {exercise.difficulty}
             </Text>
@@ -117,10 +123,10 @@ function ExerciseSuggestionCard({
 
       <Pressable
         onPress={onPress}
-        className="bg-[#4C51BF] py-4 rounded-2xl items-center"
+        className="bg-brand-dark-blue py-4 rounded-2xl items-center"
         style={({ pressed }) => ({
           opacity: pressed ? 0.8 : 1,
-          shadowColor: '#4C51BF',
+          shadowColor: '#2F6A8D',
           shadowOffset: { width: 0, height: 3 },
           shadowOpacity: 0.25,
           shadowRadius: 6,
@@ -192,9 +198,8 @@ export default function ExerciseSuggestionModal() {
       <View className="flex-1 p-6">
         {suggestedExercise ? (
           <View
-            className="rounded-3xl overflow-hidden border border-gray-200"
+            className="rounded-3xl overflow-hidden border border-gray-200 bg-card"
             style={{
-              backgroundColor: 'white',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 3 },
               shadowOpacity: 0.08,
@@ -209,9 +214,8 @@ export default function ExerciseSuggestionModal() {
           </View>
         ) : (
           <View
-            className="rounded-3xl p-6 border border-gray-200 items-center justify-center"
+            className="rounded-3xl p-6 border border-gray-200 items-center justify-center bg-foreground/15"
             style={{
-              backgroundColor: 'rgba(90, 74, 58, 0.12)',
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 3 },
               shadowOpacity: 0.08,
@@ -266,12 +270,7 @@ export default function ExerciseSuggestionModal() {
         </View>
 
         {/* Info Card */}
-        <View
-          className="mt-6 p-4 rounded-2xl border border-gray-200"
-          style={{
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          }}
-        >
+        <View className="mt-6 p-4 rounded-2xl border border-gray-200 bg-green-400/10">
           <View className="flex-row items-center mb-2">
             <Text style={{ fontSize: 20, marginRight: 8 }}>💡</Text>
             <Text variant="body" className="text-[#5A4A3A] font-semibold">

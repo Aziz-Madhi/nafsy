@@ -158,9 +158,8 @@ export default function AccountSettingsModal() {
 
       <View className="flex-1 p-6">
         <View
-          className="rounded-3xl overflow-hidden border border-gray-200"
+          className="rounded-3xl overflow-hidden border border-gray-200 bg-card"
           style={{
-            backgroundColor: 'white',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.08,
@@ -178,12 +177,7 @@ export default function AccountSettingsModal() {
         </View>
 
         {/* Info Card */}
-        <View
-          className="mt-6 p-4 rounded-2xl border border-gray-200"
-          style={{
-            backgroundColor: 'rgba(59, 130, 246, 0.1)',
-          }}
-        >
+        <View className="mt-6 p-4 rounded-2xl border border-gray-200 bg-blue-400/10">
           <View className="flex-row items-center mb-2">
             <Text style={{ fontSize: 20, marginRight: 8 }}>ℹ️</Text>
             <Text variant="body" className="text-[#5A4A3A] font-semibold">

@@ -19,7 +19,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
-import { ProfileLayout } from '~/components/ui/ScreenLayout';
+// import { ProfileLayout } from '~/components/ui/ScreenLayout';
 import { useColors } from '~/hooks/useColors';
 
 // FAQ Item Component
@@ -127,10 +127,10 @@ export default function HelpCenter() {
   };
 
   return (
-    <View className="flex-1 bg-[#F4F1ED]">
+    <View className="flex-1 bg-background">
       {/* Manual Header - matching ProfileLayout styling */}
       <View
-        className="bg-[#F4F1ED]"
+        className="bg-background"
         style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}
       >
         <View className="flex-row items-center">
@@ -142,11 +142,11 @@ export default function HelpCenter() {
             <SymbolView
               name="chevron.left"
               size={24}
-              tintColor={colors.brandDarkBlue}
+              tintColor={colors.foreground}
             />
           </Pressable>
           <Text
-            className="text-[#5A4A3A] flex-1"
+            className="text-foreground flex-1"
             style={{
               fontFamily: 'CrimsonPro-Bold',
               fontSize: 28,
@@ -277,10 +277,10 @@ export default function HelpCenter() {
         {showChat && (
           <Animated.View
             entering={FadeInDown.springify()}
-            className="absolute inset-0 bg-[#F4F1ED]"
+            className="absolute inset-0 bg-background"
           >
             {/* Chat Header */}
-            <View className="bg-[#F4F1ED] pt-12 pb-4 px-6">
+            <View className="bg-background pt-12 pb-4 px-6">
               <View className="flex-row items-center">
                 <Pressable
                   onPress={() => setShowChat(false)}
@@ -290,11 +290,11 @@ export default function HelpCenter() {
                   <SymbolView
                     name="xmark"
                     size={24}
-                    tintColor={colors.brandDarkBlue}
+                    tintColor={colors.foreground}
                   />
                 </Pressable>
                 <Text
-                  className="text-[#5A4A3A] flex-1"
+                  className="text-foreground flex-1"
                   style={{
                     fontFamily: 'CrimsonPro-Bold',
                     fontSize: 28,
@@ -316,7 +316,7 @@ export default function HelpCenter() {
             </ScrollView>
 
             {/* Chat Input */}
-            <View className="bg-[#F4F1ED] border-t border-border/10 p-4">
+            <View className="bg-background border-t border-border/10 p-4">
               <View className="flex-row items-end">
                 <TextInput
                   placeholder={t('helpCenter.chatPlaceholder')}

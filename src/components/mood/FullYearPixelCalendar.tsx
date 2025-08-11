@@ -8,22 +8,13 @@ import {
 } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { useColors } from '~/hooks/useColors';
+import { withOpacity } from '~/lib/colors';
 import Animated, {
-  FadeIn,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
 } from 'react-native-reanimated';
-import {
-  format,
-  isToday,
-  isFuture,
-  differenceInDays,
-  endOfYear,
-  endOfMonth,
-  getDaysInYear,
-  getDayOfYear,
-} from 'date-fns';
+import { format, isToday, isFuture, endOfMonth, getDayOfYear } from 'date-fns';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
@@ -43,12 +34,13 @@ export function FullYearPixelCalendar({
   moodData = [],
   year = new Date().getFullYear(),
 }: FullYearPixelCalendarProps) {
-  const today = new Date();
+  const today = useMemo(() => new Date(), []);
   const currentYear = year;
-  const yearEnd = endOfYear(new Date(currentYear, 0, 1));
+  // const yearEnd = endOfYear(new Date(currentYear, 0, 1));
 
   // Colors for React Native styling
   const colors = useColors();
+  const isDarkMode = colors.background === '#171717';
 
   // Use static mood colors for calendar consistency
   // These should not change based on current mood selection
@@ -63,11 +55,11 @@ export function FullYearPixelCalendar({
     [colors]
   );
 
-  // Calculate days left in the year
-  const daysLeft =
-    today.getFullYear() === currentYear
-      ? Math.max(0, differenceInDays(yearEnd, today))
-      : 0;
+  // Calculate days left in the year (not currently displayed)
+  // const daysLeft =
+  //   today.getFullYear() === currentYear
+  //     ? Math.max(0, differenceInDays(yearEnd, today))
+  //     : 0;
 
   // State for progressive rendering
   const [isReady, setIsReady] = useState(false);
@@ -75,16 +67,13 @@ export function FullYearPixelCalendar({
   const scrollViewRef = useRef<ScrollView>(null);
   const opacity = useSharedValue(0);
 
-  // Get screen dimensions
-  const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+  // Get screen width
+  const { width: screenWidth } = Dimensions.get('window');
 
   // Calculate optimal layout
   const COLUMNS = 14; // 14 columns for balanced layout
   const HORIZONTAL_PADDING = 32; // Side padding (16px each side)
   const GAP = 4; // More spacing between pixels
-  const HEADER_HEIGHT = 60; // Header with back button
-  const BOTTOM_INFO_HEIGHT = 60; // Bottom info bar
-  const SAFE_AREA_PADDING = 100; // Approximate safe area padding
 
   // Calculate pixel size based on screen width
   const availableWidth = screenWidth - HORIZONTAL_PADDING;
@@ -92,29 +81,21 @@ export function FullYearPixelCalendar({
     (availableWidth - GAP * (COLUMNS - 1)) / COLUMNS
   );
 
-  // Calculate number of rows needed
-  const totalDays = getDaysInYear(new Date(currentYear, 0, 1));
-  const ROWS = Math.ceil(totalDays / COLUMNS);
+  // const totalDays = getDaysInYear(new Date(currentYear, 0, 1));
+  // const ROWS = Math.ceil(totalDays / COLUMNS);
 
   // Progressive rendering effect
   useEffect(() => {
     const interaction = InteractionManager.runAfterInteractions(() => {
       setIsReady(true);
       opacity.value = withTiming(1, { duration: 300 });
-
-      // Scroll to current month after render
-      if (today.getFullYear() === currentYear && scrollViewRef.current) {
-        setTimeout(() => {
-          scrollViewRef.current?.scrollTo({
-            y: initialScrollOffset,
-            animated: false,
-          });
-        }, 100);
-      }
     });
 
     return () => interaction.cancel();
-  }, [opacity, initialScrollOffset, currentYear]);
+  }, [opacity]);
+
+  // Scroll to current month after render
+  const [shouldScroll, setShouldScroll] = useState(false);
 
   // Calculate initial scroll position to open directly on current month
   const initialScrollOffset = useMemo(() => {
@@ -144,7 +125,23 @@ export function FullYearPixelCalendar({
     }
 
     return yOffset;
-  }, [currentYear, pixelSize, GAP, COLUMNS]);
+  }, [currentYear, pixelSize, GAP, COLUMNS, today]);
+
+  useEffect(() => {
+    if (!isReady) return;
+    if (today.getFullYear() === currentYear) {
+      setShouldScroll(true);
+    }
+  }, [isReady, today, currentYear]);
+
+  useEffect(() => {
+    if (!shouldScroll || !scrollViewRef.current) return;
+    scrollViewRef.current?.scrollTo({
+      y: initialScrollOffset,
+      animated: false,
+    });
+    setShouldScroll(false);
+  }, [shouldScroll, initialScrollOffset]);
 
   const animatedContainerStyle = useAnimatedStyle(() => {
     return {
@@ -253,7 +250,7 @@ export function FullYearPixelCalendar({
     }
 
     return allRows;
-  }, [currentYear, moodDataMap]);
+  }, [currentYear, moodDataMap, today]);
 
   // Get color for a day
   const getDayColor = (day: any) => {
@@ -269,10 +266,10 @@ export function FullYearPixelCalendar({
 
     // No mood entry for this day - use very subtle background
     if (day.isFuture) {
-      return 'rgba(0, 0, 0, 0.03)'; // Very subtle for future untracked days
+      return isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)';
     }
 
-    return 'rgba(0, 0, 0, 0.05)'; // Slightly more visible for past untracked days
+    return isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
   };
 
   // Handle touch on the grid container
@@ -348,15 +345,24 @@ export function FullYearPixelCalendar({
             }}
           >
             <ChevronLeft size={20} color={colors.foreground} />
-            <Text variant="body" className="text-gray-600 text-lg ml-0.5">
+            <Text
+              variant="body"
+              style={{
+                color: withOpacity(colors.foreground, 0.85),
+                fontSize: 18,
+                marginLeft: 2,
+              }}
+            >
               Back
             </Text>
           </Pressable>
 
           <Text
             variant="title2"
-            className="text-gray-900 text-2xl font-bold"
             style={{
+              color: colors.foreground,
+              fontSize: 24,
+              fontWeight: '700',
               letterSpacing: -0.2,
               position: 'absolute',
               left: 0,
@@ -382,13 +388,14 @@ export function FullYearPixelCalendar({
           <View style={{ marginBottom: 20, marginTop: 0 }}>
             {/* Subtitle */}
             <Text
-              variant="subheadline"
+              variant="body"
               style={{
                 fontSize: 15,
                 fontWeight: '500',
                 textAlign: 'center',
                 marginBottom: 16,
                 letterSpacing: 0.1,
+                color: withOpacity(colors.foreground, 0.85),
               }}
             >
               Your emotional journey
@@ -403,6 +410,7 @@ export function FullYearPixelCalendar({
                 textAlign: 'center',
                 paddingHorizontal: 20,
                 fontWeight: '400',
+                color: withOpacity(colors.foreground, 0.75),
               }}
             >
               Discover patterns in your moods and reflect on your growth
@@ -412,11 +420,8 @@ export function FullYearPixelCalendar({
 
           {!isReady ? (
             // Loading placeholder
-            <View
-              className="items-center justify-center py-20"
-              style={{ backgroundColor: 'transparent' }}
-            >
-              <Text variant="caption1" className="text-gray-500">
+            <View className="items-center justify-center py-20 bg-transparent">
+              <Text variant="caption1" className="text-muted-foreground">
                 Loading calendar...
               </Text>
             </View>
@@ -425,8 +430,8 @@ export function FullYearPixelCalendar({
             <Animated.View style={animatedContainerStyle}>
               <Pressable onPress={handleGridPress} ref={containerRef}>
                 {(() => {
-                  const result = [];
-                  const currentMonthRows = [];
+                  const result: React.ReactNode[] = [];
+                  const currentMonthRows: { row: any; rowIndex: number }[] = [];
 
                   // First pass: collect all current month rows
                   yearGrid.forEach((row, rowIndex) => {
@@ -455,16 +460,13 @@ export function FullYearPixelCalendar({
                         <View
                           key={`current-month-container`}
                           style={{
-                            backgroundColor: 'rgba(63, 81, 117, 0.08)',
                             borderRadius: 16,
                             padding: 12,
                             marginHorizontal: -4,
                             marginVertical: 6,
-                            shadowColor: colors.primary,
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowOpacity: 0.1,
-                            shadowRadius: 8,
-                            elevation: 3,
+                            backgroundColor: isDarkMode
+                              ? 'rgba(255, 255, 255, 0.06)'
+                              : 'rgba(0, 0, 0, 0.03)',
                           }}
                         >
                           {currentMonthRows.map(
@@ -473,7 +475,7 @@ export function FullYearPixelCalendar({
                                 {/* Month label above the pixels for first row of each month */}
                                 {monthRow.isMonthStart && (
                                   <Text
-                                    variant="subheadline"
+                                    variant="body"
                                     style={{
                                       color: colors.primary,
                                       fontSize: 14,
@@ -495,7 +497,7 @@ export function FullYearPixelCalendar({
                                     gap: GAP,
                                   }}
                                 >
-                                  {monthRow.days.map((day) => {
+                                  {monthRow.days.map((day: any) => {
                                     // Skip rendering filler pixels (make them invisible)
                                     if (!day.isReal) {
                                       return (
@@ -518,7 +520,7 @@ export function FullYearPixelCalendar({
                                           width: pixelSize,
                                           height: pixelSize,
                                           backgroundColor: color,
-                                          borderRadius: 4,
+                                          borderRadius: 8,
                                           borderWidth: day.isToday ? 2 : 0,
                                           borderColor: day.isToday
                                             ? colors.primary
@@ -545,7 +547,7 @@ export function FullYearPixelCalendar({
                           {/* Month label above the pixels for first row of each month */}
                           {isMonthStart && (
                             <Text
-                              variant="subheadline"
+                              variant="body"
                               style={{
                                 color: colors.foreground,
                                 fontSize: 14,
@@ -567,7 +569,7 @@ export function FullYearPixelCalendar({
                               gap: GAP,
                             }}
                           >
-                            {row.days.map((day) => {
+                            {row.days.map((day: any) => {
                               // Skip rendering filler pixels (make them invisible)
                               if (!day.isReal) {
                                 return (
@@ -590,7 +592,7 @@ export function FullYearPixelCalendar({
                                     width: pixelSize,
                                     height: pixelSize,
                                     backgroundColor: color,
-                                    borderRadius: 4,
+                                    borderRadius: 8,
                                     borderWidth: day.isToday ? 2 : 0,
                                     borderColor: day.isToday
                                       ? colors.primary

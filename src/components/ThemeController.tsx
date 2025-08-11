@@ -1,23 +1,35 @@
 import { useEffect } from 'react';
 import { Appearance } from 'react-native';
 import { colorScheme } from 'nativewind';
+import { useTheme } from '~/store/useAppStore';
 
+// Single source of truth for NativeWind's color scheme.
+// Syncs NativeWind with user preference (light/dark/system) and system changes.
 export function ThemeController() {
-  useEffect(() => {
-    // Initialize with system theme for now
-    const systemTheme = Appearance.getColorScheme() || 'light';
-    colorScheme.set(systemTheme);
+  const themePreference = useTheme();
 
-    // Listen for system theme changes
-    const subscription = Appearance.addChangeListener(
-      ({ colorScheme: newScheme }) => {
-        const resolvedScheme = newScheme || 'light';
-        colorScheme.set(resolvedScheme);
+  useEffect(() => {
+    const resolve = () => {
+      const system = Appearance.getColorScheme() || 'light';
+      return themePreference === 'system'
+        ? system === 'dark'
+          ? 'dark'
+          : 'light'
+        : themePreference;
+    };
+
+    // Initialize
+    colorScheme.set(resolve());
+
+    // React to system theme changes when in system mode
+    const subscription = Appearance.addChangeListener(() => {
+      if (themePreference === 'system') {
+        colorScheme.set(resolve());
       }
-    );
+    });
 
     return () => subscription.remove();
-  }, []);
+  }, [themePreference]);
 
   return null;
 }

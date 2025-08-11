@@ -1,18 +1,12 @@
-import React, { useMemo, useEffect } from 'react';
-import {
-  View,
-  ScrollView,
-  ViewStyle,
-  RefreshControl,
-  Platform,
-} from 'react-native';
+import React, { useMemo } from 'react';
+import { View, ScrollView, ViewStyle, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSegments } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
 import { useTranslation } from '~/hooks/useTranslation';
-import { useColors } from '~/hooks/useColors';
+// import { useColors } from '~/hooks/useColors';
 
 // Calculate top padding for navigation bar only
 function useNavigationBarTopPadding(): number {
@@ -280,13 +274,14 @@ export function ScreenLayout({
   scrollViewRef,
   onScroll,
 }: ScreenLayoutProps) {
-  const colors = useColors();
+  // Note: reserved for RN-only styles if needed
+  // const colors = useColors();
   const topPadding = useNavigationBarTopPadding();
 
   const content = (
     <SafeAreaView
       className="flex-1 bg-background"
-      style={[{ paddingTop: topPadding }, backgroundColor ? { backgroundColor } : {}, safeAreaStyle]}
+      style={[{ paddingTop: topPadding }, safeAreaStyle]}
       edges={[]}
     >
       {/* Header */}

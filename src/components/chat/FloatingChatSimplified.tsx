@@ -212,17 +212,7 @@ const TypingIndicator = memo(function TypingIndicator() {
   }));
 
   return (
-    <View
-      style={{
-        flexDirection: 'row',
-        gap: 4,
-        backgroundColor: '#7BA7D9',
-        borderRadius: 16,
-        paddingHorizontal: 16,
-        paddingVertical: 12,
-        alignSelf: 'flex-start',
-      }}
-    >
+    <View className="flex-row bg-brand-dark-blue rounded-xl px-4 py-3 self-start" style={{ gap: 4 }}>
       <Animated.View
         style={[
           dot1Style,

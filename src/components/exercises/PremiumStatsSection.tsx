@@ -88,21 +88,10 @@ function StatCard({
           {/* Progress Bar */}
           {progress !== undefined && (
             <View style={{ marginTop: 8 }}>
-              <View
-                style={{
-                  height: 4,
-                  backgroundColor: 'rgba(90, 74, 58, 0.1)',
-                  borderRadius: 2,
-                  overflow: 'hidden',
-                }}
-              >
+              <View className="h-1.5 bg-foreground/10 rounded overflow-hidden">
                 <View
-                  style={{
-                    height: '100%',
-                    backgroundColor: 'rgba(90, 74, 58, 0.3)',
-                    borderRadius: 2,
-                    width: `${(progress || 0) * 100}%`,
-                  }}
+                  className="bg-foreground/30 rounded"
+                  style={{ height: '100%', width: `${(progress || 0) * 100}%` }}
                 />
               </View>
             </View>
@@ -117,17 +106,7 @@ function InsightBadge({ text, index }: { text: string; index: number }) {
   const colors = useColors();
 
   return (
-    <View
-      style={{
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        backgroundColor: 'rgba(76, 175, 80, 0.15)',
-        borderRadius: 12,
-        marginRight: 8,
-        borderWidth: 1,
-        borderColor: 'rgba(76, 175, 80, 0.2)',
-      }}
-    >
+    <View className="px-3 py-1.5 rounded-lg mr-2 bg-green-400/15 border border-green-400/20">
       <Text
         style={{
           color: colors.success,

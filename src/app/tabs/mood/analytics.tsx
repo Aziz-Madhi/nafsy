@@ -76,10 +76,10 @@ function SimpleMoodChart({
     <View style={{ alignItems: 'center', margin: 8 }}>
       {/* Chart Bar */}
       <View
+        className="bg-gray-100"
         style={{
           width: 44,
           height: 88,
-          backgroundColor: '#F1F5F9',
           borderRadius: 22,
           justifyContent: 'flex-end',
           overflow: 'hidden',

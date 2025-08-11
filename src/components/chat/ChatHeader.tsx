@@ -6,6 +6,7 @@
 import React, { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
+import { useColors } from '~/hooks/useColors';
 
 interface ChatHeaderProps {
   onOpenSidebar: () => void;
@@ -14,6 +15,8 @@ interface ChatHeaderProps {
 export const ChatHeader = memo(function ChatHeader({
   onOpenSidebar,
 }: ChatHeaderProps) {
+  const colors = useColors();
+  const isDarkMode = colors.background === '#171717';
   return (
     <Pressable
       onPress={onOpenSidebar}
@@ -23,7 +26,9 @@ export const ChatHeader = memo(function ChatHeader({
       <View
         className="w-10 h-10 rounded-full items-center justify-center"
         style={{
-          backgroundColor: 'rgba(255, 255, 255, 0.8)',
+          backgroundColor: isDarkMode
+            ? 'rgba(255, 255, 255, 0.10)'
+            : 'rgba(255, 255, 255, 0.80)',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 3 },
           shadowOpacity: 0.15,
@@ -31,7 +36,11 @@ export const ChatHeader = memo(function ChatHeader({
           elevation: 5,
         }}
       >
-        <SymbolView name="line.horizontal.3" size={24} tintColor="#2F6A8D" />
+        <SymbolView
+          name="line.horizontal.3"
+          size={24}
+          tintColor={isDarkMode ? colors.foreground : '#2F6A8D'}
+        />
       </View>
     </Pressable>
   );

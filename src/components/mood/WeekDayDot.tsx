@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
 import { MotiPressable } from 'moti/interactions';
@@ -40,7 +40,7 @@ export function WeekDayDot({
     () => ({
       width: 10,
       height: 10,
-      backgroundColor: '#1F2937', // Darker gray dot
+      backgroundColor: 'rgba(0,0,0,0.8)',
       borderRadius: 5,
     }),
     []
@@ -107,7 +107,9 @@ export function WeekDayDot({
         variant="caption1"
         className={cn(
           'mt-3',
-          isSelected ? 'text-primary font-bold' : 'text-gray-600 font-medium'
+          isSelected
+            ? 'text-primary font-bold'
+            : 'text-muted-foreground font-medium'
         )}
         style={{ textAlign: 'center', fontSize: 12, letterSpacing: 0.1 }}
       >

@@ -5,12 +5,13 @@ import {
   ImageBackground,
   ImageSourcePropType,
 } from 'react-native';
-import { MotiView } from 'moti';
+// import { MotiView } from 'moti';
 import { Text } from './text';
 import { IconRenderer } from './IconRenderer';
-import { AnimatedPressable } from './AnimatedPressable';
+// import { AnimatedPressable } from './AnimatedPressable';
 import { cn } from '~/lib/cn';
 import { StaggeredListItem } from '~/lib/animations';
+import { useColors } from '~/hooks/useColors';
 
 interface InteractiveCardProps {
   title: string;
@@ -50,16 +51,7 @@ const CATEGORY_BACKGROUNDS: Record<string, ImageSourcePropType> = {
   Reminders: require('../../../assets/reminders-card.png'),
 };
 
-// Common animation configuration
-const ANIMATION_CONFIG = {
-  from: { opacity: 0, translateY: 20 },
-  animate: { opacity: 1, translateY: 0 },
-  transition: {
-    type: 'spring' as const,
-    damping: 15,
-    stiffness: 200,
-  },
-};
+// Animation handled by StaggeredListItem
 
 // Common text styling for image overlay
 const IMAGE_TEXT_STYLE = {
@@ -116,10 +108,7 @@ function ColorCard({
     <View style={{ backgroundColor: color, flex: 1 }}>
       <View className="flex-1 p-6">
         <View className="flex-1 items-center justify-center">
-          <View
-            className="w-20 h-20 rounded-full items-center justify-center"
-            style={{ backgroundColor: 'rgba(255,255,255,0.3)' }}
-          >
+          <View className="w-20 h-20 rounded-full items-center justify-center bg-white/30">
             {/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/u.test(
               iconName
             ) ? (
@@ -167,11 +156,20 @@ function ExerciseCardContent({
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   style?: ViewStyle;
 }) {
+  const colors = useColors();
+  const isDarkMode = colors.background === '#171717';
+  const DARK_CARD_COLOR = '#0A1514';
+  const DARK_SURFACE_COLOR = '#0F1F1D';
+  const DARK_BADGE_COLOR = '#16302C';
+  const DARK_META_BG = '#0C1A18';
   return (
     <View
-      className="overflow-hidden rounded-2xl bg-white border border-gray-100"
+      className="overflow-hidden rounded-2xl"
       style={[
         {
+          backgroundColor: isDarkMode ? DARK_CARD_COLOR : '#FFFFFF',
+          borderWidth: 1,
+          borderColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : '#F3F4F6',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 1 },
           shadowOpacity: 0.1,
@@ -183,18 +181,23 @@ function ExerciseCardContent({
     >
       <View
         className="h-32 justify-end p-4"
-        style={{ backgroundColor: color + '20' }}
+        style={{
+          backgroundColor: isDarkMode ? DARK_SURFACE_COLOR : color + '20',
+        }}
       >
         <View
           className="absolute top-4 right-4 w-12 h-12 rounded-full items-center justify-center"
-          style={{ backgroundColor: color + '40' }}
+          style={{
+            backgroundColor: isDarkMode ? DARK_BADGE_COLOR : color + '40',
+          }}
         >
           <Text className="text-2xl">{iconName}</Text>
         </View>
 
         <Text
           variant="title3"
-          className="mb-1 text-[#5A4A3A]"
+          className="mb-1"
+          style={{ color: isDarkMode ? colors.foreground : '#5A4A3A' }}
           numberOfLines={1}
           ellipsizeMode="tail"
         >
@@ -202,19 +205,40 @@ function ExerciseCardContent({
         </Text>
         <Text
           variant="body"
-          className="text-sm text-[#5A4A3A]/70"
+          className="text-sm"
+          style={{
+            color: isDarkMode ? 'rgba(255, 255, 255, 0.75)' : '#5A4A3A',
+          }}
           numberOfLines={2}
           ellipsizeMode="tail"
         >
           {description}
         </Text>
       </View>
+      {/* Divider between header and meta */}
+      <View
+        style={{
+          height: 1,
+          backgroundColor: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : '#F3F4F6',
+        }}
+      />
 
-      <View className="p-4 bg-white/20">
+      <View
+        className="p-4"
+        style={{
+          backgroundColor: isDarkMode
+            ? DARK_META_BG
+            : 'rgba(255, 255, 255, 0.2)',
+        }}
+      >
         <View className="flex-row items-center justify-between">
           {duration && (
             <View className="flex-row items-center">
-              <Text variant="body" className="text-sm text-[#5A4A3A]">
+              <Text
+                variant="body"
+                className="text-sm"
+                style={{ color: isDarkMode ? colors.foreground : '#5A4A3A' }}
+              >
                 ⏱ {duration}
               </Text>
             </View>
@@ -237,44 +261,7 @@ function ExerciseCardContent({
   );
 }
 
-// Animated wrapper component
-function AnimatedCardWrapper({
-  children,
-  index = 0,
-  onPress,
-  wrapperClassName,
-}: {
-  children: React.ReactNode;
-  index?: number;
-  onPress?: () => void;
-  wrapperClassName?: string;
-}) {
-  const content = onPress ? (
-    <AnimatedPressable
-      onPress={onPress}
-      scaleFrom={1}
-      scaleTo={1}
-      hapticType="light"
-    >
-      {children}
-    </AnimatedPressable>
-  ) : (
-    children
-  );
-
-  return (
-    <MotiView
-      {...ANIMATION_CONFIG}
-      transition={{
-        ...ANIMATION_CONFIG.transition,
-        delay: 0, // Removed index-based delay for better performance
-      }}
-      className={wrapperClassName}
-    >
-      {content}
-    </MotiView>
-  );
-}
+// (AnimatedCardWrapper removed; StaggeredListItem handles animations for cards)
 
 export function InteractiveCard({
   title,

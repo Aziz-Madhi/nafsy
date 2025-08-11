@@ -81,12 +81,12 @@ export function WeekView({ moodData }: WeekViewProps) {
 
   // Calculate pointer position for visual connection
   const getPointerPosition = () => {
-    if (selectedDayIndex === null) return { left: '50%' };
-
-    // Simple percentage calculation for justify-around layout
-    const percentageFromLeft = ((selectedDayIndex + 0.5) / 7) * 100;
-
-    return { left: `${percentageFromLeft}%` };
+    if (selectedDayIndex === null) return { left: '50%' as const };
+    // Calculate px offset instead of percentage to satisfy RN typing
+    const containerWidth = 320; // approximate; pointer is purely decorative
+    const step = containerWidth / 7;
+    const x = step * (selectedDayIndex + 0.5);
+    return { left: x } as const;
   };
 
   return (
@@ -170,9 +170,9 @@ export function WeekView({ moodData }: WeekViewProps) {
               />
 
               <View
+                className="bg-background"
                 style={{
                   padding: 24,
-                  backgroundColor: '#F4F1ED',
                   borderRadius: 24,
                   borderWidth: 1,
                   borderColor: '#E5E7EB',
@@ -216,8 +216,8 @@ export function WeekView({ moodData }: WeekViewProps) {
 
                 {selectedDay.mood.note ? (
                   <View
+                    className="bg-card"
                     style={{
-                      backgroundColor: 'white',
                       borderRadius: 16,
                       padding: 16,
                       borderWidth: 1,
@@ -237,10 +237,10 @@ export function WeekView({ moodData }: WeekViewProps) {
                       }}
                     >
                       <View
+                        className="bg-foreground/60"
                         style={{
                           width: 4,
                           height: 16,
-                          backgroundColor: 'rgba(90, 74, 58, 0.6)',
                           borderRadius: 2,
                           marginRight: 8,
                         }}
@@ -255,20 +255,16 @@ export function WeekView({ moodData }: WeekViewProps) {
                     </View>
                     <Text
                       variant="body"
-                      className="text-[#2D3748]"
-                      style={{
-                        fontSize: 15,
-                        lineHeight: 22,
-                        fontStyle: 'italic',
-                      }}
+                      className="text-[#2D3748] italic"
+                      style={{ fontSize: 15, lineHeight: 22 }}
                     >
-                      "{selectedDay.mood.note}"
+                      {`"${selectedDay.mood.note}"`}
                     </Text>
                   </View>
                 ) : (
                   <View
+                    className="bg-white/70"
                     style={{
-                      backgroundColor: 'rgba(255, 255, 255, 0.7)',
                       borderRadius: 12,
                       padding: 12,
                       borderWidth: 1,

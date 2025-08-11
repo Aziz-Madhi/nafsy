@@ -176,7 +176,7 @@
   }
 }
 
-/* Manual dark mode class support */
+/* Manual dark mode class support (NativeWind toggles this via colorScheme or a parent .dark class) */
 .dark {
   /* Core Brand Colors - Dark Mode */
   --brand-dark-blue: 47 106 141;

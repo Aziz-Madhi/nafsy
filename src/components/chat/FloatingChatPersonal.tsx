@@ -105,29 +105,8 @@ const ThoughtCard = memo(function ThoughtCard({
   return (
     <Animated.View style={[animatedStyle, breathingStyle]}>
       <Animated.View
-        style={[
-          shadowStyle,
-          {
-            backgroundColor: isUser ? '#9CC99A' : '#7BA7D9',
-            borderRadius: 24,
-            paddingHorizontal: 24,
-            paddingVertical: 18,
-            maxWidth: SCREEN_WIDTH * 0.8,
-            alignSelf: 'center',
-
-            // Paper-like texture with softer shadows
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 8 },
-            shadowRadius: 16,
-            elevation: 8,
-
-            // Subtle border for paper effect
-            borderWidth: 1,
-            borderColor: isUser
-              ? 'rgba(156, 201, 154, 0.3)'
-              : 'rgba(123, 167, 217, 0.3)',
-          },
-        ]}
+        style={[shadowStyle, { maxWidth: SCREEN_WIDTH * 0.8, alignSelf: 'center' }]}
+        className={isUser ? 'rounded-3xl px-6 py-4 bg-green-400' : 'rounded-3xl px-6 py-4 bg-brand-dark-blue'}
       >
         <Text
           style={{
@@ -235,15 +214,7 @@ const OrganicTypingIndicator = memo(function OrganicTypingIndicator() {
   }));
 
   return (
-    <View
-      style={{
-        backgroundColor: '#7BA7D9',
-        borderRadius: 20,
-        padding: 16,
-        alignSelf: 'center',
-        gap: 4,
-      }}
-    >
+    <View className="bg-brand-dark-blue rounded-2xl p-4 self-center" style={{ gap: 4 }}>
       <Animated.View
         style={[
           line1Style,

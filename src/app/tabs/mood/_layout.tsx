@@ -42,7 +42,7 @@ export default function MoodLayout() {
           presentation: 'modal',
           animation: 'slide_from_bottom',
           gestureEnabled: true,
-          contentStyle: { backgroundColor: '#F4F1ED' },
+          contentStyle: {},
         }}
       />
     </Stack>

@@ -53,7 +53,11 @@ function SupportRow({ item, isLast }: { item: SupportItem; isLast: boolean }) {
           elevation: item.urgent ? 4 : 0,
         }}
       >
-        <SymbolView name={item.iconName} size={22} tintColor={item.iconColor} />
+        <SymbolView
+          name={item.iconName as any}
+          size={22}
+          tintColor={item.iconColor}
+        />
       </View>
 
       <View className="flex-1">
@@ -81,7 +85,7 @@ function SupportRow({ item, isLast }: { item: SupportItem; isLast: boolean }) {
 
       {item.action && (
         <SymbolView
-          name="chevron.right"
+          name={'chevron.right' as any}
           size={20}
           tintColor={item.urgent ? '#DC2626' : '#9CA3AF'}
         />
@@ -225,9 +229,8 @@ export default function SupportModal() {
           🚨 Crisis Support
         </Text>
         <View
-          className="rounded-3xl overflow-hidden border-2 border-red-200 mb-6"
+          className="rounded-3xl overflow-hidden border-2 border-red-200 mb-6 bg-red-400/5"
           style={{
-            backgroundColor: 'rgba(248, 113, 113, 0.05)',
             shadowColor: '#EF4444',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.1,
@@ -252,9 +255,8 @@ export default function SupportModal() {
           General Support
         </Text>
         <View
-          className="rounded-3xl overflow-hidden border border-gray-200 mb-6"
+          className="rounded-3xl overflow-hidden border border-gray-200 mb-6 bg-card"
           style={{
-            backgroundColor: 'white',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.08,
@@ -279,9 +281,8 @@ export default function SupportModal() {
           Legal
         </Text>
         <View
-          className="rounded-3xl overflow-hidden border border-gray-200 mb-6"
+          className="rounded-3xl overflow-hidden border border-gray-200 mb-6 bg-card"
           style={{
-            backgroundColor: 'white',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.08,
@@ -299,12 +300,7 @@ export default function SupportModal() {
         </View>
 
         {/* Emergency Notice */}
-        <View
-          className="p-4 rounded-2xl border-2 border-red-200"
-          style={{
-            backgroundColor: 'rgba(248, 113, 113, 0.1)',
-          }}
-        >
+        <View className="p-4 rounded-2xl border-2 border-red-200 bg-red-400/10">
           <View className="flex-row items-center mb-2">
             <Text style={{ fontSize: 20, marginRight: 8 }}>⚠️</Text>
             <Text variant="body" className="text-red-700 font-bold">

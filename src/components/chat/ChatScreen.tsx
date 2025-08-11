@@ -66,7 +66,7 @@ export const ChatScreen = memo(function ChatScreen({
   onQuickReply,
   onDismissError,
 }: ChatScreenProps) {
-  const flashListRef = useRef<FlashList<Message>>(null);
+  const flashListRef = useRef<FlashList<Message>>(null as any);
 
   // Auto-scroll to bottom when messages change or new messages arrive
   const scrollToBottom = useCallback(() => {
@@ -138,7 +138,7 @@ export const ChatScreen = memo(function ChatScreen({
   const getItemType = useCallback((item: Message) => item.role, []);
 
   return (
-    <View className="flex-1 bg-[#F4F1ED]">
+    <View className="flex-1 bg-background">
       <Animated.View style={[chatAnimatedStyle, { flex: 1 }]}>
         <GestureDetector gesture={doubleTapGesture}>
           <View className="flex-1">

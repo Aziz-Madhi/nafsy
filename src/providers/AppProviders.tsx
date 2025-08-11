@@ -6,7 +6,6 @@ import { ConvexProvider } from './ConvexProvider';
 import { StoreProvider } from './StoreProvider';
 import { LanguageProvider } from './LanguageProvider';
 import { ThemeController } from '~/components/ThemeController';
-import { ThemeWrapper } from '~/components/ThemeWrapper';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -20,9 +19,7 @@ export function AppProviders({ children }: AppProvidersProps) {
           <ThemeController />
           <LanguageProvider>
             <ClerkProviderWrapper>
-              <ConvexProvider>
-                <ThemeWrapper>{children}</ThemeWrapper>
-              </ConvexProvider>
+              <ConvexProvider>{children}</ConvexProvider>
             </ClerkProviderWrapper>
           </LanguageProvider>
         </StoreProvider>

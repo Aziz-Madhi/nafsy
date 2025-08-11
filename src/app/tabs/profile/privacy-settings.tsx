@@ -209,9 +209,8 @@ export default function PrivacySettingsModal() {
           Privacy Controls
         </Text>
         <View
-          className="rounded-3xl overflow-hidden border border-gray-200 mb-6"
+          className="rounded-3xl overflow-hidden border border-gray-200 mb-6 bg-card"
           style={{
-            backgroundColor: 'white',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.08,
@@ -236,9 +235,8 @@ export default function PrivacySettingsModal() {
           Data Management
         </Text>
         <View
-          className="rounded-3xl overflow-hidden border border-gray-200 mb-6"
+          className="rounded-3xl overflow-hidden border border-gray-200 mb-6 bg-card"
           style={{
-            backgroundColor: 'white',
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.08,
@@ -256,12 +254,7 @@ export default function PrivacySettingsModal() {
         </View>
 
         {/* Privacy Info */}
-        <View
-          className="p-4 rounded-2xl border border-gray-200"
-          style={{
-            backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          }}
-        >
+        <View className="p-4 rounded-2xl border border-gray-200 bg-green-400/10">
           <View className="flex-row items-center mb-2">
             <Text style={{ fontSize: 20, marginRight: 8 }}>🔒</Text>
             <Text variant="body" className="text-[#5A4A3A] font-semibold">

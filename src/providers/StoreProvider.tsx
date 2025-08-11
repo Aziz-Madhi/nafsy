@@ -103,6 +103,7 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
         });
       }}
     >
+      <SystemThemeListener />
       {children}
     </StoreErrorBoundary>
   );

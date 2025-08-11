@@ -62,7 +62,7 @@ const defaultGetItemType = <T extends ListItem>(
 function DefaultEmptyComponent({ message }: { message: string }) {
   return (
     <View className="flex-1 justify-center items-center py-12">
-      <Text variant="muted" className="text-center text-gray-500">
+      <Text variant="muted" className="text-center text-muted-foreground">
         {message}
       </Text>
     </View>
@@ -121,11 +121,13 @@ export function GenericList<T extends ListItem>({
         typeof emptyComponent === 'function'
           ? emptyComponent
           : () => <>{emptyComponent}</>;
-      Component.displayName = 'EmptyComponent';
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- displayName for debugging only
+      (Component as any).displayName = 'EmptyComponent';
       return Component;
     }
     const DefaultEmpty = () => <DefaultEmptyComponent message={emptyMessage} />;
-    DefaultEmpty.displayName = 'DefaultEmptyComponent';
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- displayName for debugging only
+    (DefaultEmpty as any).displayName = 'DefaultEmptyComponent';
     return DefaultEmpty;
   }, [emptyComponent, emptyMessage]);
 

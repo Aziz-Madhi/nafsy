@@ -88,10 +88,10 @@ const SessionItem = ({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         className={cn(
-          'rounded-2xl p-4 border-2',
+          'rounded-2xl p-4 border',
           isActive
             ? 'bg-[#2F6A8D]/10 border-[#2F6A8D]/30'
-            : 'bg-white border-gray-100'
+            : 'bg-black/[0.03] dark:bg-white/[0.04] border-border/10'
         )}
         style={{
           shadowColor: '#000000',
@@ -103,12 +103,12 @@ const SessionItem = ({
       >
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center flex-1">
-            <View className="w-3 h-3 rounded-full mr-3 bg-[#2F6A8D]" />
+            <View className="w-3 h-3 rounded-full mr-3 bg-brand-dark-blue" />
             <Text
               variant="subhead"
               className={cn(
                 'font-semibold flex-1',
-                isActive ? 'text-[#2F6A8D]' : 'text-gray-800'
+                isActive ? 'text-[#2F6A8D]' : 'text-foreground'
               )}
               numberOfLines={1}
             >
@@ -128,12 +128,12 @@ const SessionItem = ({
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
             <SymbolView name="bubble.left" size={14} tintColor="#9CA3AF" />
-            <Text variant="caption1" className="text-gray-500 ml-1">
+            <Text variant="caption1" className="text-muted-foreground ml-1">
               {`${session.messageCount ?? 0} ${t('chat.messages') || 'messages'}`}
             </Text>
           </View>
 
-          <Text variant="caption1" className="text-gray-400">
+          <Text variant="caption1" className="text-muted-foreground">
             {formatDate(
               session.lastMessageAt ||
                 session.startedAt ||
@@ -245,6 +245,7 @@ export function ChatHistorySidebar({
       {/* Backdrop */}
       <GestureDetector gesture={backdropTapGesture}>
         <Animated.View
+          className="bg-black/50"
           style={[
             backdropStyle,
             {
@@ -253,7 +254,6 @@ export function ChatHistorySidebar({
               left: 0,
               right: 0,
               bottom: 0,
-              backgroundColor: 'black',
             },
           ]}
         />
@@ -261,6 +261,7 @@ export function ChatHistorySidebar({
 
       {/* Sidebar */}
       <Animated.View
+        className="bg-background"
         style={[
           sidebarStyle,
           {
@@ -269,7 +270,6 @@ export function ChatHistorySidebar({
             left: 0,
             bottom: 0,
             width: SIDEBAR_WIDTH,
-            backgroundColor: '#F4F1ED',
             borderTopRightRadius: 25,
             borderBottomRightRadius: 25,
             shadowColor: '#000000',
@@ -282,11 +282,11 @@ export function ChatHistorySidebar({
       >
         <SafeAreaView className="flex-1" edges={['top', 'left']}>
           {/* Header and Search */}
-          <View className="p-4 border-b border-gray-100">
-            <Text variant="title3" className="text-gray-800 font-bold mb-3">
+          <View className="p-4 border-b border-border/10">
+            <Text variant="title3" className="font-bold mb-3 text-foreground">
               History
             </Text>
-            <View className="flex-row items-center bg-white rounded-xl px-4 py-3">
+            <View className="flex-row items-center rounded-xl px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-border/10">
               <SymbolView
                 name="magnifyingglass"
                 size={18}
@@ -297,7 +297,7 @@ export function ChatHistorySidebar({
                 onChangeText={setSearchQuery}
                 placeholder="Search"
                 placeholderTextColor="#9CA3AF"
-                className="flex-1 ml-3 text-gray-800 text-base"
+                className="flex-1 ml-3 text-base text-foreground"
                 autoCapitalize="none"
                 autoCorrect={false}
               />
@@ -341,31 +341,38 @@ export function ChatHistorySidebar({
             emptyComponent={() => {
               const hasSearchQuery = searchQuery.trim().length > 0;
               const emptyMessage = hasSearchQuery
-                ? t('chat.search.noResults') ||
+                ? (t?.('chat.search.noResults' as any) as unknown as string) ||
                   'No conversations match your search'
-                : t('chat.history.noMainSessions') || 'No chat sessions yet';
+                : (t(
+                    'chat.history.noMainSessions' as any
+                  ) as unknown as string) || 'No chat sessions yet';
               const iconName = hasSearchQuery
                 ? 'magnifyingglass'
                 : 'bubble.left';
 
               return (
                 <View className="flex-1 items-center justify-center py-12">
-                  <View className="w-16 h-16 rounded-full bg-gray-100 items-center justify-center mb-4">
+                  <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/[0.05] dark:bg-white/[0.06]">
                     <SymbolView name={iconName} size={24} tintColor="#9CA3AF" />
                   </View>
                   <Text
                     variant="subhead"
-                    className="text-gray-500 text-center px-6"
+                    className="text-muted-foreground text-center px-6"
                   >
                     {emptyMessage}
                   </Text>
                   {hasSearchQuery && (
                     <Pressable
                       onPress={() => setSearchQuery('')}
-                      className="mt-4 px-4 py-2 bg-gray-100 rounded-full"
+                      className="mt-4 px-4 py-2 rounded-full bg-black/[0.05] dark:bg-white/[0.06]"
                     >
-                      <Text variant="caption1" className="text-gray-600">
-                        {t('chat.search.clearSearch') || 'Clear search'}
+                      <Text
+                        variant="caption1"
+                        className="text-muted-foreground"
+                      >
+                        {(t?.(
+                          'chat.search.clearSearch' as any
+                        ) as unknown as string) || 'Clear search'}
                       </Text>
                     </Pressable>
                   )}

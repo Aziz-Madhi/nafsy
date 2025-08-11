@@ -1,18 +1,13 @@
 import { Appearance } from 'react-native';
 import { NativeWindStyleSheet } from 'nativewind';
 
-export const initializeTheme = (theme: 'light' | 'dark') => {
-  // Set Appearance for React Native components
-  Appearance.setColorScheme(theme);
-
-  // Set Nativewind color scheme
+// Unified helpers for setting NativeWind scheme. Avoids forcing RN Appearance globally.
+export const setNativeWindTheme = (theme: 'light' | 'dark') => {
   NativeWindStyleSheet.setColorScheme(theme);
 };
 
 export const applyTheme = (theme: 'light' | 'dark' | 'system') => {
-  const resolvedTheme =
-    theme === 'system' ? Appearance.getColorScheme() || 'light' : theme;
-
-  initializeTheme(resolvedTheme);
-  return resolvedTheme;
+  const resolved = theme === 'system' ? Appearance.getColorScheme() || 'light' : theme;
+  setNativeWindTheme(resolved);
+  return resolved;
 };

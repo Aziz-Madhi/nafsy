@@ -67,7 +67,7 @@ export class SafeErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F4F1ED',
+    // background is provided by parent via className tokens
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -89,7 +89,6 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   button: {
-    backgroundColor: '#3B82F6',
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 8,
@@ -103,7 +102,7 @@ const styles = StyleSheet.create({
   errorBox: {
     marginTop: 16,
     padding: 12,
-    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+    // bg via wrapper if needed
     borderRadius: 8,
     width: '100%',
   },

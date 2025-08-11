@@ -101,14 +101,7 @@ const TabIcon = ({
       className="items-center justify-center px-4"
       style={{ minHeight: 60 }}
     >
-      <View
-        style={{
-          backgroundColor: 'transparent',
-          borderRadius: 20,
-          paddingHorizontal: 16,
-          paddingVertical: 8,
-        }}
-      >
+      <View className="bg-transparent rounded-2xl px-4 py-2">
         {getIcon(route, isFocused)}
       </View>
     </Pressable>

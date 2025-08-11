@@ -13,7 +13,6 @@ import {
   format,
   isToday,
   isFuture,
-  getDay,
   startOfWeek,
   endOfWeek,
   eachDayOfInterval,
@@ -122,11 +121,12 @@ export function PixelCalendar({
     }
 
     // No mood entry for this day - use very subtle background
+    const isDarkMode = colors.background === '#171717';
     if (isFuture(day)) {
-      return 'rgba(0, 0, 0, 0.03)'; // Very subtle for future untracked days
+      return isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)';
     }
 
-    return 'rgba(0, 0, 0, 0.05)'; // Slightly more visible for past untracked days
+    return isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
   };
 
   const handlePress = () => {
@@ -145,11 +145,14 @@ export function PixelCalendar({
       <View className="p-2">
         {/* Month Header */}
         <View className="mb-3 flex-row justify-between items-center">
-          <Text variant="body" className="font-semibold text-gray-900 text-lg">
+          <Text
+            variant="body"
+            className="font-semibold text-foreground text-lg"
+          >
             {format(currentDate, 'MMMM yyyy')}
           </Text>
           {onPress && (
-            <Text variant="caption1" className="text-gray-500 text-sm">
+            <Text variant="caption1" className="text-muted-foreground text-sm">
               Tap to view year →
             </Text>
           )}
@@ -170,7 +173,7 @@ export function PixelCalendar({
                 >
                   <Text
                     variant="caption1"
-                    className="text-gray-500 text-xs font-semibold"
+                    className="text-muted-foreground text-xs font-semibold"
                   >
                     {label}
                   </Text>

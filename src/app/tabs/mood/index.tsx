@@ -20,7 +20,6 @@ import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { router } from 'expo-router';
 import Animated, {
-  useSharedValue,
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
@@ -176,6 +175,7 @@ const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
   onPress: () => void;
 }) {
   const colors = useColors();
+  const isDarkModeLocal = colors.background === '#171717';
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -188,22 +188,21 @@ const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
       ? colors[
           `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
         ]
-      : withOpacity(colors.shadow, 0.05);
+      : colors.background === '#171717'
+        ? 'rgba(255, 255, 255, 0.04)'
+        : withOpacity(colors.shadow, 0.05);
   }, [isSelected, mood.id, colors]);
 
   const textColor = useMemo(() => {
-    return isSelected
-      ? colors[
-          `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
-        ]
-      : colors.foreground;
-  }, [isSelected, mood.id, colors]);
+    // Keep label color consistent across states
+    return isDarkModeLocal ? 'rgba(255, 255, 255, 0.9)' : colors.foreground;
+  }, [colors, isDarkModeLocal]);
 
   return (
     <Pressable
       onPress={onPress}
       className="items-center"
-      style={{ width: '20%' }}
+      style={{ marginHorizontal: 1 }}
     >
       <Animated.View
         style={[
@@ -267,8 +266,10 @@ const TagButton = React.memo(function TagButton({
 
   const textColor = useMemo(() => {
     return isSelected
-      ? '#000000' // Always black when selected for visibility
-      : colors.foreground;
+      ? 'rgba(255, 255, 255, 0.95)'
+      : colors.background === '#171717'
+        ? 'rgba(255, 255, 255, 0.9)'
+        : colors.foreground;
   }, [isSelected, colors]);
 
   return (
@@ -283,6 +284,21 @@ const TagButton = React.memo(function TagButton({
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor,
+            // Ensure pill visibility on dark mode when not selected
+            borderWidth: isSelected
+              ? 0
+              : colors.background === '#171717'
+                ? 1
+                : 0,
+            borderColor: isSelected
+              ? 'transparent'
+              : colors.background === '#171717'
+                ? 'rgba(255, 255, 255, 0.08)'
+                : 'transparent',
+            // subtle dark background for unselected in dark mode
+            ...(colors.background === '#171717' && !isSelected
+              ? { backgroundColor: 'rgba(255, 255, 255, 0.04)' }
+              : {}),
             overflow: 'hidden',
           },
         ]}
@@ -389,9 +405,10 @@ export default function MoodIndex() {
   const createMood = useMutation(api.moods.createMood);
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
+  const isDarkMode = colors.background === '#171717';
 
   // Helper function to get mood color
-  const getMoodColorValue = (mood: string) => {
+  /* const getMoodColorValue = (mood: string) => {
     const moodColorMap: Record<string, keyof typeof colors> = {
       happy: 'moodHappy',
       sad: 'moodSad',
@@ -400,7 +417,7 @@ export default function MoodIndex() {
       angry: 'moodAngry',
     };
     return colors[moodColorMap[mood]] || colors.success;
-  };
+  }; */
 
   const [selectedMood, setSelectedMood] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
@@ -493,7 +510,9 @@ export default function MoodIndex() {
                         fontFamily: 'CrimsonPro-Regular',
                         fontSize: 18,
                         lineHeight: 24,
-                        color: '#000000',
+                        color: isDarkMode
+                          ? 'rgba(255, 255, 255, 0.88)'
+                          : '#111827',
                         letterSpacing: 0.5,
                       }}
                     >
@@ -508,7 +527,9 @@ export default function MoodIndex() {
                       fontFamily: 'CrimsonPro-Bold',
                       fontSize: 32,
                       lineHeight: 38,
-                      color: '#1F2937', // Dark gray - distinct but readable
+                      color: isDarkMode
+                        ? 'rgba(255, 255, 255, 0.92)'
+                        : '#1F2937',
                       letterSpacing: 1.5,
                     }}
                   >
@@ -521,7 +542,9 @@ export default function MoodIndex() {
                     style={{
                       width: 40,
                       height: 2,
-                      backgroundColor: 'rgba(0, 0, 0, 0.2)', // Always visible dark gray
+                      backgroundColor: isDarkMode
+                        ? 'rgba(255, 255, 255, 0.35)'
+                        : 'rgba(0, 0, 0, 0.2)',
                       borderRadius: 1,
                     }}
                   />
@@ -533,7 +556,9 @@ export default function MoodIndex() {
                       fontFamily: 'CrimsonPro-Italic-VariableFont',
                       fontSize: 16,
                       lineHeight: 24,
-                      color: '#000000',
+                      color: isDarkMode
+                        ? 'rgba(255, 255, 255, 0.9)'
+                        : '#000000',
                       letterSpacing: 0,
                     }}
                   >
@@ -550,14 +575,19 @@ export default function MoodIndex() {
                     fontFamily: 'CrimsonPro-Bold',
                     fontSize: 28,
                     lineHeight: 34,
-                    color: colors.foreground,
+                    color: isDarkMode
+                      ? 'rgba(255, 255, 255, 0.92)'
+                      : colors.foreground,
                   }}
                 >
                   How are you feeling today?
                 </Text>
 
                 {/* Mood Selection */}
-                <View className="flex-row justify-between mb-6">
+                <View
+                  className="flex-row justify-center mb-6"
+                  style={{ columnGap: 6 }}
+                >
                   {moods.map((mood) => (
                     <AnimatedMoodButton
                       key={mood.id}
@@ -593,14 +623,27 @@ export default function MoodIndex() {
                       >
                         Add a note (optional)
                       </Text>
-                      <View className="rounded-2xl p-4 border border-border/10 bg-black/[0.02]">
+                      <View
+                        className="p-4"
+                        style={{
+                          backgroundColor: isDarkMode
+                            ? 'rgba(255, 255, 255, 0.04)'
+                            : withOpacity(colors.shadow, 0.05),
+                          borderWidth: isDarkMode ? 1 : 0,
+                          borderColor: isDarkMode
+                            ? 'rgba(255, 255, 255, 0.08)'
+                            : 'transparent',
+                          borderRadius: 20,
+                          overflow: 'hidden',
+                        }}
+                      >
                         <TextInput
                           value={moodNote}
                           onChangeText={setMoodNote}
                           placeholder="What's on your mind?"
                           placeholderTextColor={withOpacity(
                             colors.foreground,
-                            0.6
+                            0.55
                           )}
                           multiline
                           numberOfLines={3}
@@ -630,11 +673,10 @@ export default function MoodIndex() {
                     <Pressable
                       onPress={handleSaveMood}
                       disabled={isSaving || !selectedMood}
-                      className={`py-4 rounded-2xl items-center ${
+                      className={`py-4 rounded-2xl items-center bg-brand-dark-blue ${
                         isSaving || !selectedMood ? 'opacity-60' : ''
                       }`}
                       style={{
-                        backgroundColor: colors.brandDarkBlue,
                         shadowColor: colors.brandDarkBlue,
                         shadowOffset: { width: 0, height: 2 },
                         shadowOpacity: 0.15,
@@ -656,13 +698,13 @@ export default function MoodIndex() {
         {/* Pixel Calendar - Mood Visualization */}
         <View className="mb-6" style={{ marginHorizontal: 6 }}>
           <View
-            className="rounded-3xl p-4 border border-gray-200 bg-black/[0.03] dark:bg-white/[0.03]"
+            className="rounded-3xl p-4 bg-black/[0.03] dark:bg-white/[0.03]"
             style={{
               ...shadowMedium,
             }}
           >
             <PixelCalendar
-              moodData={moodData}
+              moodData={moodData as any}
               onPress={() => {
                 if (!isNavigating) {
                   setIsNavigating(true);

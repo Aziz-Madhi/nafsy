@@ -18,16 +18,11 @@ import Animated, {
   withSequence,
   withTiming,
 } from 'react-native-reanimated';
-import { AnimatePresence, MotiView } from 'moti';
+import { MotiView } from 'moti';
 import { ChatBubbleProps, ChatInputProps } from './types';
-import { useTranslation } from '~/hooks/useTranslation';
+// import { useTranslation } from '~/hooks/useTranslation';
 import SendingSpinner from './SendingSpinner';
-import {
-  AnimatedContainer,
-  StaggeredListItem,
-  usePressAnimation,
-  SPRING_PRESETS,
-} from '~/lib/animations';
+import { AnimatedContainer, StaggeredListItem } from '~/lib/animations';
 
 // =====================
 // CHAT BUBBLE COMPONENT
@@ -100,11 +95,11 @@ export const ChatBubble = React.memo(function ChatBubble({
 
         {/* Enhanced status indicator */}
         {isUser && status && (
-          <Animated.View
-            entering={FadeInUp.springify()}
-            className="absolute -bottom-1 -right-1"
-          >
-            <View className="bg-white rounded-full p-1.5 shadow-md">
+        <Animated.View
+          entering={FadeInUp.springify()}
+          className="absolute -bottom-1 -right-1"
+        >
+          <View className="bg-card rounded-full p-1.5 shadow-md">
               {status === 'sending' ? (
                 <SendingSpinner />
               ) : status === 'sent' ? (
@@ -163,7 +158,7 @@ export const TypingIndicator = React.memo(function TypingIndicator() {
       ),
       -1
     );
-  }, []);
+  }, [containerOpacity, containerScale, dot1, dot2, dot3]);
 
   const containerStyle = useAnimatedStyle(() => ({
     transform: [{ scale: containerScale.value }],
@@ -216,16 +211,16 @@ export const TypingIndicator = React.memo(function TypingIndicator() {
         }}
       >
         <Animated.View
-          style={[dot1Style, { backgroundColor: '#2F6A8D' }]}
-          className="w-3 h-3 rounded-full"
+          style={dot1Style}
+          className="w-3 h-3 rounded-full bg-brand-dark-blue"
         />
         <Animated.View
-          style={[dot2Style, { backgroundColor: '#2F6A8D' }]}
-          className="w-3 h-3 rounded-full mx-1.5"
+          style={dot2Style}
+          className="w-3 h-3 rounded-full mx-1.5 bg-brand-dark-blue"
         />
         <Animated.View
-          style={[dot3Style, { backgroundColor: '#2F6A8D' }]}
-          className="w-3 h-3 rounded-full"
+          style={dot3Style}
+          className="w-3 h-3 rounded-full bg-brand-dark-blue"
         />
       </View>
     </Animated.View>
@@ -275,7 +270,7 @@ export const QuickReplyButton = React.memo(function QuickReplyButton({
             {icon}
           </Text>
         )}
-        <Text variant="callout" className="text-gray-700">
+        <Text variant="callout" className="text-foreground">
           {text}
         </Text>
       </View>

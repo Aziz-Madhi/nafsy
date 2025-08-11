@@ -4,7 +4,7 @@ import { Text } from '~/components/ui/text';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTranslation } from '~/hooks/useTranslation';
 import { useColors } from '~/hooks/useColors';
-import { RTLView } from '~/components/ui/RTLView';
+// Removed unused RTLView import
 import type { Exercise } from '~/types';
 
 interface DailyExerciseCardProps {
@@ -55,7 +55,7 @@ export function DailyExerciseCard({
               <>
                 {/* Greeting */}
                 <Text
-                  className="text-gray-600 mb-2"
+                  className="text-muted-foreground mb-2"
                   style={{
                     fontFamily: 'Inter_400Regular',
                     fontSize: 14,
@@ -66,7 +66,7 @@ export function DailyExerciseCard({
 
                 {/* Today's Exercise title */}
                 <Text
-                  className="text-gray-900 mb-5"
+                  className="text-foreground mb-5"
                   style={{
                     fontFamily: 'Inter_700Bold',
                     fontSize: 26,
@@ -78,18 +78,10 @@ export function DailyExerciseCard({
 
                 {/* Category badge centered */}
                 <View className="items-center mb-2">
-                  <View
-                    className="px-4 py-1.5 rounded-full"
-                    style={{
-                      backgroundColor: '#FFFFFF',
-                    }}
-                  >
+                  <View className="px-4 py-1.5 rounded-full bg-white">
                     <Text
-                      className="text-gray-700"
-                      style={{
-                        fontFamily: 'Inter_500Medium',
-                        fontSize: 13,
-                      }}
+                      className="text-foreground"
+                      style={{ fontFamily: 'Inter_500Medium', fontSize: 13 }}
                     >
                       {exercise.category.charAt(0).toUpperCase() +
                         exercise.category.slice(1)}
@@ -99,7 +91,7 @@ export function DailyExerciseCard({
 
                 {/* Duration centered */}
                 <Text
-                  className="text-gray-600 text-center mb-5"
+                  className="text-muted-foreground text-center mb-5"
                   style={{
                     fontFamily: 'Inter_400Regular',
                     fontSize: 14,
@@ -110,7 +102,7 @@ export function DailyExerciseCard({
 
                 {/* Exercise title */}
                 <Text
-                  className="text-gray-900 mb-2"
+                  className="text-foreground mb-2"
                   style={{
                     fontFamily: 'Inter_600SemiBold',
                     fontSize: 20,
@@ -122,7 +114,7 @@ export function DailyExerciseCard({
 
                 {/* Description */}
                 <Text
-                  className="text-gray-600 mb-6"
+                  className="text-muted-foreground mb-6"
                   style={{
                     fontFamily: 'Inter_400Regular',
                     fontSize: 14,
@@ -136,7 +128,7 @@ export function DailyExerciseCard({
                 {/* Motivational message and button */}
                 <View className="flex-row items-center justify-between">
                   <Text
-                    className="text-gray-500 flex-1 mr-3"
+                    className="text-muted-foreground flex-1 mr-3"
                     style={{
                       fontFamily: 'Inter_400Regular',
                       fontSize: 13,
@@ -148,7 +140,7 @@ export function DailyExerciseCard({
 
                   <Pressable
                     onPress={handlePress}
-                    className="bg-gray-900 rounded-full"
+                    className="bg-brand-dark-blue rounded-full"
                     style={{
                       shadowColor: '#000',
                       shadowOffset: { width: 0, height: 3 },
@@ -175,8 +167,8 @@ export function DailyExerciseCard({
               // Loading placeholder
               <View>
                 <View
+                  className="bg-gray-100"
                   style={{
-                    backgroundColor: '#F3F4F6',
                     width: 120,
                     height: 20,
                     borderRadius: 4,
@@ -185,8 +177,8 @@ export function DailyExerciseCard({
                 />
 
                 <View
+                  className="bg-gray-100"
                   style={{
-                    backgroundColor: '#F3F4F6',
                     width: 200,
                     height: 32,
                     borderRadius: 6,
@@ -196,29 +188,21 @@ export function DailyExerciseCard({
 
                 <View className="items-center mb-3">
                   <View
-                    className="rounded-full"
-                    style={{
-                      backgroundColor: '#F3F4F6',
-                      width: 120,
-                      height: 40,
-                    }}
+                    className="rounded-full bg-gray-100"
+                    style={{ width: 120, height: 40 }}
                   />
                 </View>
 
                 <View className="items-center mb-6">
                   <View
-                    style={{
-                      backgroundColor: '#F3F4F6',
-                      width: 60,
-                      height: 20,
-                      borderRadius: 4,
-                    }}
+                    className="bg-gray-100"
+                    style={{ width: 60, height: 20, borderRadius: 4 }}
                   />
                 </View>
 
                 <View
+                  className="bg-gray-100"
                   style={{
-                    backgroundColor: '#F3F4F6',
                     width: '80%',
                     height: 28,
                     borderRadius: 6,
@@ -227,8 +211,8 @@ export function DailyExerciseCard({
                 />
 
                 <View
+                  className="bg-gray-100"
                   style={{
-                    backgroundColor: '#F3F4F6',
                     width: '100%',
                     height: 48,
                     borderRadius: 6,
@@ -238,8 +222,8 @@ export function DailyExerciseCard({
 
                 <View className="flex-row items-center justify-between">
                   <View
+                    className="bg-gray-100"
                     style={{
-                      backgroundColor: '#F3F4F6',
                       flex: 1,
                       height: 20,
                       borderRadius: 4,

@@ -81,19 +81,20 @@ function CategoryExerciseListComponent({
   }, [exercises, categoryId]);
 
   return (
-    <View className="flex-1 bg-[#F4F1ED]">
+    <View className="flex-1 bg-background">
       {/* Header */}
-      <View className="flex-row justify-between items-center px-6 py-4 mb-4">
-        <Pressable onPress={handleBackPress} className="flex-row items-center">
-          <SymbolView name="chevron.left" size={32} tintColor="#5A4A3A" />
-          <Text className="text-[#5A4A3A] font-medium text-lg ml-2">
-            {t('common.back') || 'Back'}
-          </Text>
+      <View className="flex-row items-center px-4 py-3 mb-4">
+        <Pressable onPress={handleBackPress} className="p-2 mr-2">
+          <SymbolView name="chevron.left" size={28} tintColor="#9CA3AF" />
         </Pressable>
-
-        <Text className="text-[#5A4A3A] text-xl font-bold">{categoryName}</Text>
-
-        <View className="w-10" />
+        <Text
+          className="text-foreground flex-1 text-center"
+          style={{ fontFamily: 'CrimsonPro-Bold', fontSize: 24, lineHeight: 28 }}
+        >
+          {categoryName}
+        </Text>
+        {/* Spacer to balance the centered title against the back icon width */}
+        <View style={{ width: 44 }} />
       </View>
 
       {/* Exercise List */}

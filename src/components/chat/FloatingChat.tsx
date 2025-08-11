@@ -474,8 +474,7 @@ export const FloatingChat = React.memo(
                                   .stiffness(300)
                                   .delay(200)
                               }
-                              className="absolute -top-2 -left-2 backdrop-blur-sm rounded-full w-4 h-4 border border-white/30"
-                              style={{ backgroundColor: '#7BA7D9' }}
+                              className="absolute -top-2 -left-2 backdrop-blur-sm rounded-full w-4 h-4 border border-white/30 bg-brand-dark-blue"
                             >
                               <Animated.View
                                 style={[pulseStyle]}
