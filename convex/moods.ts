@@ -14,6 +14,7 @@ export const createMood = mutation({
       v.literal('angry')
     ),
     note: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())), // Contributing factors/sub-emotions
     createdAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
@@ -24,6 +25,7 @@ export const createMood = mutation({
       userId: user._id,
       mood: args.mood,
       note: args.note,
+      tags: args.tags,
       createdAt: args.createdAt || Date.now(),
     });
     return moodId;

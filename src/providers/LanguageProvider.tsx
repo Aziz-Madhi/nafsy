@@ -25,14 +25,15 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
     // Text-level RTL alignment is handled by individual Text components.
   }, [language]);
 
-  // Initial setup
+  // Initial setup - use hook instead of getState to avoid initialization issues
+  const initialLanguage = useAppStore((state) => state.settings.language);
+  
   useEffect(() => {
-    const initialLanguage = useAppStore.getState().settings.language;
     setLocale(initialLanguage);
     // Enable RTL text rendering support but don't force layout direction
     I18nManager.allowRTL(true);
     // Note: Removed I18nManager.forceRTL() to prevent global layout flipping
-  }, []);
+  }, [initialLanguage]);
 
   return <>{children}</>;
 }

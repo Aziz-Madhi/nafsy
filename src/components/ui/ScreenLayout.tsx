@@ -272,7 +272,7 @@ export function ScreenLayout({
   onRefresh,
   statsSection,
   variant = 'default',
-  backgroundColor = '#F4F1ED', // Default warm beige background
+  backgroundColor,
   contentStyle,
   headerStyle,
   safeAreaStyle,
@@ -285,8 +285,8 @@ export function ScreenLayout({
 
   const content = (
     <SafeAreaView
-      className="flex-1"
-      style={[{ backgroundColor, paddingTop: topPadding }, safeAreaStyle]}
+      className="flex-1 bg-background"
+      style={[{ paddingTop: topPadding }, backgroundColor ? { backgroundColor } : {}, safeAreaStyle]}
       edges={[]}
     >
       {/* Header */}
@@ -335,7 +335,6 @@ export const ScreenPresets = {
     variant: 'dashboard' as const,
     scrollable: true,
     animated: true,
-    backgroundColor: '#F4F1ED',
   },
 
   // Chat layout
@@ -343,21 +342,18 @@ export const ScreenPresets = {
     variant: 'chat' as const,
     scrollable: false,
     showHeader: false,
-    backgroundColor: '#FFFFFF',
   },
 
   // Profile/settings layout
   profile: {
     variant: 'default' as const,
     scrollable: true,
-    backgroundColor: '#F4F1ED',
   },
 
   // List layout (exercise details, etc.)
   list: {
     variant: 'list' as const,
     scrollable: false,
-    backgroundColor: '#F4F1ED',
   },
 };
 

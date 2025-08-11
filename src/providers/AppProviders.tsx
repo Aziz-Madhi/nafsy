@@ -18,13 +18,13 @@ export function AppProviders({ children }: AppProvidersProps) {
       <SafeAreaProvider>
         <StoreProvider>
           <ThemeController />
-          <ThemeWrapper>
-            <LanguageProvider>
-              <ClerkProviderWrapper>
-                <ConvexProvider>{children}</ConvexProvider>
-              </ClerkProviderWrapper>
-            </LanguageProvider>
-          </ThemeWrapper>
+          <LanguageProvider>
+            <ClerkProviderWrapper>
+              <ConvexProvider>
+                <ThemeWrapper>{children}</ThemeWrapper>
+              </ConvexProvider>
+            </ClerkProviderWrapper>
+          </LanguageProvider>
         </StoreProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

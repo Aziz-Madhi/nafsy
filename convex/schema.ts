@@ -82,6 +82,7 @@ export default defineSchema({
       v.literal('angry')
     ),
     note: v.optional(v.string()),
+    tags: v.optional(v.array(v.string())), // Contributing factors/sub-emotions
     createdAt: v.number(),
   })
     .index('by_user_date', ['userId', 'createdAt'])

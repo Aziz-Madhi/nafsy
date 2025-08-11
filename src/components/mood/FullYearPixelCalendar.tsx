@@ -308,8 +308,9 @@ export function FullYearPixelCalendar({
     if (clickedRowIndex >= 0 && column >= 0 && column < COLUMNS) {
       const day = yearGrid[clickedRowIndex]?.days[column];
       if (day && day.isReal && !day.isFuture) {
+        // Day press disabled - mood entry modal removed
+        // Can be re-enabled with different functionality later
         impactAsync(ImpactFeedbackStyle.Light);
-        router.push(`/tabs/mood/mood-entry/${day.dateKey}`);
       }
     }
   };

@@ -64,7 +64,7 @@ async function initializeSecureStorage(): Promise<void> {
   }
 }
 
-// Initialize secure storage asynchronously
+// Initialize secure storage asynchronously (non-blocking)
 initializeSecureStorage();
 
 /**
@@ -135,6 +135,11 @@ export const mmkvJSON = {
  * Direct storage access for special cases
  */
 export { storage };
+
+/**
+ * Check if secure storage initialization is complete
+ */
+export const isSecureStorageReady = (): boolean => isInitialized;
 
 /**
  * Simple storage health check

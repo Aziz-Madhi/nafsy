@@ -10,6 +10,7 @@ import { StoreErrorBoundary } from '~/components/StoreErrorBoundary';
 import { useAppStore } from '~/store/useAppStore';
 import { useChatUIStore } from '~/store/useChatUIStore';
 import { logger } from '~/lib/logger';
+import { isSecureStorageReady } from '~/lib/mmkv-storage';
 
 interface StoreProviderProps {
   children: ReactNode;
@@ -38,21 +39,25 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
 
     const initializeStores = async () => {
       try {
-        // The new store factory handles hydration automatically
-        // We just need to access the stores to trigger initialization
-        const appStore = useAppStore.getState();
-        const chatUIStore = useChatUIStore.getState();
-
-        // Wait a brief moment for any async initialization
-        await new Promise((resolve) => setTimeout(resolve, 100));
-
-        if (isMounted && appStore && chatUIStore) {
-          setHydrationState({
-            isHydrated: true,
-            hasError: false,
-          });
-          logger.info('Store initialization completed', 'StoreProvider');
+        // Wait for MMKV storage to be ready (with timeout)
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        while (!isSecureStorageReady() && attempts < maxAttempts && isMounted) {
+          await new Promise((resolve) => setTimeout(resolve, 50));
+          attempts++;
         }
+
+        // Only proceed if component is still mounted
+        if (!isMounted) return;
+
+        // Store factory handles hydration automatically - no need to access stores here
+        setHydrationState({
+          isHydrated: true,
+          hasError: false,
+        });
+        
+        logger.info('Store initialization completed', 'StoreProvider');
       } catch (error) {
         logger.error('Store initialization failed', 'StoreProvider', error);
 
@@ -98,7 +103,6 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
         });
       }}
     >
-      <SystemThemeListener />
       {children}
     </StoreErrorBoundary>
   );
@@ -121,3 +125,4 @@ const SystemThemeListener: React.FC = () => {
 
   return null;
 };
+

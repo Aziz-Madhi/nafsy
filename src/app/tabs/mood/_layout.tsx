@@ -21,14 +21,6 @@ export default function MoodLayout() {
         }}
       />
       <Stack.Screen
-        name="mood-entry/[date]"
-        options={{
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
-          gestureEnabled: true,
-        }}
-      />
-      <Stack.Screen
         name="analytics"
         options={{
           presentation: 'modal',

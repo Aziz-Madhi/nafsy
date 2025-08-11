@@ -5,7 +5,7 @@
  * For 90% of components, use Tailwind classes instead!
  */
 
-import { useColorScheme } from 'react-native';
+import { useAppStore } from '~/store/useAppStore';
 
 const nativeColors = {
   light: {
@@ -101,8 +101,8 @@ const nativeColors = {
  * Use sparingly - prefer Tailwind classes for 90% of styling!
  */
 export function useColors() {
-  const colorScheme = useColorScheme();
-  return nativeColors[colorScheme === 'dark' ? 'dark' : 'light'];
+  const currentTheme = useAppStore((state) => state.currentTheme);
+  return nativeColors[currentTheme === 'dark' ? 'dark' : 'light'];
 }
 
 /**

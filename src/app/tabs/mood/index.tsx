@@ -14,7 +14,7 @@ import { useTranslation } from '~/hooks/useTranslation';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 import { cn } from '~/lib/cn';
 import { MotiView } from 'moti';
-import { useColors, useShadowStyle, useMoodColor } from '~/hooks/useColors';
+import { useColors, useShadowStyle } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -34,6 +34,60 @@ const moods = [
 ] as const;
 
 // Encouraging messages configuration
+// Tag categories for each mood type
+const tagCategories = {
+  anxious: [
+    'Work',
+    'Family',
+    'Health',
+    'Finances',
+    'Relationship',
+    'Future',
+    'Social',
+    'School',
+  ],
+  sad: [
+    'Loss',
+    'Loneliness',
+    'Disappointment',
+    'Rejection',
+    'Change',
+    'Memory',
+    'Illness',
+    'Failure',
+  ],
+  happy: [
+    'Achievement',
+    'Love',
+    'Friends',
+    'Progress',
+    'Gratitude',
+    'Fun',
+    'Peace',
+    'Success',
+  ],
+  angry: [
+    'Frustration',
+    'Injustice',
+    'Disrespect',
+    'Disappointment',
+    'Stress',
+    'Conflict',
+    'Betrayal',
+    'Pressure',
+  ],
+  neutral: [
+    'Routine',
+    'Rest',
+    'Calm',
+    'Stable',
+    'Observing',
+    'Reflecting',
+    'Waiting',
+    'Balanced',
+  ],
+} as const;
+
 const encouragingMessages = [
   {
     id: 1,
@@ -112,7 +166,7 @@ const renderMoodIcon = (
 };
 
 // Animated Mood Button Component
-function AnimatedMoodButton({
+const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
   mood,
   isSelected,
   onPress,
@@ -121,20 +175,33 @@ function AnimatedMoodButton({
   isSelected: boolean;
   onPress: () => void;
 }) {
-  const scale = useSharedValue(1);
   const colors = useColors();
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
       transform: [{ scale: withSpring(isSelected ? 1.1 : 1) }],
     };
-  });
+  }, [isSelected]);
+
+  const backgroundColor = useMemo(() => {
+    return isSelected
+      ? colors[
+          `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
+        ]
+      : withOpacity(colors.shadow, 0.05);
+  }, [isSelected, mood.id, colors]);
+
+  const textColor = useMemo(() => {
+    return isSelected
+      ? colors[
+          `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
+        ]
+      : colors.foreground;
+  }, [isSelected, mood.id, colors]);
 
   return (
     <Pressable
       onPress={onPress}
-      onPressIn={() => (scale.value = withSpring(0.95))}
-      onPressOut={() => (scale.value = withSpring(1))}
       className="items-center"
       style={{ width: '20%' }}
     >
@@ -147,11 +214,7 @@ function AnimatedMoodButton({
             borderRadius: 20,
             alignItems: 'center',
             justifyContent: 'center',
-            backgroundColor: isSelected
-              ? colors[
-                  `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
-                ]
-              : withOpacity(colors.shadow, 0.05),
+            backgroundColor,
             overflow: 'hidden',
           },
         ]}
@@ -161,19 +224,162 @@ function AnimatedMoodButton({
       <Text
         variant="caption1"
         className="mt-2 text-center font-medium"
-        style={{
-          color: isSelected
-            ? colors[
-                `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
-              ]
-            : colors.foreground,
-        }}
+        style={{ color: textColor }}
       >
         {mood.label}
       </Text>
     </Pressable>
   );
-}
+});
+
+// Individual Tag Component - EXACT same pattern as AnimatedMoodButton
+const TagButton = React.memo(function TagButton({
+  tag,
+  isSelected,
+  moodType,
+  onPress,
+}: {
+  tag: string;
+  isSelected: boolean;
+  moodType: string;
+  onPress: () => void;
+}) {
+  const colors = useColors();
+
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [{ scale: withSpring(isSelected ? 1.05 : 1) }],
+    };
+  }, [isSelected]);
+
+  // Get mood-specific color
+  const moodColor = useMemo(() => {
+    const moodColorKey =
+      `mood${moodType.charAt(0).toUpperCase() + moodType.slice(1)}` as keyof typeof colors;
+    return colors[moodColorKey] || colors.primary;
+  }, [moodType, colors]);
+
+  const backgroundColor = useMemo(() => {
+    return isSelected
+      ? moodColor + '33' // 20% opacity
+      : withOpacity(colors.shadow, 0.05);
+  }, [isSelected, moodColor, colors]);
+
+  const textColor = useMemo(() => {
+    return isSelected
+      ? '#000000' // Always black when selected for visibility
+      : colors.foreground;
+  }, [isSelected, colors]);
+
+  return (
+    <Pressable onPress={onPress} style={{ marginHorizontal: 4 }}>
+      <Animated.View
+        style={[
+          animatedStyle,
+          {
+            paddingHorizontal: 16,
+            paddingVertical: 10,
+            borderRadius: 20,
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor,
+            overflow: 'hidden',
+          },
+        ]}
+      >
+        <Text
+          style={{
+            fontSize: 14,
+            fontWeight: '500',
+            color: textColor,
+          }}
+        >
+          {tag}
+        </Text>
+      </Animated.View>
+    </Pressable>
+  );
+});
+
+// Memoized Tags Component to prevent unnecessary re-renders
+const TagsSection = React.memo(function TagsSection({
+  selectedMood,
+  selectedTags,
+  onTagToggle,
+}: {
+  selectedMood: string;
+  selectedTags: string[];
+  onTagToggle: (tag: string) => void;
+}) {
+  if (
+    !selectedMood ||
+    !tagCategories[selectedMood as keyof typeof tagCategories]
+  ) {
+    return null;
+  }
+
+  return (
+    <MotiView
+      from={{ opacity: 0, translateY: 10 }}
+      animate={{ opacity: 1, translateY: 0 }}
+      transition={{ type: 'timing', duration: 200 }}
+      className="mb-4"
+    >
+      <Text
+        variant="body"
+        className="text-center mb-4 text-foreground text-base font-medium"
+      >
+        What&apos;s contributing to this feeling?
+      </Text>
+      <View style={{ minHeight: 140 }}>
+        {/* Row 1: First 3 tags */}
+        <View className="flex-row justify-center mb-2">
+          {tagCategories[selectedMood as keyof typeof tagCategories]
+            .slice(0, 3)
+            .map((tag) => (
+              <TagButton
+                key={tag}
+                tag={tag}
+                isSelected={selectedTags.includes(tag)}
+                moodType={selectedMood}
+                onPress={() => onTagToggle(tag)}
+              />
+            ))}
+        </View>
+
+        {/* Row 2: Next 3 tags */}
+        <View className="flex-row justify-center mb-2">
+          {tagCategories[selectedMood as keyof typeof tagCategories]
+            .slice(3, 6)
+            .map((tag) => (
+              <TagButton
+                key={tag}
+                tag={tag}
+                isSelected={selectedTags.includes(tag)}
+                moodType={selectedMood}
+                onPress={() => onTagToggle(tag)}
+              />
+            ))}
+        </View>
+
+        {/* Row 3: Last 2 tags */}
+        <View className="flex-row justify-center">
+          {tagCategories[selectedMood as keyof typeof tagCategories]
+            .slice(6, 8)
+            .map((tag) => (
+              <TagButton
+                key={tag}
+                tag={tag}
+                isSelected={selectedTags.includes(tag)}
+                moodType={selectedMood}
+                onPress={() => onTagToggle(tag)}
+              />
+            ))}
+        </View>
+      </View>
+    </MotiView>
+  );
+});
 
 export default function MoodIndex() {
   const {} = useTranslation(); // eslint-disable-line no-empty-pattern
@@ -197,9 +403,17 @@ export default function MoodIndex() {
   };
 
   const [selectedMood, setSelectedMood] = useState('');
+  const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [moodNote, setMoodNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+
+  // Memoized tag toggle handler
+  const handleTagToggle = useCallback((tag: string) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+    );
+  }, []);
 
   const hasLoggedToday = !!todayMood;
 
@@ -225,18 +439,20 @@ export default function MoodIndex() {
       await createMood({
         mood: moodValue as 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry',
         note: moodNote.trim(),
+        tags: selectedTags.length > 0 ? selectedTags : undefined,
         createdAt: new Date().getTime(),
       });
 
       // Reset form
       setSelectedMood('');
+      setSelectedTags([]);
       setMoodNote('');
     } catch (error) {
       console.error('Error saving mood:', error);
     } finally {
       setIsSaving(false);
     }
-  }, [selectedMood, moodNote, currentUser, createMood, isSaving]);
+  }, [selectedMood, moodNote, selectedTags, currentUser, createMood, isSaving]);
 
   const screenTitle = 'Mood';
 
@@ -277,7 +493,7 @@ export default function MoodIndex() {
                         fontFamily: 'CrimsonPro-Regular',
                         fontSize: 18,
                         lineHeight: 24,
-                        color: colors.foreground,
+                        color: '#000000',
                         letterSpacing: 0.5,
                       }}
                     >
@@ -292,9 +508,7 @@ export default function MoodIndex() {
                       fontFamily: 'CrimsonPro-Bold',
                       fontSize: 32,
                       lineHeight: 38,
-                      color: todayMood
-                        ? getMoodColorValue(todayMood.mood)
-                        : colors.success,
+                      color: '#1F2937', // Dark gray - distinct but readable
                       letterSpacing: 1.5,
                     }}
                   >
@@ -307,9 +521,7 @@ export default function MoodIndex() {
                     style={{
                       width: 40,
                       height: 2,
-                      backgroundColor: todayMood
-                        ? getMoodColorValue(todayMood.mood) + '30'
-                        : 'rgba(34, 197, 94, 0.3)', // success with opacity
+                      backgroundColor: 'rgba(0, 0, 0, 0.2)', // Always visible dark gray
                       borderRadius: 1,
                     }}
                   />
@@ -321,7 +533,7 @@ export default function MoodIndex() {
                       fontFamily: 'CrimsonPro-Italic-VariableFont',
                       fontSize: 16,
                       lineHeight: 24,
-                      color: withOpacity(colors.foreground, 0.7),
+                      color: '#000000',
                       letterSpacing: 0,
                     }}
                   >
@@ -354,10 +566,18 @@ export default function MoodIndex() {
                       onPress={() => {
                         impactAsync(ImpactFeedbackStyle.Light);
                         setSelectedMood(mood.id);
+                        setSelectedTags([]); // Reset tags when mood changes
                       }}
                     />
                   ))}
                 </View>
+
+                {/* Tags Section */}
+                <TagsSection
+                  selectedMood={selectedMood}
+                  selectedTags={selectedTags}
+                  onTagToggle={handleTagToggle}
+                />
 
                 {/* Note Input */}
                 {selectedMood && (

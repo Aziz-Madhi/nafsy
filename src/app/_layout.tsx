@@ -8,11 +8,6 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppProviders } from '~/providers/AppProviders';
 import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
-import { colorScheme } from 'nativewind';
-import { Appearance } from 'react-native';
-
-// Initialize with system color scheme
-colorScheme.set(Appearance.getColorScheme() || 'light');
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
