@@ -258,9 +258,8 @@ export default function ProfileIndex() {
     <Animated.View entering={FadeInDown.springify()}>
       {/* User Info Card */}
       <View
-        className="mx-4 mb-4 rounded-2xl shadow-sm"
+        className="mx-4 mb-4 rounded-3xl shadow-sm bg-black/[0.03] dark:bg-white/[0.03]"
         style={{
-          backgroundColor: colors.card,
           ...shadowLight,
         }}
       >
@@ -301,9 +300,8 @@ export default function ProfileIndex() {
           Usage Statistics
         </Text>
         <View
-          className="rounded-2xl shadow-sm p-5"
+          className="rounded-3xl shadow-sm p-5 bg-black/[0.03] dark:bg-white/[0.03]"
           style={{
-            backgroundColor: withOpacity(colors.brandBrownish, 0.12),
             ...shadowLight,
           }}
         >
@@ -374,9 +372,8 @@ export default function ProfileIndex() {
         {/* Settings Section */}
         <SectionHeader title={t('profile.sections.settings')} />
         <View
-          className="mx-4 mb-4 rounded-2xl shadow-sm overflow-hidden"
+          className="mx-4 mb-4 rounded-3xl shadow-sm overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]"
           style={{
-            backgroundColor: withOpacity(colors.brandBrownish, 0.12),
             ...shadowLight,
           }}
         >
@@ -403,9 +400,8 @@ export default function ProfileIndex() {
         {/* Support Section */}
         <SectionHeader title={t('profile.sections.support')} />
         <View
-          className="mx-4 mb-6 rounded-2xl shadow-sm overflow-hidden"
+          className="mx-4 mb-6 rounded-3xl shadow-sm overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]"
           style={{
-            backgroundColor: withOpacity(colors.brandBrownish, 0.12),
             ...shadowLight,
           }}
         >

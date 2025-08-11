@@ -22,6 +22,9 @@ const nativeColors = {
     chatBubbleUser: '#2F6A8D', // matches --chat-bubble-user: 47 106 141
     chatBubbleAi: '#202020', // matches --chat-bubble-ai: 32 32 32
 
+    // Brand colors - matches CSS variables
+    brandDarkBlue: '#2F6A8D', // matches --brand-dark-blue: 47 106 141
+
     // Mood colors - for React Native specific components
     moodHappy: '#FCD34D', // matches --mood-happy: 252 211 77
     moodSad: '#6B7FDE', // matches --mood-sad: 107 127 222
@@ -59,8 +62,11 @@ const nativeColors = {
     tabInactive: '#737373', // matches dark --tab-inactive: 115 115 115
 
     // Chat colors - dark mode
-    chatBubbleUser: '#3B82F6', // matches dark --chat-bubble-user: 59 130 246
+    chatBubbleUser: '#2F6A8D', // matches dark --chat-bubble-user: 47 106 141
     chatBubbleAi: '#404040', // matches dark --chat-bubble-ai: 64 64 64
+
+    // Brand colors - same in dark mode
+    brandDarkBlue: '#2F6A8D', // matches --brand-dark-blue: 47 106 141
 
     // Mood colors - dark mode (keep vibrant)
     moodHappy: '#FCD34D', // matches dark --mood-happy: 252 211 77

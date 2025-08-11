@@ -274,6 +274,7 @@ The app uses a modern, unified color system with CSS variables as the single sou
 ### Usage Guidelines
 
 #### 🎨 **Use Tailwind Classes for 90% of Components**
+
 ```tsx
 // ✅ Preferred - Use Tailwind classes
 <View className="bg-primary text-primary-foreground">
@@ -282,6 +283,7 @@ The app uses a modern, unified color system with CSS variables as the single sou
 ```
 
 #### 🔧 **Use useColors Hook for React Native Specific Components**
+
 ```tsx
 // ✅ Only for React Native components requiring hex values
 import { useColors, useMoodColor, useShadowStyle } from '~/hooks/useColors';

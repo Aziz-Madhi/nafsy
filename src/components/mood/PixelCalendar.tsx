@@ -1,7 +1,7 @@
 import React, { useMemo, useEffect } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '~/components/ui/text';
-import { useMoodColor, useColors } from '~/hooks/useColors';
+import { useColors } from '~/hooks/useColors';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -41,13 +41,19 @@ export function PixelCalendar({
 
   // Colors for React Native styling (need hex values)
   const colors = useColors();
-  const moodColors = {
-    happy: useMoodColor('happy'),
-    sad: useMoodColor('sad'),
-    anxious: useMoodColor('anxious'),
-    neutral: useMoodColor('neutral'),
-    angry: useMoodColor('angry'),
-  };
+
+  // Use static mood colors for calendar consistency
+  // These should not change based on current mood selection
+  const moodColors = useMemo(
+    () => ({
+      happy: colors.moodHappy,
+      sad: colors.moodSad,
+      anxious: colors.moodAnxious,
+      neutral: colors.moodNeutral,
+      angry: colors.moodAngry,
+    }),
+    [colors]
+  );
 
   useEffect(() => {
     opacity.value = withTiming(1, { duration: 400 });
@@ -100,9 +106,9 @@ export function PixelCalendar({
   }, [allDays]);
 
   const getDayColor = (day: Date, isInMonth: boolean) => {
-    // Days outside the current month should always be very light
+    // Days outside the current month should be transparent/invisible
     if (!isInMonth) {
-      return 'rgba(229, 231, 235, 0.5)';
+      return 'transparent';
     }
 
     const dateKey = format(day, 'yyyy-MM-dd');
@@ -115,12 +121,12 @@ export function PixelCalendar({
       return moodColors[mood];
     }
 
-    // No mood entry for this day
+    // No mood entry for this day - use very subtle background
     if (isFuture(day)) {
-      return '#E5E7EB'; // Gray for future untracked days
+      return 'rgba(0, 0, 0, 0.03)'; // Very subtle for future untracked days
     }
 
-    return '#E5E7EB'; // Gray for past untracked days
+    return 'rgba(0, 0, 0, 0.05)'; // Slightly more visible for past untracked days
   };
 
   const handlePress = () => {
@@ -136,9 +142,9 @@ export function PixelCalendar({
 
   return (
     <Pressable onPress={handlePress} disabled={!onPress}>
-      <View className="p-4">
+      <View className="p-2">
         {/* Month Header */}
-        <View className="mb-5 flex-row justify-between items-center">
+        <View className="mb-3 flex-row justify-between items-center">
           <Text variant="body" className="font-semibold text-gray-900 text-lg">
             {format(currentDate, 'MMMM yyyy')}
           </Text>
@@ -194,7 +200,6 @@ export function PixelCalendar({
                           borderColor: isTodayDate
                             ? colors.primary
                             : 'transparent',
-                          opacity: isInMonth ? 1 : 0.3,
                         }}
                       />
                     );
@@ -202,49 +207,6 @@ export function PixelCalendar({
                 </View>
               ))}
             </Animated.View>
-          </View>
-        </View>
-
-        {/* Mood Legend - Compact */}
-        <View className="mt-5">
-          <View
-            className="flex-row flex-wrap justify-center"
-            style={{ gap: 12 }}
-          >
-            {/* Empty state */}
-            <View className="flex-row items-center">
-              <View
-                style={{
-                  width: 12,
-                  height: 12,
-                  backgroundColor: '#E5E7EB',
-                  borderRadius: 4,
-                }}
-              />
-              <Text variant="caption2" className="text-gray-600 text-xs ml-1">
-                No mood
-              </Text>
-            </View>
-
-            {/* Mood colors */}
-            {Object.entries(moodColors).map(([mood, color]) => (
-              <View key={mood} className="flex-row items-center">
-                <View
-                  style={{
-                    width: 12,
-                    height: 12,
-                    backgroundColor: color,
-                    borderRadius: 4,
-                  }}
-                />
-                <Text
-                  variant="caption2"
-                  className="capitalize text-gray-600 text-xs ml-1"
-                >
-                  {mood}
-                </Text>
-              </View>
-            ))}
           </View>
         </View>
       </View>

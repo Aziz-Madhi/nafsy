@@ -92,7 +92,8 @@ export const useAppStore = createPersistedStore<AppStoreState>(
 
     toggleTheme: () => {
       const { currentTheme } = get();
-      get().setTheme(currentTheme === 'light' ? 'dark' : 'light');
+      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+      get().setTheme(newTheme);
     },
 
     applySystemTheme: () => {

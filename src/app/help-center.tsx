@@ -41,7 +41,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   };
 
   return (
-    <View className="bg-white rounded-xl mb-3 overflow-hidden">
+    <View className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl mb-3 overflow-hidden">
       <Pressable
         onPress={handlePress}
         className="p-4"
@@ -75,6 +75,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 
 export default function HelpCenter() {
   const { t } = useTranslation();
+  const colors = useColors();
   const [searchQuery, setSearchQuery] = useState('');
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -138,7 +139,11 @@ export default function HelpCenter() {
             className="mr-4"
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
-            <SymbolView name="chevron.left" size={24} tintColor="#2196F3" />
+            <SymbolView
+              name="chevron.left"
+              size={24}
+              tintColor={colors.brandDarkBlue}
+            />
           </Pressable>
           <Text
             className="text-[#5A4A3A] flex-1"
@@ -162,7 +167,7 @@ export default function HelpCenter() {
         <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
           <View className="p-6">
             {/* Search Bar */}
-            <View className="bg-white rounded-xl px-4 py-3 mb-6 flex-row items-center">
+            <View className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl px-4 py-3 mb-6 flex-row items-center">
               <SymbolView
                 name="magnifyingglass"
                 size={20}
@@ -188,7 +193,7 @@ export default function HelpCenter() {
 
               <Pressable
                 onPress={handleStartChat}
-                className="bg-primary rounded-xl p-4 mb-3"
+                className="bg-brand-dark-blue rounded-3xl p-4 mb-3"
                 style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
               >
                 <View className="flex-row items-center">
@@ -220,7 +225,7 @@ export default function HelpCenter() {
 
               <Pressable
                 onPress={() => router.push('/crisis-resources')}
-                className="bg-white rounded-xl p-4"
+                className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl p-4"
                 style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
               >
                 <View className="flex-row items-center">
@@ -282,7 +287,11 @@ export default function HelpCenter() {
                   className="mr-4"
                   style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
                 >
-                  <SymbolView name="xmark" size={24} tintColor="#2196F3" />
+                  <SymbolView
+                    name="xmark"
+                    size={24}
+                    tintColor={colors.brandDarkBlue}
+                  />
                 </Pressable>
                 <Text
                   className="text-[#5A4A3A] flex-1"
@@ -301,7 +310,7 @@ export default function HelpCenter() {
 
             {/* Chat Content */}
             <ScrollView className="flex-1 p-6">
-              <View className="bg-gray-100 rounded-2xl p-4 mb-4 self-start max-w-[80%]">
+              <View className="bg-black/[0.03] dark:bg-white/[0.03] rounded-2xl p-4 mb-4 self-start max-w-[80%]">
                 <Text variant="body">{t('helpCenter.chatGreeting')}</Text>
               </View>
             </ScrollView>
@@ -314,7 +323,7 @@ export default function HelpCenter() {
                   value={chatMessage}
                   onChangeText={setChatMessage}
                   multiline
-                  className="flex-1 bg-gray-100 rounded-2xl px-4 py-3 max-h-32 text-base"
+                  className="flex-1 bg-black/[0.03] dark:bg-white/[0.03] rounded-2xl px-4 py-3 max-h-32 text-base"
                   placeholderTextColor="#9CA3AF"
                 />
                 <Pressable
@@ -322,7 +331,7 @@ export default function HelpCenter() {
                   disabled={!chatMessage.trim()}
                   className={cn(
                     'ml-2 w-10 h-10 rounded-full items-center justify-center',
-                    chatMessage.trim() ? 'bg-primary' : 'bg-gray-200'
+                    chatMessage.trim() ? 'bg-brand-dark-blue' : 'bg-gray-200'
                   )}
                 >
                   <SymbolView

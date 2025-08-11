@@ -42,8 +42,10 @@ function FeedbackTypeCard({
     <Pressable
       onPress={onPress}
       className={cn(
-        'flex-1 p-4 rounded-xl border-2',
-        isSelected ? 'bg-blue-50 border-primary' : 'bg-white border-gray-200'
+        'flex-1 p-4 rounded-3xl border-2',
+        isSelected
+          ? 'bg-blue-50 border-brand-dark-blue'
+          : 'bg-black/[0.03] dark:bg-white/[0.03] border-gray-200'
       )}
       style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
     >
@@ -51,13 +53,15 @@ function FeedbackTypeCard({
         <SymbolView
           name={icon as any}
           size={24}
-          tintColor={isSelected ? colors.primary : colors.mutedForeground}
+          tintColor={isSelected ? colors.brandDarkBlue : colors.mutedForeground}
         />
         <Text
           variant="caption1"
           className={cn(
             'mt-2 text-center',
-            isSelected ? 'text-primary font-medium' : 'text-muted-foreground'
+            isSelected
+              ? 'font-medium text-brand-dark-blue'
+              : 'text-muted-foreground'
           )}
         >
           {title}
@@ -174,7 +178,7 @@ export default function Feedback() {
             <SymbolView
               name="chevron.left"
               size={24}
-              tintColor={colors.primary}
+              tintColor={colors.brandDarkBlue}
             />
           </Pressable>
           <Text
@@ -234,7 +238,7 @@ export default function Feedback() {
                 {t('feedback.rateExperience')}
               </Text>
 
-              <View className="bg-white rounded-xl p-4 mb-6">
+              <View className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl p-4 mb-6">
                 <Text variant="body" className="text-center mb-3">
                   {t('feedback.ratingQuestion')}
                 </Text>
@@ -260,7 +264,7 @@ export default function Feedback() {
                 {t('feedback.yourFeedback')}
               </Text>
 
-              <View className="bg-white rounded-xl p-4 mb-4">
+              <View className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl p-4 mb-4">
                 <TextInput
                   placeholder={t('feedback.subject')}
                   value={subject}
@@ -284,7 +288,7 @@ export default function Feedback() {
 
             <Animated.View entering={FadeInDown.delay(400).springify()}>
               {/* Contact Email (Optional) */}
-              <View className="bg-white rounded-xl p-4 mb-6">
+              <View className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl p-4 mb-6">
                 <Text variant="caption1" className="text-muted-foreground mb-2">
                   {t('feedback.emailOptional')}
                 </Text>
@@ -305,8 +309,8 @@ export default function Feedback() {
               onPress={handleSubmit}
               disabled={isSubmitting}
               className={cn(
-                'rounded-xl px-6 py-4 flex-row items-center justify-center',
-                isSubmitting ? 'bg-gray-400' : 'bg-primary'
+                'rounded-3xl px-6 py-4 flex-row items-center justify-center',
+                isSubmitting ? 'bg-gray-400' : 'bg-brand-dark-blue'
               )}
               style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
             >

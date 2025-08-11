@@ -5,6 +5,8 @@ import { ClerkProviderWrapper } from './ClerkProvider';
 import { ConvexProvider } from './ConvexProvider';
 import { StoreProvider } from './StoreProvider';
 import { LanguageProvider } from './LanguageProvider';
+import { ThemeController } from '~/components/ThemeController';
+import { ThemeWrapper } from '~/components/ThemeWrapper';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -15,11 +17,14 @@ export function AppProviders({ children }: AppProvidersProps) {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <StoreProvider>
-          <LanguageProvider>
-            <ClerkProviderWrapper>
-              <ConvexProvider>{children}</ConvexProvider>
-            </ClerkProviderWrapper>
-          </LanguageProvider>
+          <ThemeController />
+          <ThemeWrapper>
+            <LanguageProvider>
+              <ClerkProviderWrapper>
+                <ConvexProvider>{children}</ConvexProvider>
+              </ClerkProviderWrapper>
+            </LanguageProvider>
+          </ThemeWrapper>
         </StoreProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

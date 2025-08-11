@@ -12,10 +12,9 @@ import {
 } from '~/hooks/useSharedData';
 import { useTranslation } from '~/hooks/useTranslation';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
-import { getMoodColor } from '~/lib/color-helpers';
 import { cn } from '~/lib/cn';
 import { MotiView } from 'moti';
-import { useColors, useShadowStyle } from '~/hooks/useColors';
+import { useColors, useShadowStyle, useMoodColor } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
 import { useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -185,6 +184,18 @@ export default function MoodIndex() {
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
 
+  // Helper function to get mood color
+  const getMoodColorValue = (mood: string) => {
+    const moodColorMap: Record<string, keyof typeof colors> = {
+      happy: 'moodHappy',
+      sad: 'moodSad',
+      anxious: 'moodAnxious',
+      neutral: 'moodNeutral',
+      angry: 'moodAngry',
+    };
+    return colors[moodColorMap[mood]] || colors.success;
+  };
+
   const [selectedMood, setSelectedMood] = useState('');
   const [moodNote, setMoodNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -244,7 +255,7 @@ export default function MoodIndex() {
               'rounded-3xl p-6 border border-border/20',
               hasLoggedToday && todayMood
                 ? `bg-mood-${todayMood.mood}/30`
-                : 'bg-card'
+                : 'bg-black/[0.03] dark:bg-white/[0.03]'
             )}
             style={{
               ...shadowMedium,
@@ -282,8 +293,8 @@ export default function MoodIndex() {
                       fontSize: 32,
                       lineHeight: 38,
                       color: todayMood
-                        ? getMoodColor(todayMood.mood as any, 'primary')
-                        : '#22C55E', // success
+                        ? getMoodColorValue(todayMood.mood)
+                        : colors.success,
                       letterSpacing: 1.5,
                     }}
                   >
@@ -297,7 +308,7 @@ export default function MoodIndex() {
                       width: 40,
                       height: 2,
                       backgroundColor: todayMood
-                        ? getMoodColor(todayMood.mood as any, 'primary') + '30'
+                        ? getMoodColorValue(todayMood.mood) + '30'
                         : 'rgba(34, 197, 94, 0.3)', // success with opacity
                       borderRadius: 1,
                     }}
@@ -403,8 +414,8 @@ export default function MoodIndex() {
                         isSaving || !selectedMood ? 'opacity-60' : ''
                       }`}
                       style={{
-                        backgroundColor: colors.primary,
-                        shadowColor: colors.primary,
+                        backgroundColor: colors.brandDarkBlue,
+                        shadowColor: colors.brandDarkBlue,
                         shadowOffset: { width: 0, height: 2 },
                         shadowOpacity: 0.15,
                         shadowRadius: 4,
@@ -425,17 +436,8 @@ export default function MoodIndex() {
         {/* Pixel Calendar - Mood Visualization */}
         <View className="mb-6" style={{ marginHorizontal: 6 }}>
           <View
-            className="rounded-3xl p-6 border border-gray-200"
+            className="rounded-3xl p-4 border border-gray-200 bg-black/[0.03] dark:bg-white/[0.03]"
             style={{
-              backgroundColor:
-                hasLoggedToday && todayMood
-                  ? withOpacity(
-                      colors[
-                        `mood${todayMood.mood.charAt(0).toUpperCase() + todayMood.mood.slice(1)}` as keyof typeof colors
-                      ],
-                      0.3
-                    )
-                  : colors.background,
               ...shadowMedium,
             }}
           >

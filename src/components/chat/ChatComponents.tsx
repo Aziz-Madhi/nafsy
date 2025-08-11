@@ -28,7 +28,6 @@ import {
   usePressAnimation,
   SPRING_PRESETS,
 } from '~/lib/animations';
-import { useColors } from '~/hooks/useColors';
 
 // =====================
 // CHAT BUBBLE COMPONENT
@@ -41,7 +40,6 @@ export const ChatBubble = React.memo(function ChatBubble({
   index = 0,
   status,
 }: ChatBubbleProps) {
-  const colors = useColors();
   const shouldJustifyEnd = isUser;
 
   return (
@@ -58,12 +56,12 @@ export const ChatBubble = React.memo(function ChatBubble({
         <View
           className={cn(
             'px-4 py-3 rounded-2xl',
-            isUser ? 'bg-primary' : 'bg-transparent'
+            isUser ? 'bg-chat-bubble-user' : 'bg-transparent'
           )}
           style={{
             ...(isUser
               ? {
-                  shadowColor: colors.primary,
+                  shadowColor: '#2F6A8D',
                   shadowOffset: { width: 0, height: 3 },
                   shadowOpacity: 0.2,
                   shadowRadius: 8,
@@ -425,10 +423,7 @@ export const ChatInput = React.memo(function ChatInput({
                   <Pressable
                     onPress={handleSend}
                     disabled={disabled}
-                    className="w-8 h-8 rounded-full items-center justify-center"
-                    style={{
-                      backgroundColor: '#2F6A8D',
-                    }}
+                    className="w-8 h-8 rounded-full items-center justify-center bg-chat-bubble-user"
                   >
                     <SymbolView name="arrow.up" size={18} tintColor="white" />
                   </Pressable>

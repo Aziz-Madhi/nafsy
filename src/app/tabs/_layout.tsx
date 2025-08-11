@@ -7,9 +7,11 @@ import { useUserSafe } from '~/lib/useUserSafe';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { MorphingTabBar } from '~/components/navigation';
+import { useColors } from '~/hooks/useColors';
 
 export default function TabsLayout() {
-  const activeColor = '#2196F3'; // design primary blue
+  const colors = useColors();
+  const activeColor = colors.primary;
 
   // Centralized auth guard - prevents hook order issues in individual screens
   const { user, isLoaded } = useUserSafe();
@@ -29,7 +31,7 @@ export default function TabsLayout() {
   // Show loading until auth is resolved
   if (!isLoaded) {
     return (
-      <SafeAreaView className="flex-1 bg-[#F4F1ED]" edges={['top']}>
+      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
         <View className="flex-1 justify-center items-center">
           <ActivityIndicator size="large" color={activeColor} />
           <Text variant="body" className="text-muted-foreground mt-4">
@@ -46,7 +48,7 @@ export default function TabsLayout() {
   }
 
   return (
-    <View style={{ flex: 1, backgroundColor: '#F4F1ED' }}>
+    <View className="flex-1 bg-background">
       <Tabs
         tabBar={(props) => <MorphingTabBar {...props} />}
         screenOptions={{

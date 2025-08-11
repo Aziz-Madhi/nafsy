@@ -283,12 +283,11 @@ export default function MoodEntryModal() {
               <Pressable
                 onPress={handleSaveMood}
                 disabled={isSaving || !selectedMood}
-                className={`py-4 rounded-2xl items-center mt-4 ${
+                className={`py-4 rounded-2xl items-center mt-4 bg-brand-dark-blue ${
                   isSaving || !selectedMood ? 'opacity-60' : ''
                 }`}
                 style={{
-                  backgroundColor: colors.primary,
-                  shadowColor: colors.primary,
+                  shadowColor: '#2F6A8D',
                   shadowOffset: { width: 0, height: 2 },
                   shadowOpacity: 0.15,
                   shadowRadius: 4,

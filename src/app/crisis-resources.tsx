@@ -24,6 +24,7 @@ function ResourceCard({
   isEmergency?: boolean;
 }) {
   const { t } = useTranslation();
+  const colors = useColors();
   const handleCall = () => {
     impactAsync(ImpactFeedbackStyle.Medium);
     Alert.alert(
@@ -42,7 +43,7 @@ function ResourceCard({
   return (
     <Animated.View entering={FadeInDown.springify()}>
       <View
-        className={`rounded-xl mb-4 overflow-hidden ${isEmergency ? 'bg-red-50' : 'bg-white'}`}
+        className={`rounded-3xl mb-4 overflow-hidden ${isEmergency ? 'bg-red-50' : 'bg-black/[0.03] dark:bg-white/[0.03]'}`}
       >
         <View className="p-4">
           <View className="flex-row items-start justify-between mb-2">
@@ -72,15 +73,11 @@ function ResourceCard({
           <Pressable
             onPress={handleCall}
             className={`mt-3 rounded-lg py-3 flex-row items-center justify-center ${
-              isEmergency ? 'bg-red-600' : 'bg-primary'
+              isEmergency ? 'bg-red-600' : 'bg-brand-dark-blue'
             }`}
             style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
           >
-            <SymbolView
-              name="phone.fill"
-              size={18}
-              tintColor={colors.primaryForeground}
-            />
+            <SymbolView name="phone.fill" size={18} tintColor="white" />
             <Text variant="callout" className="text-white font-medium ml-2">
               {phoneNumber}
             </Text>
@@ -93,12 +90,14 @@ function ResourceCard({
 
 // Warning Signs Component
 function WarningSign({ text }: { text: string }) {
+  const colors = useColors();
+
   return (
     <View className="flex-row items-start mb-3">
       <SymbolView
         name="exclamationmark.triangle.fill"
         size={16}
-        tintColor={colors.destructive}
+        tintColor={colors.error}
       />
       <Text variant="footnote" className="text-muted-foreground ml-2 flex-1">
         {text}
@@ -210,7 +209,7 @@ export default function CrisisResources() {
             <SymbolView
               name="chevron.left"
               size={24}
-              tintColor={colors.primary}
+              tintColor={colors.brandDarkBlue}
             />
           </Pressable>
           <Text
@@ -235,7 +234,7 @@ export default function CrisisResources() {
             <SymbolView
               name="exclamationmark.circle.fill"
               size={24}
-              tintColor={colors.primaryForeground}
+              tintColor="white"
             />
             <Text variant="title3" className="text-white ml-2">
               {t('crisisResources.immediateHelp')}
@@ -268,7 +267,7 @@ export default function CrisisResources() {
               {t('crisisResources.warningSigns')}
             </Text>
 
-            <View className="bg-white rounded-xl p-4">
+            <View className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl p-4">
               <Text variant="callout" className="font-semibold mb-4">
                 {t('crisisResources.seekHelp')}
               </Text>
@@ -288,12 +287,12 @@ export default function CrisisResources() {
               {t('crisisResources.remember')}
             </Text>
 
-            <View className="bg-blue-50 rounded-xl p-4">
+            <View className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl p-4">
               <View className="flex-row items-start">
                 <SymbolView
                   name="heart.fill"
                   size={20}
-                  tintColor={colors.primary}
+                  tintColor={colors.brandDarkBlue}
                 />
                 <Text variant="body" className="text-gray-700 ml-3 flex-1">
                   {t('crisisResources.notAlone')}

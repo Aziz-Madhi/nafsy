@@ -38,7 +38,7 @@ function StatCard({
   return (
     <View style={{ flex: 1, marginHorizontal: 6 }}>
       <Pressable
-        className="rounded-2xl overflow-hidden bg-card"
+        className="rounded-3xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]"
         style={{
           height: 120,
           shadowColor: colors.shadow,
@@ -114,6 +114,8 @@ function StatCard({
 }
 
 function InsightBadge({ text, index }: { text: string; index: number }) {
+  const colors = useColors();
+
   return (
     <View
       style={{

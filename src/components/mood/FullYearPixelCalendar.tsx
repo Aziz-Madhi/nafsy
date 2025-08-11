@@ -7,7 +7,7 @@ import {
   ScrollView,
 } from 'react-native';
 import { Text } from '~/components/ui/text';
-import { useMoodColor, useColors } from '~/hooks/useColors';
+import { useColors } from '~/hooks/useColors';
 import Animated, {
   FadeIn,
   useSharedValue,
@@ -49,13 +49,19 @@ export function FullYearPixelCalendar({
 
   // Colors for React Native styling
   const colors = useColors();
-  const moodColors = {
-    happy: useMoodColor('happy'),
-    sad: useMoodColor('sad'),
-    anxious: useMoodColor('anxious'),
-    neutral: useMoodColor('neutral'),
-    angry: useMoodColor('angry'),
-  };
+
+  // Use static mood colors for calendar consistency
+  // These should not change based on current mood selection
+  const moodColors = useMemo(
+    () => ({
+      happy: colors.moodHappy,
+      sad: colors.moodSad,
+      anxious: colors.moodAnxious,
+      neutral: colors.moodNeutral,
+      angry: colors.moodAngry,
+    }),
+    [colors]
+  );
 
   // Calculate days left in the year
   const daysLeft =
@@ -251,12 +257,22 @@ export function FullYearPixelCalendar({
 
   // Get color for a day
   const getDayColor = (day: any) => {
+    // If it's a filler day (not a real date), make it transparent
+    if (!day.isReal) {
+      return 'transparent';
+    }
+
+    // If there's a mood, use the EXACT mood color
     if (day.mood && moodColors[day.mood as keyof typeof moodColors]) {
       return moodColors[day.mood as keyof typeof moodColors];
     }
 
-    // Same gray for all untracked days (past and future)
-    return '#E5E7EB';
+    // No mood entry for this day - use very subtle background
+    if (day.isFuture) {
+      return 'rgba(0, 0, 0, 0.03)'; // Very subtle for future untracked days
+    }
+
+    return 'rgba(0, 0, 0, 0.05)'; // Slightly more visible for past untracked days
   };
 
   // Handle touch on the grid container
@@ -304,11 +320,11 @@ export function FullYearPixelCalendar({
   };
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: '#F4F1ED' }}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }}>
       {/* Minimal Header */}
       <View
         className="px-4"
-        style={{ backgroundColor: '#F4F1ED', paddingVertical: 2 }}
+        style={{ backgroundColor: colors.background, paddingVertical: 2 }}
       >
         <View
           style={{
@@ -356,7 +372,7 @@ export function FullYearPixelCalendar({
       <ScrollView
         ref={scrollViewRef}
         className="flex-1"
-        style={{ backgroundColor: '#F4F1ED' }}
+        style={{ backgroundColor: colors.background }}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingVertical: 0 }}
       >

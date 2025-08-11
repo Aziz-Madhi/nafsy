@@ -42,4 +42,5 @@ if (process.env.NODE_ENV === 'development') {
 
 module.exports = withNativeWind(config, {
   input: './global.css',
+  cssInteropEnabled: true, // Enable CSS interop for better hot reload
 });

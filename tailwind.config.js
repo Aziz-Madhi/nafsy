@@ -9,6 +9,29 @@ module.exports = {
     './lib/**/*.{js,jsx,ts,tsx}',
     './theme/**/*.{js,jsx,ts,tsx}',
   ],
+  safelist: [
+    // Ensure dynamic mood classes are always available
+    'bg-mood-happy',
+    'bg-mood-sad',
+    'bg-mood-anxious',
+    'bg-mood-neutral',
+    'bg-mood-angry',
+    'bg-mood-happy/30',
+    'bg-mood-sad/30',
+    'bg-mood-anxious/30',
+    'bg-mood-neutral/30',
+    'bg-mood-angry/30',
+    // Chat and navigation utility colors used dynamically
+    'bg-chat-bubble-user',
+    'bg-chat-bubble-ai',
+    'text-tab-active',
+    'text-tab-inactive',
+    // Brand colors used in components
+    'bg-brand-dark-blue',
+    'bg-brand-oxford',
+    'bg-brand-primary',
+    'bg-brand-brownish',
+  ],
   darkMode: 'class',
   presets: [require('nativewind/preset')],
   theme: {
@@ -126,6 +149,7 @@ module.exports = {
           oxford: 'rgb(var(--brand-oxford) / <alpha-value>)',
           primary: 'rgb(var(--brand-primary) / <alpha-value>)',
           brownish: 'rgb(var(--brand-brownish) / <alpha-value>)',
+          'dark-blue': 'rgb(var(--brand-dark-blue) / <alpha-value>)',
         },
 
         // Keep destructive for compatibility

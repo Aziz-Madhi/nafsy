@@ -30,9 +30,6 @@ export function DailyExerciseCard({
     }
   }, [exercise, onPress]);
 
-  // Using background color matching mood history calendar container
-  const backgroundColor = 'rgba(90, 74, 58, 0.12)';
-
   return (
     <View
       style={{
@@ -44,9 +41,8 @@ export function DailyExerciseCard({
     >
       <Pressable onPress={handlePress} disabled={!exercise}>
         <View
-          className="overflow-hidden rounded-2xl"
+          className="overflow-hidden rounded-3xl bg-black/[0.03] dark:bg-white/[0.03]"
           style={{
-            backgroundColor,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },
             shadowOpacity: 0.05,
@@ -55,135 +51,161 @@ export function DailyExerciseCard({
           }}
         >
           <View className="p-6">
-            <View>
-              <Text
-                className="mb-1"
-                className="text-gray-700 text-sm font-medium"
-                style={{
-                  fontFamily: 'Inter_500Medium',
-                }}
-              >
-                {greeting}
-              </Text>
-
-              <Text
-                className="mb-4 text-gray-900 text-2xl"
-                style={{
-                  fontFamily: 'CrimsonPro-Bold',
-                  lineHeight: 34,
-                }}
-              >
-                {t('exercises.dailyExercise.title')}
-              </Text>
-            </View>
-
             {exercise ? (
               <>
-                <View className="mb-4">
-                  <RTLView className="items-center mb-2">
-                    <View
-                      className="px-3 py-1.5 rounded-full"
-                      style={{
-                        backgroundColor: '#FFFFFF',
-                        borderWidth: 1,
-                        borderColor: '#E5E7EB',
-                      }}
-                    >
-                      <Text
-                        className="text-gray-800 text-xs font-semibold"
-                        style={{
-                          fontFamily: 'Inter_600SemiBold',
-                        }}
-                      >
-                        {exercise.category.charAt(0).toUpperCase() +
-                          exercise.category.slice(1)}
-                      </Text>
-                    </View>
+                {/* Greeting */}
+                <Text
+                  className="text-gray-600 mb-2"
+                  style={{
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 14,
+                  }}
+                >
+                  {greeting}
+                </Text>
 
-                    <View className="mx-2 w-1 h-1 rounded-full bg-gray-400" />
+                {/* Today's Exercise title */}
+                <Text
+                  className="text-gray-900 mb-5"
+                  style={{
+                    fontFamily: 'Inter_700Bold',
+                    fontSize: 26,
+                    lineHeight: 32,
+                  }}
+                >
+                  {t('exercises.dailyExercise.title')}
+                </Text>
 
+                {/* Category badge centered */}
+                <View className="items-center mb-2">
+                  <View
+                    className="px-4 py-1.5 rounded-full"
+                    style={{
+                      backgroundColor: '#FFFFFF',
+                    }}
+                  >
                     <Text
-                      className="text-gray-700 text-sm"
+                      className="text-gray-700"
                       style={{
-                        fontFamily: 'Inter_400Regular',
+                        fontFamily: 'Inter_500Medium',
+                        fontSize: 13,
                       }}
                     >
-                      {exercise.duration}
+                      {exercise.category.charAt(0).toUpperCase() +
+                        exercise.category.slice(1)}
                     </Text>
-                  </RTLView>
-
-                  <Text
-                    className="text-gray-900 text-lg"
-                    style={{
-                      fontFamily: 'Inter_600SemiBold',
-                      lineHeight: 24,
-                    }}
-                  >
-                    {exercise.title}
-                  </Text>
-
-                  <Text
-                    className="mt-1"
-                    style={{
-                      fontFamily: 'Inter_400Regular',
-                      fontSize: 14,
-                      lineHeight: 20,
-                    }}
-                    className="text-gray-700 text-sm"
-                    numberOfLines={2}
-                  >
-                    {exercise.description}
-                  </Text>
+                  </View>
                 </View>
 
-                <View className="flex-row justify-between items-center">
+                {/* Duration centered */}
+                <Text
+                  className="text-gray-600 text-center mb-5"
+                  style={{
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 14,
+                  }}
+                >
+                  {exercise.duration}
+                </Text>
+
+                {/* Exercise title */}
+                <Text
+                  className="text-gray-900 mb-2"
+                  style={{
+                    fontFamily: 'Inter_600SemiBold',
+                    fontSize: 20,
+                    lineHeight: 26,
+                  }}
+                >
+                  {exercise.title}
+                </Text>
+
+                {/* Description */}
+                <Text
+                  className="text-gray-600 mb-6"
+                  style={{
+                    fontFamily: 'Inter_400Regular',
+                    fontSize: 14,
+                    lineHeight: 20,
+                  }}
+                  numberOfLines={2}
+                >
+                  {exercise.description}
+                </Text>
+
+                {/* Motivational message and button */}
+                <View className="flex-row items-center justify-between">
                   <Text
-                    className="flex-1 mr-4"
+                    className="text-gray-500 flex-1 mr-3"
                     style={{
                       fontFamily: 'Inter_400Regular',
                       fontSize: 13,
-                      fontStyle: 'italic',
+                      lineHeight: 18,
                     }}
-                    className="text-gray-600 text-xs italic"
                   >
                     {motivationalMessage}
                   </Text>
 
-                  <View
-                    className="px-5 py-3 rounded-full bg-gray-900"
+                  <Pressable
+                    onPress={handlePress}
+                    className="bg-gray-900 rounded-full"
                     style={{
                       shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 4,
-                      elevation: 2,
+                      shadowOffset: { width: 0, height: 3 },
+                      shadowOpacity: 0.2,
+                      shadowRadius: 6,
+                      elevation: 4,
+                      paddingHorizontal: 26,
+                      paddingVertical: 11,
                     }}
                   >
                     <Text
+                      className="text-white font-semibold"
                       style={{
                         fontFamily: 'Inter_600SemiBold',
-                        fontSize: 15,
-                        color: '#FFFFFF',
+                        fontSize: 14,
                       }}
                     >
                       {t('exercises.dailyExercise.startNow')}
                     </Text>
-                  </View>
+                  </Pressable>
                 </View>
               </>
             ) : (
               // Loading placeholder
-              <View className="space-y-3">
-                <View className="flex-row items-center mb-2">
+              <View>
+                <View
+                  style={{
+                    backgroundColor: '#F3F4F6',
+                    width: 120,
+                    height: 20,
+                    borderRadius: 4,
+                    marginBottom: 12,
+                  }}
+                />
+
+                <View
+                  style={{
+                    backgroundColor: '#F3F4F6',
+                    width: 200,
+                    height: 32,
+                    borderRadius: 6,
+                    marginBottom: 24,
+                  }}
+                />
+
+                <View className="items-center mb-3">
                   <View
-                    className="px-3 py-1.5 rounded-full"
+                    className="rounded-full"
                     style={{
                       backgroundColor: '#F3F4F6',
-                      width: 100,
-                      height: 28,
+                      width: 120,
+                      height: 40,
                     }}
                   />
-                  <View className="mx-2 w-1 h-1 rounded-full bg-gray-400" />
+                </View>
+
+                <View className="items-center mb-6">
                   <View
                     style={{
                       backgroundColor: '#F3F4F6',
@@ -198,9 +220,9 @@ export function DailyExerciseCard({
                   style={{
                     backgroundColor: '#F3F4F6',
                     width: '80%',
-                    height: 24,
-                    borderRadius: 4,
-                    marginBottom: 8,
+                    height: 28,
+                    borderRadius: 6,
+                    marginBottom: 12,
                   }}
                 />
 
@@ -208,37 +230,35 @@ export function DailyExerciseCard({
                   style={{
                     backgroundColor: '#F3F4F6',
                     width: '100%',
-                    height: 40,
-                    borderRadius: 4,
-                    marginBottom: 16,
+                    height: 48,
+                    borderRadius: 6,
+                    marginBottom: 32,
                   }}
                 />
 
-                <View className="flex-row justify-between items-center">
+                <View className="flex-row items-center justify-between">
                   <View
                     style={{
                       backgroundColor: '#F3F4F6',
-                      width: '50%',
-                      height: 16,
+                      flex: 1,
+                      height: 20,
                       borderRadius: 4,
+                      marginRight: 16,
                     }}
                   />
 
                   <View
-                    className="px-5 py-3 rounded-full bg-gray-900 opacity-50"
+                    className="rounded-full bg-gray-300"
                     style={{
-                      shadowColor: '#000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 4,
-                      elevation: 2,
+                      paddingHorizontal: 32,
+                      paddingVertical: 14,
                     }}
                   >
                     <Text
+                      className="text-white font-semibold"
                       style={{
                         fontFamily: 'Inter_600SemiBold',
-                        fontSize: 15,
-                        color: '#FFFFFF',
+                        fontSize: 17,
                       }}
                     >
                       {t('exercises.dailyExercise.startNow')}
