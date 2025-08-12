@@ -1,5 +1,11 @@
 import React, { useMemo, useCallback } from 'react';
-import { View, ScrollView, ViewStyle, RefreshControl, Pressable } from 'react-native';
+import {
+  View,
+  ScrollView,
+  ViewStyle,
+  RefreshControl,
+  Pressable,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
@@ -71,7 +77,7 @@ interface ScreenLayoutProps {
 // Settings Icon Component
 function SettingsIcon() {
   const colors = useColors();
-  
+
   const handlePress = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
     router.push('/settings');

@@ -23,7 +23,8 @@
     "signIn": "تسجيل الدخول",
     "signUp": "إنشاء حساب",
     "signOut": "تسجيل الخروج",
-    "pleaseSignIn": "يرجى تسجيل الدخول للمتابعة"
+    "pleaseSignIn": "يرجى تسجيل الدخول للمتابعة",
+    "minutes": "دقيقة"
   },
   "auth": {
     "welcome": "مرحباً بك في نفسي",
@@ -104,6 +105,11 @@
       "title": "تقويم المزاج",
       "noMoodData": "لا توجد بيانات مزاج لهذا اليوم",
       "selectDate": "اختر تاريخاً لعرض المزاج"
+    },
+    "exerciseSuggestion": {
+      "recommendedForYou": "موصى به لك",
+      "basedOnMood": "بناءً على مزاجك اليوم",
+      "tryExercise": "جرب التمرين"
     },
     "stats": {
       "title": "إحصائيات المزاج",

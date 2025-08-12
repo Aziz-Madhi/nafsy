@@ -42,6 +42,41 @@ export const getExercise = query({
   },
 });
 
+// Get random exercise from specified categories
+export const getRandomExerciseByCategories = query({
+  args: {
+    categories: v.array(
+      v.union(
+        v.literal('breathing'),
+        v.literal('mindfulness'),
+        v.literal('journaling'),
+        v.literal('movement'),
+        v.literal('relaxation')
+      )
+    ),
+  },
+  handler: async (ctx, args) => {
+    // Get all exercises from the specified categories
+    const exercisePromises = args.categories.map((category) =>
+      ctx.db
+        .query('exercises')
+        .withIndex('by_category', (q) => q.eq('category', category))
+        .collect()
+    );
+    
+    const exercisesByCategory = await Promise.all(exercisePromises);
+    const allExercises = exercisesByCategory.flat();
+    
+    if (allExercises.length === 0) {
+      return null;
+    }
+    
+    // Return a random exercise
+    const randomIndex = Math.floor(Math.random() * allExercises.length);
+    return allExercises[randomIndex];
+  },
+});
+
 // Create a new exercise (admin function)
 export const createExercise = mutation({
   args: {

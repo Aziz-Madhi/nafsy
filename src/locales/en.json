@@ -23,7 +23,8 @@
     "signIn": "Sign In",
     "signUp": "Sign Up",
     "signOut": "Sign Out",
-    "pleaseSignIn": "Please sign in to continue"
+    "pleaseSignIn": "Please sign in to continue",
+    "minutes": "min"
   },
   "auth": {
     "welcome": "Welcome to Nafsy",
@@ -110,6 +111,11 @@
       "title": "Mood Calendar",
       "noMoodData": "No mood data for this day",
       "selectDate": "Select a date to view mood"
+    },
+    "exerciseSuggestion": {
+      "recommendedForYou": "Recommended for you",
+      "basedOnMood": "Based on today's mood",
+      "tryExercise": "Try Exercise"
     },
     "stats": {
       "title": "Mood Statistics",

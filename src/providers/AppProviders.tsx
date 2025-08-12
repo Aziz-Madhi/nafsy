@@ -15,7 +15,9 @@ interface AppProvidersProps {
 export function AppProviders({ children }: AppProvidersProps) {
   const colors = useColors();
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: colors.background }}>
+    <GestureHandlerRootView
+      style={{ flex: 1, backgroundColor: colors.background }}
+    >
       <SafeAreaProvider>
         <StoreProvider>
           <ThemeController />

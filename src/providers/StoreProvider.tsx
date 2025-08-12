@@ -42,7 +42,7 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
         // Wait for MMKV storage to be ready (with timeout)
         let attempts = 0;
         const maxAttempts = 10;
-        
+
         while (!isSecureStorageReady() && attempts < maxAttempts && isMounted) {
           await new Promise((resolve) => setTimeout(resolve, 50));
           attempts++;
@@ -56,7 +56,7 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
           isHydrated: true,
           hasError: false,
         });
-        
+
         logger.info('Store initialization completed', 'StoreProvider');
       } catch (error) {
         logger.error('Store initialization failed', 'StoreProvider', error);
@@ -126,4 +126,3 @@ const SystemThemeListener: React.FC = () => {
 
   return null;
 };
-

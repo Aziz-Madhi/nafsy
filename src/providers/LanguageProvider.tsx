@@ -27,7 +27,7 @@ export function LanguageProvider({ children }: LanguageProviderProps) {
 
   // Initial setup - use hook instead of getState to avoid initialization issues
   const initialLanguage = useAppStore((state) => state.settings.language);
-  
+
   useEffect(() => {
     setLocale(initialLanguage);
     // Enable RTL text rendering support but don't force layout direction

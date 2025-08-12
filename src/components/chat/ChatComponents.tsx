@@ -95,11 +95,11 @@ export const ChatBubble = React.memo(function ChatBubble({
 
         {/* Enhanced status indicator */}
         {isUser && status && (
-        <Animated.View
-          entering={FadeInUp.springify()}
-          className="absolute -bottom-1 -right-1"
-        >
-          <View className="bg-card rounded-full p-1.5 shadow-md">
+          <Animated.View
+            entering={FadeInUp.springify()}
+            className="absolute -bottom-1 -right-1"
+          >
+            <View className="bg-card rounded-full p-1.5 shadow-md">
               {status === 'sending' ? (
                 <SendingSpinner />
               ) : status === 'sent' ? (

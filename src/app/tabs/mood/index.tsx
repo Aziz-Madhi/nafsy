@@ -16,13 +16,15 @@ import { cn } from '~/lib/cn';
 import { MotiView } from 'moti';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
-import { useMutation } from 'convex/react';
+import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { router } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
+import { MoodBasedExerciseSuggestion } from '~/components/mood/MoodBasedExerciseSuggestion';
+import { getExerciseCategoriesForMood } from '~/lib/mood-exercise-mapping';
 
 const moods = [
   { id: 'sad', label: 'Sad', value: 'sad' },
@@ -407,6 +409,17 @@ export default function MoodIndex() {
   const shadowMedium = useShadowStyle('medium');
   const isDarkMode = colors.background === '#171717';
 
+  // Get exercise suggestion based on today's mood
+  const exerciseCategories = useMemo(() => {
+    if (!todayMood) return [];
+    return getExerciseCategoriesForMood(todayMood.mood as any);
+  }, [todayMood]);
+
+  const suggestedExercise = useQuery(
+    api.exercises.getRandomExerciseByCategories,
+    todayMood ? { categories: exerciseCategories } : 'skip'
+  );
+
   // Helper function to get mood color
   /* const getMoodColorValue = (mood: string) => {
     const moodColorMap: Record<string, keyof typeof colors> = {
@@ -501,7 +514,7 @@ export default function MoodIndex() {
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ type: 'timing', duration: 300 }}
               >
-                <View className="items-center justify-center flex-1">
+                <View className="items-center justify-center">
                   {/* Prefix text */}
                   {selectedEncouragingMessage.prefix && (
                     <Text
@@ -694,6 +707,15 @@ export default function MoodIndex() {
             )}
           </View>
         </View>
+
+        {/* Mood-based Exercise Suggestion */}
+        {hasLoggedToday && todayMood && (
+          <MoodBasedExerciseSuggestion
+            mood={todayMood.mood as any}
+            exercise={suggestedExercise || null}
+            isLoading={suggestedExercise === undefined}
+          />
+        )}
 
         {/* Pixel Calendar - Mood Visualization */}
         <View className="mb-6" style={{ marginHorizontal: 6 }}>

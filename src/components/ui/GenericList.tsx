@@ -121,12 +121,12 @@ export function GenericList<T extends ListItem>({
         typeof emptyComponent === 'function'
           ? emptyComponent
           : () => <>{emptyComponent}</>;
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any -- displayName for debugging only
+
       (Component as any).displayName = 'EmptyComponent';
       return Component;
     }
     const DefaultEmpty = () => <DefaultEmptyComponent message={emptyMessage} />;
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any -- displayName for debugging only
+
     (DefaultEmpty as any).displayName = 'DefaultEmptyComponent';
     return DefaultEmpty;
   }, [emptyComponent, emptyMessage]);

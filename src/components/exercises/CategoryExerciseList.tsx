@@ -89,7 +89,11 @@ function CategoryExerciseListComponent({
         </Pressable>
         <Text
           className="text-foreground flex-1 text-center"
-          style={{ fontFamily: 'CrimsonPro-Bold', fontSize: 24, lineHeight: 28 }}
+          style={{
+            fontFamily: 'CrimsonPro-Bold',
+            fontSize: 24,
+            lineHeight: 28,
+          }}
         >
           {categoryName}
         </Text>

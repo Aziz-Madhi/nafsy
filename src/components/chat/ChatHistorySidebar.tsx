@@ -159,7 +159,7 @@ export function ChatHistorySidebar({
   const { t } = useTranslation();
   const colors = useColors();
   const [searchQuery, setSearchQuery] = useState('');
-  
+
   const handleSettingsPress = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
     router.push('/settings');

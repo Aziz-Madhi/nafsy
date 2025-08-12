@@ -7,7 +7,8 @@ export const setNativeWindTheme = (theme: 'light' | 'dark') => {
 };
 
 export const applyTheme = (theme: 'light' | 'dark' | 'system') => {
-  const resolved = theme === 'system' ? Appearance.getColorScheme() || 'light' : theme;
+  const resolved =
+    theme === 'system' ? Appearance.getColorScheme() || 'light' : theme;
   setNativeWindTheme(resolved);
   return resolved;
 };

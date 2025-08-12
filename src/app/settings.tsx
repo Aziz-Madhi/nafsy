@@ -130,12 +130,7 @@ function SettingRow({
             />
           </View>
         )}
-        <Text
-          className={cn(
-            'flex-1 text-[17px]',
-            destructive && 'text-error'
-          )}
-        >
+        <Text className={cn('flex-1 text-[17px]', destructive && 'text-error')}>
           {label}
         </Text>
         {type === 'navigation' ? (
@@ -271,9 +266,7 @@ export default function SettingsScreen() {
               <Avatar.Image source={{ uri: user.imageUrl }} />
               <Avatar.Fallback className="bg-gradient-to-br from-primary to-primary/80">
                 <Text className="text-primary-foreground text-lg font-semibold">
-                  {user.fullName?.charAt(0) ||
-                    user.firstName?.charAt(0) ||
-                    'U'}
+                  {user.fullName?.charAt(0) || user.firstName?.charAt(0) || 'U'}
                 </Text>
               </Avatar.Fallback>
             </Avatar>

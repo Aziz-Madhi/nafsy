@@ -105,8 +105,15 @@ const ThoughtCard = memo(function ThoughtCard({
   return (
     <Animated.View style={[animatedStyle, breathingStyle]}>
       <Animated.View
-        style={[shadowStyle, { maxWidth: SCREEN_WIDTH * 0.8, alignSelf: 'center' }]}
-        className={isUser ? 'rounded-3xl px-6 py-4 bg-green-400' : 'rounded-3xl px-6 py-4 bg-brand-dark-blue'}
+        style={[
+          shadowStyle,
+          { maxWidth: SCREEN_WIDTH * 0.8, alignSelf: 'center' },
+        ]}
+        className={
+          isUser
+            ? 'rounded-3xl px-6 py-4 bg-green-400'
+            : 'rounded-3xl px-6 py-4 bg-brand-dark-blue'
+        }
       >
         <Text
           style={{
@@ -214,7 +221,10 @@ const OrganicTypingIndicator = memo(function OrganicTypingIndicator() {
   }));
 
   return (
-    <View className="bg-brand-dark-blue rounded-2xl p-4 self-center" style={{ gap: 4 }}>
+    <View
+      className="bg-brand-dark-blue rounded-2xl p-4 self-center"
+      style={{ gap: 4 }}
+    >
       <Animated.View
         style={[
           line1Style,

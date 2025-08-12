@@ -294,7 +294,7 @@ export default function CrisisResources() {
                   size={20}
                   tintColor={colors.brandDarkBlue}
                 />
-      <Text variant="body" className="text-foreground ml-3 flex-1">
+                <Text variant="body" className="text-foreground ml-3 flex-1">
                   {t('crisisResources.notAlone')}
                 </Text>
               </View>
