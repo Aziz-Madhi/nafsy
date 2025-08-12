@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useLayoutEffect } from 'react';
 import { Appearance } from 'react-native';
 import { colorScheme } from 'nativewind';
 import { useTheme } from '~/store/useAppStore';
@@ -8,7 +8,7 @@ import { useTheme } from '~/store/useAppStore';
 export function ThemeController() {
   const themePreference = useTheme();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const resolve = () => {
       const system = Appearance.getColorScheme() || 'light';
       return themePreference === 'system'

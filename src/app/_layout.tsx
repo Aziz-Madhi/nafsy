@@ -1,4 +1,5 @@
 import '../../global.css';
+import '~/lib/theme-bootstrap';
 import 'expo-dev-client';
 
 import React from 'react';
@@ -8,6 +9,7 @@ import { useFonts } from 'expo-font';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppProviders } from '~/providers/AppProviders';
 import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
+import { useCurrentTheme } from '~/store/useAppStore';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -19,10 +21,16 @@ export {
 
 // Navigation stack - expo-router provides NavigationContainer automatically
 function NavigationStack() {
+  const currentTheme = useCurrentTheme();
   return (
     <>
-      <StatusBar style="auto" />
-      <Stack screenOptions={{ headerShown: false }}>
+      <StatusBar style={currentTheme === 'dark' ? 'light' : 'dark'} />
+      <Stack
+        screenOptions={{
+          headerShown: false,
+          contentStyle: { backgroundColor: 'transparent' },
+        }}
+      >
         <Stack.Screen name="tabs" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
