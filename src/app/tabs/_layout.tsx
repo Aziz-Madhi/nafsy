@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
 import { Tabs, router } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
-import { MessageCircle, Heart, Activity, User } from 'lucide-react-native';
+import { MessageCircle, Heart, Activity } from 'lucide-react-native';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -89,15 +89,6 @@ export default function TabsLayout() {
                 color={color}
                 fill={focused ? color : 'none'}
               />
-            ),
-          }}
-        />
-        <Tabs.Screen
-          name="profile"
-          options={{
-            title: '',
-            tabBarIcon: ({ color, focused }) => (
-              <User size={28} color={color} fill={focused ? color : 'none'} />
             ),
           }}
         />

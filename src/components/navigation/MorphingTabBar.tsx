@@ -2,7 +2,7 @@ import React, { useCallback, useEffect } from 'react';
 import { View, Pressable, Dimensions } from 'react-native';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { SymbolView } from 'expo-symbols';
-import { MessageCircle, Heart, Activity, User } from 'lucide-react-native';
+import { MessageCircle, Heart, Activity } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, {
   useSharedValue,
@@ -62,15 +62,6 @@ const TabIcon = ({
       case 'exercises':
         return (
           <Activity
-            size={size}
-            color={iconColor}
-            fill="none"
-            strokeWidth={strokeWidth}
-          />
-        );
-      case 'profile':
-        return (
-          <User
             size={size}
             color={iconColor}
             fill="none"

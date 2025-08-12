@@ -35,6 +35,15 @@ function NavigationStack() {
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="chat-history" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="settings"
+          options={{
+            headerShown: false,
+            presentation: 'modal',
+            animation: 'slide_from_bottom',
+            gestureEnabled: true,
+          }}
+        />
       </Stack>
     </>
   );

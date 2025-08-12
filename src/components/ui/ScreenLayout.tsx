@@ -1,12 +1,14 @@
-import React, { useMemo } from 'react';
-import { View, ScrollView, ViewStyle, RefreshControl } from 'react-native';
+import React, { useMemo, useCallback } from 'react';
+import { View, ScrollView, ViewStyle, RefreshControl, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useSegments } from 'expo-router';
+import { useSegments, router } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
 import { useTranslation } from '~/hooks/useTranslation';
-// import { useColors } from '~/hooks/useColors';
+import { User } from 'lucide-react-native';
+import { useColors } from '~/hooks/useColors';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 // Calculate top padding for navigation bar only
 function useNavigationBarTopPadding(): number {
@@ -38,6 +40,7 @@ interface ScreenLayoutProps {
   headerRight?: React.ReactNode;
   headerCenter?: React.ReactNode;
   showHeader?: boolean;
+  showSettingsIcon?: boolean;
 
   // Content configuration
   children: React.ReactNode;
@@ -65,6 +68,25 @@ interface ScreenLayoutProps {
   onScroll?: (event: any) => void;
 }
 
+// Settings Icon Component
+function SettingsIcon() {
+  const colors = useColors();
+  
+  const handlePress = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    router.push('/settings');
+  }, []);
+
+  return (
+    <Pressable
+      onPress={handlePress}
+      className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
+    >
+      <User size={20} color={colors.foreground} />
+    </Pressable>
+  );
+}
+
 // Header component
 function ScreenHeader({
   title,
@@ -73,6 +95,7 @@ function ScreenHeader({
   headerRight,
   headerCenter,
   style,
+  showSettingsIcon = true,
 }: {
   title?: string;
   subtitle?: string;
@@ -80,6 +103,7 @@ function ScreenHeader({
   headerRight?: React.ReactNode;
   headerCenter?: React.ReactNode;
   style?: ViewStyle;
+  showSettingsIcon?: boolean;
 }) {
   const { isRTL } = useTranslation();
 
@@ -137,7 +161,9 @@ function ScreenHeader({
       <View className="flex-2 items-center">{headerCenter}</View>
 
       {/* Right section (becomes left in RTL) */}
-      <View className="flex-1 items-end">{headerRight}</View>
+      <View className="flex-1 items-end">
+        {headerRight || (showSettingsIcon && <SettingsIcon />)}
+      </View>
     </View>
   );
 }
@@ -260,6 +286,7 @@ export function ScreenLayout({
   headerRight,
   headerCenter,
   showHeader = true,
+  showSettingsIcon = true,
   children,
   scrollable = true,
   refreshing = false,
@@ -293,6 +320,7 @@ export function ScreenLayout({
           headerRight={headerRight}
           headerCenter={headerCenter}
           style={headerStyle}
+          showSettingsIcon={showSettingsIcon}
         />
       )}
 

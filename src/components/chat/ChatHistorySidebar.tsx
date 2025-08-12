@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useCallback } from 'react';
 import { View, Pressable, Dimensions, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
@@ -18,6 +18,9 @@ import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
+import { User } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { useColors } from '~/hooks/useColors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width
@@ -154,7 +157,14 @@ export function ChatHistorySidebar({
 }: ChatHistorySidebarProps) {
   const { user } = useUserSafe();
   const { t } = useTranslation();
+  const colors = useColors();
   const [searchQuery, setSearchQuery] = useState('');
+  
+  const handleSettingsPress = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    router.push('/settings');
+    onClose();
+  }, [onClose]);
 
   // Simple sidebar slide animation
   const sidebarTranslateX = useSharedValue(-SIDEBAR_WIDTH);
@@ -283,9 +293,17 @@ export function ChatHistorySidebar({
         <SafeAreaView className="flex-1" edges={['top', 'left']}>
           {/* Header and Search */}
           <View className="p-4 border-b border-border/10">
-            <Text variant="title3" className="font-bold mb-3 text-foreground">
-              History
-            </Text>
+            <View className="flex-row items-center justify-between mb-3">
+              <Text variant="title3" className="font-bold text-foreground">
+                History
+              </Text>
+              <Pressable
+                onPress={handleSettingsPress}
+                className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
+              >
+                <User size={20} color={colors.foreground} />
+              </Pressable>
+            </View>
             <View className="flex-row items-center rounded-xl px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-border/10">
               <SymbolView
                 name="magnifyingglass"
