@@ -44,6 +44,14 @@ const nativeColors = {
     error: '#EF4444', // matches --error: 239 68 68
     info: '#3B82F6', // matches --info: 59 130 246
 
+    // Wellness category colors - matches CSS variables
+    wellnessMindfulness: '#FF6B6B', // matches --wellness-mindfulness: 255 107 107
+    wellnessBreathing: '#4ECDC4', // matches --wellness-breathing: 78 205 196
+    wellnessMovement: '#45B7D1', // matches --wellness-movement: 69 183 209
+    wellnessJournaling: '#96CEB4', // matches --wellness-journaling: 150 206 180
+    wellnessRelaxation: '#FFEA07', // matches --wellness-relaxation: 255 234 167
+    wellnessReminders: '#DDA0DD', // matches --wellness-reminders: 221 160 221
+
     // Additional UI colors for profile and components
     brandBrownish: '#8B7355', // warm brownish color for profile sections
     card: '#FFFFFF', // card background
@@ -86,6 +94,14 @@ const nativeColors = {
     warning: '#FBB00F', // matches dark --warning: 251 191 36
     error: '#F87171', // matches dark --error: 248 113 113
     info: '#60A5FA', // matches dark --info: 96 165 250
+
+    // Wellness category colors - same vibrant colors for dark mode
+    wellnessMindfulness: '#FF6B6B', // matches --wellness-mindfulness: 255 107 107
+    wellnessBreathing: '#4ECDC4', // matches --wellness-breathing: 78 205 196
+    wellnessMovement: '#45B7D1', // matches --wellness-movement: 69 183 209
+    wellnessJournaling: '#96CEB4', // matches --wellness-journaling: 150 206 180
+    wellnessRelaxation: '#FFEA07', // matches --wellness-relaxation: 255 234 167
+    wellnessReminders: '#DDA0DD', // matches --wellness-reminders: 221 160 221
 
     // Additional UI colors for profile and components - dark mode
     brandBrownish: '#A68B5B', // lighter brownish for dark mode

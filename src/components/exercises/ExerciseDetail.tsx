@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Modal, Pressable, ScrollView } from 'react-native';
+import { View, Modal, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { Button } from '~/components/ui/button';
@@ -37,7 +37,7 @@ export default function ExerciseDetail({
       onRequestClose={onClose}
     >
       <SafeAreaView className="flex-1 bg-background">
-        <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <View className="flex-1">
           {/* Header */}
           <View className="px-6 pt-4 pb-6">
             <View className="flex-row justify-between items-center mb-6">
@@ -66,7 +66,7 @@ export default function ExerciseDetail({
                 style={{
                   backgroundColor: isDarkMode
                     ? 'rgba(255,255,255,0.08)'
-                    : exercise.color + '20',
+                    : exercise.color ? exercise.color + '20' : 'rgba(0,0,0,0.05)',
                 }}
               >
                 <Text className="text-5xl">{exercise.icon}</Text>
@@ -77,6 +77,7 @@ export default function ExerciseDetail({
                   fontFamily: 'CrimsonPro-Bold',
                   fontSize: 28,
                   fontWeight: 'normal',
+                  lineHeight: 36,
                   color: isDarkMode ? colors.foreground : undefined,
                 }}
                 numberOfLines={2}
@@ -89,6 +90,8 @@ export default function ExerciseDetail({
                 className="text-center"
                 style={{
                   color: isDarkMode ? 'rgba(255,255,255,0.75)' : undefined,
+                  lineHeight: 22,
+                  paddingHorizontal: 8,
                 }}
               >
                 {exercise.description}
@@ -130,59 +133,21 @@ export default function ExerciseDetail({
               </View>
             </View>
 
-            {/* Subtle accent bar to bring the greenish tone */}
+            {/* Subtle accent bar */}
             <View
               style={{
                 height: 2,
                 backgroundColor: isDarkMode
-                  ? 'rgba(22, 48, 44, 0.8)'
-                  : exercise.color + '60',
+                  ? 'rgba(255, 255, 255, 0.1)'
+                  : exercise.color ? exercise.color + '60' : 'rgba(0,0,0,0.1)',
                 borderRadius: 1,
                 marginBottom: 16,
               }}
             />
 
-            {/* Benefits */}
-            {exercise.benefits && Array.isArray(exercise.benefits) && (
-              <View
-                className="rounded-2xl p-6 mb-6"
-                style={{
-                  backgroundColor: isDarkMode
-                    ? 'rgba(255,255,255,0.06)'
-                    : 'rgba(255,255,255,0.2)',
-                }}
-              >
-                <Text
-                  variant="title3"
-                  className="mb-4"
-                  style={{ color: isDarkMode ? colors.foreground : '#5A4A3A' }}
-                >
-                  Benefits
-                </Text>
-                {exercise.benefits.map((benefit, index) => (
-                  <View key={index} className="flex-row items-start mb-3">
-                    <SymbolView
-                      name="checkmark.circle"
-                      size={20}
-                      tintColor={isDarkMode ? colors.success : '#6F9460'}
-                    />
-                    <Text
-                      variant="body"
-                      className="flex-1 ml-2"
-                      style={{
-                        color: isDarkMode ? colors.foreground : '#5A4A3A',
-                      }}
-                    >
-                      {benefit}
-                    </Text>
-                  </View>
-                ))}
-              </View>
-            )}
-
             {/* Steps */}
             {exercise.steps && Array.isArray(exercise.steps) && (
-              <View className="mb-6">
+              <View>
                 <Text
                   variant="title3"
                   className="mb-4"
@@ -197,7 +162,7 @@ export default function ExerciseDetail({
                       style={{
                         backgroundColor: isDarkMode
                           ? 'rgba(255,255,255,0.08)'
-                          : exercise.color + '20',
+                          : exercise.color ? exercise.color + '20' : 'rgba(0,0,0,0.05)',
                       }}
                     >
                       <Text
@@ -215,6 +180,7 @@ export default function ExerciseDetail({
                       className="flex-1"
                       style={{
                         color: isDarkMode ? colors.foreground : '#5A4A3A',
+                        lineHeight: 20,
                       }}
                     >
                       {step}
@@ -224,7 +190,7 @@ export default function ExerciseDetail({
               </View>
             )}
           </View>
-        </ScrollView>
+        </View>
 
         {/* Start Button */}
         <View className="px-6 pb-6 pt-4 border-t border-border/10">
