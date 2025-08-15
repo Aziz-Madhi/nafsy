@@ -5,9 +5,9 @@ import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useTranslation } from '~/hooks/useTranslation';
-import { ProfileLayout } from '~/components/ui/ScreenLayout';
 import { useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
+import { useIsRTL } from '~/store/useAppStore';
 
 // Resource Card Component
 function ResourceCard({
@@ -24,7 +24,7 @@ function ResourceCard({
   isEmergency?: boolean;
 }) {
   const { t } = useTranslation();
-  const colors = useColors();
+
   const handleCall = () => {
     impactAsync(ImpactFeedbackStyle.Medium);
     Alert.alert(
@@ -78,7 +78,7 @@ function ResourceCard({
             style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
           >
             <SymbolView name="phone.fill" size={18} tintColor="white" />
-            <Text variant="callout" className="text-white font-medium ml-2">
+            <Text variant="callout" className="text-white font-medium ms-2">
               {phoneNumber}
             </Text>
           </Pressable>
@@ -99,7 +99,7 @@ function WarningSign({ text }: { text: string }) {
         size={16}
         tintColor={colors.error}
       />
-      <Text variant="footnote" className="text-muted-foreground ml-2 flex-1">
+      <Text variant="footnote" className="text-muted-foreground ms-2 flex-1">
         {text}
       </Text>
     </View>
@@ -107,91 +107,48 @@ function WarningSign({ text }: { text: string }) {
 }
 
 export default function CrisisResources() {
-  const { t, language } = useTranslation();
   const colors = useColors();
+  const { t } = useTranslation();
+  const isRTL = useIsRTL();
 
-  const resources =
-    language === 'en'
-      ? [
-          {
-            title: 'National Suicide Prevention Lifeline',
-            description:
-              'Free, confidential 24/7 support for people in distress',
-            phoneNumber: '988',
-            hours: '24/7 Available',
-            isEmergency: true,
-          },
-          {
-            title: 'Crisis Text Line',
-            description: 'Text HOME to connect with a crisis counselor',
-            phoneNumber: '741741',
-            hours: '24/7 Text Support',
-            isEmergency: true,
-          },
-          {
-            title: 'SAMHSA National Helpline',
-            description:
-              'Treatment referral and information service for mental health',
-            phoneNumber: '1-800-662-4357',
-            hours: '24/7 Available',
-            isEmergency: false,
-          },
-          {
-            title: 'Veterans Crisis Line',
-            description: 'Support for Veterans and their families',
-            phoneNumber: '1-800-273-8255',
-            hours: '24/7 Available',
-            isEmergency: false,
-          },
-        ]
-      : [
-          {
-            title: 'الخط الساخن للصحة النفسية',
-            description: 'دعم مجاني وسري على مدار الساعة',
-            phoneNumber: '920033360',
-            hours: 'متاح 24/7',
-            isEmergency: true,
-          },
-          {
-            title: 'مركز الاستشارات النفسية',
-            description: 'استشارات نفسية متخصصة',
-            phoneNumber: '920012623',
-            hours: '9 صباحاً - 9 مساءً',
-            isEmergency: false,
-          },
-          {
-            title: 'خط مساندة الطفل',
-            description: 'دعم الأطفال والمراهقين',
-            phoneNumber: '116111',
-            hours: 'متاح 24/7',
-            isEmergency: false,
-          },
-        ];
+  const resources = [
+    {
+      title: t('crisisResources.resources.suicidePreventionLifeline.title'),
+      description: t(
+        'crisisResources.resources.suicidePreventionLifeline.description'
+      ),
+      phoneNumber: '988',
+      hours: t('crisisResources.resources.suicidePreventionLifeline.hours'),
+      isEmergency: true,
+    },
+    {
+      title: t('crisisResources.resources.crisisTextLine.title'),
+      description: t('crisisResources.resources.crisisTextLine.description'),
+      phoneNumber: '741741',
+      hours: t('crisisResources.resources.crisisTextLine.hours'),
+      isEmergency: true,
+    },
+    {
+      title: t('crisisResources.resources.samhsaHelpline.title'),
+      description: t('crisisResources.resources.samhsaHelpline.description'),
+      phoneNumber: '1-800-662-4357',
+      hours: t('crisisResources.resources.samhsaHelpline.hours'),
+      isEmergency: false,
+    },
+    {
+      title: t('crisisResources.resources.veteransCrisisLine.title'),
+      description: t(
+        'crisisResources.resources.veteransCrisisLine.description'
+      ),
+      phoneNumber: '1-800-273-8255',
+      hours: t('crisisResources.resources.veteransCrisisLine.hours'),
+      isEmergency: false,
+    },
+  ];
 
-  const warningSigns =
-    language === 'en'
-      ? [
-          'Talking about wanting to die or kill oneself',
-          'Looking for ways to kill oneself',
-          'Feeling hopeless or having no purpose',
-          'Feeling trapped or in unbearable pain',
-          'Talking about being a burden to others',
-          'Increasing use of alcohol or drugs',
-          'Withdrawing from family and friends',
-          'Showing rage or talking about seeking revenge',
-          'Displaying extreme mood swings',
-        ]
-      : [
-          'التحدث عن الرغبة في الموت أو الانتحار',
-          'البحث عن طرق لإيذاء النفس',
-          'الشعور باليأس أو فقدان الهدف',
-          'الشعور بالحصار أو الألم الذي لا يطاق',
-          'التحدث عن كونك عبئاً على الآخرين',
-          'زيادة استخدام الكحول أو المخدرات',
-          'الانسحاب من العائلة والأصدقاء',
-          'إظهار الغضب أو التحدث عن الانتقام',
-          'التقلبات المزاجية الشديدة',
-        ];
+  const warningSigns = t('crisisResources.warningSignsList', {
+    returnObjects: true,
+  }) as string[];
 
   return (
     <View className="flex-1 bg-background">
@@ -203,7 +160,7 @@ export default function CrisisResources() {
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
-            className="mr-4"
+            className="me-4"
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
             <SymbolView
@@ -219,7 +176,7 @@ export default function CrisisResources() {
               fontSize: 28,
               fontWeight: 'normal',
               lineHeight: 34,
-              textAlign: 'left',
+              textAlign: isRTL ? 'right' : 'left',
             }}
           >
             {t('crisisResources.title')}
@@ -236,7 +193,7 @@ export default function CrisisResources() {
               size={24}
               tintColor="white"
             />
-            <Text variant="title3" className="text-white ml-2">
+            <Text variant="title3" className="text-white ms-2">
               {t('crisisResources.immediateHelp')}
             </Text>
           </View>
@@ -294,7 +251,7 @@ export default function CrisisResources() {
                   size={20}
                   tintColor={colors.brandDarkBlue}
                 />
-                <Text variant="body" className="text-foreground ml-3 flex-1">
+                <Text variant="body" className="text-foreground ms-3 flex-1">
                   {t('crisisResources.notAlone')}
                 </Text>
               </View>

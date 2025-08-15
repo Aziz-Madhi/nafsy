@@ -3,10 +3,15 @@
  * Uses standard Zustand patterns with MMKV persistence
  */
 
-import { shallow } from 'zustand/shallow';
 import { createPersistedStore } from '~/lib/store-factory';
 import { AppSettings } from './types';
 import { Appearance } from 'react-native';
+import { getLocales } from 'expo-localization';
+import {
+  changeLanguage,
+  isRTLLanguage,
+  type SupportedLanguage,
+} from '~/lib/i18n';
 
 // Helper function to resolve current theme
 const resolveCurrentTheme = (
@@ -18,9 +23,27 @@ const resolveCurrentTheme = (
   return themePreference;
 };
 
+// Helper function to resolve current language
+const resolveCurrentLanguage = (
+  languagePreference: 'en' | 'ar' | 'system'
+): SupportedLanguage => {
+  if (languagePreference === 'system') {
+    const locales = getLocales();
+    const deviceLanguage = locales[0]?.languageCode;
+    return deviceLanguage && ['en', 'ar'].includes(deviceLanguage)
+      ? (deviceLanguage as SupportedLanguage)
+      : 'en';
+  }
+  return languagePreference;
+};
+
+// applyRTLState function removed - RTL is now handled entirely in i18n.ts during initialization
+
 const defaultSettings: AppSettings = {
   theme: 'system',
-  language: 'en',
+  language: 'system',
+  pendingLanguage: null, // Language to apply after restart
+  languageChangeRequested: false, // Flag for restart prompt
   notificationsEnabled: true,
   moodRemindersEnabled: true,
   moodReminderTime: '09:00',
@@ -31,9 +54,16 @@ interface AppStoreState {
   // UI State
   activeTab: string;
   currentTheme: 'light' | 'dark';
+  currentLanguage: SupportedLanguage;
   isSystemTheme: boolean;
+  isSystemLanguage: boolean;
+  isRTL: boolean;
   isLoading: boolean;
   error: string | null;
+
+  // Language Change State
+  pendingLanguage: SupportedLanguage | null;
+  languageChangeRequested: boolean;
 
   // Settings
   settings: AppSettings;
@@ -44,10 +74,21 @@ interface AppStoreState {
   setError: (error: string | null) => void;
   updateSettings: (newSettings: Partial<AppSettings>) => void;
   setTheme: (theme: 'light' | 'dark' | 'system') => void;
+  setLanguage: (language: 'en' | 'ar' | 'system') => void;
+  setLanguagePreference: (language: 'en' | 'ar' | 'system') => void;
   toggleTheme: () => void;
   applySystemTheme: () => void;
+  applySystemLanguage: () => void;
   reset: () => void;
+
+  // New Deferred Language Actions
+  requestLanguageChange: (language: 'en' | 'ar' | 'system') => void;
+  cancelLanguageChange: () => void;
+  applyPendingLanguage: () => Promise<void>;
 }
+
+// RTL state initialization is handled by i18n.ts at startup
+// Removed premature RTL application to fix language persistence issues
 
 export const useAppStore = createPersistedStore<AppStoreState>(
   { name: 'app-store' },
@@ -55,9 +96,17 @@ export const useAppStore = createPersistedStore<AppStoreState>(
     // Initial state
     activeTab: 'mood',
     currentTheme: resolveCurrentTheme(defaultSettings.theme),
+    currentLanguage: resolveCurrentLanguage(defaultSettings.language),
     isSystemTheme: defaultSettings.theme === 'system',
+    isSystemLanguage: defaultSettings.language === 'system',
+    isRTL: isRTLLanguage(resolveCurrentLanguage(defaultSettings.language)),
     isLoading: false,
     error: null,
+
+    // Language Change State
+    pendingLanguage: null,
+    languageChangeRequested: false,
+
     settings: defaultSettings,
 
     // Actions
@@ -71,23 +120,61 @@ export const useAppStore = createPersistedStore<AppStoreState>(
       const currentSettings = get().settings;
       const updatedSettings = { ...currentSettings, ...newSettings };
 
+      let stateUpdate: any = { settings: updatedSettings };
+
       // Handle theme updates
       if (newSettings.theme && newSettings.theme !== currentSettings.theme) {
         const newTheme = resolveCurrentTheme(newSettings.theme);
-        const isSystem = newSettings.theme === 'system';
+        const isSystemTheme = newSettings.theme === 'system';
 
-        set({
-          settings: updatedSettings,
-          currentTheme: newTheme,
-          isSystemTheme: isSystem,
-        });
-      } else {
-        set({ settings: updatedSettings });
+        stateUpdate.currentTheme = newTheme;
+        stateUpdate.isSystemTheme = isSystemTheme;
       }
+
+      // Handle language updates
+      if (
+        newSettings.language &&
+        newSettings.language !== currentSettings.language
+      ) {
+        const newLanguage = resolveCurrentLanguage(newSettings.language);
+        const isSystemLanguage = newSettings.language === 'system';
+        const isRTL = isRTLLanguage(newLanguage);
+
+        stateUpdate.currentLanguage = newLanguage;
+        stateUpdate.isSystemLanguage = isSystemLanguage;
+        stateUpdate.isRTL = isRTL;
+
+        // DO NOT apply language change immediately - this should only be for preference storage
+        // Language changes that need immediate effect should use changeLanguage() directly
+        console.warn(
+          'updateSettings changed language preference but did not apply it immediately. Use changeLanguage() for immediate effect.'
+        );
+      }
+
+      set(stateUpdate);
     },
 
     setTheme: (theme: 'light' | 'dark' | 'system') => {
       get().updateSettings({ theme });
+    },
+
+    setLanguage: (language: 'en' | 'ar' | 'system') => {
+      // DEPRECATED: Use requestLanguageChange() for proper deferred switching
+      // This method is kept for backward compatibility but should not be used
+      console.warn(
+        'setLanguage is deprecated. Use requestLanguageChange() instead.'
+      );
+      get().updateSettings({ language });
+    },
+
+    setLanguagePreference: (language: 'en' | 'ar' | 'system') => {
+      // Store language preference only - no immediate application
+      set({
+        settings: {
+          ...get().settings,
+          language,
+        },
+      });
     },
 
     toggleTheme: () => {
@@ -104,15 +191,111 @@ export const useAppStore = createPersistedStore<AppStoreState>(
       }
     },
 
+    applySystemLanguage: () => {
+      const { settings } = get();
+      if (settings.language === 'system') {
+        const systemLanguage = resolveCurrentLanguage('system');
+        const isRTL = isRTLLanguage(systemLanguage);
+
+        set({
+          currentLanguage: systemLanguage,
+          isRTL,
+        });
+
+        changeLanguage(systemLanguage).catch(console.error);
+      }
+    },
+
     reset: () => {
+      const resetLanguage = resolveCurrentLanguage(defaultSettings.language);
+
       set({
         activeTab: 'mood',
         currentTheme: resolveCurrentTheme(defaultSettings.theme),
+        currentLanguage: resetLanguage,
         isSystemTheme: defaultSettings.theme === 'system',
+        isSystemLanguage: defaultSettings.language === 'system',
+        isRTL: isRTLLanguage(resetLanguage),
         isLoading: false,
         error: null,
+        pendingLanguage: null,
+        languageChangeRequested: false,
         settings: defaultSettings,
       });
+
+      // Apply language change
+      changeLanguage(resetLanguage).catch(console.error);
+    },
+
+    // New Deferred Language Actions
+    requestLanguageChange: (language: 'en' | 'ar' | 'system') => {
+      const resolvedLanguage = resolveCurrentLanguage(language);
+      const currentLanguage = get().currentLanguage;
+
+      if (resolvedLanguage === currentLanguage) {
+        return; // No change needed
+      }
+
+      console.log('🎯 Store: Requesting language change to:', resolvedLanguage);
+
+      // Store the pending language without applying it
+      set({
+        pendingLanguage: resolvedLanguage,
+        languageChangeRequested: true,
+        settings: {
+          ...get().settings,
+          pendingLanguage: resolvedLanguage,
+          languageChangeRequested: true,
+        },
+      });
+
+      console.log('🎯 Store: Pending language saved to store');
+    },
+
+    cancelLanguageChange: () => {
+      set({
+        pendingLanguage: null,
+        languageChangeRequested: false,
+        settings: {
+          ...get().settings,
+          pendingLanguage: null,
+          languageChangeRequested: false,
+        },
+      });
+    },
+
+    applyPendingLanguage: async () => {
+      const { pendingLanguage } = get();
+
+      if (!pendingLanguage) return;
+
+      try {
+        console.log(
+          '🎯 Store: Clearing pending language after i18n handled it:',
+          pendingLanguage
+        );
+
+        // i18n.ts already applied the language and RTL during initialization
+        // We just need to update the store state and clear the pending language
+        set({
+          currentLanguage: pendingLanguage,
+          isRTL: isRTLLanguage(pendingLanguage),
+          pendingLanguage: null,
+          languageChangeRequested: false,
+          settings: {
+            ...get().settings,
+            language: pendingLanguage,
+            pendingLanguage: null,
+            languageChangeRequested: false,
+          },
+        });
+
+        console.log('🎯 Store: Pending language cleared, store state updated');
+      } catch (error) {
+        console.error('Failed to clear pending language state:', error);
+        // Reset pending state on error
+        get().cancelLanguageChange();
+      }
     },
   })
 );
@@ -120,32 +303,40 @@ export const useAppStore = createPersistedStore<AppStoreState>(
 // Typed selectors for common use cases
 export const useActiveTab = () => useAppStore((state) => state.activeTab);
 export const useCurrentTheme = () => useAppStore((state) => state.currentTheme);
+export const useCurrentLanguage = () =>
+  useAppStore((state) => state.currentLanguage);
 export const useIsSystemTheme = () =>
   useAppStore((state) => state.isSystemTheme);
+export const useIsSystemLanguage = () =>
+  useAppStore((state) => state.isSystemLanguage);
+export const useIsRTL = () => useAppStore((state) => state.isRTL);
 export const useSettings = () => useAppStore((state) => state.settings);
 export const useIsLoading = () => useAppStore((state) => state.isLoading);
 export const useError = () => useAppStore((state) => state.error);
 
 // Convenience selectors
 export const useTheme = () => useAppStore((state) => state.settings.theme);
-export const useToggleTheme = () => useAppStore((state) => state.toggleTheme);
 export const useLanguage = () =>
   useAppStore((state) => state.settings.language);
+export const useToggleTheme = () => useAppStore((state) => state.toggleTheme);
 export const useNotificationsEnabled = () =>
   useAppStore((state) => state.settings.notificationsEnabled);
 
-// Action selectors with shallow comparison
+// Action selectors - removed shallow comparison to fix TypeScript error
 export const useAppActions = () =>
-  useAppStore(
-    (state) => ({
-      setActiveTab: state.setActiveTab,
-      updateSettings: state.updateSettings,
-      setTheme: state.setTheme,
-      toggleTheme: state.toggleTheme,
-      applySystemTheme: state.applySystemTheme,
-      setLoading: state.setLoading,
-      setError: state.setError,
-      reset: state.reset,
-    }),
-    shallow
-  );
+  useAppStore((state) => ({
+    setActiveTab: state.setActiveTab,
+    updateSettings: state.updateSettings,
+    setTheme: state.setTheme,
+    setLanguage: state.setLanguage,
+    setLanguagePreference: state.setLanguagePreference,
+    toggleTheme: state.toggleTheme,
+    applySystemTheme: state.applySystemTheme,
+    applySystemLanguage: state.applySystemLanguage,
+    setLoading: state.setLoading,
+    setError: state.setError,
+    reset: state.reset,
+    requestLanguageChange: state.requestLanguageChange,
+    cancelLanguageChange: state.cancelLanguageChange,
+    applyPendingLanguage: state.applyPendingLanguage,
+  }));

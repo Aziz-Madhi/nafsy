@@ -7,6 +7,7 @@ import { SymbolView } from 'expo-symbols';
 import { notificationAsync, NotificationFeedbackType } from 'expo-haptics';
 import type { ExerciseDetailProps } from '~/types';
 import { useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
 
 const DIFFICULTY_COLORS = {
   beginner: '#22C55E',
@@ -21,6 +22,7 @@ export default function ExerciseDetail({
   onStart,
 }: ExerciseDetailProps) {
   const colors = useColors();
+  const { t } = useTranslation();
   if (!exercise) return null;
   const isDarkMode = colors.background === '#171717';
 
@@ -66,7 +68,9 @@ export default function ExerciseDetail({
                 style={{
                   backgroundColor: isDarkMode
                     ? 'rgba(255,255,255,0.08)'
-                    : exercise.color ? exercise.color + '20' : 'rgba(0,0,0,0.05)',
+                    : exercise.color
+                      ? exercise.color + '20'
+                      : 'rgba(0,0,0,0.05)',
                 }}
               >
                 <Text className="text-5xl">{exercise.icon}</Text>
@@ -100,7 +104,7 @@ export default function ExerciseDetail({
 
             {/* Meta Info */}
             <View className="flex-row justify-center mb-8">
-              <View className="flex-row items-center mr-6">
+              <View className="flex-row items-center me-6">
                 <SymbolView
                   name="clock"
                   size={20}
@@ -108,7 +112,7 @@ export default function ExerciseDetail({
                 />
                 <Text
                   variant="body"
-                  className="ml-1"
+                  className="ms-1"
                   style={{
                     color: isDarkMode ? colors.foreground : '#5A4A3A',
                   }}
@@ -124,11 +128,10 @@ export default function ExerciseDetail({
                 />
                 <Text
                   variant="body"
-                  className="ml-1"
+                  className="ms-1"
                   style={{ color: DIFFICULTY_COLORS[exercise.difficulty] }}
                 >
-                  {exercise.difficulty.charAt(0).toUpperCase() +
-                    exercise.difficulty.slice(1)}
+                  {t(`exercises.difficulty.${exercise.difficulty}`)}
                 </Text>
               </View>
             </View>
@@ -139,7 +142,9 @@ export default function ExerciseDetail({
                 height: 2,
                 backgroundColor: isDarkMode
                   ? 'rgba(255, 255, 255, 0.1)'
-                  : exercise.color ? exercise.color + '60' : 'rgba(0,0,0,0.1)',
+                  : exercise.color
+                    ? exercise.color + '60'
+                    : 'rgba(0,0,0,0.1)',
                 borderRadius: 1,
                 marginBottom: 16,
               }}
@@ -153,16 +158,18 @@ export default function ExerciseDetail({
                   className="mb-4"
                   style={{ color: isDarkMode ? colors.foreground : '#5A4A3A' }}
                 >
-                  How to Practice
+                  {t('exercises.instructions')}
                 </Text>
                 {exercise.steps.map((step, index) => (
                   <View key={index} className="flex-row items-start mb-4">
                     <View
-                      className="w-8 h-8 rounded-full items-center justify-center mr-3"
+                      className="w-8 h-8 rounded-full items-center justify-center me-3"
                       style={{
                         backgroundColor: isDarkMode
                           ? 'rgba(255,255,255,0.08)'
-                          : exercise.color ? exercise.color + '20' : 'rgba(0,0,0,0.05)',
+                          : exercise.color
+                            ? exercise.color + '20'
+                            : 'rgba(0,0,0,0.05)',
                       }}
                     >
                       <Text
@@ -203,7 +210,7 @@ export default function ExerciseDetail({
               variant="body"
               className="text-primary-foreground font-medium"
             >
-              Start Exercise
+              {t('exercises.startExercise')}
             </Text>
           </Button>
         </View>

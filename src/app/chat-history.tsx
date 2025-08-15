@@ -12,6 +12,7 @@ import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import { router } from 'expo-router';
+import { useTranslation } from '~/hooks/useTranslation';
 
 type HistoryTab = 'main' | 'vent';
 
@@ -26,6 +27,7 @@ interface ChatSession {
 }
 
 function ChatHistoryScreen() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<HistoryTab>('main');
   const { user, isLoaded } = useUserSafe();
   const { isSignedIn } = useAuth();
@@ -91,7 +93,7 @@ function ChatHistoryScreen() {
         minute: '2-digit',
       });
     } else if (diffDays === 1) {
-      return 'Yesterday';
+      return t('common.yesterday');
     } else if (diffDays < 7) {
       return `${diffDays} days ago`;
     } else {
@@ -144,7 +146,7 @@ function ChatHistoryScreen() {
 
           <Pressable
             onPress={() => handleDeleteSession(session.sessionId, session.type)}
-            className="ml-3 p-2 rounded-full"
+            className="ms-3 p-2 rounded-full"
           >
             <SymbolView name="trash" size={16} tintColor="#EF4444" />
           </Pressable>
@@ -195,7 +197,7 @@ function ChatHistoryScreen() {
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Header */}
       <View className="flex-row items-center px-6 py-4 border-b border-border/20">
-        <Pressable onPress={() => router.back()} className="mr-4">
+        <Pressable onPress={() => router.back()} className="me-4">
           <SymbolView name="arrow.left" size={24} tintColor="white" />
         </Pressable>
         <Text variant="title2">Chat History</Text>
@@ -274,19 +276,26 @@ function ChatHistoryScreen() {
                   <SymbolView name="heart.fill" size={48} tintColor="#6B7280" />
                 )}
                 <Text variant="title3" className="text-center mb-2">
-                  No {activeTab === 'main' ? 'Chat' : 'Vent'} History
+                  {t('chat.history.noHistory', {
+                    type:
+                      activeTab === 'main'
+                        ? t('chat.history.mainChat')
+                        : t('chat.history.ventHistory'),
+                  })}
                 </Text>
                 <Text variant="muted" className="text-center mb-6 max-w-sm">
                   {activeTab === 'main'
-                    ? 'Start a conversation in the main chat to see your history here.'
-                    : 'Use the floating chat for quick vents to see your history here.'}
+                    ? t('chat.history.noMainSessions')
+                    : t('chat.history.noVentSessions')}
                 </Text>
                 <Button
                   onPress={() => router.push('/tabs/chat')}
                   className="px-6"
                 >
                   <Text>
-                    Start {activeTab === 'main' ? 'Chatting' : 'Venting'}
+                    {activeTab === 'main'
+                      ? t('chat.history.startChatting')
+                      : t('chat.history.startVenting')}
                   </Text>
                 </Button>
               </View>

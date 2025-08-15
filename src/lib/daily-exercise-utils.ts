@@ -1,27 +1,29 @@
-export function getTimeBasedGreeting(locale: 'en' | 'ar'): string {
+export function getTimeBasedGreeting(t?: (key: string) => string): string {
   const hour = new Date().getHours();
 
-  if (locale === 'ar') {
-    if (hour < 5) return 'تصبح على خير';
-    if (hour < 12) return 'صباح الخير';
-    if (hour < 17) return 'مساء الخير';
-    if (hour < 21) return 'مساء الخير';
-    return 'تصبح على خير';
+  if (!t) {
+    // Fallback to English if no translation function provided
+    if (hour < 5) return 'Good night';
+    if (hour < 12) return 'Good morning';
+    if (hour < 17) return 'Good afternoon';
+    if (hour < 21) return 'Good evening';
+    return 'Good night';
   }
 
-  if (hour < 5) return 'Good night';
-  if (hour < 12) return 'Good morning';
-  if (hour < 17) return 'Good afternoon';
-  if (hour < 21) return 'Good evening';
-  return 'Good night';
+  if (hour < 5) return t('exercises.greeting.night');
+  if (hour < 12) return t('exercises.greeting.morning');
+  if (hour < 17) return t('exercises.greeting.afternoon');
+  if (hour < 21) return t('exercises.greeting.evening');
+  return t('exercises.greeting.night');
 }
 
 export function getMotivationalMessage(
   category: string,
-  locale: 'en' | 'ar'
+  t?: (key: string) => string
 ): string {
-  const messages = {
-    en: {
+  if (!t) {
+    // Fallback to English if no translation function provided
+    const messages = {
       mindfulness: [
         'Find your center, one breath at a time',
         'Be present in this moment',
@@ -52,45 +54,54 @@ export function getMotivationalMessage(
         'Let go and let peace in',
         'Your calm is waiting for you',
       ],
-    },
-    ar: {
-      mindfulness: [
-        'اعثر على مركزك، نفساً تلو الآخر',
-        'كن حاضراً في هذه اللحظة',
-        'سلامك يبدأ بنفس واحد واعٍ',
-        'ازرع الوعي، احتضن السكينة',
-      ],
-      breathing: [
-        'تنفس الهدوء، ازفر التوتر',
-        'أنفاسك هي مرساتك للسلام',
-        'كل نفس هو بداية جديدة',
-        'دع أنفاسك تقودك إلى الوطن',
-      ],
-      movement: [
-        'حرك جسدك، حرر عقلك',
-        'كل خطوة هي تقدم',
-        'جسدك مستعد لدعمك',
-        'الحركة هي العاطفة في العمل',
-      ],
-      journaling: [
-        'أفكارك تستحق أن تُسمع',
-        'اكتب طريقك إلى الوضوح',
-        'الصفحة هي مساحتك الآمنة',
-        'حوّل الأفكار إلى فهم',
-      ],
-      relaxation: [
-        'الإذن بالتوقف والراحة',
-        'الاسترخاء هو رعاية ذاتية مثمرة',
-        'اترك واسمح للسلام بالدخول',
-        'هدوءك في انتظارك',
-      ],
-    },
+    };
+
+    const categoryMessages =
+      messages[category as keyof typeof messages] || messages.mindfulness;
+    return categoryMessages[
+      Math.floor(Math.random() * categoryMessages.length)
+    ];
+  }
+
+  const messageKeys = {
+    mindfulness: [
+      'exercises.motivational.mindfulness.0',
+      'exercises.motivational.mindfulness.1',
+      'exercises.motivational.mindfulness.2',
+      'exercises.motivational.mindfulness.3',
+    ],
+    breathing: [
+      'exercises.motivational.breathing.0',
+      'exercises.motivational.breathing.1',
+      'exercises.motivational.breathing.2',
+      'exercises.motivational.breathing.3',
+    ],
+    movement: [
+      'exercises.motivational.movement.0',
+      'exercises.motivational.movement.1',
+      'exercises.motivational.movement.2',
+      'exercises.motivational.movement.3',
+    ],
+    journaling: [
+      'exercises.motivational.journaling.0',
+      'exercises.motivational.journaling.1',
+      'exercises.motivational.journaling.2',
+      'exercises.motivational.journaling.3',
+    ],
+    relaxation: [
+      'exercises.motivational.relaxation.0',
+      'exercises.motivational.relaxation.1',
+      'exercises.motivational.relaxation.2',
+      'exercises.motivational.relaxation.3',
+    ],
   };
 
-  const categoryMessages =
-    messages[locale][category as keyof typeof messages.en] ||
-    messages[locale].mindfulness;
-  return categoryMessages[Math.floor(Math.random() * categoryMessages.length)];
+  const categoryKeys =
+    messageKeys[category as keyof typeof messageKeys] ||
+    messageKeys.mindfulness;
+  const randomKey =
+    categoryKeys[Math.floor(Math.random() * categoryKeys.length)];
+  return t(randomKey);
 }
 
 export function getDailyExerciseIndex(

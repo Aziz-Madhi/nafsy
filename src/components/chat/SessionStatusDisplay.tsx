@@ -6,6 +6,7 @@
 import React, { memo } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '~/components/ui/text';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface SessionStatusDisplayProps {
   isLoading: boolean;
@@ -18,6 +19,8 @@ export const SessionStatusDisplay = memo(function SessionStatusDisplay({
   error,
   onDismissError,
 }: SessionStatusDisplayProps) {
+  const { t } = useTranslation();
+
   if (!isLoading && !error) {
     return null;
   }
@@ -28,7 +31,7 @@ export const SessionStatusDisplay = memo(function SessionStatusDisplay({
       {isLoading && (
         <View className="mx-4 mb-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
           <Text className="text-blue-700 text-sm text-center">
-            Switching session...
+            {t('chat.status.switchingSession')}
           </Text>
         </View>
       )}
@@ -41,7 +44,7 @@ export const SessionStatusDisplay = memo(function SessionStatusDisplay({
             onPress={onDismissError}
             className="mt-2 self-center px-3 py-1 bg-red-100 rounded-md"
           >
-            <Text className="text-red-700 text-xs">Dismiss</Text>
+            <Text className="text-red-700 text-xs">{t('common.dismiss')}</Text>
           </Pressable>
         </View>
       )}

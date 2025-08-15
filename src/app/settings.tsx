@@ -5,13 +5,15 @@ import {
   Pressable,
   Switch,
   ActivityIndicator,
+  Alert,
+  I18nManager,
 } from 'react-native';
+import * as Updates from 'expo-updates';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { Text } from '~/components/ui/text';
-import { Avatar } from '~/components/ui/avatar';
 import {
   Globe,
   Moon,
@@ -26,7 +28,6 @@ import {
   X,
   User,
   Bell,
-  Lock,
   FileText,
   Info,
   Mail,
@@ -37,29 +38,40 @@ import {
   ImpactFeedbackStyle,
   NotificationFeedbackType,
 } from 'expo-haptics';
-import { useTranslation } from '~/hooks/useTranslation';
-import { useAppStore } from '~/store/app-store';
 import { useColors } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
 import { cn } from '~/lib/cn';
+import { useTranslation } from '~/hooks/useTranslation';
+import { isRTLLanguage } from '~/lib/i18n';
+import {
+  useAppStore,
+  useCurrentLanguage,
+  useSettings,
+} from '~/store/useAppStore';
+import { saveLanguage } from '~/lib/mmkv-storage';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
+import { RTLIcon } from '~/components/ui/RTLIcon';
 
 // Section Header Component
-function SectionHeader({ title }: { title: string }) {
+const SectionHeader = React.memo(function SectionHeader({
+  title,
+}: {
+  title: string;
+}) {
   return (
     <Text className="text-muted-foreground mb-2 mt-6 px-4 uppercase tracking-wide font-medium text-[13px]">
       {title}
     </Text>
   );
-}
+});
 
 // Setting Row Component - iOS native style
-function SettingRow({
+const SettingRow = React.memo(function SettingRow({
   icon: Icon,
   label,
   value,
@@ -115,7 +127,7 @@ function SettingRow({
       >
         {Icon && (
           <View
-            className="w-7 h-7 rounded-md items-center justify-center mr-3"
+            className="w-7 h-7 rounded-md items-center justify-center me-3"
             style={{
               backgroundColor: destructive
                 ? withOpacity(colors.error, 0.15)
@@ -136,11 +148,13 @@ function SettingRow({
         {type === 'navigation' ? (
           <View className="flex-row items-center">
             {value && (
-              <Text className="text-muted-foreground mr-2 text-[15px]">
+              <Text className="text-muted-foreground me-2 text-[15px]">
                 {value}
               </Text>
             )}
-            <ChevronRight size={16} color={colors.mutedForeground} />
+            <RTLIcon>
+              <ChevronRight size={16} color={colors.mutedForeground} />
+            </RTLIcon>
           </View>
         ) : (
           <Switch
@@ -156,29 +170,31 @@ function SettingRow({
       </Pressable>
     </Animated.View>
   );
-}
+});
 
-export default function SettingsScreen() {
-  const { signOut, isSignedIn } = useAuth();
+const SettingsScreen = React.memo(function SettingsScreen() {
+  const { signOut } = useAuth();
   const { user } = useUserSafe();
-  const { t, language, setLanguage } = useTranslation();
   const colors = useColors();
+  // Add back store selectors one by one to identify the problematic one
+  const currentLanguage = useCurrentLanguage();
+  const settings = useSettings();
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const { t } = useTranslation();
 
-  // State management
-  const theme = useAppStore((state) => state.settings.theme);
-  const notificationsEnabled = useAppStore(
-    (state) => state.settings.notificationsEnabled
-  );
+  // Extract from settings
+  const theme = settings.theme;
+  const notificationsEnabled = settings.notificationsEnabled;
+
+  // The useAppActions() selector is causing the infinite loop
+  // Let me use individual selectors instead
   const setTheme = useAppStore((state) => state.setTheme);
   const updateSettings = useAppStore((state) => state.updateSettings);
+  const requestLanguageChange = useAppStore(
+    (state) => state.requestLanguageChange
+  );
 
   // Settings handlers
-  const handleLanguageChange = useCallback(() => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    const newLang = language === 'en' ? 'ar' : 'en';
-    setLanguage(newLang);
-  }, [language, setLanguage]);
 
   const handleThemeChange = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -187,6 +203,66 @@ export default function SettingsScreen() {
     const nextIndex = (currentIndex + 1) % themes.length;
     setTheme(themes[nextIndex]);
   }, [theme, setTheme]);
+
+  const handleLanguageChange = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    const nextLanguage = currentLanguage === 'en' ? 'ar' : 'en';
+
+    // 1) Persist pending language and dedicated language key for next startup
+    requestLanguageChange(nextLanguage);
+    saveLanguage(nextLanguage);
+
+    // 2) Do NOT change i18n language now to avoid text flicker before restart
+
+    // 3) Offer restart now/later. Apply native direction only if user confirms restart
+    const shouldBeRTL = isRTLLanguage(nextLanguage);
+    Alert.alert(
+      nextLanguage === 'ar' ? 'إعادة تشغيل مطلوبة' : 'Restart required',
+      nextLanguage === 'ar'
+        ? 'سيتم تطبيق تغييرات اللغة والتخطيط بعد إعادة تشغيل التطبيق.'
+        : 'Language and layout changes will be applied after restarting the app.',
+      [
+        {
+          text: nextLanguage === 'ar' ? 'أعد التشغيل الآن' : 'Restart now',
+          onPress: async () => {
+            try {
+              // Ensure native direction flag matches the next language before restart
+              if (I18nManager.isRTL !== shouldBeRTL) {
+                I18nManager.allowRTL(shouldBeRTL);
+                I18nManager.forceRTL(shouldBeRTL);
+              }
+              await Updates.reloadAsync();
+            } catch {}
+          },
+        },
+        { text: nextLanguage === 'ar' ? 'لاحقًا' : 'Later', style: 'cancel' },
+      ]
+    );
+  }, [currentLanguage, requestLanguageChange]);
+
+  const getThemeDisplayName = (theme: string) => {
+    switch (theme) {
+      case 'light':
+        return t('profile.themes.light');
+      case 'dark':
+        return t('profile.themes.dark');
+      case 'system':
+        return t('profile.themes.system');
+      default:
+        return t('profile.themes.system');
+    }
+  };
+
+  const getLanguageDisplayName = (language: string) => {
+    switch (language) {
+      case 'en':
+        return t('profile.languages.english');
+      case 'ar':
+        return t('profile.languages.arabic');
+      default:
+        return t('profile.languages.english');
+    }
+  };
 
   const handleNotificationsToggle = useCallback(
     (value: boolean) => {
@@ -241,7 +317,7 @@ export default function SettingsScreen() {
       <View className="flex-row items-center justify-between px-4 py-3 border-b border-border/10">
         <View className="w-10" />
         <Text className="text-[17px] font-semibold text-foreground">
-          Settings
+          {t('tabs.profile')}
         </Text>
         <Pressable
           onPress={handleClose}
@@ -256,23 +332,20 @@ export default function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
-        {/* User Info - Compact */}
+        {/* User Info - Compact - Avatar temporarily removed to fix infinite loop */}
         {user && (
           <Animated.View
             entering={FadeInDown.springify()}
             className="px-4 py-4 flex-row items-center border-b border-border/10"
           >
-            <Avatar alt={user.fullName || 'User'} className="h-12 w-12 mr-3">
-              <Avatar.Image source={{ uri: user.imageUrl }} />
-              <Avatar.Fallback className="bg-gradient-to-br from-primary to-primary/80">
-                <Text className="text-primary-foreground text-lg font-semibold">
-                  {user.fullName?.charAt(0) || user.firstName?.charAt(0) || 'U'}
-                </Text>
-              </Avatar.Fallback>
-            </Avatar>
+            <View className="h-12 w-12 me-3 rounded-full bg-primary/20 items-center justify-center">
+              <Text className="text-primary text-lg font-semibold">
+                {user.fullName?.charAt(0) || user.firstName?.charAt(0) || 'U'}
+              </Text>
+            </View>
             <View className="flex-1">
               <Text className="text-[16px] font-semibold text-foreground">
-                {user.fullName || 'Anonymous User'}
+                {user.fullName || t('profile.settings.anonymousUser')}
               </Text>
               <Text className="text-[14px] text-muted-foreground">
                 {user.emailAddresses?.[0]?.emailAddress}
@@ -286,7 +359,7 @@ export default function SettingsScreen() {
         <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
           <SettingRow
             icon={Mail}
-            label="Email"
+            label={t('profile.settings.email')}
             value={user?.emailAddresses?.[0]?.emailAddress}
             type="navigation"
             isFirst
@@ -295,8 +368,8 @@ export default function SettingsScreen() {
           />
           <SettingRow
             icon={User}
-            label="Subscription"
-            value="Free Plan"
+            label={t('profile.settings.subscription')}
+            value={t('profile.subscription.freePlan')}
             type="navigation"
             isLast
             iconColor={colors.warning}
@@ -308,25 +381,25 @@ export default function SettingsScreen() {
         <SectionHeader title="APP" />
         <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
           <SettingRow
-            icon={Globe}
-            label={t('profile.settings.language')}
-            value={language === 'en' ? 'English' : 'العربية'}
-            onPress={handleLanguageChange}
+            icon={Moon}
+            label={t('profile.settings.appearance')}
+            value={getThemeDisplayName(theme)}
+            onPress={handleThemeChange}
             isFirst
-            iconColor={colors.info}
-            iconBgColor={colors.info}
+            iconColor={colors.primary}
+            iconBgColor={colors.primary}
           />
           <SettingRow
-            icon={Moon}
-            label="Appearance"
-            value={t(`profile.themes.${theme}`)}
-            onPress={handleThemeChange}
+            icon={Globe}
+            label={t('profile.settings.language')}
+            value={getLanguageDisplayName(currentLanguage)}
+            onPress={handleLanguageChange}
             iconColor={colors.primary}
             iconBgColor={colors.primary}
           />
           <SettingRow
             icon={Smartphone}
-            label="Haptic Feedback"
+            label={t('profile.settings.hapticFeedback')}
             type="switch"
             switchValue={true}
             onSwitchChange={() => {}}
@@ -335,7 +408,7 @@ export default function SettingsScreen() {
           />
           <SettingRow
             icon={Bell}
-            label="Notifications"
+            label={t('profile.settings.notifications')}
             type="switch"
             switchValue={notificationsEnabled}
             onSwitchChange={handleNotificationsToggle}
@@ -345,28 +418,13 @@ export default function SettingsScreen() {
           />
         </View>
 
-        {/* SPEECH Section */}
-        <SectionHeader title="SPEECH" />
-        <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
-          <SettingRow
-            icon={Globe}
-            label="Main Language"
-            value={language === 'en' ? 'English' : 'Arabic'}
-            type="navigation"
-            isFirst
-            isLast
-            iconColor={colors.info}
-            iconBgColor={colors.info}
-          />
-        </View>
-
         {/* VOICE MODE Section */}
         <SectionHeader title="VOICE MODE" />
         <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
           <SettingRow
             icon={Volume2}
-            label="Voice"
-            value="Coming Soon"
+            label={t('profile.settings.voice')}
+            value={t('profile.settings.comingSoon')}
             type="navigation"
             isFirst
             isLast
@@ -380,7 +438,7 @@ export default function SettingsScreen() {
         <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
           <SettingRow
             icon={HelpCircle}
-            label={t('profile.support.helpCenter')}
+            label={t('profile.settings.helpCenter')}
             onPress={handleHelpCenter}
             isFirst
             iconColor={colors.success}
@@ -388,28 +446,28 @@ export default function SettingsScreen() {
           />
           <SettingRow
             icon={Heart}
-            label={t('profile.support.crisisResources')}
+            label={t('profile.settings.crisisResources')}
             onPress={handleCrisisResources}
             iconColor={colors.error}
             iconBgColor={colors.error}
           />
           <SettingRow
             icon={MessageSquare}
-            label={t('profile.support.feedback')}
+            label={t('profile.settings.feedback')}
             onPress={handleFeedback}
             iconColor={colors.warning}
             iconBgColor={colors.warning}
           />
           <SettingRow
             icon={FileText}
-            label="Terms of Use"
+            label={t('profile.settings.termsOfUse')}
             type="navigation"
             iconColor={colors.mutedForeground}
             iconBgColor={colors.muted}
           />
           <SettingRow
             icon={Shield}
-            label="Privacy Policy"
+            label={t('profile.settings.privacyPolicy')}
             type="navigation"
             iconColor={colors.mutedForeground}
             iconBgColor={colors.muted}
@@ -435,7 +493,7 @@ export default function SettingsScreen() {
             <View className="bg-black/[0.03] dark:bg-white/[0.03]">
               <View className="px-4 py-3.5 flex-row items-center">
                 <View
-                  className="w-7 h-7 rounded-md items-center justify-center mr-3"
+                  className="w-7 h-7 rounded-md items-center justify-center me-3"
                   style={{
                     backgroundColor: withOpacity(colors.error, 0.15),
                   }}
@@ -447,16 +505,14 @@ export default function SettingsScreen() {
                     <ActivityIndicator
                       size="small"
                       color={colors.error}
-                      className="mr-2"
+                      className="me-2"
                     />
                     <Text className="text-error text-[17px]">
-                      {t('profile.signingOut') || 'Signing Out...'}
+                      Signing Out...
                     </Text>
                   </>
                 ) : (
-                  <Text className="text-error text-[17px]">
-                    {t('profile.signOut') || 'Log out'}
-                  </Text>
+                  <Text className="text-error text-[17px]">Log out</Text>
                 )}
               </View>
             </View>
@@ -465,4 +521,6 @@ export default function SettingsScreen() {
       </ScrollView>
     </SafeAreaView>
   );
-}
+});
+
+export default SettingsScreen;

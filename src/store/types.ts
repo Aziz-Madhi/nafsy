@@ -7,7 +7,6 @@ export type {
   AppSettings,
   Exercise,
   Theme,
-  Language,
   MoodType,
   ExerciseCategory,
   ExerciseDifficulty,

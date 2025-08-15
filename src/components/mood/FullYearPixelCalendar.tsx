@@ -19,6 +19,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ChevronLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface MoodEntry {
   createdAt: string;
@@ -34,6 +35,7 @@ export function FullYearPixelCalendar({
   moodData = [],
   year = new Date().getFullYear(),
 }: FullYearPixelCalendarProps) {
+  const { t } = useTranslation();
   const today = useMemo(() => new Date(), []);
   const currentYear = year;
   // const yearEnd = endOfYear(new Date(currentYear, 0, 1));
@@ -162,18 +164,18 @@ export function FullYearPixelCalendar({
   // Generate year grid organized by months
   const yearGrid = useMemo(() => {
     const monthNames = [
-      'JAN',
-      'FEB',
-      'MAR',
-      'APR',
-      'MAY',
-      'JUN',
-      'JUL',
-      'AUG',
-      'SEP',
-      'OCT',
-      'NOV',
-      'DEC',
+      t('mood.calendar.months.jan'),
+      t('mood.calendar.months.feb'),
+      t('mood.calendar.months.mar'),
+      t('mood.calendar.months.apr'),
+      t('mood.calendar.months.may'),
+      t('mood.calendar.months.jun'),
+      t('mood.calendar.months.jul'),
+      t('mood.calendar.months.aug'),
+      t('mood.calendar.months.sep'),
+      t('mood.calendar.months.oct'),
+      t('mood.calendar.months.nov'),
+      t('mood.calendar.months.dec'),
     ];
     const currentMonth =
       today.getFullYear() === currentYear ? today.getMonth() : -1;
@@ -353,7 +355,7 @@ export function FullYearPixelCalendar({
                 marginLeft: 2,
               }}
             >
-              Back
+              {t('common.back')}
             </Text>
           </Pressable>
 
@@ -398,7 +400,7 @@ export function FullYearPixelCalendar({
                 color: withOpacity(colors.foreground, 0.85),
               }}
             >
-              Your emotional journey
+              {t('mood.yearView.subtitle')}
             </Text>
 
             {/* Description */}
@@ -413,8 +415,7 @@ export function FullYearPixelCalendar({
                 color: withOpacity(colors.foreground, 0.75),
               }}
             >
-              Discover patterns in your moods and reflect on your growth
-              throughout the year.
+              {t('mood.yearView.description')}
             </Text>
           </View>
 
@@ -422,7 +423,7 @@ export function FullYearPixelCalendar({
             // Loading placeholder
             <View className="items-center justify-center py-20 bg-transparent">
               <Text variant="caption1" className="text-muted-foreground">
-                Loading calendar...
+                {t('mood.calendar.loading')}
               </Text>
             </View>
           ) : (

@@ -9,26 +9,31 @@ The current color system has **3 competing implementations** causing colors not 
 ## 🔴 Critical Problems Identified
 
 ### 1. **Three Competing Color Systems**
+
 - CSS Variables (global.css) - ✅ Should be primary
 - useColors Hook - ⚠️ Should be secondary (only for RN components)
 - Hardcoded Values - ❌ Must be eliminated
 
 ### 2. **Missing Tailwind Mappings**
+
 - 15+ CSS variables not mapped in tailwind.config.js
 - Components using classes that don't exist
 - Silent failures with no error messages
 
 ### 3. **Theme Switching Chaos**
+
 - 4 different theme managers fighting each other
 - Theme changes not propagating consistently
 - Components stuck in wrong theme state
 
 ### 4. **Incorrect Color Format Usage**
+
 - Hex + opacity string concatenation creating invalid colors
 - Wrong CSS variable syntax for React Native
 - Mixed RGB/Hex/HSL formats
 
 ### 5. **Hardcoded Colors Everywhere**
+
 - 50+ instances of hardcoded colors in components
 - No semantic meaning or theme awareness
 - Impossible to maintain or update
@@ -64,16 +69,17 @@ The current color system has **3 competing implementations** causing colors not 
 ### **Phase 1: Fix Core Configuration** (Priority: CRITICAL)
 
 #### 1.1 Complete Tailwind Mappings
+
 ```javascript
 // tailwind.config.js - Add ALL missing mappings
 colors: {
   // Core colors (existing)
   primary: 'rgb(var(--primary) / <alpha-value>)',
-  
+
   // ADD MISSING:
   'input-focused': 'rgb(var(--input-focused) / <alpha-value>)',
   'border-subtle': 'rgb(var(--border-subtle) / <alpha-value>)',
-  
+
   // Complete mood color system
   'mood': {
     'happy': 'rgb(var(--mood-happy) / <alpha-value>)',
@@ -86,18 +92,20 @@ colors: {
 ```
 
 #### 1.2 Fix CSS Variable Format
+
 ```css
 /* global.css - Ensure ALL variables use RGB format */
 :root {
   /* ✅ CORRECT - RGB format for opacity support */
   --primary: 47 106 141;
-  
+
   /* ❌ WRONG - Hex values don't support opacity */
-  --primary: #2F6A8D;
+  --primary: #2f6a8d;
 }
 ```
 
 #### 1.3 Create Color System Documentation
+
 ```typescript
 // src/lib/COLOR_SYSTEM_GUIDE.ts
 /**
@@ -114,23 +122,24 @@ colors: {
 ### **Phase 2: Unify Theme Management** (Priority: HIGH)
 
 #### 2.1 Single Theme Manager
+
 ```typescript
 // src/lib/unified-theme-manager.ts
 export class UnifiedThemeManager {
   private static instance: UnifiedThemeManager;
-  
+
   setTheme(theme: 'light' | 'dark' | 'system') {
     // 1. Update NativeWind
     colorScheme.set(theme);
-    
+
     // 2. Update Zustand store
     useAppStore.setState({ theme });
-    
+
     // 3. Update DOM class (for web)
     if (Platform.OS === 'web') {
       document.documentElement.classList.toggle('dark', theme === 'dark');
     }
-    
+
     // 4. Persist preference
     AsyncStorage.setItem('theme', theme);
   }
@@ -138,6 +147,7 @@ export class UnifiedThemeManager {
 ```
 
 #### 2.2 Remove Competing Systems
+
 - DELETE: Multiple theme controllers
 - DELETE: Redundant theme wrappers
 - KEEP: One unified system
@@ -147,11 +157,12 @@ export class UnifiedThemeManager {
 ### **Phase 3: Component Migration** (Priority: HIGH)
 
 #### 3.1 Migration Pattern
+
 ```tsx
 // ❌ BEFORE - Multiple problems
-<View style={{ 
+<View style={{
   backgroundColor: '#DBEAFE',
-  shadowColor: '#2F6A8D' 
+  shadowColor: '#2F6A8D'
 }}>
   <Text style={{ color: iconColor + '20' }}>
 
@@ -161,6 +172,7 @@ export class UnifiedThemeManager {
 ```
 
 #### 3.2 Component Priority List
+
 1. **Critical Components** (Fix First):
    - ChatComponents.tsx
    - ChatScreen.tsx
@@ -182,6 +194,7 @@ export class UnifiedThemeManager {
 ### **Phase 4: Helper Functions** (Priority: MEDIUM)
 
 #### 4.1 Safe Color Helpers
+
 ```typescript
 // src/lib/color-utils.ts
 export const colorUtils = {
@@ -193,16 +206,17 @@ export const colorUtils = {
       isPressed && 'opacity-80'
     );
   },
-  
+
   // For React Native props (ONLY when needed)
   getRNColor: (colorName: string) => {
     const colors = useColors();
     return colors[colorName] || colors.primary;
-  }
+  },
 };
 ```
 
 #### 4.2 Validation System
+
 ```typescript
 // Add development-time validation
 if (__DEV__) {
@@ -216,17 +230,18 @@ if (__DEV__) {
 ### **Phase 5: Testing & Validation** (Priority: MEDIUM)
 
 #### 5.1 Color System Tests
+
 ```typescript
 // __tests__/colors/color-system.test.ts
 describe('Color System', () => {
   test('All CSS variables have Tailwind mappings', () => {
     // Verify every CSS variable is accessible via Tailwind
   });
-  
+
   test('Theme switching updates all components', () => {
     // Verify theme changes propagate correctly
   });
-  
+
   test('No hardcoded colors in components', () => {
     // Scan for hardcoded hex/rgb values
   });
@@ -234,6 +249,7 @@ describe('Color System', () => {
 ```
 
 #### 5.2 Visual Regression Testing
+
 - Screenshot tests for each theme
 - Color contrast validation
 - Platform-specific rendering checks
@@ -243,12 +259,14 @@ describe('Color System', () => {
 ## 🚀 Implementation Steps
 
 ### **Week 1: Foundation**
+
 1. **Day 1-2**: Fix tailwind.config.js mappings
 2. **Day 2-3**: Unify theme management
 3. **Day 3-4**: Create migration guide and helpers
 4. **Day 4-5**: Migrate critical components
 
 ### **Week 2: Migration**
+
 1. **Day 6-8**: Migrate all UI components
 2. **Day 8-9**: Remove hardcoded colors
 3. **Day 9-10**: Testing and validation
@@ -258,12 +276,14 @@ describe('Color System', () => {
 ## 📊 Success Metrics
 
 ### **Immediate Goals**
+
 - ✅ One-line color changes work instantly
 - ✅ Theme switching affects ALL components
 - ✅ No more silent failures
 - ✅ Clear error messages for invalid colors
 
 ### **Long-term Benefits**
+
 - 90% reduction in color-related bugs
 - 5-minute color updates (vs. hours currently)
 - Consistent theming across platforms
@@ -274,6 +294,7 @@ describe('Color System', () => {
 ## 🛠️ Developer Guidelines
 
 ### **DO's**
+
 ```tsx
 // ✅ Use Tailwind classes
 <View className="bg-primary text-white dark:bg-primary-dark">
@@ -286,6 +307,7 @@ describe('Color System', () => {
 ```
 
 ### **DON'Ts**
+
 ```tsx
 // ❌ Never hardcode colors
 <View style={{ backgroundColor: '#2F6A8D' }}>
@@ -327,12 +349,14 @@ describe('Color System', () => {
 ## 💡 Prevention Strategy
 
 ### **Code Review Checklist**
+
 - No hardcoded hex/rgb values
 - All colors use Tailwind classes or useColors hook
 - Theme-aware implementations
 - Proper opacity usage
 
 ### **ESLint Rules**
+
 ```javascript
 // .eslintrc.js
 rules: {
@@ -343,6 +367,7 @@ rules: {
 ```
 
 ### **Pre-commit Hooks**
+
 ```bash
 # Check for hardcoded colors
 grep -r "#[0-9a-fA-F]{6}" --include="*.tsx" --include="*.ts"
@@ -377,22 +402,26 @@ After implementing this plan:
 If colors aren't showing:
 
 1. **Check Tailwind mapping exists**
+
    ```bash
    grep "color-name" tailwind.config.js
    ```
 
 2. **Verify CSS variable defined**
+
    ```bash
    grep "--color-name" global.css
    ```
 
 3. **Ensure RGB format**
+
    ```css
    /* Must be RGB values, not hex */
    --primary: 47 106 141;
    ```
 
 4. **Clear Metro cache**
+
    ```bash
    bun clean && bun start:clear
    ```

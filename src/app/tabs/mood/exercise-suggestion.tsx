@@ -46,6 +46,7 @@ function ExerciseSuggestionCard({
   exercise: any;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   const categoryColor = getCategoryColor(exercise.category);
   const categoryIcon = getCategoryIcon(exercise.category);
 
@@ -60,12 +61,12 @@ function ExerciseSuggestionCard({
         variant="subhead"
         className="text-muted-foreground mb-3 font-medium"
       >
-        Try this to elevate your mood
+        {t('mood.suggestions.tryThisToElevate')}
       </Text>
 
       <View className="flex-row items-start mb-4">
         <View
-          className="w-12 h-12 rounded-2xl items-center justify-center mr-4"
+          className="w-12 h-12 rounded-2xl items-center justify-center me-4"
           style={{ backgroundColor: categoryColor + '20' }}
         >
           <Text style={{ fontSize: 20 }}>{categoryIcon}</Text>
@@ -84,25 +85,25 @@ function ExerciseSuggestionCard({
       <View className="flex-row items-center justify-between mb-5">
         <View className="flex-row items-center space-x-4">
           <View className="flex-row items-center">
-            <Text variant="caption1" className="text-muted-foreground mr-1">
+            <Text variant="caption1" className="text-muted-foreground me-1">
               ⏱️
             </Text>
             <Text
               variant="caption1"
               className="text-muted-foreground font-medium"
             >
-              {exercise.duration} min
+              {exercise.duration} {t('common.minutes')}
             </Text>
           </View>
           <View className="flex-row items-center">
-            <Text variant="caption1" className="text-muted-foreground mr-1">
+            <Text variant="caption1" className="text-muted-foreground me-1">
               📊
             </Text>
             <Text
               variant="caption1"
               className="text-muted-foreground font-medium capitalize"
             >
-              {exercise.difficulty}
+              {t(`exercises.difficulty.${exercise.difficulty}`)}
             </Text>
           </View>
         </View>
@@ -116,7 +117,7 @@ function ExerciseSuggestionCard({
             className="font-semibold capitalize"
             style={{ color: categoryColor }}
           >
-            {exercise.category}
+            {t(`exercises.categories.${exercise.category}`)}
           </Text>
         </View>
       </View>
@@ -138,7 +139,7 @@ function ExerciseSuggestionCard({
           className="text-white font-bold"
           style={{ fontSize: 16, letterSpacing: 0.5 }}
         >
-          Start Exercise
+          {t('exercises.startExercise')}
         </Text>
       </Pressable>
     </View>
@@ -146,8 +147,8 @@ function ExerciseSuggestionCard({
 }
 
 export default function ExerciseSuggestionModal() {
+  const { t } = useTranslation();
   const exercisesWithProgress = useExercisesWithProgress();
-  const { t, locale } = useTranslation();
 
   const handleBack = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -160,13 +161,13 @@ export default function ExerciseSuggestionModal() {
 
     return exercisesWithProgress.map((ex) => ({
       id: ex._id,
-      title: locale === 'ar' ? ex.titleAr : ex.title,
-      description: locale === 'ar' ? ex.descriptionAr : ex.description,
+      title: ex.title,
+      description: ex.description,
       duration: ex.duration,
       difficulty: ex.difficulty,
       category: ex.category,
     }));
-  }, [exercisesWithProgress, locale]);
+  }, [exercisesWithProgress]);
 
   // Get random exercise suggestion
   const suggestedExercise = useMemo(() => {
@@ -187,11 +188,11 @@ export default function ExerciseSuggestionModal() {
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Header */}
       <View className="flex-row items-center px-6 py-4 border-b border-border/20">
-        <Pressable onPress={handleBack} className="mr-4">
+        <Pressable onPress={handleBack} className="me-4">
           <SymbolView name="arrow.left" size={24} tintColor="#5A4A3A" />
         </Pressable>
         <Text variant="title2" className="text-[#2D3748] font-bold">
-          Exercise Suggestions
+          {t('mood.suggestions.title')}
         </Text>
       </View>
 
@@ -229,10 +230,10 @@ export default function ExerciseSuggestionModal() {
               variant="title3"
               className="text-[#5A4A3A] font-bold mb-2 text-center"
             >
-              Loading Suggestions...
+              {t('mood.suggestions.loading')}
             </Text>
             <Text variant="body" className="text-gray-600 text-center">
-              We&apos;re finding the perfect exercise for you
+              {t('mood.suggestions.findingPerfect')}
             </Text>
           </View>
         )}
@@ -247,7 +248,7 @@ export default function ExerciseSuggestionModal() {
             })}
           >
             <Text variant="callout" className="text-[#5A4A3A] font-semibold">
-              Get New Suggestion
+              {t('mood.suggestions.getNew')}
             </Text>
           </Pressable>
 
@@ -264,7 +265,7 @@ export default function ExerciseSuggestionModal() {
             })}
           >
             <Text variant="callout" className="text-white font-semibold">
-              Browse All Exercises
+              {t('mood.suggestions.browseAll')}
             </Text>
           </Pressable>
         </View>
@@ -272,15 +273,13 @@ export default function ExerciseSuggestionModal() {
         {/* Info Card */}
         <View className="mt-6 p-4 rounded-2xl border border-gray-200 bg-green-400/10">
           <View className="flex-row items-center mb-2">
-            <Text style={{ fontSize: 20, marginRight: 8 }}>💡</Text>
+            <Text style={{ fontSize: 20, marginInlineEnd: 8 }}>💡</Text>
             <Text variant="body" className="text-[#5A4A3A] font-semibold">
-              Pro Tip
+              {t('mood.suggestions.proTip')}
             </Text>
           </View>
           <Text variant="caption1" className="text-gray-600 leading-5">
-            Regular wellness exercises can significantly improve your mood and
-            mental health. Try to incorporate at least one exercise into your
-            daily routine.
+            {t('mood.suggestions.proTipDescription')}
           </Text>
         </View>
       </View>

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { FlashList, FlashListProps } from '@shopify/flash-list';
 import { Text } from './text';
+import { useTranslation } from '~/hooks/useTranslation';
 
 // Generic item interface - all items must have an id
 interface ListItem {
@@ -77,14 +78,14 @@ export function GenericList<T extends ListItem>({
   estimatedItemSize = 120,
   keyExtractor = defaultKeyExtractor,
   getItemType = defaultGetItemType,
-  emptyMessage = 'No items found',
+  emptyMessage,
   emptyComponent,
   refreshing = false,
   onRefresh,
   searchable = false,
   searchValue = '',
   onSearchChange,
-  searchPlaceholder = 'Search...',
+  searchPlaceholder,
   className,
   style,
   contentContainerStyle = {},
@@ -96,6 +97,7 @@ export function GenericList<T extends ListItem>({
   onEndReached,
   onEndReachedThreshold = 0.1,
 }: GenericListConfig<T>) {
+  const { t } = useTranslation();
   // Filter data based on search
   const filteredData = useMemo(() => {
     if (!searchable || !searchValue) return data;
@@ -125,7 +127,11 @@ export function GenericList<T extends ListItem>({
       (Component as any).displayName = 'EmptyComponent';
       return Component;
     }
-    const DefaultEmpty = () => <DefaultEmptyComponent message={emptyMessage} />;
+    const DefaultEmpty = () => (
+      <DefaultEmptyComponent
+        message={emptyMessage || t('ui.emptyState.noData')}
+      />
+    );
 
     (DefaultEmpty as any).displayName = 'DefaultEmptyComponent';
     return DefaultEmpty;
@@ -172,7 +178,7 @@ export function GenericList<T extends ListItem>({
             className="text-gray-700"
             // This would need proper TextInput implementation
           >
-            {searchPlaceholder}
+            {searchPlaceholder || t('common.search')}
           </Text>
         </View>
       </View>

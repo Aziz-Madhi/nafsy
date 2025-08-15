@@ -33,19 +33,22 @@ interface CategoryExerciseListProps {
   onBackPress: () => void;
 }
 
-const getCategoryName = (categoryId: string, t: any): string => {
-  const categoryNames: Record<string, string> = {
-    mindfulness: t('exercises.categories.mindfulness') || 'Mindfulness',
-    breathing: t('exercises.categories.breathing') || 'Breathing',
-    movement: t('exercises.categories.movement') || 'Movement',
-    journaling: t('exercises.categories.journaling') || 'Journaling',
-    relaxation: t('exercises.categories.relaxation') || 'Relaxation',
-    reminders: t('exercises.categories.reminders') || 'Reminders',
+const getCategoryName = (
+  categoryId: string,
+  t: (key: string) => string
+): string => {
+  const categoryKeys: Record<string, string> = {
+    mindfulness: 'exercises.categories.mindfulness',
+    breathing: 'exercises.categories.breathing',
+    movement: 'exercises.categories.movement',
+    journaling: 'exercises.categories.journaling',
+    relaxation: 'exercises.categories.relaxation',
+    reminders: 'exercises.categories.reminders',
   };
-  return (
-    categoryNames[categoryId] ||
-    categoryId.charAt(0).toUpperCase() + categoryId.slice(1)
-  );
+  const key = categoryKeys[categoryId];
+  return key
+    ? t(key)
+    : categoryId.charAt(0).toUpperCase() + categoryId.slice(1);
 };
 
 function CategoryExerciseListComponent({
@@ -84,7 +87,7 @@ function CategoryExerciseListComponent({
     <View className="flex-1 bg-background">
       {/* Header */}
       <View className="flex-row items-center px-4 py-3 mb-4">
-        <Pressable onPress={handleBackPress} className="p-2 mr-2">
+        <Pressable onPress={handleBackPress} className="p-2 me-2">
           <SymbolView name="chevron.left" size={28} tintColor="#9CA3AF" />
         </Pressable>
         <Text
@@ -113,10 +116,7 @@ function CategoryExerciseListComponent({
         )}
         keyExtractor={(item) => item.id}
         getItemType={(item) => item.difficulty}
-        emptyMessage={
-          t('exercises.noExercisesInCategory') ||
-          'No exercises available in this category yet.'
-        }
+        emptyMessage={t('exercises.noExercisesInCategory')}
       />
     </View>
   );

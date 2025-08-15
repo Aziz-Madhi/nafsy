@@ -11,9 +11,9 @@ import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSegments, router } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
-import { useTranslation } from '~/hooks/useTranslation';
 import { User } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
+import { useIsRTL } from '~/store/useAppStore';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 // Calculate top padding for navigation bar only
@@ -111,27 +111,19 @@ function ScreenHeader({
   style?: ViewStyle;
   showSettingsIcon?: boolean;
 }) {
-  const { isRTL } = useTranslation();
+  const isRTL = useIsRTL();
 
   if (!title && !headerCenter && !headerLeft && !headerRight) return null;
 
   return (
     <View
       className="flex-row justify-between items-center px-6 py-1"
-      style={[style, { flexDirection: isRTL ? 'row-reverse' : 'row' }]}
+      style={style}
     >
-      {/* Title section - positioned based on language direction */}
-      <View
-        className="flex-1"
-        style={{ alignItems: isRTL ? 'flex-start' : 'flex-start' }}
-      >
+      {/* Title section */}
+      <View className="flex-1">
         {headerLeft || (
-          <View
-            style={{
-              alignItems: isRTL ? 'flex-start' : 'flex-start',
-              width: '100%',
-            }}
-          >
+          <View style={{ width: '100%' }}>
             {title && (
               <Text
                 className="text-foreground"
@@ -166,7 +158,7 @@ function ScreenHeader({
       {/* Center section */}
       <View className="flex-2 items-center">{headerCenter}</View>
 
-      {/* Right section (becomes left in RTL) */}
+      {/* Right section */}
       <View className="flex-1 items-end">
         {headerRight || (showSettingsIcon && <SettingsIcon />)}
       </View>
@@ -203,6 +195,9 @@ function ContentWrapper({
   onScroll?: (event: any) => void;
 }) {
   const navigationBarPadding = useNavigationBarPadding();
+  // Use physical horizontal padding to avoid RTL mirroring issues
+  const screenPadding = useScreenPadding('list');
+  const baseHorizontalPadding = screenPadding.horizontal; // 8px by default
 
   const refreshControl = useMemo(() => {
     if (!onRefresh) return undefined;
@@ -252,18 +247,25 @@ function ContentWrapper({
   }
 
   // Dashboard/default variants - with padding and navigation bar clearance
-  const paddingClass = variant === 'dashboard' ? 'px-2' : 'px-4';
-  const dashboardContentStyle = [
-    contentStyle,
+  // IMPORTANT: Use explicit paddingHorizontal so RTL does not skew spacing
+  const computedHorizontalPadding =
+    variant === 'dashboard' ? baseHorizontalPadding : baseHorizontalPadding * 2;
+
+  // Put bottom space and horizontal padding into contentContainerStyle so it
+  // affects inner content equally in RTL and LTR. Allow screen `contentStyle`
+  // to override if it specifies its own padding.
+  const scrollViewContentContainerStyle = [
     { paddingBottom: navigationBarPadding },
+    { paddingHorizontal: computedHorizontalPadding },
+    contentStyle,
   ];
 
   if (scrollable) {
     return (
       <ScrollView
         ref={scrollViewRef}
-        className={`flex-1 ${paddingClass}`}
-        style={dashboardContentStyle}
+        className="flex-1"
+        contentContainerStyle={scrollViewContentContainerStyle}
         refreshControl={refreshControl}
         showsVerticalScrollIndicator={false}
         onScroll={onScroll}
@@ -277,7 +279,10 @@ function ContentWrapper({
   }
 
   return (
-    <View className={`flex-1 ${paddingClass}`} style={dashboardContentStyle}>
+    <View
+      className="flex-1"
+      style={{ paddingHorizontal: computedHorizontalPadding }}
+    >
       {/* Stats section for non-scrollable content */}
       {statsSection && <StatsSection>{statsSection}</StatsSection>}
       {children}

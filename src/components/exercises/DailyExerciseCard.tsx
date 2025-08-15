@@ -2,10 +2,8 @@ import React, { useCallback } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useTranslation } from '~/hooks/useTranslation';
-import { useColors } from '~/hooks/useColors';
-// Removed unused RTLView import
 import type { Exercise } from '~/types';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface DailyExerciseCardProps {
   exercise: Exercise | null;
@@ -21,7 +19,6 @@ export function DailyExerciseCard({
   motivationalMessage,
 }: DailyExerciseCardProps) {
   const { t } = useTranslation();
-  const colors = useColors();
 
   const handlePress = useCallback(() => {
     if (exercise) {
@@ -83,8 +80,7 @@ export function DailyExerciseCard({
                       className="text-foreground"
                       style={{ fontFamily: 'Inter_500Medium', fontSize: 13 }}
                     >
-                      {exercise.category.charAt(0).toUpperCase() +
-                        exercise.category.slice(1)}
+                      {t(`exercises.categories.${exercise.category}`)}
                     </Text>
                   </View>
                 </View>
@@ -128,7 +124,7 @@ export function DailyExerciseCard({
                 {/* Motivational message and button */}
                 <View className="flex-row items-center justify-between">
                   <Text
-                    className="text-muted-foreground flex-1 mr-3"
+                    className="text-muted-foreground flex-1 me-3"
                     style={{
                       fontFamily: 'Inter_400Regular',
                       fontSize: 13,

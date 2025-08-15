@@ -20,9 +20,11 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MotiView } from 'moti';
 import { ChatBubbleProps, ChatInputProps } from './types';
-// import { useTranslation } from '~/hooks/useTranslation';
+import { useTranslation } from '~/hooks/useTranslation';
 import SendingSpinner from './SendingSpinner';
 import { AnimatedContainer, StaggeredListItem } from '~/lib/animations';
+import { useIsRTL } from '~/store/useAppStore';
+import { rtlStyles } from '~/lib/rtl-utils';
 
 // =====================
 // CHAT BUBBLE COMPONENT
@@ -35,17 +37,23 @@ export const ChatBubble = React.memo(function ChatBubble({
   index = 0,
   status,
 }: ChatBubbleProps) {
-  const shouldJustifyEnd = isUser;
+  const isRTL = useIsRTL();
+
+  // RTL-aware positioning: user messages go to opposite side in RTL
+  const justifyContent = isUser
+    ? isRTL
+      ? 'justify-start' // User messages go left in RTL
+      : 'justify-end' // User messages go right in LTR
+    : isRTL
+      ? 'justify-end' // AI messages go right in RTL
+      : 'justify-start'; // AI messages go left in LTR
 
   return (
     <StaggeredListItem
       index={index}
       staggerDelay="quick"
       springPreset="gentle"
-      className={cn(
-        'flex-row mb-5',
-        shouldJustifyEnd ? 'justify-end' : 'justify-start'
-      )}
+      className={cn('flex-row mb-5', justifyContent)}
     >
       <AnimatedContainer pressable pressScale="subtle" className="max-w-[85%]">
         <View
@@ -71,7 +79,6 @@ export const ChatBubble = React.memo(function ChatBubble({
               className={cn(
                 isUser ? 'text-primary-foreground' : 'text-foreground'
               )}
-              enableRTL={isUser}
             >
               {message}
             </Text>
@@ -85,7 +92,6 @@ export const ChatBubble = React.memo(function ChatBubble({
                     ? 'text-primary-foreground/70'
                     : 'text-muted-foreground'
                 )}
-                enableRTL={isUser}
               >
                 {timestamp}
               </Text>
@@ -97,7 +103,7 @@ export const ChatBubble = React.memo(function ChatBubble({
         {isUser && status && (
           <Animated.View
             entering={FadeInUp.springify()}
-            className="absolute -bottom-1 -right-1"
+            className={cn('absolute -bottom-1', isRTL ? '-start-1' : '-end-1')}
           >
             <View className="bg-card rounded-full p-1.5 shadow-md">
               {status === 'sending' ? (
@@ -123,6 +129,7 @@ export const ChatBubble = React.memo(function ChatBubble({
 // TYPING INDICATOR
 // =====================
 export const TypingIndicator = React.memo(function TypingIndicator() {
+  const isRTL = useIsRTL();
   const dot1 = useSharedValue(0);
   const dot2 = useSharedValue(0);
   const dot3 = useSharedValue(0);
@@ -201,7 +208,10 @@ export const TypingIndicator = React.memo(function TypingIndicator() {
   return (
     <Animated.View style={containerStyle} className="mb-5">
       <View
-        className="flex-row items-center justify-center bg-white rounded-full px-5 py-3.5 ml-4 self-start shadow-md"
+        className={cn(
+          'flex-row items-center justify-center bg-white rounded-full px-5 py-3.5 self-start shadow-md',
+          isRTL ? 'me-4' : 'ms-4'
+        )}
         style={{
           shadowColor: '#000000',
           shadowOffset: { width: 0, height: 2 },
@@ -243,6 +253,7 @@ export const QuickReplyButton = React.memo(function QuickReplyButton({
   icon,
   delay = 0,
 }: QuickReplyButtonProps) {
+  const isRTL = useIsRTL();
   return (
     <AnimatedContainer
       entrance="slideInUp"
@@ -251,7 +262,7 @@ export const QuickReplyButton = React.memo(function QuickReplyButton({
       onPress={onPress}
       pressScale="normal"
       springPreset="quick"
-      className="mr-3 mb-3"
+      className={cn('mb-3', isRTL ? 'ms-3' : 'me-3')}
     >
       <View
         className="flex-row items-center bg-white rounded-full px-6 py-3"
@@ -266,7 +277,7 @@ export const QuickReplyButton = React.memo(function QuickReplyButton({
         }}
       >
         {icon && (
-          <Text variant="heading" className="mr-2.5">
+          <Text variant="heading" className={cn(isRTL ? 'ms-2.5' : 'me-2.5')}>
             {icon}
           </Text>
         )}
@@ -283,13 +294,15 @@ export const QuickReplyButton = React.memo(function QuickReplyButton({
 // =====================
 export const ChatInput = React.memo(function ChatInput({
   onSendMessage,
-  placeholder = 'Type a message...',
+  placeholder,
   disabled = false,
   hideBorder = false,
   hideButton = false,
   value,
   onChangeText,
 }: ChatInputProps & { hideBorder?: boolean; hideButton?: boolean }) {
+  const { t } = useTranslation();
+  const isRTL = useIsRTL();
   const [internalMessage, setInternalMessage] = useState('');
   const sendScale = useSharedValue(1);
   const containerScale = useSharedValue(1);
@@ -344,7 +357,7 @@ export const ChatInput = React.memo(function ChatInput({
             <TextInput
               value={message}
               onChangeText={setMessage}
-              placeholder={placeholder}
+              placeholder={placeholder || t('chat.typingPlaceholder')}
               placeholderTextColor="#94a3b8" // More refined slate color
               multiline
               maxLength={1000}
@@ -361,8 +374,10 @@ export const ChatInput = React.memo(function ChatInput({
                 lineHeight: 20,
                 color: '#1e293b', // Rich, sophisticated text color
                 fontWeight: '400',
-                paddingLeft: 16,
-                paddingRight: !hideButton ? 52 : 16, // Make space for the button
+                paddingLeft:
+                  !hideButton && !isRTL ? 16 : !hideButton && isRTL ? 52 : 16,
+                paddingRight:
+                  !hideButton && !isRTL ? 52 : !hideButton && isRTL ? 16 : 16, // Make space for the button
                 paddingTop: 12,
                 paddingBottom: 12,
                 backgroundColor: 'transparent',
@@ -380,7 +395,7 @@ export const ChatInput = React.memo(function ChatInput({
             <View
               style={{
                 position: 'absolute',
-                right: 8,
+                ...(isRTL ? { left: 8 } : { right: 8 }),
                 top: '50%',
                 transform: [{ translateY: -16 }], // Center vertically (32px height / 2)
               }}

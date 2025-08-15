@@ -1,21 +1,11 @@
 import React, { memo, useMemo, useCallback } from 'react';
-import { View } from 'react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { ModernCategoryCard } from './ModernCategoryCard';
 import { SimpleMasonryGrid } from '~/components/ui/SimpleMasonryGrid';
 import { useTranslation } from '~/hooks/useTranslation';
-import type { WellnessCategory } from '~/lib/colors';
 
 interface PremiumCategoryGridProps {
   onCategorySelect: (categoryId: string) => void;
-}
-
-interface Category {
-  id: WellnessCategory;
-  name: string;
-  color: string;
-  description: string;
-  icon: string;
 }
 
 function PremiumCategoryGridComponent({
@@ -23,85 +13,55 @@ function PremiumCategoryGridComponent({
 }: PremiumCategoryGridProps) {
   const { t } = useTranslation();
 
-  // Cache translated strings to prevent categories recreation when t function changes
-  const translatedStrings = useMemo(() => {
-    return {
-      mindfulness: {
-        name: t('exercises.categories.mindfulness') || 'Mindfulness',
-        description: t('exercises.descriptions.mindfulness') || 'Stay present',
-      },
-      breathing: {
-        name: t('exercises.categories.breathing') || 'Breathing',
-        description: t('exercises.descriptions.breathing') || 'Breathe deeply',
-      },
-      movement: {
-        name: t('exercises.categories.movement') || 'Movement',
-        description: t('exercises.descriptions.movement') || 'Move gently',
-      },
-      journaling: {
-        name: t('exercises.categories.journaling') || 'Journaling',
-        description: t('exercises.descriptions.journaling') || 'Write freely',
-      },
-      relaxation: {
-        name: t('exercises.categories.relaxation') || 'Relaxation',
-        description: t('exercises.descriptions.relaxation') || 'Find peace',
-      },
-      reminders: {
-        name: t('exercises.categories.reminders') || 'Reminders',
-        description: t('exercises.descriptions.reminders') || 'Daily wisdom',
-      },
-    };
-  }, [t]);
-
-  // Memoize categories using cached translations
+  // Memoize categories using translations
   const categories = useMemo(() => {
     const baseCategories = [
       {
         id: 'mindfulness' as const,
-        name: translatedStrings.mindfulness.name,
+        name: t('exercises.categories.mindfulness'),
         color: '#FF6B6B',
-        description: translatedStrings.mindfulness.description,
+        description: t('exercises.descriptions.mindfulness'),
         icon: '🧘‍♀️',
       },
       {
         id: 'breathing' as const,
-        name: translatedStrings.breathing.name,
+        name: t('exercises.categories.breathing'),
         color: '#4ECDC4',
-        description: translatedStrings.breathing.description,
+        description: t('exercises.descriptions.breathing'),
         icon: '🌬️',
       },
       {
         id: 'movement' as const,
-        name: translatedStrings.movement.name,
+        name: t('exercises.categories.movement'),
         color: '#45B7D1',
-        description: translatedStrings.movement.description,
+        description: t('exercises.descriptions.movement'),
         icon: '🚶‍♀️',
       },
       {
         id: 'journaling' as const,
-        name: translatedStrings.journaling.name,
+        name: t('exercises.categories.journaling'),
         color: '#96CEB4',
-        description: translatedStrings.journaling.description,
+        description: t('exercises.descriptions.journaling'),
         icon: '✍️',
       },
       {
         id: 'relaxation' as const,
-        name: translatedStrings.relaxation.name,
+        name: t('exercises.categories.relaxation'),
         color: '#FFEAA7',
-        description: translatedStrings.relaxation.description,
+        description: t('exercises.descriptions.relaxation'),
         icon: '🛀',
       },
       {
         id: 'reminders' as const,
-        name: translatedStrings.reminders.name,
+        name: t('exercises.categories.reminders'),
         color: '#DDA0DD',
-        description: translatedStrings.reminders.description,
+        description: t('exercises.descriptions.reminders'),
         icon: '💭',
       },
     ];
 
     return baseCategories;
-  }, [translatedStrings]);
+  }, [t]);
 
   const handleCategorySelect = useCallback(
     (categoryId: string) => {

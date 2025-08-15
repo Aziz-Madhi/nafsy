@@ -1,107 +1,163 @@
-import I18n from 'react-native-i18n';
-import { NativeModules, Platform } from 'react-native';
-import {
-  translations,
-  type Language,
-  type TranslationKeyPath,
-} from '../locales';
+import i18next from 'i18next';
+import { initReactI18next } from 'react-i18next';
+import { getLocales } from 'expo-localization';
+import { getCurrentStorage, getSavedLanguage } from '~/lib/mmkv-storage';
 
-// Get device locale
-const getDeviceLocale = (): string => {
-  let locale = 'en';
+// Import translation files
+import en from '../locales/en.json';
+import ar from '../locales/ar.json';
 
-  if (Platform.OS === 'ios') {
-    locale =
-      NativeModules.SettingsManager?.settings?.AppleLocale ||
-      NativeModules.SettingsManager?.settings?.AppleLanguages?.[0] ||
-      'en';
-  } else {
-    locale = NativeModules.I18nManager.localeIdentifier || 'en';
-  }
+// Define the resources for i18next
+export const resources = {
+  en: {
+    translation: en,
+  },
+  ar: {
+    translation: ar,
+  },
+} as const;
 
-  return locale.split('_')[0]; // Get language code only (e.g., 'en' from 'en_US')
+// Helper function to get the device locale
+const getDeviceLocale = (): SupportedLanguage => {
+  const locales = getLocales();
+  const primaryLocale = locales[0];
+  const languageCode = primaryLocale?.languageCode;
+
+  // Support only English and Arabic
+  return languageCode && ['en', 'ar'].includes(languageCode)
+    ? (languageCode as SupportedLanguage)
+    : 'en';
 };
 
-// Configure I18n
-I18n.translations = translations;
-I18n.defaultLocale = 'en';
-I18n.fallbacks = true;
-
-// Set initial locale
-const deviceLocale = getDeviceLocale();
-I18n.locale = ['en', 'ar'].includes(deviceLocale) ? deviceLocale : 'en';
-
-// Helper function to get nested translation value
-const getNestedTranslation = (obj: any, path: string): string => {
-  const keys = path.split('.');
-  let current = obj;
-
-  for (const key of keys) {
-    if (current && typeof current === 'object' && key in current) {
-      current = current[key];
-    } else {
-      return path; // Return the key if translation not found
-    }
-  }
-
-  return typeof current === 'string' ? current : path;
-};
-
-// Translation function with type safety
-export const t = (key: TranslationKeyPath, options?: any): string => {
+// Get stored language preference or fallback to device/default
+const getInitialLanguage = (): SupportedLanguage => {
   try {
-    const translation = getNestedTranslation(
-      I18n.translations[I18n.locale as Language],
-      key
+    // 0) Prefer explicit language key to keep i18n and RTL in lockstep
+    const explicit = getSavedLanguage();
+    if (explicit) {
+      console.log('🎯 i18n: Using explicit saved language:', explicit);
+      return explicit as SupportedLanguage;
+    }
+
+    // 1) Fallback to reading from persisted app store
+    const currentStorage = getCurrentStorage();
+    console.log('🎯 i18n: Reading from unified storage');
+
+    const storedSettings = currentStorage.getString('app-store');
+    console.log(
+      '🎯 i18n: Raw stored settings:',
+      storedSettings ? 'found' : 'not found'
     );
-    return I18n.interpolate(translation, options);
-  } catch {
-    console.warn(`Translation not found for key: ${key}`);
-    return key;
+
+    if (storedSettings) {
+      const settings = JSON.parse(storedSettings);
+      console.log('🎯 i18n: Parsed settings structure:', {
+        hasPendingLanguage: !!settings?.state?.pendingLanguage,
+        hasLanguagePreference: !!settings?.state?.settings?.language,
+        currentLanguage: settings?.state?.currentLanguage,
+      });
+
+      // CRITICAL: Check for pendingLanguage FIRST - this is set when user requested a language change
+      const pendingLanguage = settings?.state?.pendingLanguage;
+      if (pendingLanguage && ['en', 'ar'].includes(pendingLanguage)) {
+        console.log('🎯 i18n: Found pending language change:', pendingLanguage);
+        return pendingLanguage as SupportedLanguage;
+      }
+
+      // If no pending language, check regular preference
+      const languagePreference =
+        settings?.state?.settings?.language || 'system';
+      console.log(
+        '🎯 i18n: No pending language, using preference:',
+        languagePreference
+      );
+
+      if (languagePreference === 'system') {
+        const deviceLocale = getDeviceLocale();
+        console.log('🎯 i18n: Using device locale:', deviceLocale);
+        return deviceLocale;
+      }
+      if (['en', 'ar'].includes(languagePreference)) {
+        console.log('🎯 i18n: Using stored preference:', languagePreference);
+        return languagePreference as SupportedLanguage;
+      }
+    } else {
+      console.log('🎯 i18n: No stored settings found in unified storage');
+    }
+  } catch (error) {
+    console.warn('🎯 i18n: Failed to read stored language preference:', error);
   }
+
+  // Fallback to device locale
+  const fallbackLocale = getDeviceLocale();
+  console.log('🎯 i18n: Using fallback device locale:', fallbackLocale);
+  return fallbackLocale;
 };
 
-// Get current locale
-export const getCurrentLocale = (): Language => {
-  return I18n.locale as Language;
+// Helper function to check if language is RTL
+export const isRTLLanguage = (language: string): boolean => {
+  return language === 'ar';
 };
 
-// Set locale
-export const setLocale = (locale: Language): void => {
-  I18n.locale = locale;
+// Initialize i18next with stored language preference
+// Apply RTL state at startup to prevent runtime layout issues
+const initI18n = () => {
+  const initialLanguage = getInitialLanguage();
+  const isRTL = isRTLLanguage(initialLanguage);
+
+  console.log(
+    '🎯 i18n: Initializing language (RTL handled by rtl-bootstrap):',
+    {
+      language: initialLanguage,
+      isRTL,
+    }
+  );
+
+  i18next.use(initReactI18next).init({
+    resources,
+    lng: initialLanguage,
+    fallbackLng: 'en',
+    compatibilityJSON: 'v4',
+    interpolation: {
+      escapeValue: false,
+    },
+    react: {
+      useSuspense: false,
+    },
+    debug: __DEV__,
+  });
+
+  return i18next;
 };
 
-// Check if current locale is RTL
-export const isRTL = (): boolean => {
-  return I18n.locale === 'ar';
+// Initialize and export
+const i18n = initI18n();
+
+export default i18n;
+
+// Helper function to change language (RTL handled by bootstrap)
+// NOTE: This is mainly for legacy compatibility. With the current deferred language system,
+// language changes should happen during app initialization via rtl-bootstrap.ts.
+export const changeLanguage = async (language: 'en' | 'ar'): Promise<void> => {
+  const currentLanguage = i18n.language;
+
+  if (currentLanguage === language) {
+    return; // No change needed
+  }
+
+  console.log(
+    '🎯 i18n: Runtime language change (legacy, RTL not applied):',
+    language
+  );
+
+  // Change i18next language only - RTL is handled by rtl-bootstrap.ts at app startup
+  await i18n.changeLanguage(language);
+
+  console.log(
+    '🎯 i18n: Language changed, RTL requires app restart to take effect'
+  );
 };
 
-// Get text direction
-export const getTextDirection = (): 'ltr' | 'rtl' => {
-  return isRTL() ? 'rtl' : 'ltr';
-};
-
-// Get text align based on locale
-export const getTextAlign = (): 'left' | 'right' => {
-  return isRTL() ? 'right' : 'left';
-};
-
-// Get flex direction based on locale - now defaults to 'row' to keep layout consistent
-// Use getFlexDirectionRTL() when you explicitly want RTL layout behavior
-export const getFlexDirection = (): 'row' | 'row-reverse' => {
-  return 'row'; // Always return 'row' to keep layout direction consistent
-};
-
-// Get RTL-aware flex direction for components that explicitly want RTL layout behavior
-export const getFlexDirectionRTL = (): 'row' | 'row-reverse' => {
-  return isRTL() ? 'row-reverse' : 'row';
-};
-
-// Helper to check if a language is supported
-export const isSupportedLanguage = (language: string): language is Language => {
-  return ['en', 'ar'].includes(language);
-};
-
-// Export I18n instance for advanced usage
-export { I18n };
-export type { Language, TranslationKeyPath };
+// Export supported languages
+export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const;
+export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];

@@ -7,8 +7,10 @@ import { FormField } from '~/components/ui/FormField';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { useAuthForm } from '~/hooks/useAuthForm';
+import { useTranslation } from '~/hooks/useTranslation';
 
 export default function SignInScreen() {
+  const { t } = useTranslation();
   const {
     form,
     errors,
@@ -24,16 +26,18 @@ export default function SignInScreen() {
 
   return (
     <AuthLayout
-      title="Welcome Back"
-      subtitle="Sign in to continue your mental wellness journey"
+      title={t('auth.welcomeBack')}
+      subtitle={t('auth.signInSubtitle')}
       footerContent={
         <>
           <Text className="text-muted-foreground">
-            Don&apos;t have an account?
+            {t('auth.dontHaveAccount')}
           </Text>
           <Link href="/auth/sign-up" asChild>
             <TouchableOpacity>
-              <Text className="text-primary font-medium">Sign Up</Text>
+              <Text className="text-primary font-medium">
+                {t('common.signUp')}
+              </Text>
             </TouchableOpacity>
           </Link>
         </>
@@ -41,8 +45,8 @@ export default function SignInScreen() {
     >
       <Animated.View style={shakeStyle} className="gap-4 mt-6">
         <FormField
-          label="Email"
-          placeholder="Enter your email"
+          label={t('auth.email')}
+          placeholder={t('auth.placeholders.enterEmail')}
           value={form.email}
           onChangeText={(text) => updateForm('email', text)}
           autoCapitalize="none"
@@ -52,8 +56,8 @@ export default function SignInScreen() {
         />
 
         <FormField
-          label="Password"
-          placeholder="Enter your password"
+          label={t('auth.password')}
+          placeholder={t('auth.placeholders.enterPassword')}
           value={form.password}
           onChangeText={(text) => updateForm('password', text)}
           secureTextEntry
@@ -68,7 +72,7 @@ export default function SignInScreen() {
           className="mt-2"
         >
           <Text className="text-primary-foreground text-base font-semibold">
-            {loading ? 'Signing In...' : 'Sign In'}
+            {loading ? t('auth.buttons.signingIn') : t('common.signIn')}
           </Text>
         </Button>
       </Animated.View>

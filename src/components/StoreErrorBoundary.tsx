@@ -8,11 +8,22 @@ import {
   ImpactFeedbackStyle,
   NotificationFeedbackType,
 } from 'expo-haptics';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
   onError?: (error: Error, errorInfo: ErrorInfo) => void;
+  translations?: {
+    title: string;
+    description: string;
+    tryAgain: string;
+    reportIssue: string;
+    alertTitle: string;
+    alertMessage: string;
+    cancel: string;
+    report: string;
+  };
 }
 
 interface State {
@@ -25,7 +36,7 @@ interface State {
  * Store Error Boundary - Catches and handles Zustand store-related errors
  * Prevents app crashes during store initialization, hydration, or state operations
  */
-export class StoreErrorBoundary extends Component<Props, State> {
+class StoreErrorBoundaryComponent extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
@@ -93,16 +104,18 @@ export class StoreErrorBoundary extends Component<Props, State> {
   };
 
   private handleReportIssue = () => {
+    const { translations } = this.props;
     const errorMessage = this.state.error?.message || 'Unknown error occurred';
     const errorStack = this.state.error?.stack || 'No stack trace available';
 
     Alert.alert(
-      'Report Issue',
-      'Would you like to report this issue to help us improve the app?',
+      translations?.alertTitle || 'Report Issue',
+      translations?.alertMessage ||
+        'Would you like to report this issue to help us improve the app?',
       [
-        { text: 'Cancel', style: 'cancel' },
+        { text: translations?.cancel || 'Cancel', style: 'cancel' },
         {
-          text: 'Report',
+          text: translations?.report || 'Report',
           onPress: () => {
             // TODO: Implement issue reporting (email, GitHub, support system)
             console.log('Error report requested:', {
@@ -122,6 +135,8 @@ export class StoreErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const { translations } = this.props;
+
       // Default error UI
       return (
         <View className="flex-1 justify-center items-center p-6 bg-background">
@@ -132,7 +147,7 @@ export class StoreErrorBoundary extends Component<Props, State> {
                 <Text className="text-2xl">⚠️</Text>
               </View>
               <Text variant="title3" className="text-center font-semibold">
-                Something went wrong
+                {translations?.title || 'Something went wrong'}
               </Text>
             </View>
 
@@ -141,8 +156,8 @@ export class StoreErrorBoundary extends Component<Props, State> {
               variant="body"
               className="text-center text-muted-foreground mb-6"
             >
-              We encountered an issue loading your data. This is usually
-              temporary and can be fixed by retrying.
+              {translations?.description ||
+                'We encountered an issue loading your data. This is usually temporary and can be fixed by retrying.'}
             </Text>
 
             {/* Error Details (Development only) */}
@@ -157,7 +172,9 @@ export class StoreErrorBoundary extends Component<Props, State> {
             {/* Action Buttons */}
             <View className="space-y-3">
               <Button onPress={this.handleRetry} className="w-full">
-                <Text className="text-white font-medium">Try Again</Text>
+                <Text className="text-white font-medium">
+                  {translations?.tryAgain || 'Try Again'}
+                </Text>
               </Button>
 
               <Button
@@ -165,7 +182,9 @@ export class StoreErrorBoundary extends Component<Props, State> {
                 onPress={this.handleReportIssue}
                 className="w-full"
               >
-                <Text className="text-primary font-medium">Report Issue</Text>
+                <Text className="text-primary font-medium">
+                  {translations?.reportIssue || 'Report Issue'}
+                </Text>
               </Button>
             </View>
           </View>
@@ -194,6 +213,40 @@ export const useStoreErrorHandler = () => {
 
   return { handleStoreError };
 };
+
+// Wrapper function component that provides translations to the class component
+export function StoreErrorBoundary({
+  children,
+  fallback,
+  onError,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+  onError?: (error: Error, errorInfo: ErrorInfo) => void;
+}) {
+  const { t } = useTranslation();
+
+  const translations = {
+    title: t('ui.error.somethingWrong'),
+    description: t('ui.error.dataLoadingIssue'),
+    tryAgain: t('common.retry'),
+    reportIssue: t('ui.error.reportIssue'),
+    alertTitle: t('ui.error.reportIssue'),
+    alertMessage: t('ui.error.reportQuestion'),
+    cancel: t('common.cancel'),
+    report: t('ui.error.report'),
+  };
+
+  return (
+    <StoreErrorBoundaryComponent
+      translations={translations}
+      fallback={fallback}
+      onError={onError}
+    >
+      {children}
+    </StoreErrorBoundaryComponent>
+  );
+}
 
 // HOC wrapper for class components
 export const withStoreErrorBoundary = <P extends object>(

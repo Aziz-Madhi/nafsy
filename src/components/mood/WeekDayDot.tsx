@@ -5,6 +5,7 @@ import { cn } from '~/lib/cn';
 import { MotiPressable } from 'moti/interactions';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { IconRenderer } from '~/components/ui/IconRenderer';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface WeekDayDotProps {
   day: string;
@@ -27,6 +28,7 @@ export function WeekDayDot({
   isSelected = false,
   mood,
 }: WeekDayDotProps) {
+  const { t } = useTranslation();
   const dotStyle = React.useMemo(
     () => ({
       width: size,
@@ -113,7 +115,7 @@ export function WeekDayDot({
         )}
         style={{ textAlign: 'center', fontSize: 12, letterSpacing: 0.1 }}
       >
-        {isToday ? 'Today' : day}
+        {isToday ? t('common.today') : day}
       </Text>
     </View>
   );

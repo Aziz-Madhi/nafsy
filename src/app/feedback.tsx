@@ -19,10 +19,10 @@ import {
   NotificationFeedbackType,
 } from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
-import { ProfileLayout } from '~/components/ui/ScreenLayout';
 import { useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
+import { useIsRTL } from '~/store/useAppStore';
 
 // Feedback Type Card
 function FeedbackTypeCard({
@@ -93,8 +93,9 @@ function RatingStar({
 }
 
 export default function Feedback() {
-  const { t } = useTranslation();
   const colors = useColors();
+  const { t } = useTranslation();
+  const isRTL = useIsRTL();
   const [feedbackType, setFeedbackType] = useState<
     'bug' | 'feature' | 'improvement' | 'other'
   >('improvement');
@@ -172,7 +173,7 @@ export default function Feedback() {
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
-            className="mr-4"
+            className="me-4"
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
             <SymbolView
@@ -188,7 +189,7 @@ export default function Feedback() {
               fontSize: 28,
               fontWeight: 'normal',
               lineHeight: 34,
-              textAlign: 'left',
+              textAlign: isRTL ? 'right' : 'left',
             }}
           >
             {t('feedback.title')}
@@ -319,7 +320,7 @@ export default function Feedback() {
                   <ActivityIndicator
                     size="small"
                     color="white"
-                    className="mr-2"
+                    className="me-2"
                   />
                   <Text variant="callout" className="text-white font-medium">
                     {t('feedback.submitting')}
@@ -334,7 +335,7 @@ export default function Feedback() {
                   />
                   <Text
                     variant="callout"
-                    className="text-white font-medium ml-2"
+                    className="text-white font-medium ms-2"
                   >
                     {t('feedback.submit')}
                   </Text>

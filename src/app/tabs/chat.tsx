@@ -4,6 +4,7 @@ import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { useTranslation } from '~/hooks/useTranslation';
 import {
   useMainChatTyping,
   useShowQuickReplies,
@@ -13,7 +14,6 @@ import {
   useSessionSwitchLoading,
   useChatUIStore,
 } from '~/store';
-import { useTranslation } from '~/hooks/useTranslation';
 import { ChatScreen } from '~/components/chat';
 
 // Auth is now handled at tab layout level - no need for wrapper
@@ -27,22 +27,20 @@ interface Message {
   _creationTime: number;
 }
 
-const getWelcomeMessage = (t: any) =>
-  t('chat.welcomeMessage') ||
-  "Hello! I'm here to support your mental wellness journey.";
+const getWelcomeMessage = (t: any) => t('chat.welcomeMessage');
 
 const getQuickReplies = (t: any) => [
-  { text: t('chat.quickReplies.anxious') || "I'm feeling anxious", icon: '😟' },
+  { text: t('chat.quickReplies.anxious'), icon: '😟' },
   {
-    text: t('chat.quickReplies.needTalk') || 'I need someone to talk to',
+    text: t('chat.quickReplies.needTalk'),
     icon: '💭',
   },
   {
-    text: t('chat.quickReplies.trackMood') || 'I want to track my mood',
+    text: t('chat.quickReplies.trackMood'),
     icon: '📊',
   },
   {
-    text: t('chat.quickReplies.showExercises') || 'Show me exercises',
+    text: t('chat.quickReplies.showExercises'),
     icon: '🧘',
   },
 ];
@@ -160,7 +158,6 @@ export default function ChatTab() {
     sendMainMessage,
     serverMainSessionId,
     currentMainSessionId,
-    t,
   ]);
 
   // Transform Convex main chat messages to UI format with memoization
@@ -246,27 +243,22 @@ export default function ChatTab() {
         setMainChatTyping(false);
 
         // Generate contextual AI response based on user input
-        let aiResponseText =
-          "I hear you. Let's work through this together. Can you tell me more about what's on your mind?";
+        let aiResponseText = t('chat.defaultResponse');
 
         if (
           text.toLowerCase().includes('anxious') ||
           text.toLowerCase().includes('anxiety')
         ) {
-          aiResponseText =
-            "I understand you're feeling anxious. That can be really challenging. Would you like to try a breathing exercise together, or would you prefer to talk about what's making you feel this way?";
+          aiResponseText = t('chat.responses.anxiety');
         } else if (
           text.toLowerCase().includes('sad') ||
           text.toLowerCase().includes('depressed')
         ) {
-          aiResponseText =
-            "I'm sorry you're feeling sad. It's okay to feel this way, and I'm here to support you. Would you like to share what's been weighing on your mind?";
+          aiResponseText = t('chat.responses.sad');
         } else if (text.toLowerCase().includes('mood')) {
-          aiResponseText =
-            "Tracking your mood is a great step! You can use the Mood tab to log how you're feeling. Would you like me to guide you through it?";
+          aiResponseText = t('chat.responses.mood');
         } else if (text.toLowerCase().includes('exercise')) {
-          aiResponseText =
-            "Great choice! We have various exercises including breathing techniques, mindfulness, and movement. Check out the Exercises tab, or I can recommend one based on how you're feeling.";
+          aiResponseText = t('chat.responses.exercise');
         }
 
         await sendMainMessage({
@@ -288,14 +280,11 @@ export default function ChatTab() {
     ]
   );
 
-  // Memoize quick replies to prevent recreation on translation changes
+  // Memoize quick replies
   const quickReplies = useMemo(() => getQuickReplies(t), [t]);
 
-  // Memoize welcome subtitle
-  const welcomeSubtitle = useMemo(
-    () => t('chat.welcomeSubtitle') || 'Your safe space for mental wellness',
-    [t]
-  );
+  // Welcome subtitle
+  const welcomeSubtitle = t('chat.welcomeSubtitle');
 
   // Memoize error dismiss handler
   const handleDismissError = useCallback(

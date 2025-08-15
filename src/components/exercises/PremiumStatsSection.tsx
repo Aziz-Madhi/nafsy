@@ -3,6 +3,7 @@ import { View, Pressable } from 'react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Text } from '~/components/ui/text';
 import { useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface PremiumStatsSectionProps {
   completionsThisWeek: number;
@@ -28,6 +29,7 @@ function StatCard({
   index: number;
   onPress?: () => void;
 }) {
+  const { t } = useTranslation();
   const colors = useColors();
 
   const handlePress = () => {
@@ -51,7 +53,7 @@ function StatCard({
         accessible={true}
         accessibilityRole="button"
         accessibilityLabel={`${title}: ${value}${subtitle ? `. ${subtitle}` : ''}`}
-        accessibilityHint="Tap to view detailed statistics"
+        accessibilityHint={t('mood.stats.accessibilityHint')}
       >
         <View style={{ flex: 1, padding: 16, justifyContent: 'space-between' }}>
           {/* Header */}
@@ -103,10 +105,11 @@ function StatCard({
 }
 
 function InsightBadge({ text, index }: { text: string; index: number }) {
+  const { t } = useTranslation();
   const colors = useColors();
 
   return (
-    <View className="px-3 py-1.5 rounded-lg mr-2 bg-green-400/15 border border-green-400/20">
+    <View className="px-3 py-1.5 rounded-lg me-2 bg-green-400/15 border border-green-400/20">
       <Text
         style={{
           color: colors.success,
@@ -125,23 +128,24 @@ export function PremiumStatsSection({
   totalCompletions = 0,
   weeklyGoal = 7,
 }: PremiumStatsSectionProps) {
+  const { t } = useTranslation();
   const colors = useColors();
   const weekProgress = completionsThisWeek / weeklyGoal;
 
   const getStreakMessage = (streak: number) => {
-    if (streak === 0) return 'Start your journey!';
-    if (streak < 3) return 'Building momentum';
-    if (streak < 7) return 'Great progress!';
-    if (streak < 14) return 'Amazing streak!';
-    return 'Incredible dedication!';
+    if (streak === 0) return t('mood.stats.streakMessages.start');
+    if (streak < 3) return t('mood.stats.streakMessages.building');
+    if (streak < 7) return t('mood.stats.streakMessages.great');
+    if (streak < 14) return t('mood.stats.streakMessages.amazing');
+    return t('mood.stats.streakMessages.incredible');
   };
 
   const getWeekMessage = (completed: number, goal: number) => {
     const percentage = (completed / goal) * 100;
-    if (percentage >= 100) return 'Goal achieved!';
-    if (percentage >= 80) return 'Almost there!';
-    if (percentage >= 50) return 'Halfway done';
-    return 'Keep going!';
+    if (percentage >= 100) return t('mood.stats.weekMessages.achieved');
+    if (percentage >= 80) return t('mood.stats.weekMessages.almost');
+    if (percentage >= 50) return t('mood.stats.weekMessages.halfway');
+    return t('mood.stats.weekMessages.keepGoing');
   };
 
   return (
@@ -150,7 +154,7 @@ export function PremiumStatsSection({
       {/* Main Stats Cards */}
       <View style={{ flexDirection: 'row', marginBottom: 0 }}>
         <StatCard
-          title="This Week"
+          title={t('common.thisWeek')}
           value={completionsThisWeek}
           subtitle={getWeekMessage(completionsThisWeek, weeklyGoal)}
           progress={weekProgress}
@@ -159,8 +163,8 @@ export function PremiumStatsSection({
         />
 
         <StatCard
-          title="Current Streak"
-          value={`${currentStreak} days`}
+          title={t('mood.stats.currentStreak')}
+          value={t('mood.stats.streakDays', { count: currentStreak })}
           subtitle={getStreakMessage(currentStreak)}
           index={1}
           onPress={() => impactAsync(ImpactFeedbackStyle.Light)}
@@ -172,13 +176,22 @@ export function PremiumStatsSection({
         <View className="mt-2">
           <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
             {currentStreak >= 7 && (
-              <InsightBadge text="⭐ Weekly champion" index={1} />
+              <InsightBadge
+                text={t('mood.stats.insights.weeklyChampion')}
+                index={1}
+              />
             )}
             {currentStreak >= 30 && (
-              <InsightBadge text="💎 Wellness master" index={2} />
+              <InsightBadge
+                text={t('mood.stats.insights.wellnessMaster')}
+                index={2}
+              />
             )}
             {completionsThisWeek === weeklyGoal && (
-              <InsightBadge text="🎯 Goal crusher" index={3} />
+              <InsightBadge
+                text={t('mood.stats.insights.goalCrusher')}
+                index={3}
+              />
             )}
           </View>
         </View>

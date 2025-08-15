@@ -1,3 +1,5 @@
+// CRITICAL: RTL bootstrap MUST be imported first to prevent style caching issues
+import '~/lib/rtl-bootstrap';
 import '../../global.css';
 import '~/lib/theme-bootstrap';
 import 'expo-dev-client';
@@ -22,6 +24,8 @@ export {
 // Navigation stack - expo-router provides NavigationContainer automatically
 function NavigationStack() {
   const currentTheme = useCurrentTheme();
+  // RTL layout is now handled at app startup in i18n.ts - no runtime switching
+
   return (
     <>
       <StatusBar style={currentTheme === 'dark' ? 'light' : 'dark'} />

@@ -8,13 +8,13 @@ import { ExerciseDetail } from '~/components/exercises';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import { useCurrentUser, useUserStats } from '~/hooks/useSharedData';
-import { useTranslation } from '~/hooks/useTranslation';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   getTimeBasedGreeting,
   getMotivationalMessage,
 } from '~/lib/daily-exercise-utils';
 import type { Exercise } from '~/types';
+import { useTranslation } from '~/hooks/useTranslation';
 
 // Utility functions from original exercises.tsx
 function getCategoryIcon(category: string): string {
@@ -41,19 +41,43 @@ function getCategoryColor(category: string): string {
   return categoryColors[category] || '#FF6B6B';
 }
 
-function getBenefitsForCategory(category: string, t: any): string[] {
-  const benefits: Record<string, string[]> = {
-    breathing: t('exercises.benefits.breathing'),
-    mindfulness: t('exercises.benefits.mindfulness'),
-    movement: t('exercises.benefits.movement'),
-    journaling: t('exercises.benefits.journaling'),
-    relaxation: t('exercises.benefits.relaxation'),
+function getBenefitsForCategory(
+  category: string,
+  t: (key: string) => string
+): string[] {
+  const benefitKeys: Record<string, string[]> = {
+    breathing: [
+      'exercises.benefits.breathing.0',
+      'exercises.benefits.breathing.1',
+      'exercises.benefits.breathing.2',
+    ],
+    mindfulness: [
+      'exercises.benefits.mindfulness.0',
+      'exercises.benefits.mindfulness.1',
+      'exercises.benefits.mindfulness.2',
+    ],
+    movement: [
+      'exercises.benefits.movement.0',
+      'exercises.benefits.movement.1',
+      'exercises.benefits.movement.2',
+    ],
+    journaling: [
+      'exercises.benefits.journaling.0',
+      'exercises.benefits.journaling.1',
+      'exercises.benefits.journaling.2',
+    ],
+    relaxation: [
+      'exercises.benefits.relaxation.0',
+      'exercises.benefits.relaxation.1',
+      'exercises.benefits.relaxation.2',
+    ],
   };
-  return benefits[category] || [];
+  const keys = benefitKeys[category] || [];
+  return keys.map((key) => t(key));
 }
 
 export default function ExercisesIndex() {
-  const { t, locale } = useTranslation();
+  const { t } = useTranslation();
 
   // State for ExerciseDetail modal (remains global)
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
@@ -70,9 +94,9 @@ export default function ExercisesIndex() {
   // Store stability guard
   const [isStoreStable] = useState(true);
 
-  // Cache translated benefits
-  const translatedBenefits = useMemo(() => {
-    const benefitsMap: Record<string, string[]> = {};
+  // Cache benefits
+  const benefitsMap = useMemo(() => {
+    const benefits: Record<string, string[]> = {};
     const categories = [
       'breathing',
       'mindfulness',
@@ -82,10 +106,10 @@ export default function ExercisesIndex() {
     ];
 
     categories.forEach((category) => {
-      benefitsMap[category] = getBenefitsForCategory(category, t);
+      benefits[category] = getBenefitsForCategory(category, t);
     });
 
-    return benefitsMap;
+    return benefits;
   }, [t]);
 
   // Daily exercise data
@@ -94,24 +118,17 @@ export default function ExercisesIndex() {
 
     return {
       id: dailyExerciseData._id,
-      title:
-        locale === 'ar' ? dailyExerciseData.titleAr : dailyExerciseData.title,
-      description:
-        locale === 'ar'
-          ? dailyExerciseData.descriptionAr
-          : dailyExerciseData.description,
+      title: dailyExerciseData.title,
+      description: dailyExerciseData.description,
       duration: `${dailyExerciseData.duration} min`,
       difficulty: dailyExerciseData.difficulty,
       category: dailyExerciseData.category,
       icon: getCategoryIcon(dailyExerciseData.category),
       color: getCategoryColor(dailyExerciseData.category),
-      steps:
-        locale === 'ar'
-          ? dailyExerciseData.instructionsAr
-          : dailyExerciseData.instructions,
-      benefits: translatedBenefits[dailyExerciseData.category] || [],
+      steps: dailyExerciseData.instructions,
+      benefits: benefitsMap[dailyExerciseData.category] || [],
     };
-  }, [dailyExerciseData, locale, translatedBenefits, isStoreStable]);
+  }, [dailyExerciseData, benefitsMap, isStoreStable]);
 
   // Navigation handler for category selection
   const handleCategorySelect = useCallback((categoryId: string) => {
@@ -133,25 +150,22 @@ export default function ExercisesIndex() {
         await recordCompletion({
           exerciseId: exercise.id as any,
           duration: parseInt(exercise.duration),
-          feedback: 'Completed successfully',
+          feedback: t('exercises.exerciseCompleted'),
         });
       }
     },
-    [currentUser, recordCompletion]
+    [currentUser, recordCompletion, t]
   );
 
   // Stats values
+  const totalCompletions = (userStats as any)?.totalCompletions ?? 0;
   const statsValues = useMemo(
     () => ({
       completionsThisWeek: userStats?.completionsThisWeek ?? 0,
       currentStreak: userStats?.currentStreak ?? 0,
-      totalCompletions: (userStats as any)?.totalCompletions ?? 0,
+      totalCompletions,
     }),
-    [
-      userStats?.completionsThisWeek,
-      userStats?.currentStreak,
-      (userStats as any)?.totalCompletions,
-    ]
+    [userStats, totalCompletions]
   );
 
   // Stats section component
@@ -168,16 +182,14 @@ export default function ExercisesIndex() {
   );
 
   // Screen title
-  const screenTitle = useMemo(() => t('exercises.title') || 'Exercises', [t]);
+  const screenTitle = t('exercises.title');
 
   // Daily exercise helpers
-  const greeting = useMemo(() => getTimeBasedGreeting(locale), [locale]);
+  const greeting = useMemo(() => getTimeBasedGreeting(t), [t]);
   const motivationalMessage = useMemo(
     () =>
-      dailyExercise
-        ? getMotivationalMessage(dailyExercise.category, locale)
-        : '',
-    [dailyExercise, locale]
+      dailyExercise ? getMotivationalMessage(dailyExercise.category, t) : '',
+    [dailyExercise, t]
   );
 
   return (

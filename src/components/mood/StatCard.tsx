@@ -49,7 +49,7 @@ export function StatCard({
           <Icon size={28} color={iconColor} strokeWidth={2.5} />
         </View>
         <Text
-          variant="largeTitle"
+          variant="title1"
           className="font-bold text-[#2D3748] mb-1"
           style={{ fontSize: 28, letterSpacing: 0.5 }}
         >

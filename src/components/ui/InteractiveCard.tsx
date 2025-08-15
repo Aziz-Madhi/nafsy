@@ -12,6 +12,7 @@ import { IconRenderer } from './IconRenderer';
 import { cn } from '~/lib/cn';
 import { StaggeredListItem } from '~/lib/animations';
 import { useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface InteractiveCardProps {
   title: string;
@@ -35,11 +36,7 @@ const DIFFICULTY_COLORS = {
   advanced: '#EF4444',
 } as const;
 
-const DIFFICULTY_LABELS = {
-  beginner: 'Beginner',
-  intermediate: 'Intermediate',
-  advanced: 'Advanced',
-} as const;
+// Note: DIFFICULTY_LABELS will be replaced with translation function usage
 
 // Background image mapping moved to data layer
 const CATEGORY_BACKGROUNDS: Record<string, ImageSourcePropType> = {
@@ -156,6 +153,7 @@ function ExerciseCardContent({
   difficulty?: 'beginner' | 'intermediate' | 'advanced';
   style?: ViewStyle;
 }) {
+  const { t } = useTranslation();
   const colors = useColors();
   const isDarkMode = colors.background === '#171717';
   const DARK_CARD_COLOR = '#0A1514';
@@ -186,7 +184,7 @@ function ExerciseCardContent({
         }}
       >
         <View
-          className="absolute top-4 right-4 w-12 h-12 rounded-full items-center justify-center"
+          className="absolute top-4 end-4 w-12 h-12 rounded-full items-center justify-center"
           style={{
             backgroundColor: isDarkMode ? DARK_BADGE_COLOR : color + '40',
           }}
@@ -251,7 +249,7 @@ function ExerciseCardContent({
                 className="text-sm font-medium"
                 style={{ color: DIFFICULTY_COLORS[difficulty] }}
               >
-                📊 {DIFFICULTY_LABELS[difficulty]}
+                📊 {t(`exercises.difficulty.${difficulty}`)}
               </Text>
             </View>
           )}

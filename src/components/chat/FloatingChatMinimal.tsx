@@ -34,6 +34,7 @@ import { StreamingText } from './StreamingText';
 import { AnimatedWelcomeText } from './AnimatedWelcomeText';
 import { SPRING_PRESETS } from '~/lib/animations';
 import { useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 
@@ -312,6 +313,7 @@ const EnhancedTypingIndicator = memo(function EnhancedTypingIndicator() {
 // Main floating chat component - minimal design
 export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
   const colors = useColors();
+  const { t } = useTranslation();
 
   // Component mount tracking to prevent state updates on unmounted component
   const isMountedRef = React.useRef(true);
@@ -507,20 +509,20 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
     const lower = message.toLowerCase();
 
     if (lower.includes('stress') || lower.includes('overwhelm')) {
-      return "I feel the weight of what you're carrying. Let's take this moment together.";
+      return t('chat.responses.stress');
     } else if (lower.includes('anxious') || lower.includes('anxiety')) {
-      return "Your anxiety is real. You're safe here with me.";
+      return t('chat.responses.anxiety');
     } else if (lower.includes('sad') || lower.includes('down')) {
-      return "Your sadness matters. I'm here, holding space for all of it.";
+      return t('chat.responses.sad');
     } else if (lower.includes('angry') || lower.includes('frustrated')) {
-      return 'Your anger is valid. This is your space to express it.';
+      return t('chat.responses.angry');
     } else if (lower.includes('lonely') || lower.includes('alone')) {
-      return "I'm right here with you. You're not alone in this.";
+      return t('chat.responses.lonely');
     } else if (lower.includes('scared') || lower.includes('afraid')) {
-      return "Fear can be overwhelming. I'm here to sit with you through it.";
+      return t('chat.responses.scared');
     }
 
-    return "Whatever you're feeling is valid. This is your safe space.";
+    return t('chat.defaultResponse');
   };
 
   // Removed old animated styles - now using Moti
@@ -614,7 +616,7 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
                     style={{ alignItems: 'center' }}
                   >
                     <AnimatedWelcomeText
-                      text="This is your private space. Share what's on your mind."
+                      text={t('chat.floatingChat.welcomeMessage')}
                       style={{
                         color: 'rgba(255, 255, 255, 0.6)',
                         fontSize: 17,
@@ -688,7 +690,7 @@ export const FloatingChatMinimal = memo(function FloatingChatMinimal() {
                     <TextInput
                       value={inputText}
                       onChangeText={setInputText}
-                      placeholder="Type your thoughts..."
+                      placeholder={t('chat.floatingChat.placeholder')}
                       placeholderTextColor="rgba(255, 255, 255, 0.4)"
                       style={{
                         flex: 1,

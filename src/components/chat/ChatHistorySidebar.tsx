@@ -16,11 +16,11 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
-import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
 import { User } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width
@@ -106,7 +106,7 @@ const SessionItem = ({
       >
         <View className="flex-row items-center justify-between mb-2">
           <View className="flex-row items-center flex-1">
-            <View className="w-3 h-3 rounded-full mr-3 bg-brand-dark-blue" />
+            <View className="w-3 h-3 rounded-full me-3 bg-brand-dark-blue" />
             <Text
               variant="subhead"
               className={cn(
@@ -121,7 +121,7 @@ const SessionItem = ({
 
           <Pressable
             onPress={onDelete}
-            className="p-2 ml-2"
+            className="p-2 ms-2"
             hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           >
             <SymbolView name="trash" size={16} tintColor="#9CA3AF" />
@@ -131,8 +131,8 @@ const SessionItem = ({
         <View className="flex-row items-center justify-between">
           <View className="flex-row items-center">
             <SymbolView name="bubble.left" size={14} tintColor="#9CA3AF" />
-            <Text variant="caption1" className="text-muted-foreground ml-1">
-              {`${session.messageCount ?? 0} ${t('chat.messages') || 'messages'}`}
+            <Text variant="caption1" className="text-muted-foreground ms-1">
+              {`${session.messageCount ?? 0} ${t('chat.messages')}`}
             </Text>
           </View>
 
@@ -156,8 +156,8 @@ export function ChatHistorySidebar({
   currentSessionId,
 }: ChatHistorySidebarProps) {
   const { user } = useUserSafe();
-  const { t } = useTranslation();
   const colors = useColors();
+  const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
 
   const handleSettingsPress = useCallback(() => {
@@ -295,7 +295,7 @@ export function ChatHistorySidebar({
           <View className="p-4 border-b border-border/10">
             <View className="flex-row items-center justify-between mb-3">
               <Text variant="title3" className="font-bold text-foreground">
-                History
+                {t('chat.history.title')}
               </Text>
               <Pressable
                 onPress={handleSettingsPress}
@@ -313,9 +313,9 @@ export function ChatHistorySidebar({
               <TextInput
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                placeholder="Search"
+                placeholder={t('common.search')}
                 placeholderTextColor="#9CA3AF"
-                className="flex-1 ml-3 text-base text-foreground"
+                className="flex-1 ms-3 text-base text-foreground"
                 autoCapitalize="none"
                 autoCorrect={false}
               />
@@ -359,11 +359,8 @@ export function ChatHistorySidebar({
             emptyComponent={() => {
               const hasSearchQuery = searchQuery.trim().length > 0;
               const emptyMessage = hasSearchQuery
-                ? (t?.('chat.search.noResults' as any) as unknown as string) ||
-                  'No conversations match your search'
-                : (t(
-                    'chat.history.noMainSessions' as any
-                  ) as unknown as string) || 'No chat sessions yet';
+                ? t('chat.history.noSearchResults')
+                : t('chat.history.noMainSessions');
               const iconName = hasSearchQuery
                 ? 'magnifyingglass'
                 : 'bubble.left';
@@ -388,9 +385,7 @@ export function ChatHistorySidebar({
                         variant="caption1"
                         className="text-muted-foreground"
                       >
-                        {(t?.(
-                          'chat.search.clearSearch' as any
-                        ) as unknown as string) || 'Clear search'}
+                        {t('chat.history.clearSearch')}
                       </Text>
                     </Pressable>
                   )}

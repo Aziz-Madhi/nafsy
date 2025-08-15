@@ -28,19 +28,47 @@
   },
   "auth": {
     "welcome": "مرحباً بك في نفسي",
+    "welcomeBack": "مرحباً بعودتك",
     "signInTitle": "تسجيل الدخول",
     "signUpTitle": "إنشاء حساب",
+    "createAccount": "إنشاء حساب",
+    "verifyEmail": "تأكيد البريد الإلكتروني",
     "email": "البريد الإلكتروني",
     "password": "كلمة المرور",
+    "name": "الاسم",
     "confirmPassword": "تأكيد كلمة المرور",
+    "verificationCode": "رمز التأكيد",
     "forgotPassword": "نسيت كلمة المرور؟",
-    "createAccount": "إنشاء حساب",
     "alreadyHaveAccount": "هل لديك حساب بالفعل؟",
     "dontHaveAccount": "ليس لديك حساب؟",
-    "emailRequired": "البريد الإلكتروني مطلوب",
-    "passwordRequired": "كلمة المرور مطلوبة",
-    "invalidEmail": "عنوان بريد إلكتروني غير صحيح",
-    "passwordTooShort": "كلمة المرور يجب أن تكون 6 أحرف على الأقل"
+    "signInSubtitle": "سجل دخولك لمتابعة رحلة العافية النفسية",
+    "signUpSubtitle": "ابدأ رحلتك نحو صحة نفسية أفضل",
+    "verificationSubtitle": "لقد أرسلنا رمز تأكيد إلى {{email}}",
+    "placeholders": {
+      "enterEmail": "أدخل بريدك الإلكتروني",
+      "enterPassword": "أدخل كلمة المرور",
+      "createPassword": "أنشئ كلمة مرور",
+      "enterName": "أدخل اسمك",
+      "enterCode": "أدخل الرمز"
+    },
+    "buttons": {
+      "signingIn": "جاري تسجيل الدخول...",
+      "creatingAccount": "جاري إنشاء الحساب...",
+      "verifying": "جاري التأكيد...",
+      "verifyEmail": "تأكيد البريد الإلكتروني"
+    },
+    "validation": {
+      "emailRequired": "البريد الإلكتروني مطلوب",
+      "passwordRequired": "كلمة المرور مطلوبة",
+      "nameRequired": "الاسم مطلوب",
+      "invalidEmail": "يرجى إدخال عنوان بريد إلكتروني صحيح",
+      "passwordTooShort": "كلمة المرور يجب أن تكون 8 أحرف على الأقل"
+    },
+    "errors": {
+      "signInFailed": "فشل في تسجيل الدخول. يرجى المحاولة مرة أخرى.",
+      "signUpFailed": "فشل في إنشاء الحساب. يرجى المحاولة مرة أخرى.",
+      "verificationFailed": "فشل في تأكيد البريد الإلكتروني. يرجى المحاولة مرة أخرى."
+    }
   },
   "tabs": {
     "chat": "محادثة",
@@ -70,13 +98,21 @@
     },
     "history": {
       "title": "تاريخ المحادثات",
+      "mainChat": "المحادثة الرئيسية",
+      "ventHistory": "تاريخ التفريغ",
       "mainSessions": "جلسات العلاج",
       "ventSessions": "التفريغات السريعة",
-      "noHistory": "لا يوجد تاريخ محادثات بعد",
+      "noHistory": "لا يوجد تاريخ {{type}} بعد",
+      "noMainSessions": "ابدأ محادثة في الدردشة الرئيسية لرؤية تاريخك هنا.",
+      "noVentSessions": "استخدم الدردشة العائمة للتفريغات السريعة لرؤية تاريخك هنا.",
+      "noSearchResults": "لا توجد محادثات تطابق بحثك",
+      "untitledSession": "جلسة بدون عنوان",
       "searchPlaceholder": "ابحث في المحادثات...",
+      "clearSearch": "مسح البحث",
       "deleteSession": "حذف الجلسة",
       "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه الجلسة؟",
-      "untitledSession": "جلسة بدون عنوان"
+      "startChatting": "ابدأ المحادثة",
+      "startVenting": "ابدأ التفريغ"
     }
   },
   "mood": {
@@ -110,6 +146,13 @@
       "recommendedForYou": "موصى به لك",
       "basedOnMood": "بناءً على مزاجك اليوم",
       "tryExercise": "جرب التمرين"
+    },
+    "moodEncouragement": {
+      "happy": "حافظ على طاقتك الإيجابية",
+      "sad": "رعاية لطيفة لمشاعرك",
+      "anxious": "اعثر على مركز هدوءك",
+      "angry": "حرر واستعد التوازن",
+      "neutral": "استكشف رحلتك الصحية"
     },
     "stats": {
       "title": "إحصائيات المزاج",
@@ -233,6 +276,25 @@
       "light": "فاتح",
       "dark": "داكن",
       "system": "النظام"
+    },
+    "subscription": {
+      "freePlan": "خطة مجانية"
+    },
+    "settings": {
+      "appearance": "المظهر",
+      "language": "اللغة",
+      "hapticFeedback": "ردود الفعل اللمسية",
+      "notifications": "الإشعارات",
+      "voice": "الصوت",
+      "comingSoon": "قريباً",
+      "helpCenter": "مركز المساعدة",
+      "crisisResources": "موارد الأزمات",
+      "feedback": "الملاحظات",
+      "termsOfUse": "شروط الاستخدام",
+      "privacyPolicy": "سياسة الخصوصية",
+      "email": "البريد الإلكتروني",
+      "subscription": "الاشتراك",
+      "anonymousUser": "مستخدم مجهول"
     },
     "support": {
       "helpCenter": "مركز المساعدة",

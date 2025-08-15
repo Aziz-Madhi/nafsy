@@ -1,9 +1,15 @@
 import React, { Component, ReactNode } from 'react';
 import { View, TouchableOpacity, Text, StyleSheet } from 'react-native';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface Props {
   children: ReactNode;
   fallback?: ReactNode;
+  translations?: {
+    title: string;
+    message: string;
+    tryAgain: string;
+  };
 }
 
 interface State {
@@ -11,7 +17,7 @@ interface State {
   error?: Error;
 }
 
-export class SafeErrorBoundary extends Component<Props, State> {
+class SafeErrorBoundaryComponent extends Component<Props, State> {
   constructor(props: Props) {
     super(props);
     this.state = { hasError: false };
@@ -38,15 +44,22 @@ export class SafeErrorBoundary extends Component<Props, State> {
         return this.props.fallback;
       }
 
+      const { translations } = this.props;
+
       return (
         <View style={styles.container}>
           <View style={styles.content}>
-            <Text style={styles.title}>Something went wrong</Text>
+            <Text style={styles.title}>
+              {translations?.title || 'Something went wrong'}
+            </Text>
             <Text style={styles.message}>
-              We encountered an unexpected error. Please try again.
+              {translations?.message ||
+                'We encountered an unexpected error. Please try again.'}
             </Text>
             <TouchableOpacity onPress={this.handleRetry} style={styles.button}>
-              <Text style={styles.buttonText}>Try Again</Text>
+              <Text style={styles.buttonText}>
+                {translations?.tryAgain || 'Try Again'}
+              </Text>
             </TouchableOpacity>
             {__DEV__ && this.state.error && (
               <View style={styles.errorBox}>
@@ -112,3 +125,26 @@ const styles = StyleSheet.create({
     fontFamily: 'monospace',
   },
 });
+
+// Wrapper function component that provides translations to the class component
+export function SafeErrorBoundary({
+  children,
+  fallback,
+}: {
+  children: ReactNode;
+  fallback?: ReactNode;
+}) {
+  const { t } = useTranslation();
+
+  const translations = {
+    title: t('ui.error.somethingWrong'),
+    message: t('ui.error.unexpectedError'),
+    tryAgain: t('common.retry'),
+  };
+
+  return (
+    <SafeErrorBoundaryComponent translations={translations} fallback={fallback}>
+      {children}
+    </SafeErrorBoundaryComponent>
+  );
+}

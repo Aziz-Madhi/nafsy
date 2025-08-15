@@ -8,9 +8,7 @@ import { ActivityIndicator, View, Appearance } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { StoreErrorBoundary } from '~/components/StoreErrorBoundary';
 import { useAppStore } from '~/store/useAppStore';
-import { useChatUIStore } from '~/store/useChatUIStore';
 import { logger } from '~/lib/logger';
-import { isSecureStorageReady } from '~/lib/mmkv-storage';
 
 interface StoreProviderProps {
   children: ReactNode;
@@ -35,48 +33,14 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
   });
 
   useEffect(() => {
-    let isMounted = true;
+    // With unified storage, we can initialize immediately
+    // No need to wait for async storage initialization
+    setHydrationState({
+      isHydrated: true,
+      hasError: false,
+    });
 
-    const initializeStores = async () => {
-      try {
-        // Wait for MMKV storage to be ready (with timeout)
-        let attempts = 0;
-        const maxAttempts = 10;
-
-        while (!isSecureStorageReady() && attempts < maxAttempts && isMounted) {
-          await new Promise((resolve) => setTimeout(resolve, 50));
-          attempts++;
-        }
-
-        // Only proceed if component is still mounted
-        if (!isMounted) return;
-
-        // Store factory handles hydration automatically - no need to access stores here
-        setHydrationState({
-          isHydrated: true,
-          hasError: false,
-        });
-
-        logger.info('Store initialization completed', 'StoreProvider');
-      } catch (error) {
-        logger.error('Store initialization failed', 'StoreProvider', error);
-
-        if (isMounted) {
-          setHydrationState({
-            isHydrated: true, // Continue anyway with defaults
-            hasError: true,
-            errorMessage:
-              error instanceof Error ? error.message : 'Unknown error',
-          });
-        }
-      }
-    };
-
-    initializeStores();
-
-    return () => {
-      isMounted = false;
-    };
+    logger.info('Store initialization completed', 'StoreProvider');
   }, []);
 
   // Show loading during initialization
@@ -104,6 +68,7 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       }}
     >
       <SystemThemeListener />
+      <PendingLanguageCleaner />
       {children}
     </StoreErrorBoundary>
   );
@@ -126,3 +91,40 @@ const SystemThemeListener: React.FC = () => {
 
   return null;
 };
+
+// Simple component to clean up pending language state after i18n has handled it
+const PendingLanguageCleaner: React.FC = React.memo(
+  function PendingLanguageCleaner() {
+    const pendingLanguage = useAppStore((state) => state.pendingLanguage);
+    const applyPendingLanguage = useAppStore(
+      (state) => state.applyPendingLanguage
+    );
+
+    useEffect(() => {
+      // Only run once on mount to clean up pending language state
+      // i18n.ts has already applied the language and RTL during initialization
+
+      if (pendingLanguage) {
+        // Small delay to ensure everything is settled
+        const timer = setTimeout(() => {
+          logger.info(
+            `Cleaning up pending language state: ${pendingLanguage}`,
+            'PendingLanguageCleaner'
+          );
+          applyPendingLanguage().catch((error) => {
+            logger.error(
+              'Failed to clean pending language state',
+              'PendingLanguageCleaner',
+              error
+            );
+          });
+        }, 50); // Small delay for settling
+
+        return () => clearTimeout(timer);
+      }
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, []); // Empty dependency array - only run once on mount (intentional)
+
+    return null;
+  }
+);

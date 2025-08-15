@@ -7,23 +7,27 @@ import { Text } from '~/components/ui/text';
 import { IconRenderer } from '~/components/ui/IconRenderer';
 import { MotiView, AnimatePresence } from 'moti';
 import { useMoodColor, useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
 
-const moodNames: Record<string, string> = {
-  sad: 'Sad',
-  anxious: 'Anxious',
-  neutral: 'Neutral',
-  happy: 'Happy',
-  angry: 'Angry',
-};
+// Mood names will be localized using translation hook
 
 interface WeekViewProps {
   moodData: Doc<'moods'>[] | undefined;
 }
 
 export function WeekView({ moodData }: WeekViewProps) {
+  const { t } = useTranslation();
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   const today = new Date();
-  const weekDays = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
+  const weekDays = [
+    t('mood.calendar.days.sun'),
+    t('mood.calendar.days.mon'),
+    t('mood.calendar.days.tue'),
+    t('mood.calendar.days.wed'),
+    t('mood.calendar.days.thu'),
+    t('mood.calendar.days.fri'),
+    t('mood.calendar.days.sat'),
+  ];
 
   // Colors for React Native styling
   const colors = useColors();
@@ -193,7 +197,7 @@ export function WeekView({ moodData }: WeekViewProps) {
 
                 <View className="flex-row items-center mb-4">
                   <View
-                    className="w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden"
+                    className="w-14 h-14 rounded-2xl items-center justify-center me-4 overflow-hidden"
                     style={{
                       backgroundColor: getMoodColor(selectedDay.mood.mood),
                     }}
@@ -210,7 +214,8 @@ export function WeekView({ moodData }: WeekViewProps) {
                     className="text-[#2D3748] font-bold"
                     style={{ fontSize: 16, letterSpacing: 0.3 }}
                   >
-                    Feeling {moodNames[selectedDay.mood.mood]}
+                    {t('mood.feeling')}{' '}
+                    {t(`mood.moods.${selectedDay.mood.mood}`)}
                   </Text>
                 </View>
 
@@ -250,7 +255,7 @@ export function WeekView({ moodData }: WeekViewProps) {
                         className="text-[#5A4A3A] font-bold"
                         style={{ fontSize: 13, letterSpacing: 0.5 }}
                       >
-                        NOTE
+                        {t('mood.note')}
                       </Text>
                     </View>
                     <Text
@@ -277,7 +282,7 @@ export function WeekView({ moodData }: WeekViewProps) {
                       className="text-gray-500 italic font-medium text-center"
                       style={{ fontSize: 14 }}
                     >
-                      No notes for this day
+                      {t('mood.noNotesForDay')}
                     </Text>
                   </View>
                 )}

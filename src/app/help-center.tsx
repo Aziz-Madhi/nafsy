@@ -17,10 +17,11 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
 // import { ProfileLayout } from '~/components/ui/ScreenLayout';
 import { useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
+import { useIsRTL } from '~/store/useAppStore';
 
 // FAQ Item Component
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -48,7 +49,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
         style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
       >
         <View className="flex-row items-center justify-between">
-          <Text variant="body" className="flex-1 pr-3 font-medium">
+          <Text variant="body" className="flex-1 pe-3 font-medium">
             {question}
           </Text>
           <Animated.View style={animatedStyle}>
@@ -74,8 +75,9 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 }
 
 export default function HelpCenter() {
-  const { t } = useTranslation();
   const colors = useColors();
+  const { t } = useTranslation();
+  const isRTL = useIsRTL();
   const [searchQuery, setSearchQuery] = useState('');
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -92,10 +94,6 @@ export default function HelpCenter() {
     {
       question: t('helpCenter.faqs.privacy.question'),
       answer: t('helpCenter.faqs.privacy.answer'),
-    },
-    {
-      question: t('helpCenter.faqs.language.question'),
-      answer: t('helpCenter.faqs.language.answer'),
     },
     {
       question: t('helpCenter.faqs.export.question'),
@@ -136,7 +134,7 @@ export default function HelpCenter() {
         <View className="flex-row items-center">
           <Pressable
             onPress={() => router.back()}
-            className="mr-4"
+            className="me-4"
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
             <SymbolView
@@ -152,7 +150,7 @@ export default function HelpCenter() {
               fontSize: 28,
               fontWeight: 'normal',
               lineHeight: 34,
-              textAlign: 'left',
+              textAlign: isRTL ? 'right' : 'left',
             }}
           >
             {t('helpCenter.title')}
@@ -177,7 +175,7 @@ export default function HelpCenter() {
                 placeholder={t('helpCenter.searchPlaceholder')}
                 value={searchQuery}
                 onChangeText={setSearchQuery}
-                className="flex-1 ml-3 text-base"
+                className="flex-1 ms-3 text-base"
                 placeholderTextColor="#9CA3AF"
               />
             </View>
@@ -197,7 +195,7 @@ export default function HelpCenter() {
                 style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
               >
                 <View className="flex-row items-center">
-                  <View className="bg-white/20 w-10 h-10 rounded-full items-center justify-center mr-3">
+                  <View className="bg-white/20 w-10 h-10 rounded-full items-center justify-center me-3">
                     <SymbolView
                       name="bubble.left.fill"
                       size={20}
@@ -229,7 +227,7 @@ export default function HelpCenter() {
                 style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
               >
                 <View className="flex-row items-center">
-                  <View className="bg-red-50 w-10 h-10 rounded-full items-center justify-center mr-3">
+                  <View className="bg-red-50 w-10 h-10 rounded-full items-center justify-center me-3">
                     <SymbolView
                       name="heart.fill"
                       size={20}
@@ -238,10 +236,10 @@ export default function HelpCenter() {
                   </View>
                   <View className="flex-1">
                     <Text variant="callout" className="font-semibold mb-0.5">
-                      {t('profile.support.crisisResources')}
+                      {t('profile.settings.crisis')}
                     </Text>
                     <Text variant="caption1" className="text-muted-foreground">
-                      {t('crisisResources.hotlines')}
+                      {t('profile.settings.crisisSubtitle')}
                     </Text>
                   </View>
                   <SymbolView
@@ -284,7 +282,7 @@ export default function HelpCenter() {
               <View className="flex-row items-center">
                 <Pressable
                   onPress={() => setShowChat(false)}
-                  className="mr-4"
+                  className="me-4"
                   style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
                 >
                   <SymbolView
@@ -300,7 +298,7 @@ export default function HelpCenter() {
                     fontSize: 28,
                     fontWeight: 'normal',
                     lineHeight: 34,
-                    textAlign: 'left',
+                    textAlign: isRTL ? 'right' : 'left',
                   }}
                 >
                   {t('helpCenter.customerSupport')}
@@ -330,7 +328,7 @@ export default function HelpCenter() {
                   onPress={handleSendMessage}
                   disabled={!chatMessage.trim()}
                   className={cn(
-                    'ml-2 w-10 h-10 rounded-full items-center justify-center',
+                    'ms-2 w-10 h-10 rounded-full items-center justify-center',
                     chatMessage.trim() ? 'bg-brand-dark-blue' : 'bg-gray-200'
                   )}
                 >

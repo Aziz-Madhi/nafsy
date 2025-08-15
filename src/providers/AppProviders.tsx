@@ -4,9 +4,11 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ClerkProviderWrapper } from './ClerkProvider';
 import { ConvexProvider } from './ConvexProvider';
 import { StoreProvider } from './StoreProvider';
-import { LanguageProvider } from './LanguageProvider';
 import { ThemeController } from '~/components/ThemeController';
 import { useColors } from '~/hooks/useColors';
+
+// Initialize i18n system - must be imported to initialize
+import '~/lib/i18n';
 
 interface AppProvidersProps {
   children: React.ReactNode;
@@ -21,11 +23,9 @@ export function AppProviders({ children }: AppProvidersProps) {
       <SafeAreaProvider>
         <StoreProvider>
           <ThemeController />
-          <LanguageProvider>
-            <ClerkProviderWrapper>
-              <ConvexProvider>{children}</ConvexProvider>
-            </ClerkProviderWrapper>
-          </LanguageProvider>
+          <ClerkProviderWrapper>
+            <ConvexProvider>{children}</ConvexProvider>
+          </ClerkProviderWrapper>
         </StoreProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>

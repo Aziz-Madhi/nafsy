@@ -13,6 +13,7 @@
     "success": "Success",
     "retry": "Retry",
     "close": "Close",
+    "dismiss": "Dismiss",
     "search": "Search",
     "filter": "Filter",
     "all": "All",
@@ -28,19 +29,47 @@
   },
   "auth": {
     "welcome": "Welcome to Nafsy",
+    "welcomeBack": "Welcome Back",
     "signInTitle": "Sign In",
     "signUpTitle": "Sign Up",
+    "createAccount": "Create Account",
+    "verifyEmail": "Verify Email",
     "email": "Email",
     "password": "Password",
+    "name": "Name",
     "confirmPassword": "Confirm Password",
+    "verificationCode": "Verification Code",
     "forgotPassword": "Forgot Password?",
-    "createAccount": "Create Account",
     "alreadyHaveAccount": "Already have an account?",
     "dontHaveAccount": "Don't have an account?",
-    "emailRequired": "Email is required",
-    "passwordRequired": "Password is required",
-    "invalidEmail": "Invalid email address",
-    "passwordTooShort": "Password must be at least 6 characters"
+    "signInSubtitle": "Sign in to continue your mental wellness journey",
+    "signUpSubtitle": "Start your journey to better mental health",
+    "verificationSubtitle": "We've sent a verification code to {{email}}",
+    "placeholders": {
+      "enterEmail": "Enter your email",
+      "enterPassword": "Enter your password",
+      "createPassword": "Create a password",
+      "enterName": "Enter your name",
+      "enterCode": "Enter code"
+    },
+    "buttons": {
+      "signingIn": "Signing In...",
+      "creatingAccount": "Creating Account...",
+      "verifying": "Verifying...",
+      "verifyEmail": "Verify Email"
+    },
+    "validation": {
+      "emailRequired": "Email is required",
+      "passwordRequired": "Password is required",
+      "nameRequired": "Name is required",
+      "invalidEmail": "Please enter a valid email address",
+      "passwordTooShort": "Password must be at least 8 characters"
+    },
+    "errors": {
+      "signInFailed": "Failed to sign in. Please try again.",
+      "signUpFailed": "Failed to sign up. Please try again.",
+      "verificationFailed": "Failed to verify email. Please try again."
+    }
   },
   "tabs": {
     "chat": "Chat",
@@ -71,18 +100,48 @@
       "send": "Send"
     },
     "history": {
-      "title": "Chat History",
+      "title": "History",
       "mainChat": "Main Chat",
       "ventHistory": "Vent History",
       "mainSessions": "Therapy Sessions",
       "ventSessions": "Quick Vents",
       "noHistory": "No chat history yet",
-      "noMainSessions": "No chat sessions yet",
-      "noVentSessions": "No vent sessions yet",
+      "noMainSessions": "Start a conversation in the main chat to see your history here.",
+      "noVentSessions": "Use the floating chat for quick vents to see your history here.",
+      "noSearchResults": "No conversations match your search",
       "untitledSession": "Untitled Session",
       "searchPlaceholder": "Search conversations...",
+      "clearSearch": "Clear search",
       "deleteSession": "Delete Session",
-      "confirmDelete": "Are you sure you want to delete this session?"
+      "confirmDelete": "Are you sure you want to delete this session?",
+      "noHistory": "No {{type}} History",
+      "startChatting": "Start Chatting",
+      "startVenting": "Start Venting"
+    },
+    "defaultResponse": "I hear you. Let's work through this together. Can you tell me more about what's on your mind?",
+    "floatingChat": {
+      "welcomeMessage": "This is your private space. Share what's on your mind.",
+      "placeholder": "Type your thoughts..."
+    },
+    "status": {
+      "switchingSession": "Switching session...",
+      "connecting": "Connecting...",
+      "connected": "Connected",
+      "disconnected": "Disconnected",
+      "typing": "AI is typing...",
+      "thinking": "AI is thinking..."
+    },
+    "responses": {
+      "default": "I'm here to listen. Let it out.",
+      "anxiety": "I understand you're feeling anxious. That can be really challenging. Would you like to try a breathing exercise together, or would you prefer to talk about what's making you feel this way?",
+      "sad": "I'm sorry you're feeling sad. It's okay to feel this way, and I'm here to support you. Would you like to share what's been weighing on your mind?",
+      "stress": "I feel the weight of what you're carrying. Let's take this moment together.",
+      "angry": "Your anger is valid. This is your space to express it.",
+      "lonely": "I'm right here with you. You're not alone in this.",
+      "scared": "Fear can be overwhelming. I'm here to sit with you through it.",
+      "work": "Work stress is real. Remember to prioritize your mental health.",
+      "mood": "Tracking your mood is a great step! You can use the Mood tab to log how you're feeling. Would you like me to guide you through it?",
+      "exercise": "Great choice! We have various exercises including breathing techniques, mindfulness, and movement. Check out the Exercises tab, or I can recommend one based on how you're feeling."
     }
   },
   "mood": {
@@ -93,6 +152,13 @@
     "notePlaceholder": "How are you feeling? What's on your mind?",
     "saveMood": "Save Mood",
     "moodSaved": "Mood saved successfully!",
+    "contributing": "What's contributing to this feeling?",
+    "feeling": "Feeling",
+    "note": "NOTE",
+    "level": "Level",
+    "startExercise": "Start",
+    "noNotesForDay": "No notes for this day",
+    "noMoodLogged": "No mood logged for this day",
     "moods": {
       "happy": "Happy",
       "neutral": "Neutral",
@@ -107,24 +173,179 @@
       "anxious": "😰",
       "angry": "😠"
     },
+    "tags": {
+      "work": "Work",
+      "family": "Family",
+      "health": "Health",
+      "finances": "Finances",
+      "relationship": "Relationship",
+      "future": "Future",
+      "social": "Social",
+      "school": "School",
+      "loss": "Loss",
+      "loneliness": "Loneliness",
+      "disappointment": "Disappointment",
+      "rejection": "Rejection",
+      "change": "Change",
+      "memory": "Memory",
+      "illness": "Illness",
+      "failure": "Failure",
+      "achievement": "Achievement",
+      "love": "Love",
+      "friends": "Friends",
+      "progress": "Progress",
+      "gratitude": "Gratitude",
+      "fun": "Fun",
+      "peace": "Peace",
+      "success": "Success",
+      "frustration": "Frustration",
+      "injustice": "Injustice",
+      "disrespect": "Disrespect",
+      "stress": "Stress",
+      "conflict": "Conflict",
+      "betrayal": "Betrayal",
+      "pressure": "Pressure",
+      "routine": "Routine",
+      "rest": "Rest",
+      "calm": "Calm",
+      "stable": "Stable",
+      "observing": "Observing",
+      "reflecting": "Reflecting",
+      "waiting": "Waiting",
+      "balanced": "Balanced"
+    },
+    "encouragement": {
+      "building": {
+        "prefix": "Building",
+        "highlight": "SELF-AWARENESS",
+        "suffix": "Each mood entry reveals patterns that lead to deeper understanding."
+      },
+      "discovering": {
+        "prefix": "Discovering",
+        "highlight": "PATTERNS",
+        "suffix": "Your emotional patterns will guide your wellness journey."
+      },
+      "finding": {
+        "prefix": "Finding",
+        "highlight": "CLARITY",
+        "suffix": "Regular mood tracking brings clarity to your emotional landscape."
+      },
+      "tracking": {
+        "prefix": "Tracking",
+        "highlight": "PROGRESS",
+        "suffix": "Your mood log is becoming a powerful tool for personal growth."
+      },
+      "habits": {
+        "prefix": "Building",
+        "highlight": "HABITS",
+        "suffix": "This daily practice helps you understand yourself better each day."
+      },
+      "experiencing": {
+        "prefix": "Experiencing",
+        "highlight": "GROWTH",
+        "suffix": "Every mood entry contributes to your emotional intelligence journey."
+      },
+      "keepGoing": {
+        "highlight": "KEEP GOING!",
+        "suffix": "Your commitment to tracking moods is the foundation of emotional wellness."
+      }
+    },
     "calendar": {
       "title": "Mood Calendar",
       "noMoodData": "No mood data for this day",
-      "selectDate": "Select a date to view mood"
+      "noMoodLogged": "No mood logged for this day",
+      "selectDate": "Select a date to view mood",
+      "tapToViewYear": "Tap to view year →",
+      "loading": "Loading calendar...",
+      "days": {
+        "sun": "S",
+        "mon": "M",
+        "tue": "T",
+        "wed": "W",
+        "thu": "T",
+        "fri": "F",
+        "sat": "S"
+      },
+      "months": {
+        "jan": "JAN",
+        "feb": "FEB",
+        "mar": "MAR",
+        "apr": "APR",
+        "may": "MAY",
+        "jun": "JUN",
+        "jul": "JUL",
+        "aug": "AUG",
+        "sep": "SEP",
+        "oct": "OCT",
+        "nov": "NOV",
+        "dec": "DEC"
+      }
     },
     "exerciseSuggestion": {
       "recommendedForYou": "Recommended for you",
       "basedOnMood": "Based on today's mood",
       "tryExercise": "Try Exercise"
     },
+    "moodEncouragement": {
+      "happy": "Keep the positive energy flowing",
+      "sad": "Gentle care for your emotions",
+      "anxious": "Find your calm center",
+      "angry": "Release and restore balance",
+      "neutral": "Explore your wellness journey"
+    },
+    "suggestions": {
+      "title": "Exercise Suggestions",
+      "tryThisToElevate": "Try this to elevate your mood",
+      "loading": "Loading Suggestions...",
+      "findingPerfect": "We're finding the perfect exercise for you",
+      "getNew": "Get New Suggestion",
+      "browseAll": "Browse All Exercises",
+      "proTip": "Pro Tip",
+      "proTipDescription": "Regular wellness exercises can significantly improve your mood and mental health. Try to incorporate at least one exercise into your daily routine."
+    },
     "stats": {
       "title": "Mood Statistics",
       "averageMood": "Average Mood",
       "moodPattern": "Mood Pattern",
-      "streakDays": "Day Streak",
+      "streakDays": "{{count}} days",
+      "currentStreak": "Current Streak",
       "totalEntries": "Total Entries",
       "mostCommonMood": "Most Common Mood",
-      "improvementTrend": "Improvement Trend"
+      "improvementTrend": "Improvement Trend",
+      "accessibilityHint": "Tap to view detailed statistics",
+      "streakMessages": {
+        "start": "Start your journey!",
+        "building": "Building momentum",
+        "great": "Great progress!",
+        "amazing": "Amazing streak!",
+        "incredible": "Incredible dedication!"
+      },
+      "weekMessages": {
+        "achieved": "Goal achieved!",
+        "almost": "Almost there!",
+        "halfway": "Halfway done",
+        "keepGoing": "Keep going!"
+      },
+      "insights": {
+        "weeklyChampion": "⭐ Weekly champion",
+        "wellnessMaster": "💎 Wellness master",
+        "goalCrusher": "🎯 Goal crusher"
+      }
+    },
+    "analytics": {
+      "title": "Mood Analytics",
+      "noDataYet": "No Mood Data Yet",
+      "startLogging": "Start logging your daily moods to see insights and patterns here.",
+      "entries": "{{count}} entries",
+      "averageScore": "Average Score",
+      "mostFrequent": "Most Frequent",
+      "timeCount": "{{count}} times",
+      "distribution": "Mood Distribution",
+      "basedOn": "Based on {{count}} mood entries"
+    },
+    "yearView": {
+      "subtitle": "Your emotional journey",
+      "description": "Discover patterns in your moods and reflect on your growth throughout the year."
     }
   },
   "exercises": {
@@ -198,6 +419,46 @@
     "dailyExercise": {
       "title": "Today's Exercise",
       "startNow": "Start Now"
+    },
+    "noExercisesInCategory": "No exercises available in this category yet.",
+    "greeting": {
+      "morning": "Good morning",
+      "afternoon": "Good afternoon", 
+      "evening": "Good evening",
+      "night": "Good night",
+      "lateNight": "Good night"
+    },
+    "motivational": {
+      "mindfulness": {
+        "0": "Find your center, one breath at a time",
+        "1": "Be present in this moment",
+        "2": "Your peace begins with a single mindful breath",
+        "3": "Cultivate awareness, embrace serenity"
+      },
+      "breathing": {
+        "0": "Breathe in calm, breathe out tension",
+        "1": "Your breath is your anchor to peace",
+        "2": "Each breath is a new beginning",
+        "3": "Let your breath guide you home"
+      },
+      "movement": {
+        "0": "Move your body, free your mind",
+        "1": "Every step is progress",
+        "2": "Your body is ready to support you",
+        "3": "Motion is emotion in action"
+      },
+      "journaling": {
+        "0": "Your thoughts deserve to be heard",
+        "1": "Write your way to clarity",
+        "2": "The page is your safe space",
+        "3": "Transform thoughts into understanding"
+      },
+      "relaxation": {
+        "0": "Permission to pause and rest",
+        "1": "Relaxation is productive self-care",
+        "2": "Let go and let peace in",
+        "3": "Your calm is waiting for you"
+      }
     }
   },
   "profile": {
@@ -239,6 +500,25 @@
       "light": "Light",
       "dark": "Dark",
       "system": "System"
+    },
+    "subscription": {
+      "freePlan": "Free Plan"
+    },
+    "settings": {
+      "appearance": "Appearance",
+      "language": "Language",
+      "hapticFeedback": "Haptic Feedback",
+      "notifications": "Notifications",
+      "voice": "Voice",
+      "comingSoon": "Coming Soon",
+      "helpCenter": "Help Center",
+      "crisisResources": "Crisis Resources",
+      "feedback": "Feedback",
+      "termsOfUse": "Terms of Use",
+      "privacyPolicy": "Privacy Policy",
+      "email": "Email",
+      "subscription": "Subscription",
+      "anonymousUser": "Anonymous User"
     },
     "support": {
       "helpCenter": "Help Center",
@@ -286,16 +566,49 @@
   "crisisResources": {
     "title": "Crisis Resources",
     "emergency": "EMERGENCY",
-    "immediateHelp": "If you are in immediate danger",
-    "callEmergency": "Please call emergency services (911) or go to your nearest emergency room",
+    "immediateHelp": "Immediate Help",
+    "callEmergency": "If you're in immediate danger, please call 911 or your local emergency services.",
     "hotlines": "Crisis Hotlines",
     "warningSigns": "Warning Signs",
-    "seekHelp": "Seek help immediately if you notice:",
+    "seekHelp": "If you or someone you know shows these signs, seek help immediately:",
     "remember": "Remember",
-    "notAlone": "You are not alone. Help is available, and people care about you. Reaching out is a sign of strength, not weakness.",
+    "notAlone": "You are not alone. Help is available, and recovery is possible. Reaching out for support is a sign of strength, not weakness.",
     "alertCall": "Call",
     "alertCancel": "Cancel",
-    "confirmCall": "Are you sure you want to call {{phoneNumber}}?"
+    "confirmCall": "Are you sure you want to call {{phoneNumber}}?",
+    "resources": {
+      "suicidePreventionLifeline": {
+        "title": "National Suicide Prevention Lifeline",
+        "description": "Free, confidential 24/7 support for people in distress",
+        "hours": "24/7 Available"
+      },
+      "crisisTextLine": {
+        "title": "Crisis Text Line",
+        "description": "Text HOME to connect with a crisis counselor",
+        "hours": "24/7 Text Support"
+      },
+      "samhsaHelpline": {
+        "title": "SAMHSA National Helpline",
+        "description": "Treatment referral and information service for mental health",
+        "hours": "24/7 Available"
+      },
+      "veteransCrisisLine": {
+        "title": "Veterans Crisis Line",
+        "description": "Support for Veterans and their families",
+        "hours": "24/7 Available"
+      }
+    },
+    "warningSignsList": [
+      "Talking about wanting to die or kill oneself",
+      "Looking for ways to kill oneself",
+      "Feeling hopeless or having no purpose",
+      "Feeling trapped or in unbearable pain",
+      "Talking about being a burden to others",
+      "Increasing use of alcohol or drugs",
+      "Withdrawing from family and friends",
+      "Showing rage or talking about seeking revenge",
+      "Displaying extreme mood swings"
+    ]
   },
   "feedback": {
     "title": "Send Feedback",
@@ -340,5 +653,18 @@
     "profileUpdated": "Profile updated successfully!",
     "settingsSaved": "Settings saved!",
     "accountCreated": "Account created successfully!"
+  },
+  "ui": {
+    "error": {
+      "somethingWrong": "Something went wrong",
+      "unexpectedError": "We encountered an unexpected error. Please try again.",
+      "dataLoadingIssue": "We encountered an issue loading your data. This is usually temporary and can be fixed by retrying.",
+      "reportIssue": "Report Issue",
+      "reportQuestion": "Would you like to report this issue to help us improve the app?",
+      "report": "Report"
+    },
+    "emptyState": {
+      "noData": "No items found"
+    }
   }
 }

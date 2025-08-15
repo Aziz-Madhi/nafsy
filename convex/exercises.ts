@@ -63,14 +63,14 @@ export const getRandomExerciseByCategories = query({
         .withIndex('by_category', (q) => q.eq('category', category))
         .collect()
     );
-    
+
     const exercisesByCategory = await Promise.all(exercisePromises);
     const allExercises = exercisesByCategory.flat();
-    
+
     if (allExercises.length === 0) {
       return null;
     }
-    
+
     // Return a random exercise
     const randomIndex = Math.floor(Math.random() * allExercises.length);
     return allExercises[randomIndex];

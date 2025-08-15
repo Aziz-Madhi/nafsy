@@ -18,6 +18,7 @@ import {
   eachDayOfInterval,
 } from 'date-fns';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface MoodEntry {
   createdAt: string;
@@ -35,6 +36,7 @@ export function PixelCalendar({
   onPress,
   currentDate = new Date(),
 }: PixelCalendarProps) {
+  const { t } = useTranslation();
   // Animation for entire calendar
   const opacity = useSharedValue(0);
 
@@ -153,7 +155,7 @@ export function PixelCalendar({
           </Text>
           {onPress && (
             <Text variant="caption1" className="text-muted-foreground text-sm">
-              Tap to view year →
+              {t('mood.calendar.tapToViewYear')}
             </Text>
           )}
         </View>
@@ -163,7 +165,15 @@ export function PixelCalendar({
           <View>
             {/* Day Labels on Top */}
             <View className="flex-row mb-3" style={{ gap }}>
-              {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((label, index) => (
+              {[
+                t('mood.calendar.days.sun'),
+                t('mood.calendar.days.mon'),
+                t('mood.calendar.days.tue'),
+                t('mood.calendar.days.wed'),
+                t('mood.calendar.days.thu'),
+                t('mood.calendar.days.fri'),
+                t('mood.calendar.days.sat'),
+              ].map((label, index) => (
                 <View
                   key={index}
                   style={{

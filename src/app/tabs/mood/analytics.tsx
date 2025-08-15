@@ -15,6 +15,7 @@ import Animated, {
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useColors } from '~/hooks/useColors';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface MoodData {
   mood: string;
@@ -54,6 +55,7 @@ function SimpleMoodChart({
   color: string;
   count: number;
 }) {
+  const { t } = useTranslation();
   const barHeight = useSharedValue(percentage);
   const opacity = useSharedValue(1);
 
@@ -127,10 +129,10 @@ function SimpleMoodChart({
           {percentage.toFixed(0)}%
         </Text>
         <Text variant="muted" className="text-xs capitalize mt-1">
-          {mood}
+          {t(`mood.moods.${mood}`)}
         </Text>
         <Text variant="muted" className="text-xs">
-          {count} {count === 1 ? 'entry' : 'entries'}
+          {count} {t('mood.analytics.entries', { count })}
         </Text>
       </View>
     </View>
@@ -165,10 +167,10 @@ function SimpleMoodVisualization({ data }: { data: MoodData[] }) {
           </Svg>
         </View>
         <Text variant="title3" className="text-gray-500 font-semibold mb-2">
-          No Mood Data Yet
+          {t('mood.analytics.noDataYet')}
         </Text>
         <Text variant="body" className="text-center text-gray-400 max-w-xs">
-          Start logging your daily moods to see insights and patterns here.
+          {t('mood.analytics.startLogging')}
         </Text>
       </View>
     );
@@ -190,6 +192,7 @@ function SimpleMoodVisualization({ data }: { data: MoodData[] }) {
 }
 
 export default function AnalyticsModal() {
+  const { t } = useTranslation();
   const moodData = useMoodData();
   const colors = useColors();
 
@@ -261,11 +264,11 @@ export default function AnalyticsModal() {
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Header */}
       <View className="flex-row items-center px-6 py-4 border-b border-border/20">
-        <Pressable onPress={handleBack} className="mr-4">
+        <Pressable onPress={handleBack} className="me-4">
           <SymbolView name="arrow.left" size={24} tintColor="#5A4A3A" />
         </Pressable>
         <Text variant="title2" className="text-[#2D3748] font-bold">
-          Mood Analytics
+          {t('mood.analytics.title')}
         </Text>
       </View>
 
@@ -273,7 +276,7 @@ export default function AnalyticsModal() {
         {/* Summary Stats */}
         <View className="flex-row mb-6">
           <View
-            className="flex-1 rounded-2xl p-4 mr-3 border border-gray-200"
+            className="flex-1 rounded-2xl p-4 me-3 border border-gray-200"
             style={{
               backgroundColor: 'rgba(90, 74, 58, 0.08)',
               shadowColor: '#000',
@@ -290,12 +293,12 @@ export default function AnalyticsModal() {
               {totalEntries}
             </Text>
             <Text variant="caption1" className="text-gray-600 text-center mt-1">
-              Total Entries
+              {t('mood.stats.totalEntries')}
             </Text>
           </View>
 
           <View
-            className="flex-1 rounded-2xl p-4 ml-3 border border-gray-200"
+            className="flex-1 rounded-2xl p-4 ms-3 border border-gray-200"
             style={{
               backgroundColor: 'rgba(90, 74, 58, 0.08)',
               shadowColor: '#000',
@@ -312,7 +315,7 @@ export default function AnalyticsModal() {
               {averageMoodScore.toFixed(1)}/5
             </Text>
             <Text variant="caption1" className="text-gray-600 text-center mt-1">
-              Average Score
+              {t('mood.analytics.averageScore')}
             </Text>
           </View>
         </View>
@@ -332,7 +335,7 @@ export default function AnalyticsModal() {
           >
             <View className="flex-row items-center">
               <View
-                className="w-12 h-12 rounded-2xl items-center justify-center mr-3"
+                className="w-12 h-12 rounded-2xl items-center justify-center me-3"
                 style={{
                   backgroundColor: mostFrequentMood.color + '20',
                   borderWidth: 2,
@@ -348,11 +351,14 @@ export default function AnalyticsModal() {
                   variant="body"
                   className="text-[#5A4A3A] font-bold capitalize"
                 >
-                  Most Frequent: {mostFrequentMood.mood}
+                  {t('mood.analytics.mostFrequent')}:{' '}
+                  {t(`mood.moods.${mostFrequentMood.mood}`)}
                 </Text>
                 <Text variant="caption1" className="text-gray-600 mt-1">
-                  {mostFrequentMood.count} times (
-                  {mostFrequentMood.percentage.toFixed(0)}%)
+                  {t('mood.analytics.timeCount', {
+                    count: mostFrequentMood.count,
+                  })}{' '}
+                  ({mostFrequentMood.percentage.toFixed(0)}%)
                 </Text>
               </View>
             </View>
@@ -372,7 +378,7 @@ export default function AnalyticsModal() {
           }}
         >
           <Text variant="heading" className="text-[#5A4A3A] font-semibold mb-6">
-            Mood Distribution
+            {t('mood.analytics.distribution')}
           </Text>
 
           <SimpleMoodVisualization data={chartData} />
@@ -380,8 +386,7 @@ export default function AnalyticsModal() {
           {totalEntries > 0 && (
             <View className="mt-6 pt-4 border-t border-gray-200">
               <Text variant="caption1" className="text-center text-gray-600">
-                Based on {totalEntries} mood{' '}
-                {totalEntries === 1 ? 'entry' : 'entries'}
+                {t('mood.analytics.basedOn', { count: totalEntries })}
               </Text>
             </View>
           )}

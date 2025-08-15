@@ -17,6 +17,7 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useNavigationColors, useColors } from '~/hooks/useColors';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface TabIconProps {
   route: string;
@@ -104,6 +105,7 @@ export function MorphingTabBar({
   descriptors,
   navigation,
 }: BottomTabBarProps) {
+  const { t } = useTranslation();
   const currentRoute = state.routes[state.index].name;
   const isChat = currentRoute === 'chat';
 
@@ -275,7 +277,7 @@ export function MorphingTabBar({
           {/* Chat Input with integrated button */}
           <ChatInput
             onSendMessage={handleSendMessage}
-            placeholder="Type a message..."
+            placeholder={t('chat.typingPlaceholder')}
             hideBorder={true}
             hideButton={false}
             value={inputText}

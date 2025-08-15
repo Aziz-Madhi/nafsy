@@ -35,6 +35,9 @@ import {
   useFloatingChatTyping,
   useChatUIStore,
 } from '~/store';
+import { useTranslation } from '~/hooks/useTranslation';
+import { useIsRTL } from '~/store/useAppStore';
+import { cn } from '~/lib/cn';
 
 interface FloatingChatProps {
   // No props needed - visibility is managed by store
@@ -44,6 +47,8 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 
 export const FloatingChat = React.memo(
   function FloatingChat({}: FloatingChatProps) {
+    const { t } = useTranslation();
+    const isRTL = useIsRTL();
     // ===== ZUSTAND: Local UI State =====
     const currentMessage = useFloatingChatInput();
     const isTyping = useFloatingChatTyping();
@@ -241,39 +246,34 @@ export const FloatingChat = React.memo(
           setTimeout(async () => {
             try {
               // Generate contextual responses
-              let aiResponse = "I'm here to listen. Let it out.";
+              let aiResponse = t('chat.responses.default');
 
               const lowerMessage = messageText.toLowerCase();
               if (
                 lowerMessage.includes('stress') ||
                 lowerMessage.includes('overwhelm')
               ) {
-                aiResponse =
-                  "That sounds really stressful. Take a deep breath. You're safe here.";
+                aiResponse = t('chat.responses.stress');
               } else if (
                 lowerMessage.includes('anxious') ||
                 lowerMessage.includes('anxiety')
               ) {
-                aiResponse =
-                  "Anxiety is tough. Remember, this feeling will pass. You're stronger than you know.";
+                aiResponse = t('chat.responses.anxiety');
               } else if (
                 lowerMessage.includes('sad') ||
                 lowerMessage.includes('down')
               ) {
-                aiResponse =
-                  "I hear your sadness. It's okay to feel this way. You're not alone.";
+                aiResponse = t('chat.responses.sad');
               } else if (
                 lowerMessage.includes('angry') ||
                 lowerMessage.includes('frustrated')
               ) {
-                aiResponse =
-                  'Your frustration is valid. Sometimes we need to let these feelings out.';
+                aiResponse = t('chat.responses.angry');
               } else if (
                 lowerMessage.includes('work') ||
                 lowerMessage.includes('job')
               ) {
-                aiResponse =
-                  'Work stress is real. Remember to prioritize your mental health.';
+                aiResponse = t('chat.responses.work');
               }
 
               await sendMainMessage({
@@ -322,7 +322,10 @@ export const FloatingChat = React.memo(
                   .stiffness(300)
                   .delay(200)}
                 exiting={FadeOut.springify().damping(20)}
-                className="absolute top-16 right-6 z-20"
+                className={cn(
+                  'absolute top-16 z-20',
+                  isRTL ? 'start-6' : 'end-6'
+                )}
               >
                 <Pressable
                   onPress={onClose}
@@ -334,7 +337,9 @@ export const FloatingChat = React.memo(
 
               {/* Message Area - Center Section */}
               <View
-                className="absolute top-28 left-0 right-0 items-center justify-center px-6"
+                className={cn(
+                  'absolute top-28 left-0 right-0 items-center justify-center px-6'
+                )}
                 style={{
                   height: SCREEN_HEIGHT * 0.6,
                   bottom: 120,
@@ -421,7 +426,7 @@ export const FloatingChat = React.memo(
                               fontSize: 16,
                               fontWeight: '500',
                               color: 'white',
-                              textAlign: 'left',
+                              textAlign: isRTL ? 'right' : 'left',
                               lineHeight: 22,
                             }}
                           >
@@ -438,7 +443,10 @@ export const FloatingChat = React.memo(
                                   .stiffness(200)
                                   .delay(300)
                               }
-                              className="absolute -bottom-1 -right-1 bg-white/90 backdrop-blur-sm rounded-full p-1.5 border border-white/30"
+                              className={cn(
+                                'absolute -bottom-1 bg-white/90 backdrop-blur-sm rounded-full p-1.5 border border-white/30',
+                                isRTL ? '-start-1' : '-end-1'
+                              )}
                             >
                               {msg.status === 'sending' && (
                                 <SymbolView
@@ -474,7 +482,10 @@ export const FloatingChat = React.memo(
                                   .stiffness(300)
                                   .delay(200)
                               }
-                              className="absolute -top-2 -left-2 backdrop-blur-sm rounded-full w-4 h-4 border border-white/30 bg-brand-dark-blue"
+                              className={cn(
+                                'absolute -top-2 backdrop-blur-sm rounded-full w-4 h-4 border border-white/30 bg-brand-dark-blue',
+                                isRTL ? '-end-2' : '-start-2'
+                              )}
                             >
                               <Animated.View
                                 style={[pulseStyle]}
@@ -510,7 +521,7 @@ export const FloatingChat = React.memo(
                   .stiffness(400)
                   .delay(300)}
                 exiting={SlideOutUp.springify().damping(30)}
-                className="absolute bottom-8 left-6 right-6"
+                className={cn('absolute bottom-8 left-6 right-6')}
               >
                 <Animated.View
                   entering={FadeIn.springify().damping(20)}
@@ -519,11 +530,15 @@ export const FloatingChat = React.memo(
                   <TextInput
                     value={currentMessage}
                     onChangeText={setFloatingChatInput}
-                    placeholder="What's on your mind?"
+                    placeholder={t('chat.floatingChat.placeholder')}
                     placeholderTextColor="rgba(255,255,255,0.6)"
-                    className="flex-1 text-white text-base mr-3"
+                    className={cn(
+                      'flex-1 text-white text-base',
+                      isRTL ? 'ms-3' : 'me-3'
+                    )}
                     style={{
                       fontFamily: Platform.OS === 'ios' ? 'System' : 'Roboto',
+                      textAlign: isRTL ? 'right' : 'left',
                     }}
                     autoFocus
                     onSubmitEditing={handleSend}

@@ -7,9 +7,9 @@ import {
   useCurrentUser,
   useExercisesWithProgress,
 } from '~/hooks/useSharedData';
-import { useTranslation } from '~/hooks/useTranslation';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import type { Exercise } from '~/types';
+import { useTranslation } from '~/hooks/useTranslation';
 
 // Utility functions (copied from main exercises screen)
 function getCategoryIcon(category: string): string {
@@ -36,20 +36,44 @@ function getCategoryColor(category: string): string {
   return categoryColors[category] || '#FF6B6B';
 }
 
-function getBenefitsForCategory(category: string, t: any): string[] {
-  const benefits: Record<string, string[]> = {
-    breathing: t('exercises.benefits.breathing'),
-    mindfulness: t('exercises.benefits.mindfulness'),
-    movement: t('exercises.benefits.movement'),
-    journaling: t('exercises.benefits.journaling'),
-    relaxation: t('exercises.benefits.relaxation'),
+function getBenefitsForCategory(
+  category: string,
+  t: (key: string) => string
+): string[] {
+  const benefitKeys: Record<string, string[]> = {
+    breathing: [
+      'exercises.benefits.breathing.0',
+      'exercises.benefits.breathing.1',
+      'exercises.benefits.breathing.2',
+    ],
+    mindfulness: [
+      'exercises.benefits.mindfulness.0',
+      'exercises.benefits.mindfulness.1',
+      'exercises.benefits.mindfulness.2',
+    ],
+    movement: [
+      'exercises.benefits.movement.0',
+      'exercises.benefits.movement.1',
+      'exercises.benefits.movement.2',
+    ],
+    journaling: [
+      'exercises.benefits.journaling.0',
+      'exercises.benefits.journaling.1',
+      'exercises.benefits.journaling.2',
+    ],
+    relaxation: [
+      'exercises.benefits.relaxation.0',
+      'exercises.benefits.relaxation.1',
+      'exercises.benefits.relaxation.2',
+    ],
   };
-  return benefits[category] || [];
+  const keys = benefitKeys[category] || [];
+  return keys.map((key) => t(key));
 }
 
 export default function CategoryModal() {
+  const { t } = useTranslation();
   const { id: categoryId } = useLocalSearchParams<{ id: string }>();
-  const { t, locale } = useTranslation();
 
   // State for ExerciseDetail modal
   const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
@@ -66,9 +90,9 @@ export default function CategoryModal() {
   // Store stability guard
   const [isStoreStable] = useState(true);
 
-  // Cache translated benefits
-  const translatedBenefits = useMemo(() => {
-    const benefitsMap: Record<string, string[]> = {};
+  // Cache benefits
+  const benefitsMap = useMemo(() => {
+    const benefits: Record<string, string[]> = {};
     const categories = [
       'breathing',
       'mindfulness',
@@ -78,10 +102,10 @@ export default function CategoryModal() {
     ];
 
     categories.forEach((category) => {
-      benefitsMap[category] = getBenefitsForCategory(category, t);
+      benefits[category] = getBenefitsForCategory(category, t);
     });
 
-    return benefitsMap;
+    return benefits;
   }, [t]);
 
   // Transform exercises to UI format
@@ -90,17 +114,17 @@ export default function CategoryModal() {
 
     return exercisesWithProgress.map((ex) => ({
       id: ex._id,
-      title: locale === 'ar' ? ex.titleAr : ex.title,
-      description: locale === 'ar' ? ex.descriptionAr : ex.description,
+      title: ex.title,
+      description: ex.description,
       duration: `${ex.duration} min`,
       difficulty: ex.difficulty,
       category: ex.category,
       icon: getCategoryIcon(ex.category),
       color: getCategoryColor(ex.category),
-      steps: locale === 'ar' ? ex.instructionsAr : ex.instructions,
-      benefits: translatedBenefits[ex.category] || [],
+      steps: ex.instructions,
+      benefits: benefitsMap[ex.category] || [],
     }));
-  }, [exercisesWithProgress, locale, translatedBenefits, isStoreStable]);
+  }, [exercisesWithProgress, benefitsMap, isStoreStable]);
 
   // Filter exercises for this category
   const filteredExercises = useMemo(() => {
@@ -145,11 +169,11 @@ export default function CategoryModal() {
         await recordCompletion({
           exerciseId: exercise.id as any,
           duration: parseInt(exercise.duration),
-          feedback: 'Completed successfully',
+          feedback: t('exercises.exerciseCompleted'),
         });
       }
     },
-    [currentUser, recordCompletion]
+    [currentUser, recordCompletion, t]
   );
 
   // Ensure categoryId exists

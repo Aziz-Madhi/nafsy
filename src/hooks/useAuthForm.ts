@@ -8,6 +8,7 @@ import {
   withSpring,
 } from 'react-native-reanimated';
 import { optimizedHaptic } from '~/lib/haptic-optimizer';
+import { useTranslation } from './useTranslation';
 
 interface UseAuthFormProps {
   mode: 'signin' | 'signup';
@@ -28,6 +29,7 @@ interface AuthFormErrors {
 }
 
 export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
+  const { t } = useTranslation();
   const {
     signIn,
     setActive: setSignInActive,
@@ -103,13 +105,13 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
     const newErrors: AuthFormErrors = {};
 
     if (!validation.email) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = t('auth.validation.invalidEmail');
     }
     if (!validation.password) {
-      newErrors.password = 'Password must be at least 8 characters';
+      newErrors.password = t('auth.validation.passwordTooShort');
     }
     if (mode === 'signup' && !validation.name) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('auth.validation.nameRequired');
     }
 
     setErrors(newErrors);
@@ -138,8 +140,8 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
       const errorMessage =
         err.errors?.[0]?.message ||
         err.message ||
-        'Failed to sign in. Please try again.';
-      Alert.alert('Error', errorMessage);
+        t('auth.errors.signInFailed');
+      Alert.alert(t('common.error'), errorMessage);
       throw err;
     }
   }, [signIn, setSignInActive, signInLoaded, form, onSuccess, router]);
@@ -166,8 +168,8 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
       const errorMessage =
         err.errors?.[0]?.message ||
         err.message ||
-        'Failed to sign up. Please try again.';
-      Alert.alert('Error', errorMessage);
+        t('auth.errors.signUpFailed');
+      Alert.alert(t('common.error'), errorMessage);
       throw err;
     }
   }, [signUp, signUpLoaded, form]);
@@ -190,8 +192,8 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
       const errorMessage =
         err.errors?.[0]?.message ||
         err.message ||
-        'Failed to verify email. Please try again.';
-      Alert.alert('Error', errorMessage);
+        t('auth.errors.verificationFailed');
+      Alert.alert(t('common.error'), errorMessage);
       throw err;
     }
   }, [

@@ -73,21 +73,33 @@ export function useUserSafe() {
 
 /**
  * Safe wrapper around Clerk's useAuth hook with error handling
+ * Uses React.memo pattern to prevent re-render loops
  */
 export function useAuthSafe() {
-  try {
-    return useAuth();
-  } catch (error) {
-    console.error('useAuthSafe: Error in useAuth hook:', error);
+  const auth = useAuth();
 
-    // Return safe fallback values
-    return {
-      isLoaded: false,
-      isSignedIn: false,
-      userId: null,
-      getToken: async () => null,
-      signOut: async () => {},
-      error: error as Error,
-    };
-  }
+  return useMemo(() => {
+    try {
+      if (!auth) {
+        return {
+          isLoaded: false,
+          isSignedIn: false,
+          userId: null,
+          getToken: async () => null,
+          signOut: async () => {},
+        };
+      }
+      return auth;
+    } catch (error) {
+      console.error('useAuthSafe: Error processing auth:', error);
+      return {
+        isLoaded: false,
+        isSignedIn: false,
+        userId: null,
+        getToken: async () => null,
+        signOut: async () => {},
+        error: error as Error,
+      };
+    }
+  }, [auth]); // Depend on the full auth object but memoize the result
 }

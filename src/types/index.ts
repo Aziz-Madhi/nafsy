@@ -81,14 +81,15 @@ export interface ExerciseCategory_Config {
 // ===== APP SETTINGS =====
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
-  language: 'en' | 'ar';
+  language: 'en' | 'ar' | 'system';
+  pendingLanguage?: 'en' | 'ar' | null; // Language to apply after restart
+  languageChangeRequested?: boolean; // Flag for restart prompt
   notificationsEnabled: boolean;
   moodRemindersEnabled: boolean;
   moodReminderTime: string; // "09:00"
 }
 
 export type Theme = 'light' | 'dark' | 'system';
-export type Language = 'en' | 'ar';
 
 // ===== COMPONENT PROP TYPES =====
 export interface ChatInputProps {

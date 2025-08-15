@@ -1,4 +1,5 @@
 # React Native Styling Migration Plan
+
 ## From Nativewind/Tailwind to Native Solutions
 
 ---
@@ -12,12 +13,14 @@ After thorough investigation of the Nafsy codebase, I recommend migrating from N
 ## Current State Analysis
 
 ### Statistics
+
 - **646 className occurrences** across 51 files
 - **Complex color system** with CSS variables and useColors hook
 - **Deep Nativewind integration** in UI components, screens, and navigation
 - **Dynamic theming** with light/dark mode support
 
 ### Pain Points Identified
+
 1. Nativewind v4 compatibility issues with React Native
 2. Inconsistent style application between platforms
 3. Hot reload problems with Tailwind classes
@@ -58,16 +61,19 @@ After thorough investigation of the Nafsy codebase, I recommend migrating from N
 ## Alternative Options Considered
 
 ### 1. Tamagui
+
 **Pros:** Excellent performance, cross-platform, compiler optimizations
 **Cons:** Steep learning curve, requires significant refactoring, opinionated architecture
 **Verdict:** Too complex for this migration
 
 ### 2. StyleSheet (Pure React Native)
+
 **Pros:** Native, no dependencies, guaranteed compatibility
 **Cons:** No theming system, verbose, no dynamic styles
 **Verdict:** Too basic for app requirements
 
 ### 3. Styled Components
+
 **Pros:** Familiar API, good theming
 **Cons:** Performance overhead, larger bundle size
 **Verdict:** Performance concerns
@@ -79,11 +85,13 @@ After thorough investigation of the Nafsy codebase, I recommend migrating from N
 ### Phase 1: Setup & Foundation (Week 1)
 
 #### 1. Install React Native Unistyles
+
 ```bash
 bun add react-native-unistyles
 ```
 
 #### 2. Create Theme Configuration
+
 ```typescript
 // src/styles/theme.ts
 export const theme = {
@@ -102,7 +110,7 @@ export const theme = {
       foreground: '#F5F5F5',
       card: '#262626',
       // ... dark mode colors
-    }
+    },
   },
   spacing: {
     xs: 4,
@@ -139,31 +147,32 @@ export const theme = {
       shadowRadius: 6,
       elevation: 4,
     },
-  }
-}
+  },
+};
 ```
 
 #### 3. Initialize Unistyles
+
 ```typescript
 // src/styles/unistyles.ts
-import { UnistylesRegistry } from 'react-native-unistyles'
-import { theme } from './theme'
-import { breakpoints } from './breakpoints'
+import { UnistylesRegistry } from 'react-native-unistyles';
+import { theme } from './theme';
+import { breakpoints } from './breakpoints';
 
-UnistylesRegistry
-  .addBreakpoints(breakpoints)
+UnistylesRegistry.addBreakpoints(breakpoints)
   .addThemes({
     light: theme.light,
     dark: theme.dark,
   })
   .addConfig({
-    adaptiveThemes: true
-  })
+    adaptiveThemes: true,
+  });
 ```
 
 ### Phase 2: Component Migration (Weeks 2-3)
 
 #### Migration Order (Least to Most Complex)
+
 1. **Base UI Components** (Week 2)
    - button.tsx → Pure StyleSheet with theme
    - card.tsx → Unistyles implementation
@@ -192,36 +201,38 @@ UnistylesRegistry
 ### Phase 3: Theme & Color System (Week 4)
 
 #### 1. Migrate Color System
+
 ```typescript
 // src/styles/colors.ts
-import { useStyles } from 'react-native-unistyles'
+import { useStyles } from 'react-native-unistyles';
 
 export const useThemeColors = () => {
-  const { theme } = useStyles()
-  return theme.colors
-}
+  const { theme } = useStyles();
+  return theme.colors;
+};
 
 // Direct replacement for useColors hook
-export const useColors = useThemeColors
+export const useColors = useThemeColors;
 ```
 
 #### 2. Create Style Utilities
+
 ```typescript
 // src/styles/utils.ts
 export const createStyles = (styles: any) => {
-  return StyleSheet.create(styles)
-}
+  return StyleSheet.create(styles);
+};
 
 export const getMoodColor = (mood: MoodType, theme: Theme) => {
-  return theme.moods[mood]
-}
+  return theme.moods[mood];
+};
 
 export const getCardStyle = (variant: 'default' | 'elevated', theme: Theme) => {
   return {
     backgroundColor: theme.colors.card[variant],
     ...theme.shadows.sm,
-  }
-}
+  };
+};
 ```
 
 ### Phase 4: Testing & Optimization (Week 5)
@@ -246,6 +257,7 @@ export const getCardStyle = (variant: 'default' | 'elevated', theme: Theme) => {
 ## Component Migration Examples
 
 ### Before (Nativewind)
+
 ```tsx
 <View className="bg-primary rounded-lg p-4 shadow-md">
   <Text className="text-white font-bold text-lg">Hello</Text>
@@ -253,6 +265,7 @@ export const getCardStyle = (variant: 'default' | 'elevated', theme: Theme) => {
 ```
 
 ### After (Unistyles)
+
 ```tsx
 const styles = StyleSheet.create(theme => ({
   container: {
@@ -273,6 +286,7 @@ const styles = StyleSheet.create(theme => ({
 ```
 
 ### Alternative (Pure StyleSheet for Simple Components)
+
 ```tsx
 const styles = StyleSheet.create({
   container: {
@@ -302,6 +316,7 @@ const styles = StyleSheet.create({
 ## Migration Checklist
 
 ### Pre-Migration
+
 - [ ] Backup current codebase
 - [ ] Create feature branch
 - [ ] Install Unistyles
@@ -309,6 +324,7 @@ const styles = StyleSheet.create({
 - [ ] Create style utilities
 
 ### Component Migration
+
 - [ ] Button component
 - [ ] Card component
 - [ ] Text component
@@ -324,6 +340,7 @@ const styles = StyleSheet.create({
 - [ ] Navigation components (1 file)
 
 ### Screen Migration
+
 - [ ] Auth screens (3 files)
 - [ ] Profile screens (5 files)
 - [ ] Chat screen
@@ -332,6 +349,7 @@ const styles = StyleSheet.create({
 - [ ] Utility screens (3 files)
 
 ### Post-Migration
+
 - [ ] Remove Nativewind dependencies
 - [ ] Remove Tailwind config
 - [ ] Clean up CSS files

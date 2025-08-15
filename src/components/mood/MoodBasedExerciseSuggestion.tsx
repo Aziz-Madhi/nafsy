@@ -4,9 +4,9 @@ import { Text } from '~/components/ui/text';
 import { MotiView } from 'moti';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
-import { useTranslation } from '~/hooks/useTranslation';
 import type { Exercise } from '~/types';
 import ExerciseDetail from '~/components/exercises/ExerciseDetail';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface MoodBasedExerciseSuggestionProps {
   mood: 'happy' | 'sad' | 'anxious' | 'neutral' | 'angry';
@@ -25,8 +25,13 @@ export function MoodBasedExerciseSuggestion({
 
   // Get category colors - matching ModernCategoryCard exactly
   const getCategoryColors = useMemo(() => {
-    if (!exercise) return { base: colors.primary, background: colors.primary + '15', text: colors.foreground };
-    
+    if (!exercise)
+      return {
+        base: colors.primary,
+        background: colors.primary + '15',
+        text: colors.foreground,
+      };
+
     // Same color mapping as ModernCategoryCard
     const exerciseColors: Record<string, string> = {
       mindfulness: '#EF4444', // Red
@@ -36,19 +41,19 @@ export function MoodBasedExerciseSuggestion({
       relaxation: '#F59E0B', // Amber
       reminders: '#8B5CF6', // Purple
     };
-    
+
     const baseColor = exerciseColors[exercise.category] || '#FAFAFA';
-    
+
     // Use same background opacity for both light and dark modes - matching category cards
     const backgroundColor = baseColor + '15'; // 15% opacity for both modes
-    
+
     // Use dark gray text that works on light pastel backgrounds
     const textColor = '#374151'; // Gray-700 for readability on pastel backgrounds
-    
+
     return {
       base: baseColor,
       background: backgroundColor,
-      text: textColor
+      text: textColor,
     };
   }, [exercise, colors]);
 
@@ -73,7 +78,7 @@ export function MoodBasedExerciseSuggestion({
   // Enrich exercise data with missing fields for ExerciseDetail
   const enrichedExercise = useMemo(() => {
     if (!exercise) return null;
-    
+
     // Add missing fields that ExerciseDetail expects
     const categoryIcons: Record<string, string> = {
       mindfulness: '🧘',
@@ -163,7 +168,7 @@ export function MoodBasedExerciseSuggestion({
           >
             {t('mood.exerciseSuggestion.recommendedForYou')}
           </Text>
-          
+
           {/* Category display - minimal line design */}
           <View className="flex-row items-center mb-3">
             <View
@@ -184,7 +189,7 @@ export function MoodBasedExerciseSuggestion({
                 letterSpacing: 1.5,
               }}
             >
-              {exercise.category}
+              {t(`exercises.categories.${exercise.category}`)}
             </Text>
             <View
               style={{
@@ -196,7 +201,7 @@ export function MoodBasedExerciseSuggestion({
               }}
             />
           </View>
-          
+
           <Text
             className="mb-2"
             style={{
@@ -208,7 +213,7 @@ export function MoodBasedExerciseSuggestion({
           >
             {exercise.title}
           </Text>
-          
+
           <Text
             style={{
               fontFamily: 'Inter_400Regular',
@@ -237,7 +242,7 @@ export function MoodBasedExerciseSuggestion({
                   opacity: colors.background === '#171717' ? 0.6 : 0.5,
                 }}
               >
-                Duration
+                {t('exercises.duration')}
               </Text>
               <Text
                 style={{
@@ -247,7 +252,7 @@ export function MoodBasedExerciseSuggestion({
                   marginLeft: 6,
                 }}
               >
-                {exercise.duration} min
+                {exercise.duration} {t('common.minutes')}
               </Text>
             </View>
             {exercise.difficulty && (
@@ -271,7 +276,7 @@ export function MoodBasedExerciseSuggestion({
                       opacity: colors.background === '#171717' ? 0.6 : 0.5,
                     }}
                   >
-                    Level
+                    {t('mood.level')}
                   </Text>
                   <Text
                     style={{
@@ -282,7 +287,7 @@ export function MoodBasedExerciseSuggestion({
                       textTransform: 'capitalize',
                     }}
                   >
-                    {exercise.difficulty}
+                    {t(`exercises.difficulty.${exercise.difficulty}`)}
                   </Text>
                 </View>
               </>
@@ -309,12 +314,13 @@ export function MoodBasedExerciseSuggestion({
                 color: '#FFFFFF',
               }}
             >
-              Start {exercise.category} Exercise →
+              {t('mood.startExercise')}{' '}
+              {t(`exercises.categories.${exercise.category}`)} →
             </Text>
           </Pressable>
         </View>
       </View>
-      
+
       {/* Exercise Detail Modal */}
       {enrichedExercise && (
         <ExerciseDetail

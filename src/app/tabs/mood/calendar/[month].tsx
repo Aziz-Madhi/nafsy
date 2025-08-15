@@ -20,6 +20,7 @@ import {
 import { cn } from '~/lib/cn';
 import { useColors } from '~/hooks/useColors';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
+import { useTranslation } from '~/hooks/useTranslation';
 
 const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
   const iconProps = { size, color: color || '#6B7280', fill: 'none' };
@@ -41,6 +42,7 @@ const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
 };
 
 export default function CalendarModal() {
+  const { t } = useTranslation();
   const { month: monthParam } = useLocalSearchParams<{ month: string }>();
   const moodData = useMoodData();
   const colors = useColors();
@@ -196,11 +198,11 @@ export default function CalendarModal() {
     <SafeAreaView className="flex-1 bg-background" edges={['top']}>
       {/* Header */}
       <View className="flex-row items-center px-6 py-4 border-b border-border/20">
-        <Pressable onPress={handleBack} className="mr-4">
+        <Pressable onPress={handleBack} className="me-4">
           <SymbolView name="arrow.left" size={24} tintColor="#5A4A3A" />
         </Pressable>
         <Text variant="title2" className="text-[#2D3748] font-bold">
-          Mood Calendar
+          {t('mood.calendar.title')}
         </Text>
       </View>
 
@@ -241,7 +243,15 @@ export default function CalendarModal() {
 
           {/* Weekday headers */}
           <View style={{ flexDirection: 'row', marginBottom: 16 }}>
-            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
+            {[
+              t('mood.calendar.days.sun'),
+              t('mood.calendar.days.mon'),
+              t('mood.calendar.days.tue'),
+              t('mood.calendar.days.wed'),
+              t('mood.calendar.days.thu'),
+              t('mood.calendar.days.fri'),
+              t('mood.calendar.days.sat'),
+            ].map((day, index) => (
               <View key={index} style={{ flex: 1, alignItems: 'center' }}>
                 <Text
                   variant="caption1"
@@ -295,7 +305,7 @@ export default function CalendarModal() {
                         }}
                       >
                         <View
-                          className="w-12 h-12 rounded-2xl items-center justify-center mr-3 overflow-hidden"
+                          className="w-12 h-12 rounded-2xl items-center justify-center me-3 overflow-hidden"
                           style={{
                             backgroundColor: getMoodColor(
                               selectedMoodData.mood
@@ -312,7 +322,8 @@ export default function CalendarModal() {
                           variant="body"
                           className="text-[#5A4A3A] capitalize font-medium"
                         >
-                          Feeling {selectedMoodData.mood}
+                          {t('mood.feeling')}{' '}
+                          {t(`mood.moods.${selectedMoodData.mood}`)}
                         </Text>
                       </View>
                       {selectedMoodData.note && (
@@ -321,7 +332,7 @@ export default function CalendarModal() {
                             variant="caption1"
                             className="text-gray-500 mb-1 font-medium"
                           >
-                            Note
+                            {t('mood.note')}
                           </Text>
                           <Text
                             variant="body"
@@ -336,7 +347,7 @@ export default function CalendarModal() {
                 } else {
                   return (
                     <Text variant="body" className="text-muted-foreground">
-                      No mood logged for this day
+                      {t('mood.calendar.noMoodLogged')}
                     </Text>
                   );
                 }

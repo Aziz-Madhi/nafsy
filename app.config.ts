@@ -45,7 +45,15 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
         ],
       },
     ],
+    'expo-localization',
+    'expo-updates',
   ],
+  updates: {
+    fallbackToCacheTimeout: 0,
+    checkAutomatically: 'ON_ERROR_RECOVERY',
+    enabled: true,
+  },
+  runtimeVersion: '1.0.0',
   assetBundlePatterns: ['assets/fonts/*'],
   experiments: {
     typedRoutes: true,

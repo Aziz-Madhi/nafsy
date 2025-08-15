@@ -2,7 +2,6 @@ import { type VariantProps, cva } from 'class-variance-authority';
 import * as React from 'react';
 import { Text as RNText, Platform } from 'react-native';
 import { cn } from '~/lib/cn';
-import { useTranslation } from '~/hooks/useTranslation';
 // Typography system - simplified without design-tokens
 const typography = {
   therapeutic: {
@@ -31,7 +30,9 @@ const typography = {
   },
 };
 
-const getFontFamily = (family: string) => family;
+const getFontFamily = (platform: 'ios' | 'android') => ({
+  system: platform === 'ios' ? 'SF Pro Display' : 'Roboto',
+});
 
 // Keep this context for backward compatibility with button, card, tooltip
 const TextClassContext = React.createContext<string | undefined>(undefined);
@@ -93,19 +94,17 @@ const textVariants = cva('text-base text-foreground web:select-text', {
 interface TextProps
   extends React.ComponentPropsWithoutRef<typeof RNText>,
     VariantProps<typeof textVariants> {
-  enableRTL?: boolean; // New prop to explicitly enable RTL
   context?: TypographyContext; // New prop to override typography context
   therapeuticVariant?: TherapeuticVariant; // Direct access to therapeutic typography
   uiVariant?: UIVariant; // Direct access to UI typography
 }
 
-const Text = React.forwardRef<React.ElementRef<typeof RNText>, TextProps>(
+const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(
   (
     {
       className,
       variant,
       style,
-      enableRTL = true,
       context = 'auto',
       therapeuticVariant,
       uiVariant,
@@ -114,19 +113,6 @@ const Text = React.forwardRef<React.ElementRef<typeof RNText>, TextProps>(
     ref
   ) => {
     const textClass = React.useContext(TextClassContext);
-
-    // Safely get translation hook - add error boundary
-    let locale = 'en';
-    try {
-      const translation = useTranslation();
-      locale = translation.locale;
-    } catch (error) {
-      // Fallback if useTranslation fails (e.g., during navigation context issues)
-      console.warn(
-        'Text component: useTranslation failed, using fallback locale:',
-        error
-      );
-    }
 
     // Determine typography style based on props
     const getTypographyStyle = () => {
@@ -146,15 +132,15 @@ const Text = React.forwardRef<React.ElementRef<typeof RNText>, TextProps>(
       // Legacy variant mapping
       if (variant) {
         const legacyMapping: Record<string, any> = {
-          title1: typography.therapeutic.largeTitle,
-          title2: typography.therapeutic.title1,
-          title3: typography.therapeutic.title2,
-          title4: typography.therapeutic.title2,
-          heading: typography.therapeutic.title2,
+          title1: typography.therapeutic.title1,
+          title2: typography.therapeutic.title2,
+          title3: typography.therapeutic.title3,
+          title4: typography.therapeutic.title3,
+          heading: typography.therapeutic.heading,
           body: typography.therapeutic.body,
           callout: typography.therapeutic.callout,
           subhead: {
-            ...typography.ui.subheadline,
+            ...typography.ui.subhead,
             fontFamily: getFontFamily(Platform.OS as 'ios' | 'android').system,
           },
           footnote: {
@@ -178,19 +164,19 @@ const Text = React.forwardRef<React.ElementRef<typeof RNText>, TextProps>(
             ...typography.ui.footnote,
             fontFamily: getFontFamily(Platform.OS as 'ios' | 'android').system,
           },
-          italic: typography.therapeutic.emphasis,
+          italic: typography.therapeutic.body,
 
           // New explicit variants
-          therapeuticLargeTitle: typography.therapeutic.largeTitle,
+          therapeuticLargeTitle: typography.therapeutic.heading,
           therapeuticTitle1: typography.therapeutic.title1,
           therapeuticTitle2: typography.therapeutic.title2,
           therapeuticBody: typography.therapeutic.body,
-          therapeuticBodyLarge: typography.therapeutic.bodyLarge,
+          therapeuticBodyLarge: typography.therapeutic.body,
           therapeuticCallout: typography.therapeutic.callout,
-          therapeuticEmphasis: typography.therapeutic.emphasis,
+          therapeuticEmphasis: typography.therapeutic.body,
 
           uiLargeTitle: {
-            ...typography.ui.largeTitle,
+            ...typography.ui.heading,
             fontFamily: getFontFamily(Platform.OS as 'ios' | 'android').system,
           },
           uiTitle1: {
@@ -206,7 +192,7 @@ const Text = React.forwardRef<React.ElementRef<typeof RNText>, TextProps>(
             fontFamily: getFontFamily(Platform.OS as 'ios' | 'android').system,
           },
           uiHeadline: {
-            ...typography.ui.headline,
+            ...typography.ui.heading,
             fontFamily: getFontFamily(Platform.OS as 'ios' | 'android').system,
           },
           uiBody: {
@@ -218,7 +204,7 @@ const Text = React.forwardRef<React.ElementRef<typeof RNText>, TextProps>(
             fontFamily: getFontFamily(Platform.OS as 'ios' | 'android').system,
           },
           uiSubheadline: {
-            ...typography.ui.subheadline,
+            ...typography.ui.subhead,
             fontFamily: getFontFamily(Platform.OS as 'ios' | 'android').system,
           },
           uiFootnote: {
@@ -242,13 +228,9 @@ const Text = React.forwardRef<React.ElementRef<typeof RNText>, TextProps>(
       return typography.therapeutic.body;
     };
 
-    // Apply RTL text alignment for Arabic when enableRTL is true
-    const rtlStyle =
-      enableRTL && locale === 'ar' ? { textAlign: 'right' as const } : {};
-
     // Combine all styles
     const typographyStyle = getTypographyStyle();
-    const combinedStyle = [typographyStyle, style, rtlStyle];
+    const combinedStyle = [typographyStyle, style];
 
     return (
       <RNText

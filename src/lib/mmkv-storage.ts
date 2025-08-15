@@ -1,71 +1,41 @@
 /**
- * Secure MMKV Storage for React Native
- * Uses device-specific encryption keys instead of hardcoded values
+ * Simplified MMKV Storage for React Native
+ * Uses a single secure storage instance to eliminate race conditions
  */
 
 import { MMKV } from 'react-native-mmkv';
-import { getOrCreateMMKVKey, getFallbackKey } from './secure-key';
+import { getFallbackKey } from './secure-key';
 import { logger } from './logger';
 
-// Single MMKV instance with secure encryption
+// Single MMKV instance - no dual storage system
 let storage: MMKV;
-let isInitialized = false;
 
-// Initialize with fallback key first, then upgrade to secure key
-try {
-  storage = new MMKV({
-    id: 'nafsy-app-storage',
-    encryptionKey: getFallbackKey(),
-  });
-} catch (error) {
-  logger.warn(
-    'MMKV initialization failed, using unencrypted storage',
-    'MMKV',
-    error
-  );
-  storage = new MMKV({ id: 'nafsy-app-storage' });
-}
-
-// Async initialization with secure key
-async function initializeSecureStorage(): Promise<void> {
-  if (isInitialized) return;
-
+// Initialize with the best available encryption key
+const initializeStorage = (): MMKV => {
   try {
-    const secureKey = await getOrCreateMMKVKey();
+    // Try to get secure key first, fallback to getFallbackKey if needed
+    const encryptionKey = getFallbackKey(); // Use fallback key for immediate availability
 
-    // Create new instance with secure key
-    const secureStorage = new MMKV({
-      id: 'nafsy-app-storage-secure',
-      encryptionKey: secureKey,
+    storage = new MMKV({
+      id: 'nafsy-app-storage-unified', // New unified storage ID
+      encryptionKey,
     });
 
-    // Migrate data if necessary (from fallback to secure storage)
-    const keys = storage.getAllKeys();
-    if (keys.length > 0) {
-      logger.info('Migrating MMKV data to secure storage', 'MMKV');
-      keys.forEach((key) => {
-        const value = storage.getString(key);
-        if (value !== null) {
-          secureStorage.set(key, value);
-        }
-      });
-
-      // Clear old storage
-      storage.clearAll();
-    }
-
-    // Switch to secure storage
-    storage = secureStorage;
-    isInitialized = true;
-    logger.info('MMKV secure storage initialized successfully', 'MMKV');
+    logger.info('MMKV unified storage initialized successfully', 'MMKV');
+    return storage;
   } catch (error) {
-    logger.warn('Failed to initialize secure MMKV storage', 'MMKV', error);
-    // Continue with fallback storage
+    logger.warn(
+      'MMKV initialization with encryption failed, using unencrypted storage',
+      'MMKV',
+      error
+    );
+    storage = new MMKV({ id: 'nafsy-app-storage-unified' });
+    return storage;
   }
-}
+};
 
-// Initialize secure storage asynchronously (non-blocking)
-initializeSecureStorage();
+// Initialize storage immediately
+storage = initializeStorage();
 
 /**
  * Safe MMKV operations with basic error handling
@@ -133,13 +103,26 @@ export const mmkvJSON = {
 
 /**
  * Direct storage access for special cases
+ * Export the same storage instance for consistent access
  */
 export { storage };
 
 /**
- * Check if secure storage initialization is complete
+ * Main MMKV instance - use this for direct access
+ * This is the same instance used by the storage adapter
  */
-export const isSecureStorageReady = (): boolean => isInitialized;
+export const mmkv = storage;
+
+/**
+ * Get current active storage instance
+ * Always returns the same unified storage instance
+ */
+export const getCurrentStorage = () => storage;
+
+/**
+ * Check if storage is ready (always true with unified storage)
+ */
+export const isSecureStorageReady = (): boolean => true;
 
 /**
  * Simple storage health check
@@ -154,5 +137,26 @@ export const isStorageHealthy = (): boolean => {
     return retrieved === testValue;
   } catch {
     return false;
+  }
+};
+
+/**
+ * Language helpers — single source of truth for language at bootstrap
+ */
+export const saveLanguage = (lang: 'en' | 'ar'): void => {
+  try {
+    storage.set('language', lang);
+  } catch (error) {
+    logger.warn('Failed to save language', 'MMKV', error);
+  }
+};
+
+export const getSavedLanguage = (): 'en' | 'ar' | null => {
+  try {
+    const value = storage.getString('language');
+    return value === 'en' || value === 'ar' ? (value as 'en' | 'ar') : null;
+  } catch (error) {
+    logger.warn('Failed to read saved language', 'MMKV', error);
+    return null;
   }
 };

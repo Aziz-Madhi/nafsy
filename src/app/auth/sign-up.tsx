@@ -7,8 +7,10 @@ import { FormField } from '~/components/ui/FormField';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { useAuthForm } from '~/hooks/useAuthForm';
+import { useTranslation } from '~/hooks/useTranslation';
 
 export default function SignUpScreen() {
+  const { t } = useTranslation();
   const {
     form,
     errors,
@@ -28,21 +30,25 @@ export default function SignUpScreen() {
 
   return (
     <AuthLayout
-      title={!pendingVerification ? 'Create Account' : 'Verify Email'}
+      title={
+        !pendingVerification ? t('auth.createAccount') : t('auth.verifyEmail')
+      }
       subtitle={
         !pendingVerification
-          ? 'Start your journey to better mental health'
-          : `We've sent a verification code to ${form.email}`
+          ? t('auth.signUpSubtitle')
+          : t('auth.verificationSubtitle', { email: form.email })
       }
       footerContent={
         !pendingVerification ? (
           <>
             <Text className="text-muted-foreground">
-              Already have an account?
+              {t('auth.alreadyHaveAccount')}
             </Text>
             <Link href="/auth/sign-in" asChild>
               <TouchableOpacity>
-                <Text className="text-primary font-medium">Sign In</Text>
+                <Text className="text-primary font-medium">
+                  {t('common.signIn')}
+                </Text>
               </TouchableOpacity>
             </Link>
           </>
@@ -52,8 +58,8 @@ export default function SignUpScreen() {
       {!pendingVerification ? (
         <Animated.View style={shakeStyle} className="gap-4 mt-6">
           <FormField
-            label="Name"
-            placeholder="Enter your name"
+            label={t('auth.name')}
+            placeholder={t('auth.placeholders.enterName')}
             value={form.name || ''}
             onChangeText={(text) => updateForm('name', text)}
             autoComplete="name"
@@ -61,8 +67,8 @@ export default function SignUpScreen() {
           />
 
           <FormField
-            label="Email"
-            placeholder="Enter your email"
+            label={t('auth.email')}
+            placeholder={t('auth.placeholders.enterEmail')}
             value={form.email}
             onChangeText={(text) => updateForm('email', text)}
             autoCapitalize="none"
@@ -74,8 +80,8 @@ export default function SignUpScreen() {
           />
 
           <FormField
-            label="Password"
-            placeholder="Create a password"
+            label={t('auth.password')}
+            placeholder={t('auth.placeholders.createPassword')}
             value={form.password}
             onChangeText={(text) => updateForm('password', text)}
             secureTextEntry
@@ -90,15 +96,15 @@ export default function SignUpScreen() {
             className="mt-2"
           >
             <Text className="text-primary-foreground text-base font-semibold">
-              {loading ? 'Creating Account...' : 'Sign Up'}
+              {loading ? t('auth.buttons.creatingAccount') : t('common.signUp')}
             </Text>
           </Button>
         </Animated.View>
       ) : (
         <Animated.View style={shakeStyle} className="gap-4 mt-6">
           <FormField
-            label="Verification Code"
-            placeholder="Enter code"
+            label={t('auth.verificationCode')}
+            placeholder={t('auth.placeholders.enterCode')}
             value={verificationCode}
             onChangeText={setVerificationCode}
             keyboardType="number-pad"
@@ -113,7 +119,9 @@ export default function SignUpScreen() {
             className="mt-2"
           >
             <Text className="text-primary-foreground text-base font-semibold">
-              {loading ? 'Verifying...' : 'Verify Email'}
+              {loading
+                ? t('auth.buttons.verifying')
+                : t('auth.buttons.verifyEmail')}
             </Text>
           </Button>
         </Animated.View>

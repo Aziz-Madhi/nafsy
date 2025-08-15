@@ -10,7 +10,6 @@ import {
   useTodayMood,
   useCurrentUser,
 } from '~/hooks/useSharedData';
-import { useTranslation } from '~/hooks/useTranslation';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 import { cn } from '~/lib/cn';
 import { MotiView } from 'moti';
@@ -25,116 +24,107 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MoodBasedExerciseSuggestion } from '~/components/mood/MoodBasedExerciseSuggestion';
 import { getExerciseCategoriesForMood } from '~/lib/mood-exercise-mapping';
+import { useTranslation } from '~/hooks/useTranslation';
 
-const moods = [
-  { id: 'sad', label: 'Sad', value: 'sad' },
-  { id: 'anxious', label: 'Anxious', value: 'anxious' },
-  { id: 'neutral', label: 'Neutral', value: 'neutral' },
-  { id: 'happy', label: 'Happy', value: 'happy' },
-  { id: 'angry', label: 'Angry', value: 'angry' },
-] as const;
+// Moods array will be localized in the component
 
 // Encouraging messages configuration
-// Tag categories for each mood type
-const tagCategories = {
+// Tag categories keys for translation
+const tagCategoryKeys = {
   anxious: [
-    'Work',
-    'Family',
-    'Health',
-    'Finances',
-    'Relationship',
-    'Future',
-    'Social',
-    'School',
+    'mood.tags.work',
+    'mood.tags.family',
+    'mood.tags.health',
+    'mood.tags.finances',
+    'mood.tags.relationship',
+    'mood.tags.future',
+    'mood.tags.social',
+    'mood.tags.school',
   ],
   sad: [
-    'Loss',
-    'Loneliness',
-    'Disappointment',
-    'Rejection',
-    'Change',
-    'Memory',
-    'Illness',
-    'Failure',
+    'mood.tags.loss',
+    'mood.tags.loneliness',
+    'mood.tags.disappointment',
+    'mood.tags.rejection',
+    'mood.tags.change',
+    'mood.tags.memory',
+    'mood.tags.illness',
+    'mood.tags.failure',
   ],
   happy: [
-    'Achievement',
-    'Love',
-    'Friends',
-    'Progress',
-    'Gratitude',
-    'Fun',
-    'Peace',
-    'Success',
+    'mood.tags.achievement',
+    'mood.tags.love',
+    'mood.tags.friends',
+    'mood.tags.progress',
+    'mood.tags.gratitude',
+    'mood.tags.fun',
+    'mood.tags.peace',
+    'mood.tags.success',
   ],
   angry: [
-    'Frustration',
-    'Injustice',
-    'Disrespect',
-    'Disappointment',
-    'Stress',
-    'Conflict',
-    'Betrayal',
-    'Pressure',
+    'mood.tags.frustration',
+    'mood.tags.injustice',
+    'mood.tags.disrespect',
+    'mood.tags.disappointment',
+    'mood.tags.stress',
+    'mood.tags.conflict',
+    'mood.tags.betrayal',
+    'mood.tags.pressure',
   ],
   neutral: [
-    'Routine',
-    'Rest',
-    'Calm',
-    'Stable',
-    'Observing',
-    'Reflecting',
-    'Waiting',
-    'Balanced',
+    'mood.tags.routine',
+    'mood.tags.rest',
+    'mood.tags.calm',
+    'mood.tags.stable',
+    'mood.tags.observing',
+    'mood.tags.reflecting',
+    'mood.tags.waiting',
+    'mood.tags.balanced',
   ],
 } as const;
 
-const encouragingMessages = [
+const encouragingMessageKeys = [
   {
     id: 1,
-    prefix: 'Building',
-    highlight: 'SELF-AWARENESS',
-    suffix:
-      'Each mood entry reveals patterns that lead to deeper understanding.',
+    prefix: 'mood.encouragement.building.prefix',
+    highlight: 'mood.encouragement.building.highlight',
+    suffix: 'mood.encouragement.building.suffix',
   },
   {
     id: 2,
-    prefix: 'Discovering',
-    highlight: 'PATTERNS',
-    suffix: 'Your emotional patterns will guide your wellness journey.',
+    prefix: 'mood.encouragement.discovering.prefix',
+    highlight: 'mood.encouragement.discovering.highlight',
+    suffix: 'mood.encouragement.discovering.suffix',
   },
   {
     id: 3,
-    prefix: 'Finding',
-    highlight: 'CLARITY',
-    suffix: 'Regular mood tracking brings clarity to your emotional landscape.',
+    prefix: 'mood.encouragement.finding.prefix',
+    highlight: 'mood.encouragement.finding.highlight',
+    suffix: 'mood.encouragement.finding.suffix',
   },
   {
     id: 4,
-    prefix: 'Tracking',
-    highlight: 'PROGRESS',
-    suffix: 'Your mood log is becoming a powerful tool for personal growth.',
+    prefix: 'mood.encouragement.tracking.prefix',
+    highlight: 'mood.encouragement.tracking.highlight',
+    suffix: 'mood.encouragement.tracking.suffix',
   },
   {
     id: 5,
-    prefix: 'Building',
-    highlight: 'HABITS',
-    suffix:
-      'This daily practice helps you understand yourself better each day.',
+    prefix: 'mood.encouragement.habits.prefix',
+    highlight: 'mood.encouragement.habits.highlight',
+    suffix: 'mood.encouragement.habits.suffix',
   },
   {
     id: 6,
-    prefix: 'Experiencing',
-    highlight: 'GROWTH',
-    suffix:
-      'Every mood entry contributes to your emotional intelligence journey.',
+    prefix: 'mood.encouragement.experiencing.prefix',
+    highlight: 'mood.encouragement.experiencing.highlight',
+    suffix: 'mood.encouragement.experiencing.suffix',
   },
   {
     id: 7,
     prefix: '',
-    highlight: 'KEEP GOING!',
-    suffix:
-      'Your commitment to tracking moods is the foundation of emotional wellness.',
+    highlight: 'mood.encouragement.keepGoing.highlight',
+    suffix: 'mood.encouragement.keepGoing.suffix',
   },
 ] as const;
 
@@ -171,10 +161,12 @@ const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
   mood,
   isSelected,
   onPress,
+  t,
 }: {
-  mood: (typeof moods)[number];
+  mood: { id: string; label: string; value: string };
   isSelected: boolean;
   onPress: () => void;
+  t: (key: string) => string;
 }) {
   const colors = useColors();
   const isDarkModeLocal = colors.background === '#171717';
@@ -227,7 +219,7 @@ const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
         className="mt-2 text-center font-medium"
         style={{ color: textColor }}
       >
-        {mood.label}
+        {t(`mood.moods.${mood.value}`)}
       </Text>
     </Pressable>
   );
@@ -235,16 +227,17 @@ const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
 
 // Individual Tag Component - EXACT same pattern as AnimatedMoodButton
 const TagButton = React.memo(function TagButton({
-  tag,
+  tagKey,
   isSelected,
   moodType,
   onPress,
 }: {
-  tag: string;
+  tagKey: string;
   isSelected: boolean;
   moodType: string;
   onPress: () => void;
 }) {
+  const { t } = useTranslation();
   const colors = useColors();
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -312,7 +305,7 @@ const TagButton = React.memo(function TagButton({
             color: textColor,
           }}
         >
-          {tag}
+          {t(tagKey)}
         </Text>
       </Animated.View>
     </Pressable>
@@ -327,11 +320,13 @@ const TagsSection = React.memo(function TagsSection({
 }: {
   selectedMood: string;
   selectedTags: string[];
-  onTagToggle: (tag: string) => void;
+  onTagToggle: (tagKey: string) => void;
 }) {
+  const { t } = useTranslation();
+
   if (
     !selectedMood ||
-    !tagCategories[selectedMood as keyof typeof tagCategories]
+    !tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
   ) {
     return null;
   }
@@ -347,50 +342,50 @@ const TagsSection = React.memo(function TagsSection({
         variant="body"
         className="text-center mb-4 text-foreground text-base font-medium"
       >
-        What&apos;s contributing to this feeling?
+        {t('mood.contributing')}
       </Text>
       <View style={{ minHeight: 140 }}>
         {/* Row 1: First 3 tags */}
         <View className="flex-row justify-center mb-2">
-          {tagCategories[selectedMood as keyof typeof tagCategories]
+          {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
             .slice(0, 3)
-            .map((tag) => (
+            .map((tagKey) => (
               <TagButton
-                key={tag}
-                tag={tag}
-                isSelected={selectedTags.includes(tag)}
+                key={tagKey}
+                tagKey={tagKey}
+                isSelected={selectedTags.includes(tagKey)}
                 moodType={selectedMood}
-                onPress={() => onTagToggle(tag)}
+                onPress={() => onTagToggle(tagKey)}
               />
             ))}
         </View>
 
         {/* Row 2: Next 3 tags */}
         <View className="flex-row justify-center mb-2">
-          {tagCategories[selectedMood as keyof typeof tagCategories]
+          {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
             .slice(3, 6)
-            .map((tag) => (
+            .map((tagKey) => (
               <TagButton
-                key={tag}
-                tag={tag}
-                isSelected={selectedTags.includes(tag)}
+                key={tagKey}
+                tagKey={tagKey}
+                isSelected={selectedTags.includes(tagKey)}
                 moodType={selectedMood}
-                onPress={() => onTagToggle(tag)}
+                onPress={() => onTagToggle(tagKey)}
               />
             ))}
         </View>
 
         {/* Row 3: Last 2 tags */}
         <View className="flex-row justify-center">
-          {tagCategories[selectedMood as keyof typeof tagCategories]
+          {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
             .slice(6, 8)
-            .map((tag) => (
+            .map((tagKey) => (
               <TagButton
-                key={tag}
-                tag={tag}
-                isSelected={selectedTags.includes(tag)}
+                key={tagKey}
+                tagKey={tagKey}
+                isSelected={selectedTags.includes(tagKey)}
                 moodType={selectedMood}
-                onPress={() => onTagToggle(tag)}
+                onPress={() => onTagToggle(tagKey)}
               />
             ))}
         </View>
@@ -400,7 +395,7 @@ const TagsSection = React.memo(function TagsSection({
 });
 
 export default function MoodIndex() {
-  const {} = useTranslation(); // eslint-disable-line no-empty-pattern
+  const { t } = useTranslation();
   const moodData = useMoodData();
   const todayMood = useTodayMood();
   const currentUser = useCurrentUser();
@@ -408,6 +403,18 @@ export default function MoodIndex() {
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
   const isDarkMode = colors.background === '#171717';
+
+  // Localized moods array
+  const moods = useMemo(
+    () => [
+      { id: 'sad', label: t('mood.moods.sad'), value: 'sad' },
+      { id: 'anxious', label: t('mood.moods.anxious'), value: 'anxious' },
+      { id: 'neutral', label: t('mood.moods.neutral'), value: 'neutral' },
+      { id: 'happy', label: t('mood.moods.happy'), value: 'happy' },
+      { id: 'angry', label: t('mood.moods.angry'), value: 'angry' },
+    ],
+    [t]
+  );
 
   // Get exercise suggestion based on today's mood
   const exerciseCategories = useMemo(() => {
@@ -439,9 +446,11 @@ export default function MoodIndex() {
   const [isNavigating, setIsNavigating] = useState(false);
 
   // Memoized tag toggle handler
-  const handleTagToggle = useCallback((tag: string) => {
+  const handleTagToggle = useCallback((tagKey: string) => {
     setSelectedTags((prev) =>
-      prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      prev.includes(tagKey)
+        ? prev.filter((t) => t !== tagKey)
+        : [...prev, tagKey]
     );
   }, []);
 
@@ -451,9 +460,14 @@ export default function MoodIndex() {
   const selectedEncouragingMessage = useMemo(() => {
     const today = new Date().getDay(); // 0 = Sunday, 6 = Saturday
     // Use day of week to select message (ensures same message throughout the day)
-    const messageIndex = today % encouragingMessages.length;
-    return encouragingMessages[messageIndex];
-  }, []);
+    const messageIndex = today % encouragingMessageKeys.length;
+    const messageKeys = encouragingMessageKeys[messageIndex];
+    return {
+      prefix: messageKeys.prefix ? t(messageKeys.prefix) : '',
+      highlight: t(messageKeys.highlight),
+      suffix: t(messageKeys.suffix),
+    };
+  }, [t]);
 
   // Save mood handler
   const handleSaveMood = useCallback(async () => {
@@ -469,7 +483,10 @@ export default function MoodIndex() {
       await createMood({
         mood: moodValue as 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry',
         note: moodNote.trim(),
-        tags: selectedTags.length > 0 ? selectedTags : undefined,
+        tags:
+          selectedTags.length > 0
+            ? selectedTags.map((tagKey) => t(tagKey))
+            : undefined,
         createdAt: new Date().getTime(),
       });
 
@@ -484,7 +501,7 @@ export default function MoodIndex() {
     }
   }, [selectedMood, moodNote, selectedTags, currentUser, createMood, isSaving]);
 
-  const screenTitle = 'Mood';
+  const screenTitle = t('tabs.mood');
 
   return (
     <DashboardLayout title={screenTitle}>
@@ -593,7 +610,7 @@ export default function MoodIndex() {
                       : colors.foreground,
                   }}
                 >
-                  How are you feeling today?
+                  {t('mood.subtitle')}
                 </Text>
 
                 {/* Mood Selection */}
@@ -611,6 +628,7 @@ export default function MoodIndex() {
                         setSelectedMood(mood.id);
                         setSelectedTags([]); // Reset tags when mood changes
                       }}
+                      t={t}
                     />
                   ))}
                 </View>
@@ -634,7 +652,7 @@ export default function MoodIndex() {
                         variant="caption1"
                         className="text-muted-foreground mb-2"
                       >
-                        Add a note (optional)
+                        {t('mood.addNote')}
                       </Text>
                       <View
                         className="p-4"
@@ -653,7 +671,7 @@ export default function MoodIndex() {
                         <TextInput
                           value={moodNote}
                           onChangeText={setMoodNote}
-                          placeholder="What's on your mind?"
+                          placeholder={t('mood.notePlaceholder')}
                           placeholderTextColor={withOpacity(
                             colors.foreground,
                             0.55
@@ -698,7 +716,7 @@ export default function MoodIndex() {
                       }}
                     >
                       <Text variant="callout" className="text-white font-bold">
-                        {isSaving ? 'Saving...' : 'Save Mood'}
+                        {isSaving ? t('common.loading') : t('mood.saveMood')}
                       </Text>
                     </Pressable>
                   </MotiView>
