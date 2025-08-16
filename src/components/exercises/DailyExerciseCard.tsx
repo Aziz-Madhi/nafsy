@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, memo } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -12,7 +12,7 @@ interface DailyExerciseCardProps {
   motivationalMessage: string;
 }
 
-export function DailyExerciseCard({
+function DailyExerciseCardComponent({
   exercise,
   onPress,
   greeting,
@@ -257,3 +257,5 @@ export function DailyExerciseCard({
     </View>
   );
 }
+
+export const DailyExerciseCard = memo(DailyExerciseCardComponent);

@@ -1,6 +1,5 @@
 import React, { useCallback } from 'react';
 import { View, Pressable } from 'react-native';
-import { useRouter, useSegments } from 'expo-router';
 import { MessageCircle, Heart, Activity } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, {
@@ -8,48 +7,34 @@ import Animated, {
   useAnimatedStyle,
   withSpring,
 } from 'react-native-reanimated';
-import { getNavigationIconClass } from '~/lib/color-helpers';
+import { useColors } from '~/hooks/useColors';
+import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
-interface TabItem {
-  name: string;
-  href: string;
-  icon: React.ComponentType<any>;
-  label: string;
-}
+const getIconForRoute = (routeName: string) => {
+  switch (routeName) {
+    case 'chat':
+      return MessageCircle;
+    case 'mood':
+      return Heart;
+    case 'exercises':
+      return Activity;
+    default:
+      return MessageCircle;
+  }
+};
 
-const tabs: TabItem[] = [
-  {
-    name: 'chat',
-    href: '/tabs/chat',
-    icon: MessageCircle,
-    label: 'Chat',
-  },
-  {
-    name: 'mood',
-    href: '/tabs/mood',
-    icon: Heart,
-    label: 'Mood',
-  },
-  {
-    name: 'exercises',
-    href: '/tabs/exercises',
-    icon: Activity,
-    label: 'Exercises',
-  },
-];
-
-export function CustomBottomNavigation() {
-  const router = useRouter();
-  const segments = useSegments();
-
-  // Get current active tab from route segments
-  const activeTab = segments[1] || 'chat'; // Default to chat if no segment
+export function CustomBottomNavigation({
+  state,
+  descriptors,
+  navigation,
+}: BottomTabBarProps) {
+  const colors = useColors();
 
   // Animation values
   const tabScale = useSharedValue(1);
 
   const handleTabPress = useCallback(
-    async (href: string, tabName: string) => {
+    async (route: any, isFocused: boolean) => {
       // Quick scale animation for feedback
       tabScale.value = withSpring(0.95, { duration: 100 }, () => {
         tabScale.value = withSpring(1, { duration: 150 });
@@ -58,12 +43,17 @@ export function CustomBottomNavigation() {
       // Add haptic feedback
       await impactAsync(ImpactFeedbackStyle.Light);
 
-      // Navigate to tab if not already active
-      if (activeTab !== tabName) {
-        router.push(href);
+      const event = navigation.emit({
+        type: 'tabPress',
+        target: route.key,
+        canPreventDefault: true,
+      });
+
+      if (!isFocused && !event.defaultPrevented) {
+        navigation.navigate(route.name, route.params);
       }
     },
-    [router, activeTab, tabScale]
+    [navigation, tabScale]
   );
 
   // Animated style for tab scale
@@ -74,17 +64,21 @@ export function CustomBottomNavigation() {
   });
 
   return (
-    <View className="absolute bottom-0 left-0 right-0 h-20 bg-card-elevated">
+    <View
+      className="absolute bottom-0 left-0 right-0 h-20 rounded-t-2xl"
+      style={{ backgroundColor: colors.card }}
+    >
       {/* Tab buttons */}
       <View className="flex-row items-center justify-evenly h-full">
-        {tabs.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = activeTab === tab.name;
+        {state.routes.map((route, index) => {
+          const { options } = descriptors[route.key];
+          const isFocused = state.index === index;
+          const Icon = getIconForRoute(route.name);
 
           return (
             <Pressable
-              key={tab.name}
-              onPress={() => handleTabPress(tab.href, tab.name)}
+              key={route.key}
+              onPress={() => handleTabPress(route, isFocused)}
               className="flex-1 items-center justify-center py-4"
               android_ripple={{
                 color: 'rgba(0, 0, 0, 0.1)',
@@ -93,14 +87,14 @@ export function CustomBottomNavigation() {
               }}
             >
               <Animated.View
-                style={isActive ? tabScaleStyle : undefined}
+                style={isFocused ? tabScaleStyle : undefined}
                 className="items-center justify-center"
               >
                 <Icon
                   size={24}
-                  className={getNavigationIconClass(isActive)}
-                  fill={isActive ? 'currentColor' : 'none'}
-                  strokeWidth={isActive ? 2.5 : 2}
+                  color={isFocused ? colors.tabActive : colors.tabInactive}
+                  fill="none"
+                  strokeWidth={isFocused ? 2.5 : 2}
                 />
               </Animated.View>
             </Pressable>

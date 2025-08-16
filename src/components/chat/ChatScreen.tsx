@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useCallback, useEffect, memo, useMemo } from 'react';
-import { View } from 'react-native';
+import { View, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
 import { runOnJS } from 'react-native-reanimated';
@@ -122,32 +122,34 @@ export const ChatScreen = memo(function ChatScreen({
   return (
     <View className="flex-1 bg-background">
       <GestureDetector gesture={doubleTapGesture}>
-        <View
-          className="flex-1"
-          style={{ paddingBottom: navigationBarPadding }}
-        >
-          <ChatHeader onOpenSidebar={onOpenSidebar} />
+        <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+          <View
+            className="flex-1"
+            style={{ paddingBottom: navigationBarPadding }}
+          >
+            <ChatHeader onOpenSidebar={onOpenSidebar} />
 
-          <SessionStatusDisplay
-            isLoading={sessionSwitchLoading}
-            error={sessionError}
-            onDismissError={onDismissError}
-          />
+            <SessionStatusDisplay
+              isLoading={sessionSwitchLoading}
+              error={sessionError}
+              onDismissError={onDismissError}
+            />
 
-          <ChatMessageList
-            flashListRef={flashListRef}
-            messages={messages}
-            renderMessage={renderMessage}
-            keyExtractor={keyExtractor}
-            getItemType={getItemType}
-            welcomeSubtitle={welcomeSubtitle}
-            isTyping={isTyping}
-            showQuickReplies={showQuickReplies}
-            quickReplies={quickReplies}
-            horizontalPadding={20}
-            onQuickReply={onQuickReply}
-          />
-        </View>
+            <ChatMessageList
+              flashListRef={flashListRef}
+              messages={messages}
+              renderMessage={renderMessage}
+              keyExtractor={keyExtractor}
+              getItemType={getItemType}
+              welcomeSubtitle={welcomeSubtitle}
+              isTyping={isTyping}
+              showQuickReplies={showQuickReplies}
+              quickReplies={quickReplies}
+              horizontalPadding={20}
+              onQuickReply={onQuickReply}
+            />
+          </View>
+        </TouchableWithoutFeedback>
       </GestureDetector>
 
       {/* Chat History Sidebar */}

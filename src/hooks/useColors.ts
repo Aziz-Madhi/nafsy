@@ -15,7 +15,7 @@ const nativeColors = {
     foreground: '#5A4A3A', // matches --foreground: 90 74 58
 
     // Navigation colors - for SymbolView only
-    tabActive: '#1D4ED8', // matches --tab-active: 29 78 216
+    tabActive: '#2F6A8D', // matches --tab-active: 47 106 141
     tabInactive: '#A3A3A3', // matches --tab-inactive: 163 163 163
 
     // Chat colors - for React Native specific styling only
@@ -56,6 +56,7 @@ const nativeColors = {
     brandBrownish: '#8B7355', // warm brownish color for profile sections
     card: '#FFFFFF', // card background
     cardElevated: '#FFFFFF', // elevated card background
+    cardDarker: '#E4E1DD', // darker card background - matches --card-darker: 228 225 221
     muted: '#F3F4F6', // muted background
     mutedForeground: '#9CA3AF', // muted text color
   },
@@ -66,7 +67,7 @@ const nativeColors = {
     foreground: '#F5F5F5', // matches dark --foreground: 245 245 245
 
     // Navigation colors - dark mode
-    tabActive: '#60A5FA', // matches dark --tab-active: 96 165 250
+    tabActive: '#2F6A8D', // matches dark --tab-active: 47 106 141
     tabInactive: '#737373', // matches dark --tab-inactive: 115 115 115
 
     // Chat colors - dark mode
@@ -107,6 +108,7 @@ const nativeColors = {
     brandBrownish: '#A68B5B', // lighter brownish for dark mode
     card: '#262626', // dark card background
     cardElevated: '#2A2A2A', // elevated card background for dark mode
+    cardDarker: '#1C1C1C', // darker card background - matches --card-darker: 28 28 28
     muted: '#404040', // dark muted background
     mutedForeground: '#A3A3A3', // dark muted text color
   },

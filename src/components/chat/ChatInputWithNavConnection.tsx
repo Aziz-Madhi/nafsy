@@ -88,16 +88,18 @@ export function ChatInputWithNavConnection({
         keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 0}
       >
         <View
-          className="bg-card-elevated"
+          className=""
           style={{
+            backgroundColor: colors.card,
             borderTopLeftRadius: 20,
             borderTopRightRadius: 20,
           }}
         >
           {/* Input area */}
-          <View
+          <Pressable
             className="flex-row items-center px-4 py-3"
             style={{ minHeight: 48 }}
+            onPress={(e) => e.stopPropagation()}
           >
             {/* Text input - no container styling */}
             <TextInput
@@ -114,6 +116,7 @@ export function ChatInputWithNavConnection({
                 fontSize: 16,
                 lineHeight: 20,
                 paddingVertical: 8,
+                backgroundColor: 'transparent',
               }}
               multiline
               maxLength={1000}
@@ -170,7 +173,7 @@ export function ChatInputWithNavConnection({
                 </Pressable>
               </Animated.View>
             </MotiView>
-          </View>
+          </Pressable>
 
           {/* Navigation bar spacing */}
           <View className="h-20" />

@@ -1,4 +1,4 @@
-import React, { useMemo, useCallback } from 'react';
+import React, { useMemo, useCallback, memo } from 'react';
 import {
   View,
   ScrollView,
@@ -290,7 +290,7 @@ function ContentWrapper({
   );
 }
 
-export function ScreenLayout({
+function ScreenLayoutComponent({
   title,
   subtitle,
   headerLeft,
@@ -362,6 +362,8 @@ export function ScreenLayout({
   return content;
 }
 
+export const ScreenLayout = memo(ScreenLayoutComponent);
+
 // Preset configurations for common screen types
 export const ScreenPresets = {
   // Dashboard layout (mood, exercises screens)
@@ -392,22 +394,26 @@ export const ScreenPresets = {
 };
 
 // Convenience components with presets
-export function DashboardLayout(props: Omit<ScreenLayoutProps, 'variant'>) {
+export const DashboardLayout = memo(function DashboardLayout(
+  props: Omit<ScreenLayoutProps, 'variant'>
+) {
   return <ScreenLayout {...props} {...ScreenPresets.dashboard} />;
-}
+});
 
-export function ChatLayout(
+export const ChatLayout = memo(function ChatLayout(
   props: Omit<ScreenLayoutProps, 'variant' | 'showHeader' | 'scrollable'>
 ) {
   return <ScreenLayout {...props} {...ScreenPresets.chat} />;
-}
+});
 
-export function ProfileLayout(props: Omit<ScreenLayoutProps, 'variant'>) {
+export const ProfileLayout = memo(function ProfileLayout(
+  props: Omit<ScreenLayoutProps, 'variant'>
+) {
   return <ScreenLayout {...props} {...ScreenPresets.profile} />;
-}
+});
 
-export function ListLayout(
+export const ListLayout = memo(function ListLayout(
   props: Omit<ScreenLayoutProps, 'variant' | 'scrollable'>
 ) {
   return <ScreenLayout {...props} {...ScreenPresets.list} />;
-}
+});

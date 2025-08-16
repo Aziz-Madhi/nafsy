@@ -1,11 +1,11 @@
-import { useLayoutEffect } from 'react';
+import React, { useLayoutEffect } from 'react';
 import { Appearance } from 'react-native';
 import { colorScheme } from 'nativewind';
 import { useTheme } from '~/store/useAppStore';
 
 // Single source of truth for NativeWind's color scheme.
 // Syncs NativeWind with user preference (light/dark/system) and system changes.
-export function ThemeController() {
+export const ThemeController = React.memo(function ThemeController() {
   const themePreference = useTheme();
 
   useLayoutEffect(() => {
@@ -32,4 +32,4 @@ export function ThemeController() {
   }, [themePreference]);
 
   return null;
-}
+});

@@ -185,7 +185,7 @@ export default function ExercisesIndex() {
   );
 
   // Screen title
-  const screenTitle = t('exercises.title');
+  const screenTitle = useMemo(() => t('exercises.title'), [t]);
 
   // Daily exercise helpers
   const greeting = useMemo(() => getTimeBasedGreeting(t), [t]);
@@ -195,6 +195,16 @@ export default function ExercisesIndex() {
     [dailyExercise, t]
   );
 
+  // Memoize content style
+  const contentStyle = useMemo(() => ({ paddingHorizontal: 0 }), []);
+
+  // Memoize daily exercise press handler
+  const handleDailyExercisePress = useCallback(() => {
+    if (dailyExercise) {
+      handleExercisePress(dailyExercise);
+    }
+  }, [dailyExercise, handleExercisePress]);
+
   return (
     <>
       <DashboardLayout
@@ -202,14 +212,12 @@ export default function ExercisesIndex() {
         title={screenTitle}
         showHeader={true}
         scrollable={true}
-        contentStyle={{ paddingHorizontal: 0 }}
+        contentStyle={contentStyle}
       >
         {/* Daily Exercise Card */}
         <DailyExerciseCard
           exercise={dailyExercise}
-          onPress={() =>
-            dailyExercise ? handleExercisePress(dailyExercise) : () => {}
-          }
+          onPress={handleDailyExercisePress}
           greeting={greeting}
           motivationalMessage={motivationalMessage}
         />

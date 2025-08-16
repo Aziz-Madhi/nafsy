@@ -1,7 +1,6 @@
 // Consolidated chat components
 export {
   ChatBubble,
-  ChatInput,
   TypingIndicator,
   QuickReplyButton,
 } from './ChatComponents';

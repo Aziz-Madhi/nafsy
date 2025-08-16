@@ -29,7 +29,7 @@ export default function Index() {
     <View className="flex-1 justify-center items-center bg-background">
       <ActivityIndicator size="large" className="text-primary mb-4" />
       <Text variant="body" className="text-muted-foreground">
-        {!isLoaded ? t('common.loading') : t('common.loading')}
+        {t('common.loading')}
       </Text>
     </View>
   );

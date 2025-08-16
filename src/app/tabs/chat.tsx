@@ -16,9 +16,7 @@ import {
 } from '~/store';
 import { ChatScreen } from '~/components/chat';
 
-// Auth is now handled at tab layout level - no need for wrapper
-
-// Chat screen handles its own spacing
+// Auth is handled by AuthGuard at tab layout level
 
 interface Message {
   _id: string;
@@ -121,7 +119,7 @@ export default function ChatTab() {
     }
   }, [serverMainSessionId, currentMainSessionId]);
 
-  // Auth is handled at tab layout level - no early returns needed
+  // Auth is handled by AuthGuard - no early returns needed
 
   // Create user if doesn't exist
   useEffect(() => {

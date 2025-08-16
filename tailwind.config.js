@@ -31,6 +31,10 @@ module.exports = {
     'bg-brand-oxford',
     'bg-brand-primary',
     'bg-brand-brownish',
+    // Card colors for tab and input backgrounds
+    'bg-card',
+    'bg-card-elevated',
+    'bg-card-darker',
   ],
   darkMode: 'class',
   presets: [require('nativewind/preset')],
@@ -85,6 +89,7 @@ module.exports = {
           DEFAULT: 'rgb(var(--card) / <alpha-value>)',
           foreground: 'rgb(var(--card-foreground) / <alpha-value>)',
           elevated: 'rgb(var(--card-elevated) / <alpha-value>)',
+          darker: 'rgb(var(--card-darker) / <alpha-value>)',
         },
 
         // Mood colors
