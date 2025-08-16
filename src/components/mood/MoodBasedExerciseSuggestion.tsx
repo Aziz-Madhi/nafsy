@@ -18,7 +18,7 @@ export function MoodBasedExerciseSuggestion({
   exercise,
   isLoading = false,
 }: MoodBasedExerciseSuggestionProps) {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
   const [showExerciseDetail, setShowExerciseDetail] = useState(false);
@@ -211,7 +211,9 @@ export function MoodBasedExerciseSuggestion({
               color: getCategoryColors.text,
             }}
           >
-            {exercise.title}
+            {currentLanguage === 'ar' && exercise.titleAr
+              ? exercise.titleAr
+              : exercise.title}
           </Text>
 
           <Text
@@ -225,7 +227,9 @@ export function MoodBasedExerciseSuggestion({
             }}
             numberOfLines={2}
           >
-            {exercise.description}
+            {currentLanguage === 'ar' && exercise.descriptionAr
+              ? exercise.descriptionAr
+              : exercise.description}
           </Text>
         </View>
 

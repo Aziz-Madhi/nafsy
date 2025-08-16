@@ -46,7 +46,7 @@ function ExerciseSuggestionCard({
   exercise: any;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const categoryColor = getCategoryColor(exercise.category);
   const categoryIcon = getCategoryIcon(exercise.category);
 
@@ -74,10 +74,14 @@ function ExerciseSuggestionCard({
 
         <View className="flex-1">
           <Text variant="title3" className="text-[#5A4A3A] font-bold mb-1">
-            {exercise.title}
+            {currentLanguage === 'ar' && exercise.titleAr
+              ? exercise.titleAr
+              : exercise.title}
           </Text>
           <Text variant="body" className="text-[#5A4A3A] opacity-70 leading-5">
-            {exercise.description}
+            {currentLanguage === 'ar' && exercise.descriptionAr
+              ? exercise.descriptionAr
+              : exercise.description}
           </Text>
         </View>
       </View>

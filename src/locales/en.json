@@ -97,7 +97,8 @@
       "title": "Quick Vent",
       "subtitle": "How are you feeling?",
       "placeholder": "Share what's on your mind...",
-      "send": "Send"
+      "send": "Send",
+      "welcomeMessage": "This is your private space. Share what's on your mind."
     },
     "history": {
       "title": "History",
@@ -114,15 +115,10 @@
       "clearSearch": "Clear search",
       "deleteSession": "Delete Session",
       "confirmDelete": "Are you sure you want to delete this session?",
-      "noHistory": "No {{type}} History",
       "startChatting": "Start Chatting",
       "startVenting": "Start Venting"
     },
     "defaultResponse": "I hear you. Let's work through this together. Can you tell me more about what's on your mind?",
-    "floatingChat": {
-      "welcomeMessage": "This is your private space. Share what's on your mind.",
-      "placeholder": "Type your thoughts..."
-    },
     "status": {
       "switchingSession": "Switching session...",
       "connecting": "Connecting...",
@@ -423,7 +419,7 @@
     "noExercisesInCategory": "No exercises available in this category yet.",
     "greeting": {
       "morning": "Good morning",
-      "afternoon": "Good afternoon", 
+      "afternoon": "Good afternoon",
       "evening": "Good evening",
       "night": "Good night",
       "lateNight": "Good night"
@@ -518,7 +514,11 @@
       "privacyPolicy": "Privacy Policy",
       "email": "Email",
       "subscription": "Subscription",
-      "anonymousUser": "Anonymous User"
+      "anonymousUser": "Anonymous User",
+      "restartRequired": "Restart required",
+      "restartMessage": "Language and layout changes will be applied after restarting the app.",
+      "restartNow": "Restart now",
+      "restartLater": "Later"
     },
     "support": {
       "helpCenter": "Help Center",

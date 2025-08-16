@@ -18,7 +18,7 @@ export function DailyExerciseCard({
   greeting,
   motivationalMessage,
 }: DailyExerciseCardProps) {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
 
   const handlePress = useCallback(() => {
     if (exercise) {
@@ -105,7 +105,9 @@ export function DailyExerciseCard({
                     lineHeight: 26,
                   }}
                 >
-                  {exercise.title}
+                  {currentLanguage === 'ar' && exercise.titleAr
+                    ? exercise.titleAr
+                    : exercise.title}
                 </Text>
 
                 {/* Description */}
@@ -118,7 +120,9 @@ export function DailyExerciseCard({
                   }}
                   numberOfLines={2}
                 >
-                  {exercise.description}
+                  {currentLanguage === 'ar' && exercise.descriptionAr
+                    ? exercise.descriptionAr
+                    : exercise.description}
                 </Text>
 
                 {/* Motivational message and button */}

@@ -66,22 +66,24 @@ This document provides a comprehensive analysis of the language switching implem
 ```typescript
 // In src/app/settings.tsx - handleLanguageChange function
 const shouldBeRTL = isRTLLanguage(nextLanguage);
-Alert.alert(/* ... */[
-  {
-    text: nextLanguage === 'ar' ? 'أعد التشغيل الآن' : 'Restart now',
-    onPress: async () => {
-      try {
-        // This conflicts with rtl-bootstrap.ts
-        if (I18nManager.isRTL !== shouldBeRTL) {
-          I18nManager.allowRTL(shouldBeRTL);
-          I18nManager.forceRTL(shouldBeRTL);
-        }
-        await Updates.reloadAsync();
-      } catch {}
+Alert.alert(
+  /* ... */ [
+    {
+      text: nextLanguage === 'ar' ? 'أعد التشغيل الآن' : 'Restart now',
+      onPress: async () => {
+        try {
+          // This conflicts with rtl-bootstrap.ts
+          if (I18nManager.isRTL !== shouldBeRTL) {
+            I18nManager.allowRTL(shouldBeRTL);
+            I18nManager.forceRTL(shouldBeRTL);
+          }
+          await Updates.reloadAsync();
+        } catch {}
+      },
     },
-  },
-  { text: nextLanguage === 'ar' ? 'لاحقًا' : 'Later', style: 'cancel' },
-]);
+    { text: nextLanguage === 'ar' ? 'لاحقًا' : 'Later', style: 'cancel' },
+  ]
+);
 ```
 
 **Impact**: Potential conflicts between manual RTL changes and bootstrap system.
@@ -89,6 +91,7 @@ Alert.alert(/* ... */[
 ### 2. Inconsistent Language Change Methods
 
 **Issue**: Multiple methods exist for language changing with different levels of deprecation:
+
 - `useAppStore.requestLanguageChange()` (recommended)
 - `useTranslation.switchLanguage()` (deprecated)
 - Direct `i18n.changeLanguage()` calls (legacy)
@@ -98,6 +101,7 @@ Alert.alert(/* ... */[
 ### 3. Duplicated Logic
 
 **Issue**: Language resolution logic is duplicated in multiple files:
+
 - `src/lib/i18n.ts` - `getInitialLanguage()`
 - `src/lib/rtl-bootstrap.ts` - `getStoredLanguageForRTL()`
 - `src/store/useAppStore.ts` - `resolveCurrentLanguage()`
@@ -111,7 +115,7 @@ Alert.alert(/* ... */[
 ```typescript
 // In src/store/useAppStore.ts
 reset: () => {
-  // ... 
+  // ...
   // Apply language change - this should use deferred system instead
   changeLanguage(resetLanguage).catch(console.error);
 },
@@ -162,7 +166,8 @@ const handleLanguageChange = useCallback(() => {
 
 **Problem**: Deprecated methods create confusion and maintenance overhead.
 
-**Solution**: 
+**Solution**:
+
 1. Remove `useTranslation.switchLanguage()` completely
 2. Update documentation to only reference `useAppStore.requestLanguageChange()`
 3. Remove deprecated methods in `src/lib/i18n.ts`:
@@ -232,7 +237,8 @@ reset: () => {
 
 **Problem**: Some language-related types are not fully type-safe.
 
-**Solution**: 
+**Solution**:
+
 1. Create a dedicated type for language preferences that includes 'system'
 2. Use stricter typing for language parameters
 3. Ensure all language-related functions return proper types
@@ -247,7 +253,8 @@ export type LanguagePreference = SupportedLanguage | 'system';
 
 **Problem**: Some implementation details are only documented in comments.
 
-**Solution**: 
+**Solution**:
+
 1. Create a comprehensive documentation file for the language system
 2. Document the deferred language change workflow
 3. Provide clear examples of how to implement language switching in components
@@ -255,16 +262,19 @@ export type LanguagePreference = SupportedLanguage | 'system';
 ## Implementation Plan
 
 ### Phase 1: Immediate Fixes (1-2 days)
+
 1. Remove manual RTL changes from settings screen
 2. Remove deprecated methods
 3. Fix reset function to use deferred system
 
 ### Phase 2: Refactoring (3-5 days)
+
 1. Consolidate language resolution logic into a single utility
 2. Improve type safety
 3. Optimize MMKV storage access patterns
 
 ### Phase 3: Documentation (1-2 days)
+
 1. Create comprehensive documentation for the language system
 2. Update README with language implementation details
 3. Add examples for component-level language switching

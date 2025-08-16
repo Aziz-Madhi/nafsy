@@ -1,7 +1,12 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import { getLocales } from 'expo-localization';
 import { getCurrentStorage, getSavedLanguage } from '~/lib/mmkv-storage';
+import {
+  isRTLLanguage,
+  getDeviceLocale,
+  SUPPORTED_LANGUAGES,
+  type SupportedLanguage,
+} from './language-utils';
 
 // Import translation files
 import en from '../locales/en.json';
@@ -16,18 +21,6 @@ export const resources = {
     translation: ar,
   },
 } as const;
-
-// Helper function to get the device locale
-const getDeviceLocale = (): SupportedLanguage => {
-  const locales = getLocales();
-  const primaryLocale = locales[0];
-  const languageCode = primaryLocale?.languageCode;
-
-  // Support only English and Arabic
-  return languageCode && ['en', 'ar'].includes(languageCode)
-    ? (languageCode as SupportedLanguage)
-    : 'en';
-};
 
 // Get stored language preference or fallback to device/default
 const getInitialLanguage = (): SupportedLanguage => {
@@ -59,7 +52,10 @@ const getInitialLanguage = (): SupportedLanguage => {
 
       // CRITICAL: Check for pendingLanguage FIRST - this is set when user requested a language change
       const pendingLanguage = settings?.state?.pendingLanguage;
-      if (pendingLanguage && ['en', 'ar'].includes(pendingLanguage)) {
+      if (
+        pendingLanguage &&
+        SUPPORTED_LANGUAGES.includes(pendingLanguage as SupportedLanguage)
+      ) {
         console.log('🎯 i18n: Found pending language change:', pendingLanguage);
         return pendingLanguage as SupportedLanguage;
       }
@@ -77,7 +73,9 @@ const getInitialLanguage = (): SupportedLanguage => {
         console.log('🎯 i18n: Using device locale:', deviceLocale);
         return deviceLocale;
       }
-      if (['en', 'ar'].includes(languagePreference)) {
+      if (
+        SUPPORTED_LANGUAGES.includes(languagePreference as SupportedLanguage)
+      ) {
         console.log('🎯 i18n: Using stored preference:', languagePreference);
         return languagePreference as SupportedLanguage;
       }
@@ -92,11 +90,6 @@ const getInitialLanguage = (): SupportedLanguage => {
   const fallbackLocale = getDeviceLocale();
   console.log('🎯 i18n: Using fallback device locale:', fallbackLocale);
   return fallbackLocale;
-};
-
-// Helper function to check if language is RTL
-export const isRTLLanguage = (language: string): boolean => {
-  return language === 'ar';
 };
 
 // Initialize i18next with stored language preference
@@ -157,7 +150,3 @@ export const changeLanguage = async (language: 'en' | 'ar'): Promise<void> => {
     '🎯 i18n: Language changed, RTL requires app restart to take effect'
   );
 };
-
-// Export supported languages
-export const SUPPORTED_LANGUAGES = ['en', 'ar'] as const;
-export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];

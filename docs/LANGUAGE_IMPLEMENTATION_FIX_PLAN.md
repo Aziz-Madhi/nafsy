@@ -11,6 +11,7 @@ This document outlines the specific technical changes needed to improve the lang
 **File**: `src/app/settings.tsx`
 
 **Current Code**:
+
 ```typescript
 const handleLanguageChange = useCallback(() => {
   impactAsync(ImpactFeedbackStyle.Light);
@@ -50,6 +51,7 @@ const handleLanguageChange = useCallback(() => {
 ```
 
 **Fixed Code**:
+
 ```typescript
 const handleLanguageChange = useCallback(() => {
   impactAsync(ImpactFeedbackStyle.Light);
@@ -85,10 +87,12 @@ const handleLanguageChange = useCallback(() => {
 **File**: `src/lib/i18n.ts`
 
 **Remove the following functions**:
+
 - `wouldChangeRTL()`
 - `getRestartMessage()`
 
 **Update the changeLanguage function comment**:
+
 ```typescript
 // Helper function to change language (RTL handled by bootstrap)
 export const changeLanguage = async (language: 'en' | 'ar'): Promise<void> => {
@@ -146,7 +150,8 @@ export const resolveLanguage = (
   if (languagePreference === 'system') {
     const locales = getLocales();
     const deviceLanguage = locales[0]?.languageCode;
-    return deviceLanguage && SUPPORTED_LANGUAGES.includes(deviceLanguage as SupportedLanguage)
+    return deviceLanguage &&
+      SUPPORTED_LANGUAGES.includes(deviceLanguage as SupportedLanguage)
       ? (deviceLanguage as SupportedLanguage)
       : 'en';
   }
@@ -169,7 +174,8 @@ export const getDeviceLocale = (): SupportedLanguage => {
     const primaryLocale = locales[0];
     const languageCode = primaryLocale?.languageCode;
 
-    return languageCode && SUPPORTED_LANGUAGES.includes(languageCode as SupportedLanguage)
+    return languageCode &&
+      SUPPORTED_LANGUAGES.includes(languageCode as SupportedLanguage)
       ? (languageCode as SupportedLanguage)
       : 'en';
   } catch {
@@ -183,16 +189,17 @@ export const getDeviceLocale = (): SupportedLanguage => {
 **File**: `src/lib/i18n.ts`
 
 **Replace language resolution logic**:
+
 ```typescript
 // Remove old getDeviceLocale and getInitialLanguage functions
 
 // Import new utilities
-import { 
-  resolveLanguage, 
-  isRTLLanguage, 
+import {
+  resolveLanguage,
+  isRTLLanguage,
   getDeviceLocale,
   type SupportedLanguage,
-  type LanguagePreference
+  type LanguagePreference,
 } from './language-utils';
 
 // Update getInitialLanguage to use new utilities
@@ -243,7 +250,9 @@ const getInitialLanguage = (): SupportedLanguage => {
         console.log('🎯 i18n: Using device locale:', deviceLocale);
         return deviceLocale;
       }
-      if (SUPPORTED_LANGUAGES.includes(languagePreference as SupportedLanguage)) {
+      if (
+        SUPPORTED_LANGUAGES.includes(languagePreference as SupportedLanguage)
+      ) {
         console.log('🎯 i18n: Using stored preference:', languagePreference);
         return languagePreference as SupportedLanguage;
       }
@@ -266,13 +275,14 @@ const getInitialLanguage = (): SupportedLanguage => {
 **File**: `src/lib/rtl-bootstrap.ts`
 
 **Replace language resolution logic**:
+
 ```typescript
 // Import new utilities
-import { 
-  resolveLanguage, 
-  isRTLLanguage, 
+import {
+  resolveLanguage,
+  isRTLLanguage,
   getDeviceLocale,
-  type SupportedLanguage
+  type SupportedLanguage,
 } from './language-utils';
 
 // Remove old helper functions and replace with imports
@@ -304,21 +314,30 @@ const getStoredLanguageForRTL = (): SupportedLanguage => {
       }
 
       // Check stored language preference
-      const languagePreference = settings?.state?.settings?.language || 'system';
+      const languagePreference =
+        settings?.state?.settings?.language || 'system';
       if (languagePreference === 'system') {
         const deviceLocale = getDeviceLocale();
         console.log('🚀 RTL Bootstrap: Using system language:', deviceLocale);
         return deviceLocale;
       }
-      if (SUPPORTED_LANGUAGES.includes(languagePreference as SupportedLanguage)) {
-        console.log('🚀 RTL Bootstrap: Using stored language:', languagePreference);
+      if (
+        SUPPORTED_LANGUAGES.includes(languagePreference as SupportedLanguage)
+      ) {
+        console.log(
+          '🚀 RTL Bootstrap: Using stored language:',
+          languagePreference
+        );
         return languagePreference as SupportedLanguage;
       }
     }
   } catch (error) {
-    console.warn('🚀 RTL Bootstrap: Failed to read language preference:', error);
+    console.warn(
+      '🚀 RTL Bootstrap: Failed to read language preference:',
+      error
+    );
   }
-  
+
   // Fallback to system or English
   const fallback = getDeviceLocale();
   console.log('🚀 RTL Bootstrap: Using fallback language:', fallback);
@@ -331,10 +350,11 @@ const getStoredLanguageForRTL = (): SupportedLanguage => {
 **File**: `src/store/useAppStore.ts`
 
 **Replace language resolution logic**:
+
 ```typescript
 // Import new utilities
-import { 
-  resolveLanguage, 
+import {
+  resolveLanguage,
   isRTLLanguage,
   type SupportedLanguage,
   type LanguagePreference

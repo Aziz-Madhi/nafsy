@@ -115,13 +115,16 @@ export default function CategoryModal() {
     return exercisesWithProgress.map((ex) => ({
       id: ex._id,
       title: ex.title,
+      titleAr: ex.titleAr,
       description: ex.description,
+      descriptionAr: ex.descriptionAr,
       duration: `${ex.duration} min`,
       difficulty: ex.difficulty,
       category: ex.category,
       icon: getCategoryIcon(ex.category),
       color: getCategoryColor(ex.category),
       steps: ex.instructions,
+      stepsAr: ex.instructionsAr,
       benefits: benefitsMap[ex.category] || [],
     }));
   }, [exercisesWithProgress, benefitsMap, isStoreStable]);

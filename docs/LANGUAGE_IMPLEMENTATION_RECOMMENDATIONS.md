@@ -7,26 +7,31 @@ The language switching implementation in the Nafsy app is well-structured with a
 ## Top 5 Recommendations
 
 ### 1. Remove Manual RTL Management
+
 **Issue**: Manual RTL changes in settings screen conflict with bootstrap system
 **Action**: Remove `I18nManager.allowRTL()` and `I18nManager.forceRTL()` calls from settings
 **File**: `src/app/settings.tsx`
 
 ### 2. Eliminate Deprecated Methods
+
 **Issue**: Multiple deprecated methods create confusion
 **Action**: Remove `useTranslation.switchLanguage()` and related deprecated functions
 **Files**: `src/lib/i18n.ts`, `src/lib/deferred-language.ts`, `src/hooks/useTranslation.ts`
 
 ### 3. Consolidate Language Logic
+
 **Issue**: Duplicated language resolution logic across multiple files
 **Action**: Create centralized `src/lib/language-utils.ts` module
 **Benefit**: Single source of truth for language-related operations
 
 ### 4. Align All Language Changes with Deferred System
+
 **Issue**: Inconsistent application of language changes (immediate vs deferred)
 **Action**: Ensure all language changes use the deferred system
 **Files**: `src/store/useAppStore.ts` (reset function)
 
 ### 5. Improve Documentation
+
 **Issue**: Implementation details are scattered across comments
 **Action**: Create comprehensive documentation for the language system
 **Files**: README update, example component
@@ -48,6 +53,7 @@ The language switching implementation in the Nafsy app is well-structured with a
 ## Long-term Benefits
 
 After implementing these recommendations, the language switching system will be:
+
 - More maintainable with reduced code duplication
 - More consistent with a single approach for all language changes
 - Better documented for new developers

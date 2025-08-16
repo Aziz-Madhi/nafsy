@@ -44,7 +44,9 @@ export type MoodType = 'sad' | 'anxious' | 'neutral' | 'happy' | 'angry';
 export interface Exercise {
   id: string;
   title: string;
+  titleAr?: string;
   description: string;
+  descriptionAr?: string;
   duration: string;
   difficulty: 'beginner' | 'intermediate' | 'advanced';
   category:
@@ -58,7 +60,9 @@ export interface Exercise {
   icon: string;
   color: string;
   steps?: string[];
+  stepsAr?: string[];
   benefits?: string[];
+  benefitsAr?: string[];
 }
 
 export type ExerciseCategory =

@@ -93,7 +93,7 @@ export const getTextAlignment = (
 /**
  * RTL-aware conditional classes utility
  * @param ltrClass - Class to use for LTR layout
- * @param rtlClass - Class to use for RTL layout  
+ * @param rtlClass - Class to use for RTL layout
  * @param isRTL - RTL state (required - do not use I18nManager.isRTL fallback)
  */
 export const rtlClass = (
@@ -152,34 +152,44 @@ export const getRTLPosition = {
 
 /**
  * Layout direction helpers
- * @deprecated These functions read I18nManager.isRTL which can be stale during app initialization
+ * @deprecated These functions are deprecated and should not be used
  * Use useIsRTL() hook from useAppStore instead for consistent RTL state
  */
 export const layoutDirection = {
   /**
    * @deprecated Use useIsRTL() hook from useAppStore instead
+   * Reading I18nManager.isRTL can be stale during app initialization
    */
   isRTL: () => {
-    console.warn('layoutDirection.isRTL() is deprecated. Use useIsRTL() hook from useAppStore for consistent RTL state.');
+    console.warn(
+      'layoutDirection.isRTL() is deprecated. Use useIsRTL() hook from useAppStore for consistent RTL state.'
+    );
     return I18nManager.isRTL;
   },
-  
+
   /**
    * @deprecated Use useIsRTL() hook from useAppStore instead
+   * Reading I18nManager.isRTL can be stale during app initialization
    */
   direction: () => {
-    console.warn('layoutDirection.direction() is deprecated. Use useIsRTL() hook from useAppStore for consistent RTL state.');
+    console.warn(
+      'layoutDirection.direction() is deprecated. Use useIsRTL() hook from useAppStore for consistent RTL state.'
+    );
     return I18nManager.isRTL ? 'rtl' : 'ltr';
   },
 
   /**
-   * Force layout direction update - for internal use only
-   * @deprecated RTL should be applied during app initialization only
+   * @deprecated RTL should only be applied during app initialization via rtl-bootstrap.ts
+   * Manual RTL changes can conflict with the bootstrap system
    */
   forceUpdate: (isRTL: boolean) => {
-    console.warn('layoutDirection.forceUpdate() is deprecated. RTL should be applied during app initialization only.');
-    I18nManager.allowRTL(isRTL);
-    I18nManager.forceRTL(isRTL);
+    console.error(
+      'layoutDirection.forceUpdate() is deprecated and should not be used. ' +
+        'RTL direction is managed by rtl-bootstrap.ts during app initialization. ' +
+        'Manual RTL changes can cause conflicts and inconsistent behavior.'
+    );
+    // Intentionally not applying the change to prevent conflicts
+    return;
   },
 };
 

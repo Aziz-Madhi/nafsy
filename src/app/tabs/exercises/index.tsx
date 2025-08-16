@@ -119,13 +119,16 @@ export default function ExercisesIndex() {
     return {
       id: dailyExerciseData._id,
       title: dailyExerciseData.title,
+      titleAr: dailyExerciseData.titleAr,
       description: dailyExerciseData.description,
+      descriptionAr: dailyExerciseData.descriptionAr,
       duration: `${dailyExerciseData.duration} min`,
       difficulty: dailyExerciseData.difficulty,
       category: dailyExerciseData.category,
       icon: getCategoryIcon(dailyExerciseData.category),
       color: getCategoryColor(dailyExerciseData.category),
       steps: dailyExerciseData.instructions,
+      stepsAr: dailyExerciseData.instructionsAr,
       benefits: benefitsMap[dailyExerciseData.category] || [],
     };
   }, [dailyExerciseData, benefitsMap, isStoreStable]);

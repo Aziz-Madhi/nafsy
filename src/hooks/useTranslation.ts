@@ -1,5 +1,5 @@
 import { useTranslation as useI18nextTranslation } from 'react-i18next';
-import { type SupportedLanguage } from '~/lib/i18n';
+import { type SupportedLanguage } from '~/lib/language-utils';
 import { useIsRTL } from '~/store/useAppStore';
 
 /**
@@ -7,27 +7,6 @@ import { useIsRTL } from '~/store/useAppStore';
  */
 export const useTranslation = () => {
   const { t, i18n } = useI18nextTranslation();
-
-  /**
-   * @deprecated Use requestLanguageChange from useAppStore instead
-   * This function is kept for backward compatibility but should not be used for new code
-   * The proper way is to use the deferred language system via settings screen
-   */
-  const switchLanguage = async (language: SupportedLanguage) => {
-    console.warn(
-      'useTranslation.switchLanguage is deprecated. Use requestLanguageChange from useAppStore for proper deferred language switching.'
-    );
-
-    const currentLanguage = i18n.language as SupportedLanguage;
-
-    if (currentLanguage === language) {
-      return; // No change needed
-    }
-
-    console.warn(
-      `Language change attempted via deprecated method. Please use the settings screen for proper language switching that requires manual app restart.`
-    );
-  };
 
   /**
    * Get current language
@@ -47,7 +26,6 @@ export const useTranslation = () => {
 
   return {
     t,
-    switchLanguage,
     currentLanguage,
     isRTL,
     availableLanguages,

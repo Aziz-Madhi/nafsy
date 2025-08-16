@@ -22,7 +22,7 @@ export default function ExerciseDetail({
   onStart,
 }: ExerciseDetailProps) {
   const colors = useColors();
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   if (!exercise) return null;
   const isDarkMode = colors.background === '#171717';
 
@@ -87,7 +87,9 @@ export default function ExerciseDetail({
                 numberOfLines={2}
                 ellipsizeMode="tail"
               >
-                {exercise.title}
+                {currentLanguage === 'ar' && exercise.titleAr
+                  ? exercise.titleAr
+                  : exercise.title}
               </Text>
               <Text
                 variant="muted"
@@ -98,7 +100,9 @@ export default function ExerciseDetail({
                   paddingHorizontal: 8,
                 }}
               >
-                {exercise.description}
+                {currentLanguage === 'ar' && exercise.descriptionAr
+                  ? exercise.descriptionAr
+                  : exercise.description}
               </Text>
             </View>
 
@@ -160,7 +164,10 @@ export default function ExerciseDetail({
                 >
                   {t('exercises.instructions')}
                 </Text>
-                {exercise.steps.map((step, index) => (
+                {(currentLanguage === 'ar' && exercise.stepsAr
+                  ? exercise.stepsAr
+                  : exercise.steps
+                ).map((step, index) => (
                   <View key={index} className="flex-row items-start mb-4">
                     <View
                       className="w-8 h-8 rounded-full items-center justify-center me-3"

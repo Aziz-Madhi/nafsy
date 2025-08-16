@@ -6,7 +6,6 @@ import {
   Switch,
   ActivityIndicator,
   Alert,
-  I18nManager,
 } from 'react-native';
 import * as Updates from 'expo-updates';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -42,7 +41,6 @@ import { useColors } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
 import { cn } from '~/lib/cn';
 import { useTranslation } from '~/hooks/useTranslation';
-import { isRTLLanguage } from '~/lib/i18n';
 import {
   useAppStore,
   useCurrentLanguage,
@@ -214,31 +212,24 @@ const SettingsScreen = React.memo(function SettingsScreen() {
 
     // 2) Do NOT change i18n language now to avoid text flicker before restart
 
-    // 3) Offer restart now/later. Apply native direction only if user confirms restart
-    const shouldBeRTL = isRTLLanguage(nextLanguage);
+    // 3) Offer restart now/later - RTL will be handled by bootstrap on restart
     Alert.alert(
-      nextLanguage === 'ar' ? 'إعادة تشغيل مطلوبة' : 'Restart required',
-      nextLanguage === 'ar'
-        ? 'سيتم تطبيق تغييرات اللغة والتخطيط بعد إعادة تشغيل التطبيق.'
-        : 'Language and layout changes will be applied after restarting the app.',
+      t('profile.settings.restartRequired'),
+      t('profile.settings.restartMessage'),
       [
         {
-          text: nextLanguage === 'ar' ? 'أعد التشغيل الآن' : 'Restart now',
+          text: t('profile.settings.restartNow'),
           onPress: async () => {
             try {
-              // Ensure native direction flag matches the next language before restart
-              if (I18nManager.isRTL !== shouldBeRTL) {
-                I18nManager.allowRTL(shouldBeRTL);
-                I18nManager.forceRTL(shouldBeRTL);
-              }
+              // RTL will be handled by rtl-bootstrap.ts on restart
               await Updates.reloadAsync();
             } catch {}
           },
         },
-        { text: nextLanguage === 'ar' ? 'لاحقًا' : 'Later', style: 'cancel' },
+        { text: t('profile.settings.restartLater'), style: 'cancel' },
       ]
     );
-  }, [currentLanguage, requestLanguageChange]);
+  }, [currentLanguage, requestLanguageChange, t]);
 
   const getThemeDisplayName = (theme: string) => {
     switch (theme) {
