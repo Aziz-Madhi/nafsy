@@ -3,21 +3,15 @@
  * Handles the main message list with FlashList
  */
 
-import React, { RefObject, memo, useMemo } from 'react';
+import React, { RefObject, memo } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { ChatWelcomeHeader } from './ChatWelcomeHeader';
-import { QuickRepliesSection } from './QuickRepliesSection';
 
 export interface Message {
   _id: string;
   content: string;
   role: 'user' | 'assistant';
   _creationTime: number;
-}
-
-interface QuickReply {
-  text: string;
-  icon: string;
 }
 
 interface ChatMessageListProps {
@@ -27,11 +21,7 @@ interface ChatMessageListProps {
   keyExtractor: (item: Message) => string;
   getItemType: (item: Message) => string;
   welcomeSubtitle: string;
-  isTyping: boolean;
-  showQuickReplies: boolean;
-  quickReplies: QuickReply[];
   horizontalPadding: number;
-  onQuickReply: (text: string) => void;
 }
 
 export const ChatMessageList = memo(function ChatMessageList({
@@ -41,45 +31,19 @@ export const ChatMessageList = memo(function ChatMessageList({
   keyExtractor,
   getItemType,
   welcomeSubtitle,
-  isTyping,
-  showQuickReplies,
-  quickReplies,
   horizontalPadding,
-  onQuickReply,
 }: ChatMessageListProps) {
-  // Memoize header component to prevent unnecessary re-renders
-  const headerComponent = useMemo(() => {
-    const HeaderComponent = () => (
-      <ChatWelcomeHeader subtitle={welcomeSubtitle} />
-    );
-    HeaderComponent.displayName = 'ChatMessageListHeader';
-    return HeaderComponent;
-  }, [welcomeSubtitle]);
-
-  // Memoize footer component to prevent unnecessary re-renders
-  const footerComponent = useMemo(() => {
-    const FooterComponent = () => (
-      <QuickRepliesSection
-        isTyping={isTyping}
-        showQuickReplies={showQuickReplies}
-        messagesLength={messages.length}
-        quickReplies={quickReplies}
-        onQuickReply={onQuickReply}
-      />
-    );
-    FooterComponent.displayName = 'ChatMessageListFooter';
-    return FooterComponent;
-  }, [isTyping, showQuickReplies, messages.length, quickReplies, onQuickReply]);
-
-  // Memoize content container style
-  const contentContainerStyle = useMemo(
-    () => ({
-      paddingHorizontal: horizontalPadding,
-      paddingTop: 0,
-      paddingBottom: 40, // Add extra bottom padding to prevent text input overlap
-    }),
-    [horizontalPadding]
+  // Header component
+  const HeaderComponent = () => (
+    <ChatWelcomeHeader subtitle={welcomeSubtitle} />
   );
+
+  // Content container style with proper bottom padding for input + tab bar
+  const contentContainerStyle = {
+    paddingHorizontal: horizontalPadding,
+    paddingTop: 0,
+    paddingBottom: 140, // Account for tab bar (80px) + input area (~60px)
+  };
 
   return (
     <FlashList
@@ -91,9 +55,15 @@ export const ChatMessageList = memo(function ChatMessageList({
       estimatedItemSize={100}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={contentContainerStyle}
-      ListHeaderComponent={headerComponent}
-      ListFooterComponent={footerComponent}
+      ListHeaderComponent={HeaderComponent}
       contentInsetAdjustmentBehavior="automatic"
+      // Ensure scroll indicator doesn't overlap with input/tab bar
+      scrollIndicatorInsets={{ bottom: 140 }}
+      // Auto-scroll to end behavior
+      maintainVisibleContentPosition={{
+        minIndexForVisible: 0,
+        autoscrollToTopThreshold: 100,
+      }}
     />
   );
 });

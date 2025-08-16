@@ -1,31 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import {
-  View,
-  TextInput,
-  Pressable,
-  KeyboardAvoidingView,
-  Platform,
-} from 'react-native';
+import React from 'react';
+import { View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
-import Animated, {
-  FadeInUp,
-  useAnimatedStyle,
-  useSharedValue,
-  withSpring,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
-import { MotiView } from 'moti';
-import { ChatBubbleProps, ChatInputProps } from './types';
-import { useTranslation } from '~/hooks/useTranslation';
+import Animated, { FadeInUp } from 'react-native-reanimated';
+import { ChatBubbleProps } from './types';
 import SendingSpinner from './SendingSpinner';
 import { AnimatedContainer, StaggeredListItem } from '~/lib/animations';
 import { useIsRTL } from '~/store/useAppStore';
-import { useColors } from '~/hooks/useColors';
-import { rtlStyles } from '~/lib/rtl-utils';
 
 // =====================
 // CHAT BUBBLE COMPONENT
@@ -123,170 +105,6 @@ export const ChatBubble = React.memo(function ChatBubble({
         )}
       </AnimatedContainer>
     </StaggeredListItem>
-  );
-});
-
-// =====================
-// TYPING INDICATOR
-// =====================
-export const TypingIndicator = React.memo(function TypingIndicator() {
-  const isRTL = useIsRTL();
-  const dot1 = useSharedValue(0);
-  const dot2 = useSharedValue(0);
-  const dot3 = useSharedValue(0);
-  const containerScale = useSharedValue(0);
-  const containerOpacity = useSharedValue(0);
-
-  useEffect(() => {
-    // Container entrance animation
-    containerScale.value = withSpring(1, { damping: 10, stiffness: 200 });
-    containerOpacity.value = withTiming(1, { duration: 300 });
-
-    // Enhanced dot animations with bounce effect
-    dot1.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 300 }),
-        withSpring(0, { damping: 8, stiffness: 300 })
-      ),
-      -1
-    );
-
-    dot2.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 300 }),
-        withSpring(0, { damping: 8, stiffness: 300 })
-      ),
-      -1
-    );
-
-    dot3.value = withRepeat(
-      withSequence(
-        withTiming(1, { duration: 300 }),
-        withSpring(0, { damping: 8, stiffness: 300 })
-      ),
-      -1
-    );
-  }, [containerOpacity, containerScale, dot1, dot2, dot3]);
-
-  const containerStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: containerScale.value }],
-    opacity: containerOpacity.value,
-  }));
-
-  const dot1Style = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [
-        { scale: 0.7 + dot1.value * 0.5 },
-        { translateY: -dot1.value * 8 },
-      ],
-      opacity: 0.4 + dot1.value * 0.6,
-    };
-  });
-
-  const dot2Style = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [
-        { scale: 0.7 + dot2.value * 0.5 },
-        { translateY: -dot2.value * 8 },
-      ],
-      opacity: 0.4 + dot2.value * 0.6,
-    };
-  });
-
-  const dot3Style = useAnimatedStyle(() => {
-    'worklet';
-    return {
-      transform: [
-        { scale: 0.7 + dot3.value * 0.5 },
-        { translateY: -dot3.value * 8 },
-      ],
-      opacity: 0.4 + dot3.value * 0.6,
-    };
-  });
-
-  return (
-    <Animated.View style={containerStyle} className="mb-5">
-      <View
-        className={cn(
-          'flex-row items-center justify-center bg-white rounded-full px-5 py-3.5 self-start shadow-md',
-          isRTL ? 'me-4' : 'ms-4'
-        )}
-        style={{
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          elevation: 4,
-        }}
-      >
-        <Animated.View
-          style={dot1Style}
-          className="w-3 h-3 rounded-full bg-brand-dark-blue"
-        />
-        <Animated.View
-          style={dot2Style}
-          className="w-3 h-3 rounded-full mx-1.5 bg-brand-dark-blue"
-        />
-        <Animated.View
-          style={dot3Style}
-          className="w-3 h-3 rounded-full bg-brand-dark-blue"
-        />
-      </View>
-    </Animated.View>
-  );
-});
-
-// =====================
-// QUICK REPLY BUTTON
-// =====================
-interface QuickReplyButtonProps {
-  text: string;
-  onPress: () => void;
-  icon?: string;
-  delay?: number;
-}
-
-export const QuickReplyButton = React.memo(function QuickReplyButton({
-  text,
-  onPress,
-  icon,
-  delay = 0,
-}: QuickReplyButtonProps) {
-  const isRTL = useIsRTL();
-  return (
-    <AnimatedContainer
-      entrance="slideInUp"
-      entranceDelay={delay}
-      pressable
-      onPress={onPress}
-      pressScale="normal"
-      springPreset="quick"
-      className={cn('mb-3', isRTL ? 'ms-3' : 'me-3')}
-    >
-      <View
-        className="flex-row items-center bg-white rounded-full px-6 py-3"
-        style={{
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 8,
-          elevation: 4,
-          borderWidth: 1,
-          borderColor: '#E5E7EB',
-        }}
-      >
-        {icon && (
-          <Text variant="heading" className={cn(isRTL ? 'ms-2.5' : 'me-2.5')}>
-            {icon}
-          </Text>
-        )}
-        <Text variant="callout" className="text-foreground">
-          {text}
-        </Text>
-      </View>
-    </AnimatedContainer>
   );
 });
 

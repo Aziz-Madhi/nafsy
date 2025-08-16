@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useEffect } from 'react';
+import React, { useCallback, useEffect } from 'react';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
@@ -6,8 +6,6 @@ import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useTranslation } from '~/hooks/useTranslation';
 import {
-  useMainChatTyping,
-  useShowQuickReplies,
   useHistorySidebarVisible,
   useCurrentMainSessionId,
   useSessionError,
@@ -27,22 +25,6 @@ interface Message {
 
 const getWelcomeMessage = (t: any) => t('chat.welcomeMessage');
 
-const getQuickReplies = (t: any) => [
-  { text: t('chat.quickReplies.anxious'), icon: '😟' },
-  {
-    text: t('chat.quickReplies.needTalk'),
-    icon: '💭',
-  },
-  {
-    text: t('chat.quickReplies.trackMood'),
-    icon: '📊',
-  },
-  {
-    text: t('chat.quickReplies.showExercises'),
-    icon: '🧘',
-  },
-];
-
 // Screen padding is handled by useScreenPadding hook
 
 export default function ChatTab() {
@@ -54,11 +36,8 @@ export default function ChatTab() {
   // No specific spacing needed - chat handles its own
 
   // Zustand hooks
-  const isTyping = useMainChatTyping();
-  const showQuickReplies = useShowQuickReplies();
   const showHistorySidebar = useHistorySidebarVisible();
-  const { setMainChatTyping, setShowQuickReplies, setHistorySidebarVisible } =
-    useChatUIStore();
+  const { setHistorySidebarVisible } = useChatUIStore();
 
   // Session management
   const currentMainSessionId = useCurrentMainSessionId();
@@ -90,16 +69,11 @@ export default function ChatTab() {
     serverMainSessionId,
   });
 
-  // Memoize query args to ensure proper reactivity
-  const queryArgs = useMemo(() => {
-    if (!isSignedIn || !isLoaded || !activeSessionId) {
-      return 'skip' as const;
-    }
-    return {
-      limit: 50,
-      sessionId: activeSessionId,
-    };
-  }, [isSignedIn, isLoaded, activeSessionId]);
+  // Query args for messages
+  const queryArgs =
+    isSignedIn && isLoaded && activeSessionId
+      ? { limit: 50, sessionId: activeSessionId }
+      : ('skip' as const);
 
   const mainChatMessages = useQuery(
     api.mainChat.getMainChatMessages,
@@ -158,29 +132,24 @@ export default function ChatTab() {
     currentMainSessionId,
   ]);
 
-  // Transform Convex main chat messages to UI format with memoization
-  const messages: Message[] = useMemo(
-    () =>
-      mainChatMessages
-        ?.map((msg) => ({
-          _id: msg._id,
-          content: msg.content || '', // Ensure content is never undefined
-          role: msg.role,
-          _creationTime: msg._creationTime,
-        }))
-        .reverse() || [],
-    [mainChatMessages]
-  );
+  // Transform Convex main chat messages to UI format
+  const messages: Message[] =
+    mainChatMessages
+      ?.map((msg) => ({
+        _id: msg._id,
+        content: msg.content || '',
+        role: msg.role,
+        _creationTime: msg._creationTime,
+      }))
+      .reverse() || [];
 
   // Simple sidebar handlers
-  const handleOpenSidebar = useCallback(() => {
+  const handleOpenSidebar = () => {
     impactAsync(ImpactFeedbackStyle.Light);
     setHistorySidebarVisible(true);
-  }, [setHistorySidebarVisible]);
+  };
 
-  const handleCloseSidebar = useCallback(() => {
-    setHistorySidebarVisible(false);
-  }, [setHistorySidebarVisible]);
+  const handleCloseSidebar = () => setHistorySidebarVisible(false);
 
   const handleSessionSelect = useCallback(
     async (sessionId: string) => {
@@ -220,129 +189,53 @@ export default function ChatTab() {
     async (text: string) => {
       if (!currentUser || !isSignedIn || !isLoaded) return;
 
-      // Hide quick replies after first message
-      setShowQuickReplies(false);
-
-      // Send user message
-      await sendMainMessage({
-        content: text,
-        role: 'user',
-        sessionId: currentMainSessionId || serverMainSessionId || undefined,
-      });
-
-      // Update UI state
-      setMainChatTyping(true);
-
-      // Simulate AI response
-      setTimeout(async () => {
-        setMainChatTyping(false);
+      try {
+        // Send user message
         await sendMainMessage({
-          content: "I'm here to listen and support you. How can I help?",
-          role: 'assistant',
+          content: text,
+          role: 'user',
           sessionId: currentMainSessionId || serverMainSessionId || undefined,
         });
-      }, 2000);
+
+        // Simulate AI response
+        setTimeout(async () => {
+          await sendMainMessage({
+            content: "I'm here to listen and support you. How can I help?",
+            role: 'assistant',
+            sessionId: currentMainSessionId || serverMainSessionId || undefined,
+          });
+        }, 2000);
+      } catch (error) {
+        console.error('Failed to send message:', error);
+      }
     },
     [
       currentUser,
       isSignedIn,
       isLoaded,
       sendMainMessage,
-      setShowQuickReplies,
-      setMainChatTyping,
       currentMainSessionId,
       serverMainSessionId,
     ]
   );
-
-  const handleQuickReply = useCallback(
-    async (text: string) => {
-      if (!currentUser || !isSignedIn || !isLoaded) return;
-
-      impactAsync(ImpactFeedbackStyle.Light);
-
-      // Hide quick replies after first message
-      setShowQuickReplies(false);
-
-      // Send user message to main chat
-      await sendMainMessage({
-        content: text,
-        role: 'user',
-        sessionId: currentMainSessionId || serverMainSessionId || undefined,
-      });
-
-      // Update UI state with Zustand
-      setMainChatTyping(true);
-
-      // Simulate AI response
-      setTimeout(async () => {
-        setMainChatTyping(false);
-
-        // Generate contextual AI response based on user input
-        let aiResponseText = t('chat.defaultResponse');
-
-        if (
-          text.toLowerCase().includes('anxious') ||
-          text.toLowerCase().includes('anxiety')
-        ) {
-          aiResponseText = t('chat.responses.anxiety');
-        } else if (
-          text.toLowerCase().includes('sad') ||
-          text.toLowerCase().includes('depressed')
-        ) {
-          aiResponseText = t('chat.responses.sad');
-        } else if (text.toLowerCase().includes('mood')) {
-          aiResponseText = t('chat.responses.mood');
-        } else if (text.toLowerCase().includes('exercise')) {
-          aiResponseText = t('chat.responses.exercise');
-        }
-
-        await sendMainMessage({
-          content: aiResponseText,
-          role: 'assistant',
-          sessionId: currentMainSessionId || serverMainSessionId || undefined,
-        });
-      }, 2000);
-    },
-    [
-      currentUser,
-      sendMainMessage,
-      setShowQuickReplies,
-      setMainChatTyping,
-      currentMainSessionId,
-      serverMainSessionId,
-      isSignedIn,
-      isLoaded,
-    ]
-  );
-
-  // Memoize quick replies
-  const quickReplies = useMemo(() => getQuickReplies(t), [t]);
 
   // Welcome subtitle
   const welcomeSubtitle = t('chat.welcomeSubtitle');
 
-  // Memoize error dismiss handler
-  const handleDismissError = useCallback(
-    () => setSessionError(null),
-    [setSessionError]
-  );
+  // Error dismiss handler
+  const handleDismissError = () => setSessionError(null);
 
   return (
     <ChatScreen
       messages={messages}
-      isTyping={isTyping}
-      showQuickReplies={showQuickReplies}
       showHistorySidebar={showHistorySidebar}
       sessionSwitchLoading={sessionSwitchLoading}
       sessionError={sessionError}
-      quickReplies={quickReplies}
       welcomeSubtitle={welcomeSubtitle}
       navigationBarPadding={0} // No padding needed - using custom navigation
       onOpenSidebar={handleOpenSidebar}
       onCloseSidebar={handleCloseSidebar}
       onSessionSelect={handleSessionSelect}
-      onQuickReply={handleQuickReply}
       onDismissError={handleDismissError}
       onSendMessage={handleSendMessage}
     />

@@ -2,11 +2,6 @@ import React, { useCallback } from 'react';
 import { View, Pressable } from 'react-native';
 import { MessageCircle, Heart, Activity } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-} from 'react-native-reanimated';
 import { useColors } from '~/hooks/useColors';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
@@ -30,16 +25,8 @@ export function CustomBottomNavigation({
 }: BottomTabBarProps) {
   const colors = useColors();
 
-  // Animation values
-  const tabScale = useSharedValue(1);
-
   const handleTabPress = useCallback(
     async (route: any, isFocused: boolean) => {
-      // Quick scale animation for feedback
-      tabScale.value = withSpring(0.95, { duration: 100 }, () => {
-        tabScale.value = withSpring(1, { duration: 150 });
-      });
-
       // Add haptic feedback
       await impactAsync(ImpactFeedbackStyle.Light);
 
@@ -53,15 +40,8 @@ export function CustomBottomNavigation({
         navigation.navigate(route.name, route.params);
       }
     },
-    [navigation, tabScale]
+    [navigation]
   );
-
-  // Animated style for tab scale
-  const tabScaleStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: tabScale.value }],
-    };
-  });
 
   return (
     <View
@@ -86,17 +66,14 @@ export function CustomBottomNavigation({
                 radius: 32,
               }}
             >
-              <Animated.View
-                style={isFocused ? tabScaleStyle : undefined}
-                className="items-center justify-center"
-              >
+              <View className="items-center justify-center">
                 <Icon
                   size={24}
                   color={isFocused ? colors.tabActive : colors.tabInactive}
                   fill="none"
                   strokeWidth={isFocused ? 2.5 : 2}
                 />
-              </Animated.View>
+              </View>
             </Pressable>
           );
         })}

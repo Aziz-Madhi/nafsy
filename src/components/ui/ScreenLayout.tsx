@@ -6,7 +6,7 @@ import {
   RefreshControl,
   Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSegments, router } from 'expo-router';
@@ -15,12 +15,6 @@ import { User } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
 import { useIsRTL } from '~/store/useAppStore';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-
-// Calculate top padding for navigation bar only
-function useNavigationBarTopPadding(): number {
-  const screenPadding = useScreenPadding('list');
-  return screenPadding.top;
-}
 
 // Calculate bottom padding based on current route (unchanged)
 function useNavigationBarPadding(): number {
@@ -31,8 +25,8 @@ function useNavigationBarPadding(): number {
     const currentTab = segments.length > 1 ? segments[1] : 'mood';
 
     // Use smaller, more reasonable values for bottom padding
-    const baseHeight = currentTab === 'chat' ? 100 : 80; // Reduced from 180/90
-    const bottomMargin = 25; // Reduced from 50
+    const baseHeight = currentTab === 'chat' ? 100 : 65; // Reduced exercises/mood from 80 to 65
+    const bottomMargin = currentTab === 'chat' ? 25 : 15; // Reduced margin for non-chat tabs
 
     return baseHeight + bottomMargin;
   }, [segments]);
@@ -117,7 +111,7 @@ function ScreenHeader({
 
   return (
     <View
-      className="flex-row justify-between items-center px-6 py-1"
+      className="flex-row justify-between items-center px-6 py-1 mb-1"
       style={style}
     >
       {/* Title section */}
@@ -183,6 +177,8 @@ function ContentWrapper({
   statsSection,
   scrollViewRef,
   onScroll,
+  // Header props to include in scrollable content
+  header,
 }: {
   children: React.ReactNode;
   variant: 'default' | 'chat' | 'dashboard' | 'list';
@@ -193,8 +189,11 @@ function ContentWrapper({
   statsSection?: React.ReactNode;
   scrollViewRef?: React.RefObject<ScrollView>;
   onScroll?: (event: any) => void;
+  // Header element to include in scrollable content
+  header?: React.ReactNode;
 }) {
   const navigationBarPadding = useNavigationBarPadding();
+  const safeAreaInsets = useSafeAreaInsets();
   // Use physical horizontal padding to avoid RTL mirroring issues
   const screenPadding = useScreenPadding('list');
   const baseHorizontalPadding = screenPadding.horizontal; // 8px by default
@@ -217,6 +216,7 @@ function ContentWrapper({
   if (variant === 'list') {
     const listContentStyle = [
       contentStyle,
+      { paddingTop: safeAreaInsets.top },
       { paddingBottom: navigationBarPadding },
     ];
 
@@ -231,6 +231,8 @@ function ContentWrapper({
           onScroll={onScroll}
           scrollEventThrottle={16}
         >
+          {/* Header at top of scrollable list content */}
+          {header}
           {/* Stats section at top of scrollable content */}
           {statsSection && <StatsSection>{statsSection}</StatsSection>}
           {children}
@@ -239,6 +241,8 @@ function ContentWrapper({
     }
     return (
       <View className="flex-1" style={listContentStyle}>
+        {/* Header for non-scrollable list */}
+        {header}
         {/* Stats section for non-scrollable list */}
         {statsSection && <StatsSection>{statsSection}</StatsSection>}
         {children}
@@ -255,6 +259,7 @@ function ContentWrapper({
   // affects inner content equally in RTL and LTR. Allow screen `contentStyle`
   // to override if it specifies its own padding.
   const scrollViewContentContainerStyle = [
+    { paddingTop: safeAreaInsets.top },
     { paddingBottom: navigationBarPadding },
     { paddingHorizontal: computedHorizontalPadding },
     contentStyle,
@@ -271,7 +276,9 @@ function ContentWrapper({
         onScroll={onScroll}
         scrollEventThrottle={16}
       >
-        {/* Stats section at top of scrollable content */}
+        {/* Header at top of scrollable content */}
+        {header}
+        {/* Stats section after header */}
         {statsSection && <StatsSection>{statsSection}</StatsSection>}
         {children}
       </ScrollView>
@@ -281,8 +288,13 @@ function ContentWrapper({
   return (
     <View
       className="flex-1"
-      style={{ paddingHorizontal: computedHorizontalPadding }}
+      style={{
+        paddingTop: safeAreaInsets.top,
+        paddingHorizontal: computedHorizontalPadding,
+      }}
     >
+      {/* Header for non-scrollable content */}
+      {header}
       {/* Stats section for non-scrollable content */}
       {statsSection && <StatsSection>{statsSection}</StatsSection>}
       {children}
@@ -314,28 +326,27 @@ function ScreenLayoutComponent({
 }: ScreenLayoutProps) {
   // Note: reserved for RN-only styles if needed
   // const colors = useColors();
-  const topPadding = useNavigationBarTopPadding();
+
+  // Create header element if needed
+  const headerElement = showHeader ? (
+    <ScreenHeader
+      title={title}
+      subtitle={subtitle}
+      headerLeft={headerLeft}
+      headerRight={headerRight}
+      headerCenter={headerCenter}
+      style={headerStyle}
+      showSettingsIcon={showSettingsIcon}
+    />
+  ) : null;
 
   const content = (
     <SafeAreaView
       className="flex-1 bg-background"
-      style={[{ paddingTop: topPadding }, safeAreaStyle]}
+      style={safeAreaStyle}
       edges={[]}
     >
-      {/* Header */}
-      {showHeader && (
-        <ScreenHeader
-          title={title}
-          subtitle={subtitle}
-          headerLeft={headerLeft}
-          headerRight={headerRight}
-          headerCenter={headerCenter}
-          style={headerStyle}
-          showSettingsIcon={showSettingsIcon}
-        />
-      )}
-
-      {/* Main content with stats section inside */}
+      {/* Main content with header and stats section inside */}
       <ContentWrapper
         variant={variant}
         scrollable={scrollable}
@@ -345,6 +356,7 @@ function ScreenLayoutComponent({
         statsSection={statsSection}
         scrollViewRef={scrollViewRef}
         onScroll={onScroll}
+        header={headerElement}
       >
         {children}
       </ContentWrapper>

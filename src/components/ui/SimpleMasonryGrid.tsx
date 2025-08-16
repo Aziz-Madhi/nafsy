@@ -8,7 +8,7 @@ interface SimpleMasonryGridProps {
   contentContainerStyle?: any;
   /**
    * Extra horizontal padding already applied by a parent container (e.g. px-6 = 24).
-   * This is subtracted from the available width so cards don’t overlap.
+   * This is subtracted from the available width so cards don't overlap.
    */
   outerHorizontalPadding?: number;
 }
@@ -78,7 +78,7 @@ function SimpleMasonryGridComponent({
       contentContainerStyle={[
         {
           paddingTop: 0,
-          paddingBottom: 100,
+          paddingBottom: 20,
           paddingHorizontal: outerHorizontalPadding,
         },
         contentContainerStyle,
