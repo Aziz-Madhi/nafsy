@@ -2,6 +2,7 @@ import React from 'react';
 import { View, TextInput, TextInputProps } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
+import { useIsRTL } from '~/store/useAppStore';
 
 interface FormFieldProps extends Omit<TextInputProps, 'className'> {
   label: string;
@@ -21,9 +22,14 @@ export function FormField({
   containerClassName,
   ...inputProps
 }: FormFieldProps) {
+  const isRTL = useIsRTL();
+
   return (
     <View className={cn('gap-2', containerClassName)}>
-      <Text className={cn('text-sm text-muted-foreground', labelClassName)}>
+      <Text
+        className={cn('text-sm text-muted-foreground', labelClassName)}
+        style={{ textAlign: isRTL ? 'right' : 'left' }}
+      >
         {label}
       </Text>
       <TextInput
@@ -33,10 +39,18 @@ export function FormField({
           inputClassName,
           className
         )}
+        style={{ textAlign: isRTL ? 'right' : 'left' }}
         placeholderTextColor="#9CA3AF"
         {...inputProps}
       />
-      {error && <Text className="text-sm text-destructive">{error}</Text>}
+      {error && (
+        <Text
+          className="text-sm text-destructive"
+          style={{ textAlign: isRTL ? 'right' : 'left' }}
+        >
+          {error}
+        </Text>
+      )}
     </View>
   );
 }

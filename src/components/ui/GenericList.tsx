@@ -9,6 +9,7 @@ import {
 import { FlashList, FlashListProps } from '@shopify/flash-list';
 import { Text } from './text';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useIsRTL } from '~/store/useAppStore';
 
 // Generic item interface - all items must have an id
 interface ListItem {
@@ -61,9 +62,15 @@ const defaultGetItemType = <T extends ListItem>(
 
 // Generic empty component
 function DefaultEmptyComponent({ message }: { message: string }) {
+  const isRTL = useIsRTL();
+
   return (
     <View className="flex-1 justify-center items-center py-12">
-      <Text variant="muted" className="text-center text-muted-foreground">
+      <Text
+        variant="muted"
+        className="text-center text-muted-foreground"
+        style={{ textAlign: isRTL ? 'right' : 'left' }}
+      >
         {message}
       </Text>
     </View>

@@ -2,6 +2,7 @@ import * as React from 'react';
 import { Text, TextProps, View, ViewProps } from 'react-native';
 import { TextClassContext } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
+import { useIsRTL } from '~/store/useAppStore';
 
 function Card({
   className,
@@ -37,6 +38,8 @@ function CardTitle({
 }: TextProps & {
   ref?: React.RefObject<Text>;
 }) {
+  const isRTL = useIsRTL();
+
   return (
     <Text
       role="heading"
@@ -45,6 +48,7 @@ function CardTitle({
         'text-2xl text-card-foreground font-semibold leading-none tracking-tight',
         className
       )}
+      style={{ textAlign: isRTL ? 'right' : 'left' }}
       {...props}
     />
   );
@@ -56,9 +60,12 @@ function CardDescription({
 }: TextProps & {
   ref?: React.RefObject<Text>;
 }) {
+  const isRTL = useIsRTL();
+
   return (
     <Text
       className={cn('text-sm text-muted-foreground', className)}
+      style={{ textAlign: isRTL ? 'right' : 'left' }}
       {...props}
     />
   );
