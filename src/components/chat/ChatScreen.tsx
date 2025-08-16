@@ -4,23 +4,18 @@
  */
 
 import React, { useRef, useCallback, useEffect, memo, useMemo } from 'react';
-import { View, Dimensions } from 'react-native';
+import { View } from 'react-native';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { FlashList } from '@shopify/flash-list';
-import Animated, {
-  runOnJS,
-  useSharedValue,
-  useAnimatedStyle,
-  withTiming,
-} from 'react-native-reanimated';
+import { runOnJS } from 'react-native-reanimated';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 import { ChatHeader } from './ChatHeader';
 import { SessionStatusDisplay } from './SessionStatusDisplay';
 import { ChatMessageList, Message } from './ChatMessageList';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
-import FloatingChatMinimal from './FloatingChatMinimal';
 import { ChatBubble } from './ChatComponents';
+import { ChatInputWithNavConnection } from './ChatInputWithNavConnection';
 import { useChatUIStore } from '~/store';
 
 interface QuickReply {
@@ -48,6 +43,7 @@ interface ChatScreenProps {
   onSessionSelect: (sessionId: string) => void;
   onQuickReply: (text: string) => void;
   onDismissError: () => void;
+  onSendMessage: (message: string) => void;
 }
 
 export const ChatScreen = memo(function ChatScreen({
@@ -65,6 +61,7 @@ export const ChatScreen = memo(function ChatScreen({
   onSessionSelect,
   onQuickReply,
   onDismissError,
+  onSendMessage,
 }: ChatScreenProps) {
   const flashListRef = useRef<FlashList<Message>>(null as any);
 
@@ -84,8 +81,6 @@ export const ChatScreen = memo(function ChatScreen({
   }, [messages, scrollToBottom]);
 
   // Gesture handling
-  const chatOffset = useSharedValue(0);
-  const { width: screenWidth } = Dimensions.get('window');
   const { setFloatingChatVisible, isFloatingChatVisible } = useChatUIStore();
 
   // Memoize gesture to prevent recreation on every render
@@ -104,20 +99,7 @@ export const ChatScreen = memo(function ChatScreen({
     [setFloatingChatVisible, isFloatingChatVisible]
   );
 
-  const chatAnimatedStyle = useAnimatedStyle(
-    () => ({
-      transform: [{ translateX: chatOffset.value }],
-      paddingBottom: navigationBarPadding,
-    }),
-    [navigationBarPadding]
-  );
-
-  // Update chat offset when sidebar visibility changes - push chat RIGHT to make room for sidebar
-  useEffect(() => {
-    chatOffset.value = withTiming(showHistorySidebar ? screenWidth * 0.6 : 0, {
-      duration: 300,
-    });
-  }, [showHistorySidebar, screenWidth, chatOffset]);
+  // No complex offset logic needed with the new simplified approach
 
   // FlashList render functions
   const renderMessage = useCallback(
@@ -139,33 +121,34 @@ export const ChatScreen = memo(function ChatScreen({
 
   return (
     <View className="flex-1 bg-background">
-      <Animated.View style={[chatAnimatedStyle, { flex: 1 }]}>
-        <GestureDetector gesture={doubleTapGesture}>
-          <View className="flex-1">
-            <ChatHeader onOpenSidebar={onOpenSidebar} />
+      <GestureDetector gesture={doubleTapGesture}>
+        <View
+          className="flex-1"
+          style={{ paddingBottom: navigationBarPadding }}
+        >
+          <ChatHeader onOpenSidebar={onOpenSidebar} />
 
-            <SessionStatusDisplay
-              isLoading={sessionSwitchLoading}
-              error={sessionError}
-              onDismissError={onDismissError}
-            />
+          <SessionStatusDisplay
+            isLoading={sessionSwitchLoading}
+            error={sessionError}
+            onDismissError={onDismissError}
+          />
 
-            <ChatMessageList
-              flashListRef={flashListRef}
-              messages={messages}
-              renderMessage={renderMessage}
-              keyExtractor={keyExtractor}
-              getItemType={getItemType}
-              welcomeSubtitle={welcomeSubtitle}
-              isTyping={isTyping}
-              showQuickReplies={showQuickReplies}
-              quickReplies={quickReplies}
-              horizontalPadding={20}
-              onQuickReply={onQuickReply}
-            />
-          </View>
-        </GestureDetector>
-      </Animated.View>
+          <ChatMessageList
+            flashListRef={flashListRef}
+            messages={messages}
+            renderMessage={renderMessage}
+            keyExtractor={keyExtractor}
+            getItemType={getItemType}
+            welcomeSubtitle={welcomeSubtitle}
+            isTyping={isTyping}
+            showQuickReplies={showQuickReplies}
+            quickReplies={quickReplies}
+            horizontalPadding={20}
+            onQuickReply={onQuickReply}
+          />
+        </View>
+      </GestureDetector>
 
       {/* Chat History Sidebar */}
       <ChatHistorySidebar
@@ -174,8 +157,8 @@ export const ChatScreen = memo(function ChatScreen({
         onSessionSelect={onSessionSelect}
       />
 
-      {/* Floating Chat */}
-      <FloatingChatMinimal />
+      {/* Chat Input with Navigation Connection */}
+      <ChatInputWithNavConnection onSendMessage={onSendMessage} />
     </View>
   );
 });

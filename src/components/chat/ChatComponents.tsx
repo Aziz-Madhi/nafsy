@@ -349,43 +349,35 @@ export const ChatInput = React.memo(function ChatInput({
       keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
     >
       <View
-        className={cn(hideBorder ? 'px-0 py-0' : 'px-4 py-3', 'bg-transparent')}
+        className={cn(hideBorder ? 'px-4 py-0' : 'px-4 py-0', 'bg-transparent')}
       >
-        <View style={{ position: 'relative', minHeight: 48 }}>
+        <View className="relative">
           {/* Text input - full width with button positioned absolutely inside */}
           <Animated.View style={containerStyle}>
             <TextInput
               value={message}
               onChangeText={setMessage}
               placeholder={placeholder || t('chat.typingPlaceholder')}
-              placeholderTextColor="#94a3b8" // More refined slate color
+              placeholderTextColor="rgb(var(--muted-foreground))"
               multiline
               maxLength={1000}
               editable={!disabled}
               onFocus={handleFocus}
               onBlur={handleBlur}
-              className="text-base"
+              className={cn(
+                'min-h-10 max-h-20 text-base text-foreground font-crimson leading-5 py-2 bg-input border border-border',
+                !hideButton && !isRTL ? 'pl-4 pr-13' : '',
+                !hideButton && isRTL ? 'pl-13 pr-4' : '',
+                hideButton ? 'px-4' : ''
+              )}
               style={{
-                fontFamily: 'CrimsonPro-Regular',
                 textAlignVertical: 'center',
-                minHeight: 48,
-                maxHeight: 80,
                 fontSize: 16,
-                lineHeight: 20,
-                color: '#1e293b', // Rich, sophisticated text color
                 fontWeight: '400',
-                paddingLeft:
-                  !hideButton && !isRTL ? 16 : !hideButton && isRTL ? 52 : 16,
-                paddingRight:
-                  !hideButton && !isRTL ? 52 : !hideButton && isRTL ? 16 : 16, // Make space for the button
-                paddingTop: 12,
-                paddingBottom: 12,
-                backgroundColor: 'transparent',
-                borderRadius: 24,
-                borderWidth: 1,
-                borderColor: hideBorder
-                  ? 'rgba(226, 232, 240, 0.3)'
-                  : 'rgba(226, 232, 240, 0.6)',
+                borderTopLeftRadius: 16,
+                borderTopRightRadius: 16,
+                borderBottomLeftRadius: 24,
+                borderBottomRightRadius: 24,
               }}
             />
           </Animated.View>
@@ -393,13 +385,10 @@ export const ChatInput = React.memo(function ChatInput({
           {/* Button positioned absolutely inside the input */}
           {!hideButton && (
             <View
-              style={{
-                position: 'absolute',
-                ...(isRTL ? { left: 8 } : { right: 8 }),
-                top: '50%',
-                transform: [{ translateY: -16 }], // Center vertically (32px height / 2)
-              }}
-              className="w-8 h-8"
+              className={cn(
+                'absolute w-8 h-8 top-1/2 -translate-y-1/2',
+                isRTL ? 'left-2' : 'right-2'
+              )}
             >
               {/* Always render both, control visibility with Moti */}
               <MotiView
@@ -411,10 +400,14 @@ export const ChatInput = React.memo(function ChatInput({
                   type: 'timing',
                   duration: 150,
                 }}
-                style={{ position: 'absolute', top: 0, left: 0 }}
+                className="absolute top-0 left-0"
               >
-                <Pressable className="w-8 h-8 rounded-full items-center justify-center">
-                  <SymbolView name="mic.fill" size={20} tintColor="#6B7280" />
+                <Pressable className="w-8 h-8 rounded-full items-center justify-center bg-muted/30">
+                  <SymbolView
+                    name="mic.fill"
+                    size={18}
+                    className="text-muted-foreground"
+                  />
                 </Pressable>
               </MotiView>
 
@@ -427,15 +420,19 @@ export const ChatInput = React.memo(function ChatInput({
                   type: 'timing',
                   duration: 150,
                 }}
-                style={{ position: 'absolute', top: 0, left: 0 }}
+                className="absolute top-0 left-0"
               >
                 <Animated.View style={sendButtonStyle}>
                   <Pressable
                     onPress={handleSend}
                     disabled={disabled}
-                    className="w-8 h-8 rounded-full items-center justify-center bg-chat-bubble-user"
+                    className="w-8 h-8 rounded-full items-center justify-center bg-primary"
                   >
-                    <SymbolView name="arrow.up" size={18} tintColor="white" />
+                    <SymbolView
+                      name="arrow.up"
+                      size={16}
+                      className="text-primary-foreground"
+                    />
                   </Pressable>
                 </Animated.View>
               </MotiView>

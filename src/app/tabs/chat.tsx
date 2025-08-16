@@ -217,7 +217,45 @@ export default function ChatTab() {
     ]
   );
 
-  // Note: handleSendMessage is now managed by MorphingTabBar
+  // Chat message sending
+  const handleSendMessage = useCallback(
+    async (text: string) => {
+      if (!currentUser || !isSignedIn || !isLoaded) return;
+
+      // Hide quick replies after first message
+      setShowQuickReplies(false);
+
+      // Send user message
+      await sendMainMessage({
+        content: text,
+        role: 'user',
+        sessionId: currentMainSessionId || serverMainSessionId || undefined,
+      });
+
+      // Update UI state
+      setMainChatTyping(true);
+
+      // Simulate AI response
+      setTimeout(async () => {
+        setMainChatTyping(false);
+        await sendMainMessage({
+          content: "I'm here to listen and support you. How can I help?",
+          role: 'assistant',
+          sessionId: currentMainSessionId || serverMainSessionId || undefined,
+        });
+      }, 2000);
+    },
+    [
+      currentUser,
+      isSignedIn,
+      isLoaded,
+      sendMainMessage,
+      setShowQuickReplies,
+      setMainChatTyping,
+      currentMainSessionId,
+      serverMainSessionId,
+    ]
+  );
 
   const handleQuickReply = useCallback(
     async (text: string) => {
@@ -302,12 +340,13 @@ export default function ChatTab() {
       sessionError={sessionError}
       quickReplies={quickReplies}
       welcomeSubtitle={welcomeSubtitle}
-      navigationBarPadding={120}
+      navigationBarPadding={0} // No padding needed - using custom navigation
       onOpenSidebar={handleOpenSidebar}
       onCloseSidebar={handleCloseSidebar}
       onSessionSelect={handleSessionSelect}
       onQuickReply={handleQuickReply}
       onDismissError={handleDismissError}
+      onSendMessage={handleSendMessage}
     />
   );
 }
