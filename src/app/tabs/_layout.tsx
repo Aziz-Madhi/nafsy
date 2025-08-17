@@ -2,8 +2,10 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { CustomBottomNavigation } from '~/components/navigation/CustomBottomNavigation';
 import { AuthGuard } from '~/components/auth/AuthGuard';
+import { useColors } from '~/hooks/useColors';
 
 export default function TabsLayout() {
+  const colors = useColors();
   return (
     <AuthGuard>
       <Tabs
@@ -11,8 +13,10 @@ export default function TabsLayout() {
           headerShown: false,
           animation: 'fade',
           animationDuration: 100,
-          lazy: true,
+          lazy: false, // mount all tabs to prevent first-switch flicker
+          detachInactiveScreens: false,
           unmountOnBlur: false,
+          sceneContainerStyle: { backgroundColor: colors.background },
         }}
         tabBar={(props) => <CustomBottomNavigation {...props} />}
       >

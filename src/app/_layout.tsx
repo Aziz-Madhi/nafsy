@@ -12,6 +12,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import { AppProviders } from '~/providers/AppProviders';
 import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
 import { useCurrentTheme } from '~/store/useAppStore';
+import { useColors } from '~/hooks/useColors';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -24,6 +25,7 @@ export {
 // Navigation stack - expo-router provides NavigationContainer automatically
 function NavigationStack() {
   const currentTheme = useCurrentTheme();
+  const colors = useColors();
   // RTL layout is now handled at app startup in i18n.ts - no runtime switching
 
   return (
@@ -32,7 +34,7 @@ function NavigationStack() {
       <Stack
         screenOptions={{
           headerShown: false,
-          contentStyle: { backgroundColor: 'transparent' },
+          contentStyle: { backgroundColor: colors.background },
         }}
       >
         <Stack.Screen name="tabs" options={{ headerShown: false }} />
