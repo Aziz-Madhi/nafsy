@@ -461,6 +461,9 @@
     "title": "Profile",
     "sections": {
       "account": "Account",
+      "app": "App",
+      "voiceMode": "Voice Mode",
+      "about": "About",
       "preferences": "Preferences",
       "support": "Support",
       "settings": "Settings"
@@ -508,6 +511,8 @@
       "voice": "Voice",
       "comingSoon": "Coming Soon",
       "helpCenter": "Help Center",
+      "crisis": "Crisis Resources",
+      "crisisSubtitle": "Emergency mental health support",
       "crisisResources": "Crisis Resources",
       "feedback": "Feedback",
       "termsOfUse": "Terms of Use",

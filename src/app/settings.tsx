@@ -46,6 +46,7 @@ import {
   useToggleLanguage,
   useAppStore,
 } from '~/store/useAppStore';
+import { getLanguageClass } from '~/lib/rtl-utils';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -117,14 +118,18 @@ const SettingRow = React.memo(function SettingRow({
         onPressIn={handlePressIn}
         onPressOut={handlePressOut}
         className={cn(
-          'px-4 py-3.5 flex-row items-center',
+          'px-4 py-3.5 items-center',
+          getLanguageClass('flex-row', 'flex-row-reverse'),
           !isLast && 'border-b border-border/10'
         )}
         disabled={type === 'switch'}
       >
         {Icon && (
           <View
-            className="w-7 h-7 rounded-md items-center justify-center me-3"
+            className={cn(
+              'w-7 h-7 rounded-md items-center justify-center',
+              getLanguageClass('me-3', 'ms-3')
+            )}
             style={{
               backgroundColor: destructive
                 ? withOpacity(colors.error, 0.15)
@@ -145,7 +150,10 @@ const SettingRow = React.memo(function SettingRow({
         {type === 'navigation' ? (
           <View className="flex-row items-center">
             {value && (
-              <Text className="text-muted-foreground me-2 text-[15px]">
+              <Text className={cn(
+                'text-muted-foreground text-[15px]',
+                getLanguageClass('me-2', 'ms-2')
+              )}>
                 {value}
               </Text>
             )}
@@ -330,7 +338,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
         )}
 
         {/* ACCOUNT Section */}
-        <SectionHeader title="ACCOUNT" />
+        <SectionHeader title={t('profile.sections.account')} />
         <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
           <SettingRow
             icon={Mail}
@@ -353,7 +361,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
         </View>
 
         {/* APP Section */}
-        <SectionHeader title="APP" />
+        <SectionHeader title={t('profile.sections.app')} />
         <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
           <SettingRow
             icon={Moon}
@@ -394,7 +402,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
         </View>
 
         {/* VOICE MODE Section */}
-        <SectionHeader title="VOICE MODE" />
+        <SectionHeader title={t('profile.sections.voiceMode')} />
         <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
           <SettingRow
             icon={Volume2}
@@ -409,7 +417,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
         </View>
 
         {/* ABOUT Section */}
-        <SectionHeader title="ABOUT" />
+        <SectionHeader title={t('profile.sections.about')} />
         <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
           <SettingRow
             icon={HelpCircle}

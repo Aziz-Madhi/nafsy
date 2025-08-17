@@ -461,6 +461,9 @@
     "title": "الملف الشخصي",
     "sections": {
       "account": "الحساب",
+      "app": "التطبيق",
+      "voiceMode": "الوضع الصوتي",
+      "about": "حول",
       "preferences": "التفضيلات",
       "support": "الدعم",
       "settings": "الإعدادات"
@@ -508,6 +511,8 @@
       "voice": "الصوت",
       "comingSoon": "قريباً",
       "helpCenter": "مركز المساعدة",
+      "crisis": "موارد الأزمات",
+      "crisisSubtitle": "دعم الصحة النفسية الطارئ",
       "crisisResources": "موارد الأزمات",
       "feedback": "الملاحظات",
       "termsOfUse": "شروط الاستخدام",

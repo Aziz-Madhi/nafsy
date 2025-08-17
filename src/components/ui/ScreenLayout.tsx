@@ -16,7 +16,7 @@ import { useSegments, router } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
 import { User } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
-import { getAutoTextAlignment } from '~/lib/rtl-utils';
+import { getAutoTextAlignment, getLanguageClass, isCurrentLanguageRTL } from '~/lib/rtl-utils';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 // Calculate bottom padding based on current route (unchanged)
@@ -114,7 +114,7 @@ function ScreenHeader({
 
   return (
     <View
-      className="flex-row justify-between items-center px-6 py-1 mb-1"
+      className={`px-6 py-1 mb-1 items-center ${getLanguageClass('flex-row justify-between', 'flex-row-reverse justify-between')}`}
       style={style}
     >
       {/* Title section */}
@@ -126,9 +126,9 @@ function ScreenHeader({
                 className="text-foreground"
                 style={{
                   fontFamily: 'CrimsonPro-Bold',
-                  fontSize: 28, // Reduced from 34 to prevent wrapping
+                  fontSize: 28,
                   fontWeight: 'normal',
-                  lineHeight: 34, // Reduced from 42 for better mobile spacing
+                  lineHeight: 34,
                   textAlign,
                   width: '100%',
                 }}
@@ -155,8 +155,8 @@ function ScreenHeader({
       {/* Center section */}
       <View className="flex-2 items-center">{headerCenter}</View>
 
-      {/* Right section */}
-      <View className="flex-1 items-end">
+      {/* Settings Icon section */}
+      <View className={getLanguageClass('flex-1 items-end', 'flex-1 items-start')}>
         {headerRight || (showSettingsIcon && <SettingsIcon />)}
       </View>
     </View>
