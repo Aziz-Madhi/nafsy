@@ -1,9 +1,8 @@
 import React, { useCallback, useEffect } from 'react';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../convex/_generated/api';
+import { api } from '../../../../convex/_generated/api';
 import { useTranslation } from '~/hooks/useTranslation';
 import {
   useHistorySidebarVisible,
@@ -14,7 +13,7 @@ import {
 } from '~/store';
 import { ChatScreen } from '~/components/chat';
 
-// Auth is handled by AuthGuard at tab layout level
+// Auth is handled by root _layout.tsx - all screens here are protected
 
 interface Message {
   _id: string;
@@ -30,7 +29,6 @@ const getWelcomeMessage = (t: any) => t('chat.welcomeMessage');
 export default function ChatTab() {
   // ===== ALL HOOKS FIRST (before any early returns) =====
   const { user, isLoaded } = useUserSafe();
-  const { isSignedIn } = useAuth();
   const { t } = useTranslation();
 
   // No specific spacing needed - chat handles its own
@@ -48,21 +46,20 @@ export default function ChatTab() {
   );
   const setSessionError = useChatUIStore((state) => state.setSessionError);
 
-  // Convex hooks - only execute when auth is stable
+  // Convex hooks - only execute when auth is stable and user exists
   const currentUser = useQuery(
     api.users.getCurrentUser,
-    isSignedIn && isLoaded ? {} : 'skip'
+    isLoaded && user ? {} : 'skip'
   );
   const serverMainSessionId = useQuery(
     api.mainChat.getCurrentMainSessionId,
-    isSignedIn ? {} : 'skip'
+    isLoaded && user ? {} : 'skip'
   );
 
   // Use the current session ID from store, fallback to server session ID
   const activeSessionId = currentMainSessionId || serverMainSessionId;
 
   console.log('🔍 Query params:', {
-    isSignedIn,
     isLoaded,
     activeSessionId,
     currentMainSessionId,
@@ -71,7 +68,7 @@ export default function ChatTab() {
 
   // Query args for messages
   const queryArgs =
-    isSignedIn && isLoaded && activeSessionId
+    isLoaded && user && activeSessionId
       ? { limit: 50, sessionId: activeSessionId }
       : ('skip' as const);
 
@@ -93,11 +90,11 @@ export default function ChatTab() {
     }
   }, [serverMainSessionId, currentMainSessionId]);
 
-  // Auth is handled by AuthGuard - no early returns needed
+  // Auth is handled by root gate - no early returns needed
 
   // Create user if doesn't exist
   useEffect(() => {
-    if (user && isSignedIn && isLoaded && currentUser === null && user.id) {
+    if (user && isLoaded && currentUser === null && user.id) {
       createUser({
         clerkId: user.id,
         email: user.emailAddresses?.[0]?.emailAddress || '',
@@ -105,13 +102,12 @@ export default function ChatTab() {
         avatarUrl: user.imageUrl || undefined,
       });
     }
-  }, [user, isSignedIn, isLoaded, currentUser, createUser]);
+  }, [user, isLoaded, currentUser, createUser]);
 
   // Send welcome message on first load
   useEffect(() => {
     if (
       currentUser &&
-      isSignedIn &&
       isLoaded &&
       mainChatMessages &&
       mainChatMessages.length === 0
@@ -124,7 +120,6 @@ export default function ChatTab() {
     }
   }, [
     currentUser,
-    isSignedIn,
     isLoaded,
     mainChatMessages,
     sendMainMessage,
@@ -187,7 +182,7 @@ export default function ChatTab() {
   // Chat message sending
   const handleSendMessage = useCallback(
     async (text: string) => {
-      if (!currentUser || !isSignedIn || !isLoaded) return;
+      if (!currentUser || !isLoaded) return;
 
       try {
         // Send user message
@@ -211,7 +206,6 @@ export default function ChatTab() {
     },
     [
       currentUser,
-      isSignedIn,
       isLoaded,
       sendMainMessage,
       currentMainSessionId,

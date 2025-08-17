@@ -23,14 +23,14 @@ interface ModernCategoryCardProps {
   height: number;
 }
 
-// Background image mapping
-const CATEGORY_BACKGROUNDS: Record<string, ImageSourcePropType> = {
-  Mindfulness: require('../../../assets/mindfulness-card.png'),
-  Movement: require('../../../assets/movement-card.png'),
-  Breathing: require('../../../assets/breathing-card.jpg'),
-  Journaling: require('../../../assets/journaling-card.png'),
-  Relaxation: require('../../../assets/relaxation-card.png'),
-  Reminders: require('../../../assets/reminders-card.png'),
+// Background image mapping by stable category id (not translated name)
+const CATEGORY_BACKGROUNDS: Record<WellnessCategory, ImageSourcePropType> = {
+  mindfulness: require('../../../assets/mindfulness-card.png'),
+  movement: require('../../../assets/movement-card.png'),
+  breathing: require('../../../assets/breathing-card.jpg'),
+  journaling: require('../../../assets/journaling-card.png'),
+  relaxation: require('../../../assets/relaxation-card.png'),
+  reminders: require('../../../assets/reminders-card.png'),
 };
 
 function ModernCategoryCardComponent({
@@ -44,7 +44,8 @@ function ModernCategoryCardComponent({
   const [imageLoading, setImageLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
 
-  const backgroundImage = CATEGORY_BACKGROUNDS[category.name];
+  // Use the id so images work for all locales (Arabic/English)
+  const backgroundImage = CATEGORY_BACKGROUNDS[category.id];
 
   // Colors for React Native styling
   const colors = useColors();

@@ -16,7 +16,7 @@ import { MotiView } from 'moti';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
+import { api } from '../../../../../convex/_generated/api';
 import { router } from 'expo-router';
 import Animated, {
   useAnimatedStyle,
@@ -268,12 +268,13 @@ const TagButton = React.memo(function TagButton({
   }, [isSelected, colors]);
 
   return (
-    <Pressable onPress={onPress} style={{ marginHorizontal: 4 }}>
+    <Pressable onPress={onPress} className="w-full">
       <Animated.View
         style={[
           animatedStyle,
           {
-            paddingHorizontal: 16,
+            width: '100%',
+            paddingHorizontal: 12,
             paddingVertical: 10,
             borderRadius: 20,
             alignItems: 'center',
@@ -295,6 +296,7 @@ const TagButton = React.memo(function TagButton({
               ? { backgroundColor: 'rgba(255, 255, 255, 0.04)' }
               : {}),
             overflow: 'hidden',
+            minWidth: 0,
           },
         ]}
       >
@@ -303,7 +305,11 @@ const TagButton = React.memo(function TagButton({
             fontSize: 14,
             fontWeight: '500',
             color: textColor,
+            textAlign: 'center',
+            maxWidth: '100%',
           }}
+          numberOfLines={1}
+          ellipsizeMode="tail"
         >
           {t(tagKey)}
         </Text>
@@ -344,49 +350,36 @@ const TagsSection = React.memo(function TagsSection({
       >
         {t('mood.contributing')}
       </Text>
-      <View style={{ minHeight: 140 }}>
-        {/* Row 1: First 3 tags */}
-        <View className="flex-row justify-center mb-2">
+      <View>
+        {/* Row 1: First 4 tags */}
+        <View className="w-full flex-row justify-between mb-2 px-2">
           {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
-            .slice(0, 3)
+            .slice(0, 4)
             .map((tagKey) => (
-              <TagButton
-                key={tagKey}
-                tagKey={tagKey}
-                isSelected={selectedTags.includes(tagKey)}
-                moodType={selectedMood}
-                onPress={() => onTagToggle(tagKey)}
-              />
+              <View key={tagKey} className="w-1/4 items-center">
+                <TagButton
+                  tagKey={tagKey}
+                  isSelected={selectedTags.includes(tagKey)}
+                  moodType={selectedMood}
+                  onPress={() => onTagToggle(tagKey)}
+                />
+              </View>
             ))}
         </View>
 
-        {/* Row 2: Next 3 tags */}
-        <View className="flex-row justify-center mb-2">
+        {/* Row 2: Next 4 tags */}
+        <View className="w-full flex-row justify-between px-2">
           {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
-            .slice(3, 6)
+            .slice(4, 8)
             .map((tagKey) => (
-              <TagButton
-                key={tagKey}
-                tagKey={tagKey}
-                isSelected={selectedTags.includes(tagKey)}
-                moodType={selectedMood}
-                onPress={() => onTagToggle(tagKey)}
-              />
-            ))}
-        </View>
-
-        {/* Row 3: Last 2 tags */}
-        <View className="flex-row justify-center">
-          {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
-            .slice(6, 8)
-            .map((tagKey) => (
-              <TagButton
-                key={tagKey}
-                tagKey={tagKey}
-                isSelected={selectedTags.includes(tagKey)}
-                moodType={selectedMood}
-                onPress={() => onTagToggle(tagKey)}
-              />
+              <View key={tagKey} className="w-1/4 items-center">
+                <TagButton
+                  tagKey={tagKey}
+                  isSelected={selectedTags.includes(tagKey)}
+                  moodType={selectedMood}
+                  onPress={() => onTagToggle(tagKey)}
+                />
+              </View>
             ))}
         </View>
       </View>

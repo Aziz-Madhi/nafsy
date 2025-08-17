@@ -17,7 +17,9 @@ export function getAutoTextAlignment(): 'left' | 'right' {
 /**
  * Get text alignment for a specific language (for components that can't use hooks)
  */
-export function getTextAlignmentForLanguage(language: 'en' | 'ar'): 'left' | 'right' {
+export function getTextAlignmentForLanguage(
+  language: 'en' | 'ar'
+): 'left' | 'right' {
   return language === 'ar' ? 'right' : 'left';
 }
 

@@ -2,7 +2,7 @@ import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
 import { CategoryExerciseList, ExerciseDetail } from '~/components/exercises';
 import { useMutation } from 'convex/react';
-import { api } from '../../../../../convex/_generated/api';
+import { api } from '../../../../../../convex/_generated/api';
 import {
   useCurrentUser,
   useExercisesWithProgress,

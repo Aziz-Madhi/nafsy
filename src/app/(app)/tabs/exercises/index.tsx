@@ -6,7 +6,7 @@ import { PremiumStatsSection } from '~/components/exercises/PremiumStatsSection'
 import { DailyExerciseCard } from '~/components/exercises/DailyExerciseCard';
 import { ExerciseDetail } from '~/components/exercises';
 import { useQuery, useMutation } from 'convex/react';
-import { api } from '../../../../convex/_generated/api';
+import { api } from '../../../../../convex/_generated/api';
 import { useCurrentUser, useUserStats } from '~/hooks/useSharedData';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
@@ -89,7 +89,10 @@ export default function ExercisesIndex() {
   const currentUser = useCurrentUser();
   const userStats = useUserStats();
   const recordCompletion = useMutation(api.userProgress.recordCompletion);
-  const dailyExerciseData = useQuery(api.exercises.getDailyExercise);
+  const dailyExerciseData = useQuery(
+    api.exercises.getDailyExercise,
+    currentUser ? {} : 'skip'
+  );
 
   // Store stability guard
   const [isStoreStable] = useState(true);

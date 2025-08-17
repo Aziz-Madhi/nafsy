@@ -1,10 +1,7 @@
 import i18next from 'i18next';
 import { initReactI18next } from 'react-i18next';
 import { getSavedLanguage } from '~/lib/mmkv-storage';
-import {
-  getDeviceLocale,
-  type SupportedLanguage,
-} from './language-utils';
+import { getDeviceLocale, type SupportedLanguage } from './language-utils';
 
 // Import translation files
 import en from '../locales/en.json';

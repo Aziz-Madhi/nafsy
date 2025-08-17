@@ -8,10 +8,7 @@ import { AppSettings } from './types';
 import { Appearance } from 'react-native';
 import { changeLanguage } from '~/lib/i18n';
 import { saveLanguage } from '~/lib/mmkv-storage';
-import {
-  resolveLanguage,
-  type SupportedLanguage,
-} from '~/lib/language-utils';
+import { resolveLanguage, type SupportedLanguage } from '~/lib/language-utils';
 
 // Helper function to resolve current theme
 const resolveCurrentTheme = (
@@ -120,7 +117,8 @@ export const useAppStore = createPersistedStore<AppStoreState>(
 
     toggleLanguage: async () => {
       const currentLanguage = get().currentLanguage;
-      const nextLanguage: SupportedLanguage = currentLanguage === 'en' ? 'ar' : 'en';
+      const nextLanguage: SupportedLanguage =
+        currentLanguage === 'en' ? 'ar' : 'en';
 
       try {
         // 1) Update i18n immediately
@@ -199,7 +197,8 @@ export const useTheme = () => useAppStore((state) => state.settings.theme);
 export const useLanguage = () =>
   useAppStore((state) => state.settings.language);
 export const useToggleTheme = () => useAppStore((state) => state.toggleTheme);
-export const useToggleLanguage = () => useAppStore((state) => state.toggleLanguage);
+export const useToggleLanguage = () =>
+  useAppStore((state) => state.toggleLanguage);
 export const useNotificationsEnabled = () =>
   useAppStore((state) => state.settings.notificationsEnabled);
 

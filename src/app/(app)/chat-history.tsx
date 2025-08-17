@@ -7,10 +7,9 @@ import { Button } from '~/components/ui/button';
 import { SymbolView } from 'expo-symbols';
 import { cn } from '~/lib/cn';
 import Animated, { FadeInDown } from 'react-native-reanimated';
-import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
-import { api } from '../../convex/_generated/api';
+import { api } from '../../../convex/_generated/api';
 import { router } from 'expo-router';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -30,17 +29,16 @@ function ChatHistoryScreen() {
   const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<HistoryTab>('main');
   const { user, isLoaded } = useUserSafe();
-  const { isSignedIn } = useAuth();
 
   // All hooks must be called before any early returns
   const mainSessions = useQuery(
     api.mainChat.getMainSessions,
-    isSignedIn && isLoaded ? { limit: 20 } : 'skip'
+    isLoaded && user ? { limit: 20 } : 'skip'
   );
 
   const ventSessions = useQuery(
     api.ventChat.getVentSessions,
-    isSignedIn && isLoaded ? { limit: 20 } : 'skip'
+    isLoaded && user ? { limit: 20 } : 'skip'
   );
 
   const deleteMainSession = useMutation(api.mainChat.deleteMainSession);
@@ -48,8 +46,6 @@ function ChatHistoryScreen() {
 
   const handleDeleteSession = useCallback(
     async (sessionId: string, type: 'main' | 'vent') => {
-      if (!isSignedIn) return;
-
       try {
         if (type === 'main') {
           await deleteMainSession({
@@ -64,7 +60,7 @@ function ChatHistoryScreen() {
         console.error('Error deleting session:', error);
       }
     },
-    [isSignedIn, deleteMainSession, deleteVentSession]
+    [deleteMainSession, deleteVentSession]
   );
 
   const handleOpenSession = useCallback(
@@ -172,19 +168,6 @@ function ChatHistoryScreen() {
         <View className="flex-1 justify-center items-center">
           <Text variant="body" className="text-muted-foreground">
             Loading...
-          </Text>
-        </View>
-      </SafeAreaView>
-    );
-  }
-
-  // Show sign-in prompt if not authenticated
-  if (!isSignedIn || !user) {
-    return (
-      <SafeAreaView className="flex-1 bg-background" edges={['top']}>
-        <View className="flex-1 justify-center items-center">
-          <Text variant="body" className="text-muted-foreground">
-            Please sign in to continue
           </Text>
         </View>
       </SafeAreaView>

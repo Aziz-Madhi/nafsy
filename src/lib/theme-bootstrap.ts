@@ -15,7 +15,11 @@ try {
       // Zustand may store either the plain state or { state, version }
       const state = parsed?.state ?? parsed;
       const themePref = state?.settings?.theme ?? state?.theme;
-      if (themePref === 'light' || themePref === 'dark' || themePref === 'system') {
+      if (
+        themePref === 'light' ||
+        themePref === 'dark' ||
+        themePref === 'system'
+      ) {
         initial = themePref;
       }
     } catch {}

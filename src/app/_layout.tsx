@@ -7,12 +7,16 @@ import 'expo-dev-client';
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { View, ActivityIndicator } from 'react-native';
 import { useFonts } from 'expo-font';
+import { useAuth } from '@clerk/clerk-expo';
 import * as SplashScreen from 'expo-splash-screen';
 import { AppProviders } from '~/providers/AppProviders';
 import { SafeErrorBoundary } from '~/components/SafeErrorBoundary';
 import { useCurrentTheme } from '~/store/useAppStore';
 import { useColors } from '~/hooks/useColors';
+import { Text } from '~/components/ui/text';
+import { useTranslation } from '~/hooks/useTranslation';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -22,36 +26,56 @@ export {
   ErrorBoundary,
 } from 'expo-router';
 
-// Navigation stack - expo-router provides NavigationContainer automatically
-function NavigationStack() {
-  const currentTheme = useCurrentTheme();
+// Splash screen component
+function Splash() {
+  const { t } = useTranslation();
   const colors = useColors();
-  // RTL layout is now handled at app startup in i18n.ts - no runtime switching
 
   return (
-    <>
+    <View
+      style={{
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: colors.background,
+      }}
+    >
+      <ActivityIndicator size="large" color={colors.primary} />
+      <Text variant="body" className="text-muted-foreground mt-4">
+        {t('common.loading')}
+      </Text>
+    </View>
+  );
+}
+
+// Auth-aware navigation component (inside providers)
+function AuthAwareNavigation({ fontsReady }: { fontsReady: boolean }) {
+  const { isLoaded, isSignedIn } = useAuth();
+  const currentTheme = useCurrentTheme();
+
+  // Show splash while auth or fonts are loading
+  if (!isLoaded || !fontsReady) {
+    return <Splash />;
+  }
+
+  // Debug logging only in dev mode
+  if (__DEV__) {
+    console.log('🔐 Auth state:', { isLoaded, isSignedIn });
+  }
+
+  return (
+    <SafeErrorBoundary>
       <StatusBar style={currentTheme === 'dark' ? 'light' : 'dark'} />
+
+      {/* Use a stable Stack and pick initial route based on auth */}
       <Stack
-        screenOptions={{
-          headerShown: false,
-          contentStyle: { backgroundColor: colors.background },
-        }}
+        screenOptions={{ headerShown: false }}
+        initialRouteName={isSignedIn ? '(app)' : 'auth'}
       >
-        <Stack.Screen name="tabs" options={{ headerShown: false }} />
-        <Stack.Screen name="auth" options={{ headerShown: false }} />
-        <Stack.Screen name="index" options={{ headerShown: false }} />
-        <Stack.Screen name="chat-history" options={{ headerShown: false }} />
-        <Stack.Screen
-          name="settings"
-          options={{
-            headerShown: false,
-            presentation: 'modal',
-            animation: 'slide_from_bottom',
-            gestureEnabled: true,
-          }}
-        />
+        <Stack.Screen name="auth" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="(app)" />
       </Stack>
-    </>
+    </SafeErrorBoundary>
   );
 }
 
@@ -72,16 +96,11 @@ export default function RootLayout() {
     }
   }, [fontsLoaded, fontError]);
 
-  // Don't render until fonts are loaded
-  if (!fontsLoaded && !fontError) {
-    return null;
-  }
+  const fontsReady = !!(fontsLoaded || fontError);
 
   return (
     <AppProviders>
-      <SafeErrorBoundary>
-        <NavigationStack />
-      </SafeErrorBoundary>
+      <AuthAwareNavigation fontsReady={fontsReady} />
     </AppProviders>
   );
 }

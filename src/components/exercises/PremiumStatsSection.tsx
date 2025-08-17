@@ -55,7 +55,7 @@ function StatCard({
         accessibilityLabel={`${title}: ${value}${subtitle ? `. ${subtitle}` : ''}`}
         accessibilityHint={t('mood.stats.accessibilityHint')}
       >
-        <View style={{ flex: 1, padding: 16, justifyContent: 'space-between' }}>
+        <View className="flex-1 p-4 justify-between">
           {/* Header */}
           <View>
             <Text
@@ -70,16 +70,16 @@ function StatCard({
           </View>
 
           {/* Value */}
-          <View style={{ alignItems: 'flex-start' }}>
+          <View className="w-full items-start rtl:items-end">
             <Text
-              className="text-foreground text-3xl font-extrabold"
+              className="text-foreground text-3xl font-extrabold text-start"
               numberOfLines={1}
             >
               {value}
             </Text>
             {subtitle && (
               <Text
-                className="text-foreground font-medium mt-0.5 text-xs"
+                className="text-foreground font-medium mt-0.5 text-xs text-start"
                 numberOfLines={1}
               >
                 {subtitle}
@@ -89,7 +89,7 @@ function StatCard({
 
           {/* Progress Bar */}
           {progress !== undefined && (
-            <View style={{ marginTop: 8 }}>
+            <View className="mt-2">
               <View className="h-1.5 bg-foreground/10 rounded overflow-hidden">
                 <View
                   className="bg-foreground/30 rounded"
@@ -152,7 +152,7 @@ export function PremiumStatsSection({
     // Reduce bottom margin to align spacing with adjacent cards (now 8px)
     <View className="mb-2">
       {/* Main Stats Cards */}
-      <View style={{ flexDirection: 'row', marginBottom: 0 }}>
+      <View className="flex-row">
         <StatCard
           title={t('common.thisWeek')}
           value={completionsThisWeek}
@@ -174,7 +174,7 @@ export function PremiumStatsSection({
       {/* Insights */}
       {(completionsThisWeek > 0 || currentStreak > 0) && (
         <View className="mt-2">
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
+          <View className="flex-row flex-wrap">
             {currentStreak >= 7 && (
               <InsightBadge
                 text={t('mood.stats.insights.weeklyChampion')}

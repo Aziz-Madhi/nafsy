@@ -11,6 +11,7 @@ You are an expert in TypeScript, React Native, Expo, Tailwind CSS, Nativewind v4
 ## Development Commands
 
 ### Core Development
+
 - `bun start` - Start the Expo development server
 - `bun start:clear` - Start with cleared cache
 - `bun android` - Run on Android device/emulator
@@ -18,6 +19,7 @@ You are an expert in TypeScript, React Native, Expo, Tailwind CSS, Nativewind v4
 - `bun web` - Run on web browser
 
 ### Code Quality & Testing
+
 - `bun lint` - Run ESLint checks
 - `bun lint:fix` - Run ESLint with auto-fix
 - `bun format` - Format code with Prettier
@@ -25,6 +27,7 @@ You are an expert in TypeScript, React Native, Expo, Tailwind CSS, Nativewind v4
 - `bun test:watch` - Run tests in watch mode
 
 ### Backend & Cache
+
 - `bun convex:dev` - Start Convex development server
 - `bun convex:deploy` - Deploy Convex functions to production
 - `bun clean` - Remove .expo, node_modules cache, and metro cache
@@ -33,7 +36,8 @@ You are an expert in TypeScript, React Native, Expo, Tailwind CSS, Nativewind v4
 ## Architecture Overview
 
 ### Tech Stack
-- **Frontend**: React Native 0.79.5 with Expo SDK 53 (New Architecture enabled) 
+
+- **Frontend**: React Native 0.79.5 with Expo SDK 53 (New Architecture enabled)
 - **React**: React 19.0.0 and React DOM 19.0.0
 - **Routing**: Expo Router v5 with typed routes
 - **Styling**: Nativewind v4 (Tailwind CSS for React Native) with unified color system
@@ -44,6 +48,7 @@ You are an expert in TypeScript, React Native, Expo, Tailwind CSS, Nativewind v4
 - **Package Manager**: Bun
 
 ### Project Structure
+
 ```
 src/
 ├── app/                    # Expo Router pages
@@ -68,6 +73,7 @@ src/
 ```
 
 ### State Management
+
 - **Store Factory Pattern**: `createPersistedStore()` factory in `~/lib/store-factory` for consistent MMKV persistence
 - **Primary Stores**:
   - `useAppStore`: Global app state, themes, settings, language
@@ -75,12 +81,14 @@ src/
 - **MMKV Integration**: Custom `mmkv-storage.ts` with encryption and error handling
 
 ### Database Schema (Convex)
+
 - **Dual Chat System**: `mainChatMessages` (therapy sessions) and `ventChatMessages` (quick vents)
 - **Session Management**: `chatSessions` and `ventChatSessions` for conversation metadata
 - **User Data**: `users` (Clerk integration), `moods` (5 types), `exercises` (5 categories), `userProgress`
 - **Multilingual**: Full Arabic/English support in exercise content and UI
 
 ### Key Features
+
 1. **AI Chat**: Two types - structured therapy sessions and quick emotional vents
 2. **Mood Tracking**: Daily mood logging with 5 mood types (happy, sad, anxious, neutral, angry)
 3. **Wellness Exercises**: 5 categories (breathing, mindfulness, journaling, movement, relaxation)
@@ -103,10 +111,12 @@ src/
 The app uses a unified color system with CSS variables as the single source of truth.
 
 ### Usage Guidelines
+
 - **Use Tailwind Classes for 90% of Components**: `bg-primary`, `text-mood-happy`, `bg-card-elevated`
 - **Use useColors Hook for React Native Specific Components**: Only for SymbolView tintColor, shadowColor, etc.
 
 ### Available Color Categories
+
 - **Core Colors**: `primary`, `secondary`, `background`, `foreground`, `card`
 - **State Colors**: `success`, `warning`, `error`, `info`
 - **Mood Colors**: `mood-happy`, `mood-sad`, `mood-anxious`, `mood-neutral`, `mood-angry`
@@ -143,6 +153,6 @@ The app uses a unified color system with CSS variables as the single source of t
 Do what has been asked; nothing more, nothing less.
 NEVER create files unless they're absolutely necessary for achieving your goal.
 ALWAYS prefer editing an existing file to creating a new one.
-NEVER proactively create documentation files (*.md) or README files. Only create documentation files if explicitly requested by the User.
+NEVER proactively create documentation files (\*.md) or README files. Only create documentation files if explicitly requested by the User.
 
 When tasked with changing the coloring of specific components, make sure to follow the unified color system that is being implemented.

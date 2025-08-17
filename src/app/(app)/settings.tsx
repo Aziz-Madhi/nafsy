@@ -46,6 +46,7 @@ import {
   useToggleLanguage,
   useAppStore,
 } from '~/store/useAppStore';
+import { resetAllStores } from '~/store';
 import { getLanguageClass } from '~/lib/rtl-utils';
 import Animated, {
   FadeInDown,
@@ -150,10 +151,12 @@ const SettingRow = React.memo(function SettingRow({
         {type === 'navigation' ? (
           <View className="flex-row items-center">
             {value && (
-              <Text className={cn(
-                'text-muted-foreground text-[15px]',
-                getLanguageClass('me-2', 'ms-2')
-              )}>
+              <Text
+                className={cn(
+                  'text-muted-foreground text-[15px]',
+                  getLanguageClass('me-2', 'ms-2')
+                )}
+              >
                 {value}
               </Text>
             )}
@@ -208,7 +211,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
 
   const handleLanguageChange = useCallback(async () => {
     impactAsync(ImpactFeedbackStyle.Light);
-    
+
     try {
       // Simple toggle - handles everything internally
       await toggleLanguage();
@@ -284,7 +287,18 @@ const SettingsScreen = React.memo(function SettingsScreen() {
       setIsSigningOut(true);
       notificationAsync(NotificationFeedbackType.Warning);
       await new Promise((resolve) => setTimeout(resolve, 150));
+
+      // Sign out from Clerk
       await signOut();
+
+      // Clear all client state
+      resetAllStores();
+
+      // Add if using React Query:
+      // queryClient.clear();
+
+      // Add if using WebSockets:
+      // ws?.close();
     } catch (error) {
       console.error('Error during sign out:', error);
       setIsSigningOut(false);
