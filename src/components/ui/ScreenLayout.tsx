@@ -6,14 +6,17 @@ import {
   RefreshControl,
   Pressable,
 } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  SafeAreaView,
+  useSafeAreaInsets,
+} from 'react-native-safe-area-context';
 import { Text } from './text';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSegments, router } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
 import { User } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
-import { useIsRTL } from '~/store/useAppStore';
+import { getAutoTextAlignment } from '~/lib/rtl-utils';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 // Calculate bottom padding based on current route (unchanged)
@@ -105,7 +108,7 @@ function ScreenHeader({
   style?: ViewStyle;
   showSettingsIcon?: boolean;
 }) {
-  const isRTL = useIsRTL();
+  const textAlign = getAutoTextAlignment();
 
   if (!title && !headerCenter && !headerLeft && !headerRight) return null;
 
@@ -126,7 +129,7 @@ function ScreenHeader({
                   fontSize: 28, // Reduced from 34 to prevent wrapping
                   fontWeight: 'normal',
                   lineHeight: 34, // Reduced from 42 for better mobile spacing
-                  textAlign: isRTL ? 'right' : 'left',
+                  textAlign,
                   width: '100%',
                 }}
               >
@@ -138,7 +141,7 @@ function ScreenHeader({
                 variant="caption1"
                 className="text-muted-foreground mt-1"
                 style={{
-                  textAlign: isRTL ? 'right' : 'left',
+                  textAlign,
                   width: '100%',
                 }}
               >

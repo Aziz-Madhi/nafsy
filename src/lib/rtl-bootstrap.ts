@@ -1,140 +1,51 @@
 /**
- * RTL Bootstrap - Critical Early RTL Initialization
- * This MUST be imported BEFORE any styles or components to prevent RTL caching issues
+ * Language Bootstrap - Simple Language Detection with Forced LTR Layout
+ * Forces the app to use LTR layout always, regardless of language
+ * Text alignment is handled per-component based on current language
  */
 
 import { I18nManager } from 'react-native';
-import { getCurrentStorage, getSavedLanguage, storage } from './mmkv-storage';
-import * as Updates from 'expo-updates';
-import {
-  isRTLLanguage,
-  getDeviceLocale,
-  SUPPORTED_LANGUAGES,
-  type SupportedLanguage,
-} from './language-utils';
+import { getSavedLanguage } from './mmkv-storage';
+import { getDeviceLocale } from './language-utils';
 
 /**
- * Read stored language preference synchronously from MMKV
- * This is a simplified version of i18n's getInitialLanguage for RTL bootstrap only
+ * Get current language preference - simple fallback chain
  */
-const getStoredLanguageForRTL = (): SupportedLanguage => {
-  try {
-    // 1) Prefer dedicated language key to avoid JSON parsing and hydration races
-    const explicit = getSavedLanguage();
-    if (explicit) {
-      console.log('🚀 RTL Bootstrap: Using explicit saved language:', explicit);
-      return explicit;
-    }
-
-    // 2) Fallback to Zustand-persisted settings
-    const storage = getCurrentStorage();
-    const storedSettings = storage.getString('app-store');
-
-    if (storedSettings) {
-      const settings = JSON.parse(storedSettings);
-      // Check for pendingLanguage FIRST (user requested language change)
-      const pendingLanguage = settings?.state?.pendingLanguage;
-      if (
-        pendingLanguage &&
-        SUPPORTED_LANGUAGES.includes(pendingLanguage as SupportedLanguage)
-      ) {
-        console.log(
-          '🚀 RTL Bootstrap: Found pending language:',
-          pendingLanguage
-        );
-        return pendingLanguage as SupportedLanguage;
-      }
-
-      // Check stored language preference
-      const languagePreference =
-        settings?.state?.settings?.language || 'system';
-      if (languagePreference === 'system') {
-        const deviceLocale = getDeviceLocale();
-        console.log('🚀 RTL Bootstrap: Using system language:', deviceLocale);
-        return deviceLocale;
-      }
-      if (
-        SUPPORTED_LANGUAGES.includes(languagePreference as SupportedLanguage)
-      ) {
-        console.log(
-          '🚀 RTL Bootstrap: Using stored language:',
-          languagePreference
-        );
-        return languagePreference as SupportedLanguage;
-      }
-    }
-  } catch (error) {
-    console.warn(
-      '🚀 RTL Bootstrap: Failed to read language preference:',
-      error
-    );
+const getCurrentLanguage = (): 'en' | 'ar' => {
+  // 1) Check saved language preference first
+  const savedLanguage = getSavedLanguage();
+  if (savedLanguage) {
+    console.log('🌐 Bootstrap: Using saved language:', savedLanguage);
+    return savedLanguage;
   }
 
-  // Fallback to system or English
-  const fallback = getDeviceLocale();
-  console.log('🚀 RTL Bootstrap: Using fallback language:', fallback);
-  return fallback;
+  // 2) Fallback to device locale
+  const deviceLocale = getDeviceLocale();
+  console.log('🌐 Bootstrap: Using device locale:', deviceLocale);
+  return deviceLocale;
 };
 
 /**
- * Apply RTL state immediately during app bootstrap
- * This runs synchronously before any React components or styles are processed
+ * Initialize app with forced LTR layout
+ * UI layout is always LTR, text alignment is handled per-component
  */
-const applyEarlyRTL = async (): Promise<void> => {
-  const language = getStoredLanguageForRTL();
-  const shouldBeRTL = isRTLLanguage(language);
+const initializeLanguageBootstrap = (): void => {
+  const currentLanguage = getCurrentLanguage();
 
-  const target = shouldBeRTL ? 'rtl' : 'ltr';
-  const current = I18nManager.isRTL ? 'rtl' : 'ltr';
-  const reloadKey = 'rtl_reload_done_for';
-  const lastReload = storage.getString(reloadKey);
+  // FORCE the app to use LTR layout always (no mirroring)
+  I18nManager.allowRTL(false);
+  I18nManager.forceRTL(false);
 
-  console.log('🚀 RTL Bootstrap: Direction check BEFORE any styling', {
-    language,
-    shouldBeRTL,
-    current,
-    lastReload,
+  console.log('🌐 Language Bootstrap: Initialized', {
+    currentLanguage,
+    uiLayout: 'LTR (forced)',
+    textAlignment: 'Per-component based on language',
   });
-
-  if (current !== target) {
-    // Set native direction immediately
-    I18nManager.allowRTL(shouldBeRTL);
-    I18nManager.forceRTL(shouldBeRTL);
-
-    // Only reload once for this target to avoid loops
-    if (lastReload !== target) {
-      try {
-        storage.set(reloadKey, target);
-      } catch {}
-      try {
-        console.log(
-          '🚀 RTL Bootstrap: Direction changed. Reloading app now...'
-        );
-        await Updates.reloadAsync();
-      } catch (e) {
-        console.warn('🚀 RTL Bootstrap: Failed to reload after RTL change', e);
-      }
-    } else {
-      console.log(
-        '🚀 RTL Bootstrap: Reload already performed for target. Skipping reload.'
-      );
-    }
-    return;
-  }
-
-  // Direction already correct; clear marker to allow future toggles
-  if (lastReload === target) {
-    try {
-      storage.delete(reloadKey);
-    } catch {}
-  }
-
-  console.log('🚀 RTL Bootstrap: Direction already correct. Proceeding.');
 };
 
-// Execute RTL bootstrap immediately when this module is imported
-// Fire and forget; any required reload will interrupt startup immediately
+// Execute language bootstrap immediately when this module is imported
+// Forces LTR layout always, text alignment handled per-component
 
-applyEarlyRTL();
+initializeLanguageBootstrap();
 
-export { applyEarlyRTL, getStoredLanguageForRTL };
+export { initializeLanguageBootstrap, getCurrentLanguage };

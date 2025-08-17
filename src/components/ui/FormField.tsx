@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TextInput, TextInputProps } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
-import { useIsRTL } from '~/store/useAppStore';
+import { getAutoTextAlignment } from '~/lib/rtl-utils';
 
 interface FormFieldProps extends Omit<TextInputProps, 'className'> {
   label: string;
@@ -22,13 +22,13 @@ export function FormField({
   containerClassName,
   ...inputProps
 }: FormFieldProps) {
-  const isRTL = useIsRTL();
+  const textAlign = getAutoTextAlignment();
 
   return (
     <View className={cn('gap-2', containerClassName)}>
       <Text
         className={cn('text-sm text-muted-foreground', labelClassName)}
-        style={{ textAlign: isRTL ? 'right' : 'left' }}
+        // Text component now handles alignment automatically, but we can still override if needed
       >
         {label}
       </Text>
@@ -39,18 +39,11 @@ export function FormField({
           inputClassName,
           className
         )}
-        style={{ textAlign: isRTL ? 'right' : 'left' }}
+        style={{ textAlign }}
         placeholderTextColor="#9CA3AF"
         {...inputProps}
       />
-      {error && (
-        <Text
-          className="text-sm text-destructive"
-          style={{ textAlign: isRTL ? 'right' : 'left' }}
-        >
-          {error}
-        </Text>
-      )}
+      {error && <Text className="text-sm text-destructive">{error}</Text>}
     </View>
   );
 }

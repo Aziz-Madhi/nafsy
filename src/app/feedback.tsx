@@ -22,7 +22,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { cn } from '~/lib/cn';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
-import { useIsRTL } from '~/store/useAppStore';
+// Removed useIsRTL - text alignment handled by Text component
 
 // Feedback Type Card
 function FeedbackTypeCard({
@@ -95,7 +95,7 @@ function RatingStar({
 export default function Feedback() {
   const colors = useColors();
   const { t } = useTranslation();
-  const isRTL = useIsRTL();
+  // Text alignment now handled by Text component autoAlign
   const [feedbackType, setFeedbackType] = useState<
     'bug' | 'feature' | 'improvement' | 'other'
   >('improvement');
@@ -189,7 +189,7 @@ export default function Feedback() {
               fontSize: 28,
               fontWeight: 'normal',
               lineHeight: 34,
-              textAlign: isRTL ? 'right' : 'left',
+              // Text alignment handled by autoAlign
             }}
           >
             {t('feedback.title')}

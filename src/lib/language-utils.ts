@@ -27,12 +27,7 @@ export const resolveLanguage = (
   return languagePreference;
 };
 
-/**
- * Check if language is RTL
- */
-export const isRTLLanguage = (language: string): boolean => {
-  return language === 'ar';
-};
+// Removed isRTLLanguage - RTL detection now handled per-component
 
 /**
  * Get device locale

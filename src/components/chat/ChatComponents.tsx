@@ -7,7 +7,7 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { ChatBubbleProps } from './types';
 import SendingSpinner from './SendingSpinner';
 import { AnimatedContainer, StaggeredListItem } from '~/lib/animations';
-import { useIsRTL } from '~/store/useAppStore';
+// Removed useIsRTL - UI layout always stays LTR
 
 // =====================
 // CHAT BUBBLE COMPONENT
@@ -20,16 +20,8 @@ export const ChatBubble = React.memo(function ChatBubble({
   index = 0,
   status,
 }: ChatBubbleProps) {
-  const isRTL = useIsRTL();
-
-  // RTL-aware positioning: user messages go to opposite side in RTL
-  const justifyContent = isUser
-    ? isRTL
-      ? 'justify-start' // User messages go left in RTL
-      : 'justify-end' // User messages go right in LTR
-    : isRTL
-      ? 'justify-end' // AI messages go right in RTL
-      : 'justify-start'; // AI messages go left in LTR
+  // Consistent positioning: user messages right, AI messages left
+  const justifyContent = isUser ? 'justify-end' : 'justify-start';
 
   return (
     <StaggeredListItem
@@ -86,7 +78,7 @@ export const ChatBubble = React.memo(function ChatBubble({
         {isUser && status && (
           <Animated.View
             entering={FadeInUp.springify()}
-            className={cn('absolute -bottom-1', isRTL ? '-start-1' : '-end-1')}
+            className="absolute -bottom-1 -end-1"
           >
             <View className="bg-card rounded-full p-1.5 shadow-md">
               {status === 'sending' ? (

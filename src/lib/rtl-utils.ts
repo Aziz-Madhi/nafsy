@@ -1,241 +1,54 @@
-import { I18nManager } from 'react-native';
-
 /**
- * RTL Utility functions for React Native with NativeWind
- * These utilities help with RTL-aware styling and layout
+ * Simple Text Alignment Utilities
+ * UI layout is always LTR, only text alignment changes based on language
  */
 
-/**
- * Get RTL-aware directional class names for NativeWind
- */
-export const getRTLDirectionalClass = {
-  /**
-   * Margin classes that adapt to RTL
-   */
-  marginStart: (value: string) => `ms-${value}`,
-  marginEnd: (value: string) => `me-${value}`,
-
-  /**
-   * Padding classes that adapt to RTL
-   */
-  paddingStart: (value: string) => `ps-${value}`,
-  paddingEnd: (value: string) => `pe-${value}`,
-
-  /**
-   * Text alignment that adapts to RTL
-   */
-  textStart: 'text-start',
-  textEnd: 'text-end',
-
-  /**
-   * Border classes that adapt to RTL
-   */
-  borderStart: (value: string) => `border-s-${value}`,
-  borderEnd: (value: string) => `border-e-${value}`,
-
-  /**
-   * Positioning classes (these need manual handling)
-   */
-  start: (value: string) => `start-${value}`,
-  end: (value: string) => `end-${value}`,
-};
+import { useCurrentLanguage } from '~/store/useAppStore';
 
 /**
- * Convert directional classes to RTL-aware logical properties
+ * Get text alignment based on current language
+ * Arabic = right, English = left
  */
-export const convertToLogicalProperties = (className: string): string => {
-  return (
-    className
-      // Margin conversions
-      .replace(/\bml-(\w+)\b/g, 'ms-$1')
-      .replace(/\bmr-(\w+)\b/g, 'me-$1')
-      // Padding conversions
-      .replace(/\bpl-(\w+)\b/g, 'ps-$1')
-      .replace(/\bpr-(\w+)\b/g, 'pe-$1')
-      // Text alignment conversions
-      .replace(/\btext-left\b/g, 'text-start')
-      .replace(/\btext-right\b/g, 'text-end')
-      // Border conversions
-      .replace(/\bborder-l-(\w+)\b/g, 'border-s-$1')
-      .replace(/\bborder-r-(\w+)\b/g, 'border-e-$1')
-  );
-};
+export function getAutoTextAlignment(): 'left' | 'right' {
+  const currentLanguage = useCurrentLanguage();
+  return currentLanguage === 'ar' ? 'right' : 'left';
+}
 
 /**
- * Get flex direction based on RTL state
+ * Get text alignment for a specific language (for components that can't use hooks)
  */
-export const getFlexDirection = (isRTL: boolean, reverse: boolean = false) => {
-  if (reverse) {
-    return isRTL ? 'flex-row' : 'flex-row-reverse';
-  }
-  return isRTL ? 'flex-row-reverse' : 'flex-row';
-};
+export function getTextAlignmentForLanguage(language: 'en' | 'ar'): 'left' | 'right' {
+  return language === 'ar' ? 'right' : 'left';
+}
 
 /**
- * Get text alignment based on RTL and desired alignment
+ * Check if current language is RTL (for text alignment only)
  */
-export const getTextAlignment = (
-  alignment: 'start' | 'end' | 'center',
-  isRTL: boolean
-) => {
-  switch (alignment) {
-    case 'start':
-      return isRTL ? 'text-right' : 'text-left';
-    case 'end':
-      return isRTL ? 'text-left' : 'text-right';
-    case 'center':
-      return 'text-center';
-    default:
-      return 'text-start';
-  }
-};
+export function isCurrentLanguageRTL(): boolean {
+  const currentLanguage = useCurrentLanguage();
+  return currentLanguage === 'ar';
+}
 
 /**
- * RTL-aware conditional classes utility
- * @param ltrClass - Class to use for LTR layout
- * @param rtlClass - Class to use for RTL layout
- * @param isRTL - RTL state (required - do not use I18nManager.isRTL fallback)
+ * Hook-based text alignment utility
  */
-export const rtlClass = (
-  ltrClass: string,
-  rtlClass: string,
-  isRTL: boolean
-): string => {
-  return isRTL ? rtlClass : ltrClass;
-};
+export function useTextAlignment(): 'left' | 'right' {
+  return getAutoTextAlignment();
+}
 
 /**
- * Combine multiple classes with RTL awareness
+ * Get conditional classes based on language
  */
-export const rtlClasses = (...args: (string | undefined | false)[]): string => {
-  return args
-    .filter(Boolean)
-    .map((cls) =>
-      typeof cls === 'string' ? convertToLogicalProperties(cls) : ''
-    )
-    .join(' ')
-    .trim();
-};
+export function getLanguageClass(ltrClass: string, rtlClass: string): string {
+  const currentLanguage = useCurrentLanguage();
+  return currentLanguage === 'ar' ? rtlClass : ltrClass;
+}
 
-/**
- * Helper to get icon rotation for RTL
- */
-export const getIconRotation = (
-  isRTL: boolean,
-  shouldFlip: boolean = true
-): number => {
-  return isRTL && shouldFlip ? 180 : 0;
-};
-
-/**
- * RTL-aware positioning utilities
- */
-export const getRTLPosition = {
-  /**
-   * Get left/right position values
-   * @param isRTL - RTL state (required - do not use I18nManager.isRTL fallback)
-   */
-  horizontal: (leftValue: number, rightValue: number, isRTL: boolean) => {
-    return isRTL
-      ? { right: leftValue, left: rightValue }
-      : { left: leftValue, right: rightValue };
-  },
-
-  /**
-   * Get transform values for RTL
-   * @param isRTL - RTL state (required - do not use I18nManager.isRTL fallback)
-   */
-  transform: (translateX: number, isRTL: boolean) => {
-    return isRTL ? -translateX : translateX;
-  },
-};
-
-/**
- * Layout direction helpers
- * @deprecated These functions are deprecated and should not be used
- * Use useIsRTL() hook from useAppStore instead for consistent RTL state
- */
-export const layoutDirection = {
-  /**
-   * @deprecated Use useIsRTL() hook from useAppStore instead
-   * Reading I18nManager.isRTL can be stale during app initialization
-   */
-  isRTL: () => {
-    console.warn(
-      'layoutDirection.isRTL() is deprecated. Use useIsRTL() hook from useAppStore for consistent RTL state.'
-    );
-    return I18nManager.isRTL;
-  },
-
-  /**
-   * @deprecated Use useIsRTL() hook from useAppStore instead
-   * Reading I18nManager.isRTL can be stale during app initialization
-   */
-  direction: () => {
-    console.warn(
-      'layoutDirection.direction() is deprecated. Use useIsRTL() hook from useAppStore for consistent RTL state.'
-    );
-    return I18nManager.isRTL ? 'rtl' : 'ltr';
-  },
-
-  /**
-   * @deprecated RTL should only be applied during app initialization via rtl-bootstrap.ts
-   * Manual RTL changes can conflict with the bootstrap system
-   */
-  forceUpdate: (isRTL: boolean) => {
-    console.error(
-      'layoutDirection.forceUpdate() is deprecated and should not be used. ' +
-        'RTL direction is managed by rtl-bootstrap.ts during app initialization. ' +
-        'Manual RTL changes can cause conflicts and inconsistent behavior.'
-    );
-    // Intentionally not applying the change to prevent conflicts
-    return;
-  },
-};
-
-/**
- * Common RTL-aware style patterns
- */
-export const rtlStyles = {
-  /**
-   * Chat bubble alignment
-   */
-  chatBubble: (isUser: boolean, isRTL: boolean) => ({
-    alignSelf: isUser
-      ? isRTL
-        ? 'flex-start'
-        : 'flex-end'
-      : isRTL
-        ? 'flex-end'
-        : 'flex-start',
-  }),
-
-  /**
-   * Navigation header alignment
-   */
-  headerButton: (position: 'start' | 'end', isRTL: boolean) => {
-    const isStart = position === 'start';
-    return {
-      alignSelf: isStart
-        ? isRTL
-          ? 'flex-end'
-          : 'flex-start'
-        : isRTL
-          ? 'flex-start'
-          : 'flex-end',
-    };
-  },
-};
-
+// Simple export for backward compatibility
 export default {
-  getRTLDirectionalClass,
-  convertToLogicalProperties,
-  getFlexDirection,
-  getTextAlignment,
-  rtlClass,
-  rtlClasses,
-  getIconRotation,
-  getRTLPosition,
-  layoutDirection,
-  rtlStyles,
+  getAutoTextAlignment,
+  getTextAlignmentForLanguage,
+  isCurrentLanguageRTL,
+  useTextAlignment,
+  getLanguageClass,
 };

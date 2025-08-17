@@ -2,6 +2,7 @@ import { type VariantProps, cva } from 'class-variance-authority';
 import * as React from 'react';
 import { Text as RNText, Platform } from 'react-native';
 import { cn } from '~/lib/cn';
+import { getAutoTextAlignment } from '~/lib/rtl-utils';
 // Typography system - simplified without design-tokens
 const typography = {
   therapeutic: {
@@ -97,6 +98,7 @@ interface TextProps
   context?: TypographyContext; // New prop to override typography context
   therapeuticVariant?: TherapeuticVariant; // Direct access to therapeutic typography
   uiVariant?: UIVariant; // Direct access to UI typography
+  autoAlign?: boolean; // Automatically align text based on current language (default: true)
 }
 
 const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(
@@ -108,6 +110,7 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(
       context = 'auto',
       therapeuticVariant,
       uiVariant,
+      autoAlign = true,
       ...props
     },
     ref
@@ -230,7 +233,13 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(
 
     // Combine all styles
     const typographyStyle = getTypographyStyle();
-    const combinedStyle = [typographyStyle, style];
+
+    // Apply automatic text alignment if enabled
+    const autoAlignStyle = autoAlign
+      ? { textAlign: getAutoTextAlignment() }
+      : {};
+
+    const combinedStyle = [typographyStyle, autoAlignStyle, style];
 
     return (
       <RNText

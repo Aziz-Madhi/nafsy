@@ -86,8 +86,6 @@ export interface ExerciseCategory_Config {
 export interface AppSettings {
   theme: 'light' | 'dark' | 'system';
   language: 'en' | 'ar' | 'system';
-  pendingLanguage?: 'en' | 'ar' | null; // Language to apply after restart
-  languageChangeRequested?: boolean; // Flag for restart prompt
   notificationsEnabled: boolean;
   moodRemindersEnabled: boolean;
   moodReminderTime: string; // "09:00"

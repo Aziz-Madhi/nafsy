@@ -7,7 +7,6 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
-import * as Updates from 'expo-updates';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
@@ -42,11 +41,11 @@ import { withOpacity } from '~/lib/colors';
 import { cn } from '~/lib/cn';
 import { useTranslation } from '~/hooks/useTranslation';
 import {
-  useAppStore,
   useCurrentLanguage,
   useSettings,
+  useToggleLanguage,
+  useAppStore,
 } from '~/store/useAppStore';
-import { saveLanguage } from '~/lib/mmkv-storage';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -184,13 +183,10 @@ const SettingsScreen = React.memo(function SettingsScreen() {
   const theme = settings.theme;
   const notificationsEnabled = settings.notificationsEnabled;
 
-  // The useAppActions() selector is causing the infinite loop
-  // Let me use individual selectors instead
+  // Simplified store selectors
   const setTheme = useAppStore((state) => state.setTheme);
   const updateSettings = useAppStore((state) => state.updateSettings);
-  const requestLanguageChange = useAppStore(
-    (state) => state.requestLanguageChange
-  );
+  const toggleLanguage = useToggleLanguage();
 
   // Settings handlers
 
@@ -202,34 +198,22 @@ const SettingsScreen = React.memo(function SettingsScreen() {
     setTheme(themes[nextIndex]);
   }, [theme, setTheme]);
 
-  const handleLanguageChange = useCallback(() => {
+  const handleLanguageChange = useCallback(async () => {
     impactAsync(ImpactFeedbackStyle.Light);
-    const nextLanguage = currentLanguage === 'en' ? 'ar' : 'en';
-
-    // 1) Persist pending language and dedicated language key for next startup
-    requestLanguageChange(nextLanguage);
-    saveLanguage(nextLanguage);
-
-    // 2) Do NOT change i18n language now to avoid text flicker before restart
-
-    // 3) Offer restart now/later - RTL will be handled by bootstrap on restart
-    Alert.alert(
-      t('profile.settings.restartRequired'),
-      t('profile.settings.restartMessage'),
-      [
-        {
-          text: t('profile.settings.restartNow'),
-          onPress: async () => {
-            try {
-              // RTL will be handled by rtl-bootstrap.ts on restart
-              await Updates.reloadAsync();
-            } catch {}
-          },
-        },
-        { text: t('profile.settings.restartLater'), style: 'cancel' },
-      ]
-    );
-  }, [currentLanguage, requestLanguageChange, t]);
+    
+    try {
+      // Simple toggle - handles everything internally
+      await toggleLanguage();
+      console.log('🌐 Language toggled successfully');
+    } catch (error) {
+      console.error('🌐 Failed to toggle language:', error);
+      Alert.alert(
+        'Language Change Failed',
+        'There was an error changing the language. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  }, [toggleLanguage]);
 
   const getThemeDisplayName = (theme: string) => {
     switch (theme) {

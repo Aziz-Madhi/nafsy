@@ -68,7 +68,7 @@ export const StoreProvider: React.FC<StoreProviderProps> = ({ children }) => {
       }}
     >
       <SystemThemeListener />
-      <PendingLanguageCleaner />
+      {/* Removed PendingLanguageCleaner - no longer needed with simplified language system */}
       {children}
     </StoreErrorBoundary>
   );
@@ -92,39 +92,4 @@ const SystemThemeListener: React.FC = () => {
   return null;
 };
 
-// Simple component to clean up pending language state after i18n has handled it
-const PendingLanguageCleaner: React.FC = React.memo(
-  function PendingLanguageCleaner() {
-    const pendingLanguage = useAppStore((state) => state.pendingLanguage);
-    const applyPendingLanguage = useAppStore(
-      (state) => state.applyPendingLanguage
-    );
-
-    useEffect(() => {
-      // Only run once on mount to clean up pending language state
-      // i18n.ts has already applied the language and RTL during initialization
-
-      if (pendingLanguage) {
-        // Small delay to ensure everything is settled
-        const timer = setTimeout(() => {
-          logger.info(
-            `Cleaning up pending language state: ${pendingLanguage}`,
-            'PendingLanguageCleaner'
-          );
-          applyPendingLanguage().catch((error) => {
-            logger.error(
-              'Failed to clean pending language state',
-              'PendingLanguageCleaner',
-              error
-            );
-          });
-        }, 50); // Small delay for settling
-
-        return () => clearTimeout(timer);
-      }
-      // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, []); // Empty dependency array - only run once on mount (intentional)
-
-    return null;
-  }
-);
+// Removed PendingLanguageCleaner component - no longer needed with simplified language system

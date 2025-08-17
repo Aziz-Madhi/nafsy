@@ -7,7 +7,7 @@ import React, { memo } from 'react';
 import { Pressable, View } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { useColors } from '~/hooks/useColors';
-import { useIsRTL } from '~/store/useAppStore';
+// Removed useIsRTL - UI layout always stays LTR
 import { cn } from '~/lib/cn';
 
 interface ChatHeaderProps {
@@ -18,12 +18,11 @@ export const ChatHeader = memo(function ChatHeader({
   onOpenSidebar,
 }: ChatHeaderProps) {
   const colors = useColors();
-  const isRTL = useIsRTL();
   const isDarkMode = colors.background === '#171717';
   return (
     <Pressable
       onPress={onOpenSidebar}
-      className={cn('absolute top-16 z-10', isRTL ? 'end-4' : 'start-4')}
+      className="absolute top-16 start-4 z-10"
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
       <View

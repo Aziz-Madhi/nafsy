@@ -7,7 +7,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
-import { useIsRTL } from '~/store/useAppStore';
+// Removed useIsRTL - text alignment handled by Text component
 
 // Resource Card Component
 function ResourceCard({
@@ -109,7 +109,7 @@ function WarningSign({ text }: { text: string }) {
 export default function CrisisResources() {
   const colors = useColors();
   const { t } = useTranslation();
-  const isRTL = useIsRTL();
+  // Text alignment now handled by Text component autoAlign
 
   const resources = [
     {
@@ -176,7 +176,7 @@ export default function CrisisResources() {
               fontSize: 28,
               fontWeight: 'normal',
               lineHeight: 34,
-              textAlign: isRTL ? 'right' : 'left',
+              // Text alignment handled by autoAlign
             }}
           >
             {t('crisisResources.title')}

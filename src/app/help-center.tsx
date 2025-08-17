@@ -21,7 +21,7 @@ import { cn } from '~/lib/cn';
 // import { ProfileLayout } from '~/components/ui/ScreenLayout';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
-import { useIsRTL } from '~/store/useAppStore';
+// Removed useIsRTL - text alignment handled by Text component
 
 // FAQ Item Component
 function FAQItem({ question, answer }: { question: string; answer: string }) {
@@ -77,7 +77,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 export default function HelpCenter() {
   const colors = useColors();
   const { t } = useTranslation();
-  const isRTL = useIsRTL();
+  // Text alignment now handled by Text component autoAlign
   const [searchQuery, setSearchQuery] = useState('');
   const [showChat, setShowChat] = useState(false);
   const [chatMessage, setChatMessage] = useState('');
@@ -150,7 +150,7 @@ export default function HelpCenter() {
               fontSize: 28,
               fontWeight: 'normal',
               lineHeight: 34,
-              textAlign: isRTL ? 'right' : 'left',
+              // Text alignment handled by autoAlign
             }}
           >
             {t('helpCenter.title')}
@@ -298,7 +298,7 @@ export default function HelpCenter() {
                     fontSize: 28,
                     fontWeight: 'normal',
                     lineHeight: 34,
-                    textAlign: isRTL ? 'right' : 'left',
+                    // Text alignment handled by autoAlign
                   }}
                 >
                   {t('helpCenter.customerSupport')}
