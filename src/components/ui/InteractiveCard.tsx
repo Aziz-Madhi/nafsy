@@ -155,7 +155,7 @@ function ExerciseCardContent({
 }) {
   const { t } = useTranslation();
   const colors = useColors();
-  const isDarkMode = colors.background === '#171717';
+  const isDarkMode = colors.background === '#0A1514';
   const DARK_CARD_COLOR = '#0A1514';
   const DARK_SURFACE_COLOR = '#0F1F1D';
   const DARK_BADGE_COLOR = '#16302C';

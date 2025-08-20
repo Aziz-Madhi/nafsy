@@ -31,6 +31,12 @@ const nativeColors = {
     moodAnxious: '#9370DB', // matches --mood-anxious: 147 112 219
     moodNeutral: '#94A3B8', // matches --mood-neutral: 148 163 184
     moodAngry: '#F87171', // matches --mood-angry: 248 113 113
+    // Mood solid background pastels (warmer, identical across themes)
+    moodHappyBg: '#FFD79A', // 255 215 154
+    moodSadBg: '#E7CCFF', // 231 204 255
+    moodAnxiousBg: '#E3CDFF', // 227 205 255
+    moodNeutralBg: '#EEDFC6', // 238 223 198
+    moodAngryBg: '#FFBABA', // 255 186 186
 
     // Shadow colors
     shadow: '#000000', // for shadowColor props
@@ -51,11 +57,18 @@ const nativeColors = {
     wellnessJournaling: '#96CEB4', // matches --wellness-journaling: 150 206 180
     wellnessRelaxation: '#FFEA07', // matches --wellness-relaxation: 255 234 167
     wellnessReminders: '#DDA0DD', // matches --wellness-reminders: 221 160 221
+    // Wellness background pastels (warmer, unified across themes)
+    wellnessMindfulnessBg: '#FFC4C4', // 255 196 196
+    wellnessBreathingBg: '#DCEEE5', // 220 238 229
+    wellnessMovementBg: '#CEE6F0', // 206 230 240
+    wellnessJournalingBg: '#DCECE1', // 220 236 225
+    wellnessRelaxationBg: '#FFECC2', // 255 236 194
+    wellnessRemindersBg: '#F2C8EE', // 242 200 238
 
     // Additional UI colors for profile and components
     brandBrownish: '#8B7355', // warm brownish color for profile sections
-    card: '#FFFFFF', // card background
-    cardElevated: '#FFFFFF', // elevated card background
+    card: '#E8E2DB', // matches --card: 232 226 219 (warmer, slightly darker)
+    cardElevated: '#F4F0EB', // matches --card-elevated: 244 240 235
     cardDarker: '#E4E1DD', // darker card background - matches --card-darker: 228 225 221
     muted: '#F3F4F6', // muted background
     mutedForeground: '#9CA3AF', // muted text color
@@ -63,7 +76,7 @@ const nativeColors = {
   dark: {
     // Core colors - match dark mode CSS variables
     primary: '#60A5FA', // matches dark --primary: 96 165 250
-    background: '#171717', // matches dark --background: 23 23 23
+    background: '#0A1514', // matches dark --background: 10 21 20
     foreground: '#F5F5F5', // matches dark --foreground: 245 245 245
 
     // Navigation colors - dark mode
@@ -77,12 +90,18 @@ const nativeColors = {
     // Brand colors - same in dark mode
     brandDarkBlue: '#2F6A8D', // matches --brand-dark-blue: 47 106 141
 
-    // Mood colors - dark mode (keep vibrant)
-    moodHappy: '#FCD34D', // matches dark --mood-happy: 252 211 77
-    moodSad: '#93C5FD', // matches dark --mood-sad: 147 197 253
-    moodAnxious: '#C084FC', // matches dark --mood-anxious: 192 132 252
-    moodNeutral: '#94A3B8', // matches dark --mood-neutral: 148 163 184
-    moodAngry: '#FCA5A5', // matches dark --mood-angry: 252 165 165
+    // Mood colors - unified with light mode for consistency
+    moodHappy: '#FCD34D', // unified with light
+    moodSad: '#6B7FDE', // unified with light
+    moodAnxious: '#9370DB', // unified with light
+    moodNeutral: '#94A3B8', // unified with light
+    moodAngry: '#F87171', // unified with light
+    // Mood solid background pastels (warmer, identical across themes)
+    moodHappyBg: '#FFD79A', // 255 215 154
+    moodSadBg: '#E7CCFF', // 231 204 255
+    moodAnxiousBg: '#E3CDFF', // 227 205 255
+    moodNeutralBg: '#EEDFC6', // 238 223 198
+    moodAngryBg: '#FFBABA', // 255 186 186
 
     // Shadow colors - darker for dark mode
     shadow: '#000000',
@@ -103,11 +122,18 @@ const nativeColors = {
     wellnessJournaling: '#96CEB4', // matches --wellness-journaling: 150 206 180
     wellnessRelaxation: '#FFEA07', // matches --wellness-relaxation: 255 234 167
     wellnessReminders: '#DDA0DD', // matches --wellness-reminders: 221 160 221
+    // Wellness background pastels (warmer, unified across themes)
+    wellnessMindfulnessBg: '#FFC4C4', // 255 196 196
+    wellnessBreathingBg: '#DCEEE5', // 220 238 229
+    wellnessMovementBg: '#CEE6F0', // 206 230 240
+    wellnessJournalingBg: '#DCECE1', // 220 236 225
+    wellnessRelaxationBg: '#FFECC2', // 255 236 194
+    wellnessRemindersBg: '#F2C8EE', // 242 200 238
 
     // Additional UI colors for profile and components - dark mode
     brandBrownish: '#A68B5B', // lighter brownish for dark mode
-    card: '#262626', // dark card background
-    cardElevated: '#2A2A2A', // elevated card background for dark mode
+    card: '#0E1C1B', // ~14 28 27, aligns with --card
+    cardElevated: '#102220', // ~16 34 32, aligns with --card-elevated
     cardDarker: '#1C1C1C', // darker card background - matches --card-darker: 28 28 28
     muted: '#404040', // dark muted background
     mutedForeground: '#A3A3A3', // dark muted text color

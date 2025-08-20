@@ -23,35 +23,33 @@ export function MoodBasedExerciseSuggestion({
   const shadowMedium = useShadowStyle('medium');
   const [showExerciseDetail, setShowExerciseDetail] = useState(false);
 
-  // Get category colors - matching ModernCategoryCard exactly
+  // Get category colors - unified across themes using solid wellness BG tokens
   const getCategoryColors = useMemo(() => {
     if (!exercise)
       return {
         base: colors.primary,
-        background: colors.primary + '15',
+        background: colors.wellnessMindfulnessBg, // default pastel
         text: colors.foreground,
       };
 
-    // Same color mapping as ModernCategoryCard
-    const exerciseColors: Record<string, string> = {
-      mindfulness: '#EF4444', // Red
-      breathing: '#06B6D4', // Cyan
-      movement: '#3B82F6', // Blue
-      journaling: '#10B981', // Green
-      relaxation: '#F59E0B', // Amber
-      reminders: '#8B5CF6', // Purple
+    // Solid pastel backgrounds that do not blend with theme background
+    const bgByCategory: Record<string, string> = {
+      mindfulness: colors.wellnessMindfulnessBg,
+      breathing: colors.wellnessBreathingBg,
+      movement: colors.wellnessMovementBg,
+      journaling: colors.wellnessJournalingBg,
+      relaxation: colors.wellnessRelaxationBg,
+      reminders: colors.wellnessRemindersBg,
     };
 
-    const baseColor = exerciseColors[exercise.category] || '#FAFAFA';
+    const backgroundColor =
+      bgByCategory[exercise.category] || colors.wellnessMindfulnessBg;
 
-    // Use same background opacity for both light and dark modes - matching category cards
-    const backgroundColor = baseColor + '15'; // 15% opacity for both modes
-
-    // Use dark gray text that works on light pastel backgrounds
-    const textColor = '#374151'; // Gray-700 for readability on pastel backgrounds
+    // Use a fixed dark text on warm pastel backgrounds for both themes
+    const textColor = '#1F2937';
 
     return {
-      base: baseColor,
+      base: backgroundColor,
       background: backgroundColor,
       text: textColor,
     };
@@ -135,11 +133,8 @@ export function MoodBasedExerciseSuggestion({
     >
       <View
         className="rounded-3xl overflow-hidden"
-        style={{
-          ...shadowMedium,
-        }}
       >
-        {/* Top section - white background with pastel overlay for consistency */}
+        {/* Top section - warmer category colors with theme consistency */}
         <View
           style={{
             paddingHorizontal: 20,
@@ -148,12 +143,6 @@ export function MoodBasedExerciseSuggestion({
             backgroundColor: getCategoryColors.background,
           }}
         >
-          <View
-            className="absolute inset-0 bg-white"
-            style={{
-              zIndex: -1,
-            }}
-          />
           <Text
             className="mb-2"
             style={{
@@ -234,7 +223,7 @@ export function MoodBasedExerciseSuggestion({
         </View>
 
         {/* Bottom section with proper dark mode background */}
-        <View className="p-5 bg-white dark:bg-card">
+        <View className="p-5 bg-black/[0.03] dark:bg-white/[0.03]">
           {/* Exercise info - minimal text-based design */}
           <View className="flex-row items-center mb-4">
             <View className="flex-row items-center">
@@ -243,7 +232,7 @@ export function MoodBasedExerciseSuggestion({
                   fontFamily: 'Inter_400Regular',
                   fontSize: 13,
                   color: colors.foreground,
-                  opacity: colors.background === '#171717' ? 0.6 : 0.5,
+                  opacity: colors.background === '#0A1514' ? 0.6 : 0.5,
                 }}
               >
                 {t('exercises.duration')}
@@ -265,7 +254,7 @@ export function MoodBasedExerciseSuggestion({
                   style={{
                     marginHorizontal: 12,
                     color: colors.foreground,
-                    opacity: colors.background === '#171717' ? 0.4 : 0.3,
+                    opacity: colors.background === '#0A1514' ? 0.4 : 0.3,
                     fontSize: 14,
                   }}
                 >
@@ -277,7 +266,7 @@ export function MoodBasedExerciseSuggestion({
                       fontFamily: 'Inter_400Regular',
                       fontSize: 13,
                       color: colors.foreground,
-                      opacity: colors.background === '#171717' ? 0.6 : 0.5,
+                      opacity: colors.background === '#0A1514' ? 0.6 : 0.5,
                     }}
                   >
                     {t('mood.level')}

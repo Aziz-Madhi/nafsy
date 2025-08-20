@@ -42,7 +42,7 @@ export function FullYearPixelCalendar({
 
   // Colors for React Native styling
   const colors = useColors();
-  const isDarkMode = colors.background === '#171717';
+  const isDarkMode = colors.background === '#0A1514';
 
   // Use static mood colors for calendar consistency
   // These should not change based on current mood selection

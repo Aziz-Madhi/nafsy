@@ -51,7 +51,7 @@ export function CustomBottomNavigation({
       className={cn(
         'absolute bottom-0 left-0 right-0 h-20',
         // Only show rounded corners and background when NOT on chat tab
-        !isChatTab && 'rounded-t-2xl'
+        !isChatTab && 'rounded-t-3xl'
       )}
       style={{
         backgroundColor: isChatTab ? 'transparent' : colors.card,

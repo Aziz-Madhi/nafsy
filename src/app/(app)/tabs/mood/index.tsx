@@ -169,7 +169,7 @@ const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
   t: (key: string) => string;
 }) {
   const colors = useColors();
-  const isDarkModeLocal = colors.background === '#171717';
+  const isDarkModeLocal = colors.background === '#0A1514';
 
   const animatedStyle = useAnimatedStyle(() => {
     return {
@@ -182,7 +182,7 @@ const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
       ? colors[
           `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
         ]
-      : colors.background === '#171717'
+      : colors.background === '#0A1514'
         ? 'rgba(255, 255, 255, 0.04)'
         : withOpacity(colors.shadow, 0.05);
   }, [isSelected, mood.id, colors]);
@@ -262,7 +262,7 @@ const TagButton = React.memo(function TagButton({
   const textColor = useMemo(() => {
     return isSelected
       ? 'rgba(255, 255, 255, 0.95)'
-      : colors.background === '#171717'
+      : colors.background === '#0A1514'
         ? 'rgba(255, 255, 255, 0.9)'
         : colors.foreground;
   }, [isSelected, colors]);
@@ -283,16 +283,16 @@ const TagButton = React.memo(function TagButton({
             // Ensure pill visibility on dark mode when not selected
             borderWidth: isSelected
               ? 0
-              : colors.background === '#171717'
+              : colors.background === '#0A1514'
                 ? 1
                 : 0,
             borderColor: isSelected
               ? 'transparent'
-              : colors.background === '#171717'
+              : colors.background === '#0A1514'
                 ? 'rgba(255, 255, 255, 0.08)'
                 : 'transparent',
             // subtle dark background for unselected in dark mode
-            ...(colors.background === '#171717' && !isSelected
+            ...(colors.background === '#0A1514' && !isSelected
               ? { backgroundColor: 'rgba(255, 255, 255, 0.04)' }
               : {}),
             overflow: 'hidden',
@@ -395,7 +395,7 @@ export default function MoodIndex() {
   const createMood = useMutation(api.moods.createMood);
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
-  const isDarkMode = colors.background === '#171717';
+  const isDarkMode = colors.background === '#0A1514';
 
   // Localized moods array
   const moods = useMemo(
@@ -509,16 +509,29 @@ export default function MoodIndex() {
           <View
             className={cn(
               'rounded-3xl p-6 border border-border/20',
-              hasLoggedToday && todayMood
-                ? `bg-mood-${todayMood.mood}/30`
-                : 'bg-black/[0.03] dark:bg-white/[0.03]'
+              !hasLoggedToday || !todayMood
+                ? 'bg-black/[0.03] dark:bg-white/[0.03]'
+                : ''
             )}
             style={{
               ...shadowMedium,
+              // Force solid, identical background across themes once mood is logged
+              ...(hasLoggedToday && todayMood
+                ? {
+                    backgroundColor:
+                      {
+                        happy: colors.moodHappyBg,
+                        sad: colors.moodSadBg,
+                        anxious: colors.moodAnxiousBg,
+                        neutral: colors.moodNeutralBg,
+                        angry: colors.moodAngryBg,
+                      }[todayMood.mood as 'happy' | 'sad' | 'anxious' | 'neutral' | 'angry'],
+                  }
+                : {}),
             }}
           >
             {hasLoggedToday ? (
-              // Encouraging message after mood logged - matching base mood entry structure
+              // Encouraging message after mood logged - use fixed dark text on warm background
               <MotiView
                 from={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
@@ -533,9 +546,7 @@ export default function MoodIndex() {
                         fontFamily: 'CrimsonPro-Regular',
                         fontSize: 18,
                         lineHeight: 24,
-                        color: isDarkMode
-                          ? 'rgba(255, 255, 255, 0.88)'
-                          : '#111827',
+                        color: '#1F2937',
                         letterSpacing: 0.5,
                       }}
                     >
@@ -550,9 +561,7 @@ export default function MoodIndex() {
                       fontFamily: 'CrimsonPro-Bold',
                       fontSize: 32,
                       lineHeight: 38,
-                      color: isDarkMode
-                        ? 'rgba(255, 255, 255, 0.92)'
-                        : '#1F2937',
+                      color: '#1F2937',
                       letterSpacing: 1.5,
                     }}
                   >
@@ -565,9 +574,7 @@ export default function MoodIndex() {
                     style={{
                       width: 40,
                       height: 2,
-                      backgroundColor: isDarkMode
-                        ? 'rgba(255, 255, 255, 0.35)'
-                        : 'rgba(0, 0, 0, 0.2)',
+                      backgroundColor: 'rgba(0, 0, 0, 0.2)',
                       borderRadius: 1,
                     }}
                   />
@@ -579,9 +586,7 @@ export default function MoodIndex() {
                       fontFamily: 'CrimsonPro-Italic-VariableFont',
                       fontSize: 16,
                       lineHeight: 24,
-                      color: isDarkMode
-                        ? 'rgba(255, 255, 255, 0.9)'
-                        : '#000000',
+                      color: '#1F2937',
                       letterSpacing: 0,
                     }}
                   >

@@ -34,7 +34,7 @@ export function FormField({
       </Text>
       <TextInput
         className={cn(
-          'border rounded-lg px-4 py-3 text-base text-foreground bg-input',
+          'border rounded-2xl px-4 py-3 text-base text-foreground bg-input',
           error ? 'border-destructive' : 'border-border',
           inputClassName,
           className

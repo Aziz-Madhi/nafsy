@@ -38,7 +38,7 @@ function DailyExerciseCardComponent({
     >
       <Pressable onPress={handlePress} disabled={!exercise}>
         <View
-          className="overflow-hidden rounded-3xl bg-black/[0.03] dark:bg-white/[0.03]"
+          className="rounded-3xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]"
           style={{
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 2 },

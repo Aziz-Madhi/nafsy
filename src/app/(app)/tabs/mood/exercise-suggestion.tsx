@@ -7,6 +7,7 @@ import { SymbolView } from 'expo-symbols';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useExercisesWithProgress } from '~/hooks/useSharedData';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useColors } from '~/hooks/useColors';
 
 // Exercise category helpers
 function getCategoryIcon(category: string): string {
@@ -20,16 +21,7 @@ function getCategoryIcon(category: string): string {
   return icons[category] || '⭐';
 }
 
-function getCategoryColor(category: string): string {
-  const colors: Record<string, string> = {
-    mindfulness: '#EF4444',
-    breathing: '#06B6D4',
-    movement: '#3B82F6',
-    journaling: '#10B981',
-    relaxation: '#F59E0B',
-  };
-  return colors[category] || '#EF4444';
-}
+// Vibrant category color is provided by useColors wellness tokens
 
 // Helper function to randomly select an exercise
 function getRandomExercise(exercises: any[]) {
@@ -47,14 +39,33 @@ function ExerciseSuggestionCard({
   onPress: () => void;
 }) {
   const { t, currentLanguage } = useTranslation();
-  const categoryColor = getCategoryColor(exercise.category);
+  const themeColors = useColors();
+  const categoryVibrant = (
+    {
+      mindfulness: themeColors.wellnessMindfulness,
+      breathing: themeColors.wellnessBreathing,
+      movement: themeColors.wellnessMovement,
+      journaling: themeColors.wellnessJournaling,
+      relaxation: themeColors.wellnessRelaxation,
+    } as Record<string, string>
+  )[exercise.category] || themeColors.wellnessMindfulness;
+  const categoryPastel = (
+    {
+      mindfulness: themeColors.wellnessMindfulnessBg,
+      breathing: themeColors.wellnessBreathingBg,
+      movement: themeColors.wellnessMovementBg,
+      journaling: themeColors.wellnessJournalingBg,
+      relaxation: themeColors.wellnessRelaxationBg,
+    } as Record<string, string>
+  )[exercise.category] || themeColors.wellnessMindfulnessBg;
   const categoryIcon = getCategoryIcon(exercise.category);
 
   return (
     <View
       className="p-6"
       style={{
-        backgroundColor: categoryColor + '15',
+        // Warmer, less pale: use unified pastel background token
+        backgroundColor: categoryPastel,
       }}
     >
       <Text
@@ -67,7 +78,7 @@ function ExerciseSuggestionCard({
       <View className="flex-row items-start mb-4">
         <View
           className="w-12 h-12 rounded-2xl items-center justify-center me-4"
-          style={{ backgroundColor: categoryColor + '20' }}
+          style={{ backgroundColor: categoryVibrant + '1F' }}
         >
           <Text style={{ fontSize: 20 }}>{categoryIcon}</Text>
         </View>
@@ -114,12 +125,12 @@ function ExerciseSuggestionCard({
 
         <View
           className="px-3 py-1 rounded-full"
-          style={{ backgroundColor: categoryColor + '15' }}
+          style={{ backgroundColor: categoryPastel }}
         >
           <Text
             variant="caption1"
             className="font-semibold capitalize"
-            style={{ color: categoryColor }}
+            style={{ color: categoryVibrant }}
           >
             {t(`exercises.categories.${exercise.category}`)}
           </Text>

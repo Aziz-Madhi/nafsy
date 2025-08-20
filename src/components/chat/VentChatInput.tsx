@@ -64,7 +64,7 @@ export function VentChatInput({
       >
         {/* Dark themed container matching UnifiedChatInput structure */}
         <View
-          className="rounded-t-2xl"
+          className="rounded-t-3xl"
           style={{
             backgroundColor: 'rgba(20, 20, 20, 0.95)', // Dark more visible background
             paddingBottom: 65, // Same as UnifiedChatInput for consistent positioning
@@ -82,7 +82,7 @@ export function VentChatInput({
                 placeholder={
                   t('chat.vent.placeholder') || 'Release your thoughts...'
                 }
-                placeholderTextColor="rgba(255,255,255,0.3)"
+                placeholderTextColor="rgba(255,255,255,0.6)"
                 className="flex-1 text-white text-base px-4 py-3"
                 multiline
                 maxLength={500}
@@ -95,18 +95,21 @@ export function VentChatInput({
               <Pressable
                 onPress={handleSend}
                 disabled={!hasText || isLoading}
-                className={cn(
-                  'mr-2 rounded-full p-2.5',
-                  hasText && !isLoading ? 'bg-white/20' : 'bg-white/5'
-                )}
+                className={cn('mr-2 rounded-full p-2.5')}
+                style={({ pressed }) => ({
+                  backgroundColor: hasText && !isLoading
+                    ? 'rgba(255,255,255,0.28)'
+                    : 'rgba(255,255,255,0.10)',
+                  opacity: pressed ? 0.9 : 1,
+                })}
               >
                 <SymbolView
                   name="arrow.up.circle"
                   size={20}
                   tintColor={
                     hasText && !isLoading
-                      ? 'rgba(255,255,255,0.9)'
-                      : 'rgba(255,255,255,0.3)'
+                      ? 'rgba(255,255,255,0.95)'
+                      : 'rgba(255,255,255,0.6)'
                   }
                 />
               </Pressable>

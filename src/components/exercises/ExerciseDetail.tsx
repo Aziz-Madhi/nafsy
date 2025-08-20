@@ -24,7 +24,7 @@ export default function ExerciseDetail({
   const colors = useColors();
   const { t, currentLanguage } = useTranslation();
   if (!exercise) return null;
-  const isDarkMode = colors.background === '#171717';
+  const isDarkMode = colors.background === '#0A1514';
 
   const handleStart = () => {
     notificationAsync(NotificationFeedbackType.Success);

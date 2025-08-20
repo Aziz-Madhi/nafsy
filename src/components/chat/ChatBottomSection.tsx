@@ -18,6 +18,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MessageCircle, Heart, Activity } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
+import { withOpacity } from '~/lib/colors';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
@@ -104,7 +105,7 @@ export function ChatBottomSection({
       >
         {/* Unified container with card background */}
         <View
-          className="rounded-t-2xl"
+          className="rounded-t-3xl"
           style={{
             backgroundColor: colors.card,
             paddingBottom: insets.bottom,
@@ -125,7 +126,7 @@ export function ChatBottomSection({
                     t('chat.typingPlaceholder') ||
                     'Type a message...'
                   }
-                  placeholderTextColor={colors.mutedForeground + '80'}
+                  placeholderTextColor={withOpacity(colors.foreground, 0.55)}
                   className="flex-1 text-foreground text-base px-4 py-3"
                   multiline
                   maxLength={1000}
@@ -138,12 +139,16 @@ export function ChatBottomSection({
                 <Pressable
                   onPress={handleSend}
                   disabled={!hasText || disabled}
-                  className={cn(
-                    'mr-2 rounded-full p-2.5',
-                    hasText && !disabled
-                      ? 'bg-primary/20 dark:bg-primary/20'
-                      : 'bg-white/5 dark:bg-white/5'
-                  )}
+                  className={cn('mr-2 rounded-full p-2.5')}
+                  style={({ pressed }) => ({
+                    backgroundColor:
+                      hasText && !disabled
+                        ? withOpacity(colors.primary, 0.28)
+                        : colors.background === '#0A1514'
+                          ? 'rgba(255,255,255,0.10)'
+                          : 'rgba(0,0,0,0.08)',
+                    opacity: pressed ? 0.9 : 1,
+                  })}
                 >
                   <SymbolView
                     name="arrow.up.circle.fill"
@@ -151,7 +156,7 @@ export function ChatBottomSection({
                     tintColor={
                       hasText && !disabled
                         ? colors.primary
-                        : colors.mutedForeground + '60'
+                        : withOpacity(colors.foreground, 0.45)
                     }
                   />
                 </Pressable>

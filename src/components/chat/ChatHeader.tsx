@@ -18,7 +18,7 @@ export const ChatHeader = memo(function ChatHeader({
   onOpenSidebar,
 }: ChatHeaderProps) {
   const colors = useColors();
-  const isDarkMode = colors.background === '#171717';
+  const isDarkMode = colors.background === '#0A1514';
   return (
     <Pressable
       onPress={onOpenSidebar}

@@ -123,7 +123,7 @@ export function PixelCalendar({
     }
 
     // No mood entry for this day - use very subtle background
-    const isDarkMode = colors.background === '#171717';
+    const isDarkMode = colors.background === '#0A1514';
     if (isFuture(day)) {
       return isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)';
     }

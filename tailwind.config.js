@@ -21,6 +21,12 @@ module.exports = {
     'bg-mood-anxious/30',
     'bg-mood-neutral/30',
     'bg-mood-angry/30',
+    // Solid mood background variants (non-alpha) for cards
+    'bg-mood-happy-background',
+    'bg-mood-sad-background',
+    'bg-mood-anxious-background',
+    'bg-mood-neutral-background',
+    'bg-mood-angry-background',
     // Chat and navigation utility colors used dynamically
     'bg-chat-bubble-user',
     'bg-chat-bubble-ai',
