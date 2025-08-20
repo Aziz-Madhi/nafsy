@@ -1,14 +1,16 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
   TextInput,
   Pressable,
   KeyboardAvoidingView,
   Platform,
+  Keyboard,
 } from 'react-native';
-import { Send } from 'lucide-react-native';
+import { SymbolView } from 'expo-symbols';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { useSegments } from 'expo-router';
+import { useFocusEffect } from '@react-navigation/native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
@@ -25,12 +27,11 @@ export function ChatInputWithNavConnection({
   disabled = false,
 }: ChatInputWithNavConnectionProps) {
   const [message, setMessage] = useState('');
+  const [isInputFocused, setIsInputFocused] = useState(false);
+  const inputRef = useRef<TextInput>(null);
+  const insets = useSafeAreaInsets();
   const colors = useColors();
   const { t } = useTranslation();
-  const segments = useSegments();
-
-  // Check if we're on the chat tab
-  const isOnChatTab = segments[1] === 'chat';
   const hasText = !!message.trim();
 
   const handleSend = useCallback(async () => {
@@ -41,89 +42,75 @@ export function ChatInputWithNavConnection({
     }
   }, [message, disabled, onSendMessage]);
 
-  if (!isOnChatTab) return null;
+  // When the chat screen loses focus (e.g., switching tabs), blur and dismiss
+  useFocusEffect(
+    useCallback(() => {
+      return () => {
+        inputRef.current?.blur();
+        Keyboard.dismiss();
+      };
+    }, [])
+  );
 
   return (
     <View className="absolute bottom-0 left-0 right-0">
-      {/* Main input container with rounded top corners */}
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
+        keyboardVerticalOffset={0}
       >
-        <View
-          className=""
-          style={{
-            backgroundColor: colors.card,
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-          }}
-        >
-          {/* Input area */}
-          <Pressable
-            className="flex-row items-center px-4 py-3"
-            style={{ minHeight: 48 }}
-            onPress={(e) => e.stopPropagation()}
+        <View style={{ paddingBottom: insets.bottom }} className="p-4">
+          {/* Glass-like input container matching VentChat */}
+          <View
+            className={cn(
+              'flex-row items-center rounded-2xl px-4 py-3',
+              'bg-white/5 dark:bg-white/5 border',
+              isInputFocused
+                ? 'border-primary/30 dark:border-primary/30'
+                : 'border-white/10 dark:border-white/10'
+            )}
           >
-            {/* Text input - no container styling */}
             <TextInput
+              ref={inputRef}
               value={message}
               onChangeText={setMessage}
+              onFocus={() => setIsInputFocused(true)}
+              onBlur={() => setIsInputFocused(false)}
               placeholder={
                 placeholder ||
                 t('chat.typingPlaceholder') ||
                 'Type a message...'
               }
-              placeholderTextColor={colors.mutedForeground}
-              className="flex-1 text-foreground font-sans"
-              style={{
-                fontSize: 16,
-                lineHeight: 20,
-                paddingVertical: 8,
-                backgroundColor: 'transparent',
-              }}
+              placeholderTextColor={colors.mutedForeground + '80'}
+              className="flex-1 text-foreground text-base"
               multiline
               maxLength={1000}
-              editable={!disabled}
               returnKeyType="send"
               onSubmitEditing={handleSend}
-              blurOnSubmit={false}
+              editable={!disabled}
             />
 
-            {/* Send button - floating style */}
+            {/* Send button matching VentChat style */}
             <Pressable
               onPress={handleSend}
               disabled={!hasText || disabled}
               className={cn(
-                'w-10 h-10 rounded-full items-center justify-center ml-2',
-                hasText && !disabled ? 'bg-primary' : 'bg-muted'
-              )}
-              style={[
-                { opacity: hasText ? 1 : 0.6 },
+                'ml-3 rounded-full p-2.5',
                 hasText && !disabled
-                  ? {
-                      shadowColor: colors.primary,
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 6,
-                      elevation: 4,
-                    }
-                  : undefined,
-              ]}
-              android_ripple={{
-                color: 'rgba(255, 255, 255, 0.3)',
-                borderless: true,
-              }}
+                  ? 'bg-primary/20 dark:bg-primary/20'
+                  : 'bg-white/5 dark:bg-white/5'
+              )}
             >
-              <Send
-                size={18}
-                className={
+              <SymbolView
+                name="arrow.up.circle.fill"
+                size={20}
+                tintColor={
                   hasText && !disabled
-                    ? 'text-primary-foreground'
-                    : 'text-muted-foreground'
+                    ? colors.primary
+                    : colors.mutedForeground + '60'
                 }
               />
             </Pressable>
-          </Pressable>
+          </View>
 
           {/* Navigation bar spacing */}
           <View className="h-20" />

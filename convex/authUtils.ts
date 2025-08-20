@@ -4,7 +4,7 @@ import {
   createNotFoundError,
   createAuthzError,
   withErrorHandling,
-  checkRateLimit,
+  checkRateLimitDb,
 } from './errorUtils';
 
 /**
@@ -102,8 +102,16 @@ export const getAuthenticatedUserWithRateLimit = withErrorHandling(
       throw createAuthError('Authentication required');
     }
 
-    // Apply rate limiting
-    checkRateLimit(`${operation}:${identity.subject}`, 100, 60000); // 100 requests per minute
+    // Apply rate limiting (DB-backed; requires mutation context where used)
+    // For query contexts, prefer calling from a mutation or use a higher-level throttle.
+    // Default policy: 100 requests per minute per subject per operation
+    // Note: If called from a query, this will throw on write — ensure callers use from mutations.
+    await checkRateLimitDb(
+      ctx as any,
+      `${operation}:${identity.subject}`,
+      100,
+      60000
+    );
 
     const user = await ctx.db
       .query('users')

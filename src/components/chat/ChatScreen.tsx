@@ -6,13 +6,16 @@
 import React, { useRef, useCallback, useEffect, memo } from 'react';
 import { View, TouchableWithoutFeedback, Keyboard } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
+import { Gesture, GestureDetector } from 'react-native-gesture-handler';
+import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 import { ChatHeader } from './ChatHeader';
 import { SessionStatusDisplay } from './SessionStatusDisplay';
 import { ChatMessageList, Message } from './ChatMessageList';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
 import { ChatBubble } from './ChatComponents';
-import { ChatInputWithNavConnection } from './ChatInputWithNavConnection';
+import { UnifiedChatInput } from './UnifiedChatInput';
+import { VentChatOverlay } from './VentChatOverlay';
 
 interface ChatScreenProps {
   // State
@@ -20,6 +23,9 @@ interface ChatScreenProps {
   showHistorySidebar: boolean;
   sessionSwitchLoading: boolean;
   sessionError: string | null;
+  showVentChat?: boolean;
+  ventCurrentMessage?: string | null;
+  ventLoading?: boolean;
 
   // Data
   welcomeSubtitle: string;
@@ -31,6 +37,9 @@ interface ChatScreenProps {
   onSessionSelect: (sessionId: string) => void;
   onDismissError: () => void;
   onSendMessage: (message: string) => void;
+  onOpenVentChat?: () => void;
+  onCloseVentChat?: () => void;
+  onSendVentMessage?: (message: string) => Promise<void>;
 }
 
 export const ChatScreen = memo(function ChatScreen({
@@ -38,6 +47,9 @@ export const ChatScreen = memo(function ChatScreen({
   showHistorySidebar,
   sessionSwitchLoading,
   sessionError,
+  showVentChat = false,
+  ventCurrentMessage = null,
+  ventLoading = false,
   welcomeSubtitle,
   navigationBarPadding,
   onOpenSidebar,
@@ -45,8 +57,23 @@ export const ChatScreen = memo(function ChatScreen({
   onSessionSelect,
   onDismissError,
   onSendMessage,
+  onOpenVentChat,
+  onCloseVentChat,
+  onSendVentMessage,
 }: ChatScreenProps) {
   const flashListRef = useRef<FlashList<Message>>(null as any);
+
+  // Double tap gesture to open Vent Chat
+  const doubleTapGesture = Gesture.Tap()
+    .numberOfTaps(2)
+    .maxDuration(250)
+    .runOnJS(true)
+    .onStart(() => {
+      if (onOpenVentChat) {
+        impactAsync(ImpactFeedbackStyle.Medium);
+        onOpenVentChat();
+      }
+    });
 
   // Auto-scroll to bottom when messages change or new messages arrive
   const scrollToBottom = useCallback(() => {
@@ -98,30 +125,34 @@ export const ChatScreen = memo(function ChatScreen({
 
   return (
     <View className="flex-1 bg-background">
-      <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-        <View
-          className="flex-1"
-          style={{ paddingBottom: navigationBarPadding }}
-        >
-          <ChatHeader onOpenSidebar={onOpenSidebar} />
+      <GestureDetector gesture={doubleTapGesture}>
+        <View className="flex-1">
+          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
+            <View
+              className="flex-1"
+              style={{ paddingBottom: navigationBarPadding }}
+            >
+              <ChatHeader onOpenSidebar={onOpenSidebar} />
 
-          <SessionStatusDisplay
-            isLoading={sessionSwitchLoading}
-            error={sessionError}
-            onDismissError={onDismissError}
-          />
+              <SessionStatusDisplay
+                isLoading={sessionSwitchLoading}
+                error={sessionError}
+                onDismissError={onDismissError}
+              />
 
-          <ChatMessageList
-            flashListRef={flashListRef}
-            messages={messages}
-            renderMessage={renderMessage}
-            keyExtractor={keyExtractor}
-            getItemType={getItemType}
-            welcomeSubtitle={welcomeSubtitle}
-            horizontalPadding={20}
-          />
+              <ChatMessageList
+                flashListRef={flashListRef}
+                messages={messages}
+                renderMessage={renderMessage}
+                keyExtractor={keyExtractor}
+                getItemType={getItemType}
+                welcomeSubtitle={welcomeSubtitle}
+                horizontalPadding={20}
+              />
+            </View>
+          </TouchableWithoutFeedback>
         </View>
-      </TouchableWithoutFeedback>
+      </GestureDetector>
 
       {/* Chat History Sidebar */}
       <ChatHistorySidebar
@@ -130,8 +161,19 @@ export const ChatScreen = memo(function ChatScreen({
         onSessionSelect={onSessionSelect}
       />
 
-      {/* Chat Input with Navigation Connection */}
-      <ChatInputWithNavConnection onSendMessage={onSendMessage} />
+      {/* Unified Chat Input */}
+      <UnifiedChatInput onSendMessage={onSendMessage} />
+
+      {/* Vent Chat Overlay */}
+      {onCloseVentChat && onSendVentMessage && (
+        <VentChatOverlay
+          visible={showVentChat}
+          onClose={onCloseVentChat}
+          onSendMessage={onSendVentMessage}
+          currentMessage={ventCurrentMessage}
+          isLoading={ventLoading}
+        />
+      )}
     </View>
   );
 });

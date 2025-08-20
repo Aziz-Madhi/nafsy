@@ -1,6 +1,6 @@
 import React, { useMemo, useState, useCallback } from 'react';
 import { View, Pressable, Dimensions, TextInput, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { SessionList } from '~/components/ui/GenericList';
 import { SymbolView } from 'expo-symbols';
@@ -9,8 +9,11 @@ import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
   runOnJS,
+  SlideInLeft,
+  SlideOutLeft,
+  FadeIn,
+  FadeOut,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useQuery, useMutation } from 'convex/react';
@@ -159,38 +162,35 @@ export function ChatHistorySidebar({
   const colors = useColors();
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
+  const insets = useSafeAreaInsets();
+  const [skipExitAnimation, setSkipExitAnimation] = useState(false);
 
   const handleSettingsPress = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
+    // Skip any sidebar exit animation and close immediately when navigating
+    setSkipExitAnimation(true);
     router.push('/settings');
     onClose();
   }, [onClose]);
 
-  // Slide effect using width animation (no translateX positioning issues)
-  const sidebarWidth = useSharedValue(0);
-  const backdropOpacity = useSharedValue(0);
+  // Simpler push-in/out animations using Reanimated presets
+  const ANIM_DURATION = 250;
+  const [modalVisible, setModalVisible] = React.useState(false);
 
-  const sidebarStyle = useAnimatedStyle(() => ({
-    width: sidebarWidth.value,
-    overflow: 'hidden', // Hide content when width is 0
-  }));
-
-  const backdropStyle = useAnimatedStyle(() => ({
-    opacity: backdropOpacity.value,
-  }));
-
-  // Width animation creates slide effect without positioning issues
   React.useEffect(() => {
     if (visible) {
-      // Slide in by expanding width
-      sidebarWidth.value = withTiming(SIDEBAR_WIDTH, { duration: 300 });
-      backdropOpacity.value = withTiming(0.5, { duration: 300 });
+      setSkipExitAnimation(false);
+      setModalVisible(true);
     } else {
-      // Slide out by collapsing width
-      sidebarWidth.value = withTiming(0, { duration: 300 });
-      backdropOpacity.value = withTiming(0, { duration: 300 });
+      if (skipExitAnimation) {
+        // Close immediately without exit animation
+        setModalVisible(false);
+      } else {
+        const timeout = setTimeout(() => setModalVisible(false), ANIM_DURATION);
+        return () => clearTimeout(timeout);
+      }
     }
-  }, [visible, sidebarWidth, backdropOpacity]);
+  }, [visible, skipExitAnimation]);
 
   // Convex queries
   const mainSessions = useQuery(
@@ -240,163 +240,189 @@ export function ChatHistorySidebar({
   // Use Modal to ensure sidebar renders above navigation bar
   return (
     <Modal
-      visible={visible}
+      visible={modalVisible}
       transparent={true}
       animationType="none" // We handle animation ourselves
       statusBarTranslucent={true}
     >
       <View style={{ flex: 1 }}>
-        {/* Backdrop */}
-        <GestureDetector gesture={backdropTapGesture}>
-          <Animated.View
-            className="bg-black/50"
-            style={[
-              backdropStyle,
-              {
-                position: 'absolute',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              },
-            ]}
-          />
-        </GestureDetector>
-
-        {/* Sidebar */}
-        <Animated.View
-          className="bg-background"
-          style={[
-            sidebarStyle,
-            {
-              position: 'absolute',
-              top: 0,
-              bottom: 0,
-              start: 0, // React Native automatically handles RTL positioning
-              // width is now controlled by animation
-              shadowColor: '#000000',
-              shadowOffset: { width: 2, height: 0 },
-              shadowOpacity: 0.1,
-              shadowRadius: 12,
-              elevation: 20, // Higher than navigation bar
-              zIndex: 1001, // Ensure sidebar appears above everything
-              borderTopEndRadius: 25, // RN automatically flips for RTL
-              borderBottomEndRadius: 25,
-            },
-          ]}
-        >
-          <SafeAreaView
-            className="flex-1"
-            edges={['top', 'left']} // Keep it simple for now
-          >
-            {/* Header and Search */}
-            <View className="p-4 border-b border-border/10">
-              <View className="flex-row items-center justify-between mb-3">
-                <Text variant="title3" className="font-bold text-foreground">
-                  {t('chat.history.title')}
-                </Text>
-                <Pressable
-                  onPress={handleSettingsPress}
-                  className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
-                >
-                  <User size={20} color={colors.foreground} />
-                </Pressable>
-              </View>
-              <View className="flex-row items-center rounded-xl px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-border/10">
-                <SymbolView
-                  name="magnifyingglass"
-                  size={18}
-                  tintColor="#9CA3AF"
-                />
-                <TextInput
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  placeholder={t('common.search')}
-                  placeholderTextColor="#9CA3AF"
-                  className="flex-1 ms-3 text-base text-foreground"
-                  autoCapitalize="none"
-                  autoCorrect={false}
-                />
-                {searchQuery.length > 0 && (
-                  <Pressable
-                    onPress={() => setSearchQuery('')}
-                    className="p-1"
-                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-                  >
-                    <SymbolView
-                      name="xmark.circle.fill"
-                      size={16}
-                      tintColor="#9CA3AF"
-                    />
-                  </Pressable>
-                )}
-              </View>
-            </View>
-
-            {/* Sessions List */}
-            <SessionList
-              data={currentSessions}
-              keyExtractor={(item) => item._id}
-              renderItem={(item, _index) => {
-                const sessionId = item.sessionId;
-                const isActive = currentSessionId === sessionId;
-
+        {visible && (
+          <>
+            {/* Backdrop */}
+            <GestureDetector gesture={backdropTapGesture}>
+              {(() => {
+                const BackdropComponent: any = skipExitAnimation
+                  ? View
+                  : Animated.View;
+                const animationProps = skipExitAnimation
+                  ? {}
+                  : {
+                      entering: FadeIn.duration(ANIM_DURATION),
+                      exiting: FadeOut.duration(ANIM_DURATION),
+                    };
                 return (
-                  <SessionItem
-                    session={item}
-                    isActive={isActive}
-                    onPress={() => {
-                      if (sessionId) handleSessionSelect(sessionId);
-                    }}
-                    onDelete={() => {
-                      if (sessionId) handleSessionDelete(sessionId);
+                  <BackdropComponent
+                    className="bg-black/50"
+                    {...(animationProps as any)}
+                    style={{
+                      position: 'absolute',
+                      top: 0,
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
                     }}
                   />
                 );
-              }}
-              emptyComponent={() => {
-                const hasSearchQuery = searchQuery.trim().length > 0;
-                const emptyMessage = hasSearchQuery
-                  ? t('chat.history.noSearchResults')
-                  : t('chat.history.noMainSessions');
-                const iconName = hasSearchQuery
-                  ? 'magnifyingglass'
-                  : 'bubble.left';
+              })()}
+            </GestureDetector>
 
-                return (
-                  <View className="flex-1 items-center justify-center py-12">
-                    <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/[0.05] dark:bg-white/[0.06]">
-                      <SymbolView
-                        name={iconName}
-                        size={24}
-                        tintColor="#9CA3AF"
-                      />
-                    </View>
-                    <Text
-                      variant="subhead"
-                      className="text-muted-foreground text-center px-6"
-                    >
-                      {emptyMessage}
-                    </Text>
-                    {hasSearchQuery && (
-                      <Pressable
-                        onPress={() => setSearchQuery('')}
-                        className="mt-4 px-4 py-2 rounded-full bg-black/[0.05] dark:bg-white/[0.06]"
-                      >
+            {/* Sidebar */}
+            {(() => {
+              const SidebarComponent: any = skipExitAnimation
+                ? View
+                : Animated.View;
+              const animationProps = skipExitAnimation
+                ? {}
+                : {
+                    entering: SlideInLeft.duration(ANIM_DURATION),
+                    exiting: SlideOutLeft.duration(ANIM_DURATION),
+                  };
+              return (
+                <SidebarComponent
+                  className="bg-background"
+                  {...(animationProps as any)}
+                  style={{
+                    position: 'absolute',
+                    top: 0,
+                    bottom: 0,
+                    start: 0, // React Native automatically handles RTL positioning
+                    width: SIDEBAR_WIDTH,
+                    shadowColor: '#000000',
+                    shadowOffset: { width: 2, height: 0 },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 12,
+                    elevation: 20, // Higher than navigation bar
+                    zIndex: 1001, // Ensure sidebar appears above everything
+                    borderTopEndRadius: 25, // RN automatically flips for RTL
+                    borderBottomEndRadius: 25,
+                  }}
+                >
+                  <View className="flex-1" style={{ paddingTop: insets.top }}>
+                    {/* Header and Search */}
+                    <View className="p-4 border-b border-border/10">
+                      <View className="flex-row items-center justify-between mb-3">
                         <Text
-                          variant="caption1"
-                          className="text-muted-foreground"
+                          variant="title3"
+                          className="font-bold text-foreground"
                         >
-                          {t('chat.history.clearSearch')}
+                          {t('chat.history.title')}
                         </Text>
-                      </Pressable>
-                    )}
+                        <Pressable
+                          onPress={handleSettingsPress}
+                          className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
+                        >
+                          <User size={20} color={colors.foreground} />
+                        </Pressable>
+                      </View>
+                      <View className="flex-row items-center rounded-xl px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-border/10">
+                        <SymbolView
+                          name="magnifyingglass"
+                          size={18}
+                          tintColor="#9CA3AF"
+                        />
+                        <TextInput
+                          value={searchQuery}
+                          onChangeText={setSearchQuery}
+                          placeholder={t('common.search')}
+                          placeholderTextColor="#9CA3AF"
+                          className="flex-1 ms-3 text-base text-foreground"
+                          autoCapitalize="none"
+                          autoCorrect={false}
+                        />
+                        {searchQuery.length > 0 && (
+                          <Pressable
+                            onPress={() => setSearchQuery('')}
+                            className="p-1"
+                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                          >
+                            <SymbolView
+                              name="xmark.circle.fill"
+                              size={16}
+                              tintColor="#9CA3AF"
+                            />
+                          </Pressable>
+                        )}
+                      </View>
+                    </View>
+
+                    {/* Sessions List */}
+                    <SessionList
+                      data={currentSessions}
+                      keyExtractor={(item) => item._id}
+                      renderItem={(item, _index) => {
+                        const sessionId = item.sessionId;
+                        const isActive = currentSessionId === sessionId;
+
+                        return (
+                          <SessionItem
+                            session={item}
+                            isActive={isActive}
+                            onPress={() => {
+                              if (sessionId) handleSessionSelect(sessionId);
+                            }}
+                            onDelete={() => {
+                              if (sessionId) handleSessionDelete(sessionId);
+                            }}
+                          />
+                        );
+                      }}
+                      emptyComponent={() => {
+                        const hasSearchQuery = searchQuery.trim().length > 0;
+                        const emptyMessage = hasSearchQuery
+                          ? t('chat.history.noSearchResults')
+                          : t('chat.history.noMainSessions');
+                        const iconName = hasSearchQuery
+                          ? 'magnifyingglass'
+                          : 'bubble.left';
+
+                        return (
+                          <View className="flex-1 items-center justify-center py-12">
+                            <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/[0.05] dark:bg-white/[0.06]">
+                              <SymbolView
+                                name={iconName}
+                                size={24}
+                                tintColor="#9CA3AF"
+                              />
+                            </View>
+                            <Text
+                              variant="subhead"
+                              className="text-muted-foreground text-center px-6"
+                            >
+                              {emptyMessage}
+                            </Text>
+                            {hasSearchQuery && (
+                              <Pressable
+                                onPress={() => setSearchQuery('')}
+                                className="mt-4 px-4 py-2 rounded-full bg-black/[0.05] dark:bg-white/[0.06]"
+                              >
+                                <Text
+                                  variant="caption1"
+                                  className="text-muted-foreground"
+                                >
+                                  {t('chat.history.clearSearch')}
+                                </Text>
+                              </Pressable>
+                            )}
+                          </View>
+                        );
+                      }}
+                    />
                   </View>
-                );
-              }}
-            />
-          </SafeAreaView>
-        </Animated.View>
+                </SidebarComponent>
+              );
+            })()}
+          </>
+        )}
       </View>
     </Modal>
   );

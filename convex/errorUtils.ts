@@ -165,3 +165,47 @@ export function cleanupRateLimit(): void {
 
 // Note: Automatic cleanup removed due to Convex constraints
 // Rate limit entries will be cleaned up manually when accessed
+
+/**
+ * DB-backed rate limit check
+ * - Uses a windowed counter persisted in the `rateLimits` table.
+ * - Key format recommendation: `${operation}:${subject}`
+ * - Must be called from a mutation context (writes are required).
+ */
+export async function checkRateLimitDb(
+  ctx: MutationCtx,
+  key: string,
+  limit: number = 10,
+  windowMs: number = 60000
+): Promise<void> {
+  const now = Date.now();
+  const windowStart = now - (now % windowMs);
+
+  // Find existing counter for this key+window
+  const existing = await ctx.db
+    .query('rateLimits')
+    .withIndex('by_key_window', (q) =>
+      q.eq('key', key).eq('windowStart', windowStart)
+    )
+    .first();
+
+  if (!existing) {
+    await ctx.db.insert('rateLimits', {
+      key,
+      windowStart,
+      count: 1,
+    });
+    return;
+  }
+
+  if (existing.count >= limit) {
+    throw new AppError(
+      ErrorType.RATE_LIMITED,
+      'Rate limit exceeded. Please try again later.',
+      429,
+      { limit, windowMs, resetTime: windowStart + windowMs }
+    );
+  }
+
+  await ctx.db.patch(existing._id, { count: existing.count + 1 });
+}

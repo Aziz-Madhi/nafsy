@@ -7,9 +7,13 @@ import { useTranslation } from '~/hooks/useTranslation';
 import {
   useHistorySidebarVisible,
   useCurrentMainSessionId,
+  useCurrentVentSessionId,
   useSessionError,
   useSessionSwitchLoading,
   useChatUIStore,
+  useVentChatVisible,
+  useCurrentVentMessage,
+  useVentChatLoading,
 } from '~/store';
 import { ChatScreen } from '~/components/chat';
 
@@ -35,16 +39,29 @@ export default function ChatTab() {
 
   // Zustand hooks
   const showHistorySidebar = useHistorySidebarVisible();
-  const { setHistorySidebarVisible } = useChatUIStore();
+  const showVentChat = useVentChatVisible();
+  const currentVentMessage = useCurrentVentMessage();
+  const ventChatLoading = useVentChatLoading();
+  const {
+    setHistorySidebarVisible,
+    setVentChatVisible,
+    setCurrentVentMessage,
+    setVentChatLoading,
+    clearVentChat,
+  } = useChatUIStore();
 
   // Session management
   const currentMainSessionId = useCurrentMainSessionId();
+  const currentVentSessionId = useCurrentVentSessionId();
   const sessionError = useSessionError();
   const sessionSwitchLoading = useSessionSwitchLoading();
   const switchToMainSession = useChatUIStore(
     (state) => state.switchToMainSession
   );
   const setSessionError = useChatUIStore((state) => state.setSessionError);
+  const switchToVentSession = useChatUIStore(
+    (state) => state.switchToVentSession
+  );
 
   // Convex hooks - only execute when auth is stable and user exists
   const currentUser = useQuery(
@@ -80,6 +97,8 @@ export default function ChatTab() {
   console.log('📨 Messages count:', mainChatMessages?.length || 0);
   const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
   const createUser = useMutation(api.users.createUser);
+  const sendVentMessage = useMutation(api.ventChat.sendVentMessage);
+  const createVentSession = useMutation(api.ventChat.createVentSession);
 
   // Sync server session with local store - only on initial load
   useEffect(() => {
@@ -219,12 +238,87 @@ export default function ChatTab() {
   // Error dismiss handler
   const handleDismissError = () => setSessionError(null);
 
+  // Vent Chat handlers
+  const handleOpenVentChat = useCallback(async () => {
+    console.log('🌀 Opening Vent Chat');
+
+    // Create or get existing vent session
+    if (!currentVentSessionId) {
+      try {
+        const sessionId = await createVentSession({ title: 'Vent Session' });
+        await switchToVentSession(sessionId);
+      } catch (error) {
+        console.error('Failed to create vent session:', error);
+      }
+    }
+
+    setVentChatVisible(true);
+  }, [
+    currentVentSessionId,
+    createVentSession,
+    switchToVentSession,
+    setVentChatVisible,
+  ]);
+
+  const handleCloseVentChat = useCallback(() => {
+    console.log('🌀 Closing Vent Chat');
+    setVentChatVisible(false);
+    clearVentChat();
+  }, [setVentChatVisible, clearVentChat]);
+
+  const handleSendVentMessage = useCallback(
+    async (text: string) => {
+      if (!currentUser || !isLoaded) return;
+
+      setVentChatLoading(true);
+      setCurrentVentMessage(`user:${text}`);
+
+      try {
+        // Send user message
+        await sendVentMessage({
+          content: text,
+          role: 'user',
+          sessionId: currentVentSessionId || undefined,
+        });
+
+        // Simulate AI response after a delay
+        setTimeout(async () => {
+          const aiResponse =
+            'I hear you. Your feelings are valid. Take a deep breath and let it all out.';
+          setCurrentVentMessage(`ai:${aiResponse}`);
+
+          await sendVentMessage({
+            content: aiResponse,
+            role: 'assistant',
+            sessionId: currentVentSessionId || undefined,
+          });
+
+          setVentChatLoading(false);
+        }, 2000);
+      } catch (error) {
+        console.error('Failed to send vent message:', error);
+        setVentChatLoading(false);
+      }
+    },
+    [
+      currentUser,
+      isLoaded,
+      sendVentMessage,
+      currentVentSessionId,
+      setCurrentVentMessage,
+      setVentChatLoading,
+    ]
+  );
+
   return (
     <ChatScreen
       messages={messages}
       showHistorySidebar={showHistorySidebar}
       sessionSwitchLoading={sessionSwitchLoading}
       sessionError={sessionError}
+      showVentChat={showVentChat}
+      ventCurrentMessage={currentVentMessage}
+      ventLoading={ventChatLoading}
       welcomeSubtitle={welcomeSubtitle}
       navigationBarPadding={0} // No padding needed - using custom navigation
       onOpenSidebar={handleOpenSidebar}
@@ -232,6 +326,9 @@ export default function ChatTab() {
       onSessionSelect={handleSessionSelect}
       onDismissError={handleDismissError}
       onSendMessage={handleSendMessage}
+      onOpenVentChat={handleOpenVentChat}
+      onCloseVentChat={handleCloseVentChat}
+      onSendVentMessage={handleSendVentMessage}
     />
   );
 }

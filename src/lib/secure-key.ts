@@ -59,12 +59,33 @@ export async function clearMMKVKey(): Promise<void> {
  * This should only be used as a temporary measure while async key loading happens
  */
 export function getFallbackKey(): string {
-  // Generate a deterministic but device-specific key as fallback
-  // This is still better than a hardcoded key, though not as secure as the async version
-  const deviceInfo = {
-    timestamp: Date.now().toString(36),
-    random: Math.random().toString(36).substring(2),
-  };
+  // Best-effort synchronous entropy for immediate initialization only.
+  // If a synchronous crypto API is available, prefer it.
+  try {
+    const globalAny: any = global as any;
+    if (globalAny?.crypto?.getRandomValues) {
+      const arr = new Uint8Array(KEY_LENGTH);
+      globalAny.crypto.getRandomValues(arr);
+      return Array.from(arr, (byte) => byte.toString(16).padStart(2, '0')).join(
+        ''
+      );
+    }
+  } catch {}
 
-  return `nafsy_fallback_${deviceInfo.timestamp}_${deviceInfo.random}`;
+  // Fallback: combine multiple PRNG calls and timers (not cryptographically secure)
+  const now = Date.now();
+  const randParts = [
+    Math.random().toString(36).slice(2),
+    Math.random().toString(36).slice(2),
+    Math.random().toString(36).slice(2),
+    now.toString(36),
+  ];
+  const base = randParts.join('');
+  // Expand/trim to KEY_LENGTH*2 hex chars
+  let hex = '';
+  for (let i = 0; i < base.length; i++) {
+    hex += base.charCodeAt(i).toString(16).padStart(2, '0');
+    if (hex.length >= KEY_LENGTH * 2) break;
+  }
+  return hex.slice(0, KEY_LENGTH * 2);
 }

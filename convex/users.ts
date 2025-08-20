@@ -1,6 +1,11 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
-import { getAuthenticatedClerkId, getAuthenticatedUser } from './authUtils';
+import { getAuthenticatedUser } from './authUtils';
+import {
+  createAuthError,
+  createValidationError,
+  checkRateLimitDb,
+} from './errorUtils';
 
 export const createUser = mutation({
   args: {
@@ -11,6 +16,20 @@ export const createUser = mutation({
   },
   returns: v.id('users'),
   handler: async (ctx, args) => {
+    // Require authentication and ensure caller can only create their own user record
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw createAuthError('Authentication required');
+    }
+
+    // Per-user rate limit to prevent abuse of user creation endpoint
+    await checkRateLimitDb(ctx, `users:create:${identity.subject}`, 5, 60000);
+
+    // Validate that provided clerkId matches authenticated subject
+    if (args.clerkId !== identity.subject) {
+      throw createValidationError('clerkId does not match authenticated user');
+    }
+
     const existingUser = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))

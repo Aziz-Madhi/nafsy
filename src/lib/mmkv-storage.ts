@@ -24,13 +24,14 @@ const initializeStorage = (): MMKV => {
     logger.info('MMKV unified storage initialized successfully', 'MMKV');
     return storage;
   } catch (error) {
-    logger.warn(
-      'MMKV initialization with encryption failed, using unencrypted storage',
-      'MMKV',
-      error
-    );
-    storage = new MMKV({ id: 'nafsy-app-storage-unified' });
-    return storage;
+    logger.security('MMKV encryption initialization failed', {
+      context: 'MMKV',
+      error,
+    });
+    // Fail closed: do not downgrade to unencrypted storage silently
+    throw error instanceof Error
+      ? error
+      : new Error('MMKV encryption initialization failed');
   }
 };
 

@@ -76,7 +76,20 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
   const validation = useMemo(() => {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const isEmailValid = emailRegex.test(form.email.trim());
-    const isPasswordValid = form.password.length >= 8;
+    const pwd = form.password;
+    // For sign-in, allow any non-empty password (policy enforced by Clerk server-side)
+    // For sign-up, enforce strong password policy client-side
+    const isPasswordValid =
+      mode === 'signin'
+        ? pwd.trim().length > 0
+        : (() => {
+            const lengthOk = pwd.length >= 12;
+            const hasUpper = /[A-Z]/.test(pwd);
+            const hasLower = /[a-z]/.test(pwd);
+            const hasNumber = /\d/.test(pwd);
+            const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
+            return lengthOk && hasUpper && hasLower && hasNumber && hasSpecial;
+          })();
     const isNameValid =
       mode === 'signin' || (form.name && form.name.trim().length > 0);
 
@@ -108,7 +121,16 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
       newErrors.email = t('auth.validation.invalidEmail');
     }
     if (!validation.password) {
-      newErrors.password = t('auth.validation.passwordTooShort');
+      const pwd = form.password;
+      if (mode === 'signin') {
+        newErrors.password = t('auth.validation.passwordRequired');
+      } else {
+        if (pwd.length < 12) {
+          newErrors.password = t('auth.validation.passwordTooShort');
+        } else {
+          newErrors.password = t('auth.validation.passwordWeak');
+        }
+      }
     }
     if (mode === 'signup' && !validation.name) {
       newErrors.name = t('auth.validation.nameRequired');

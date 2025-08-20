@@ -63,7 +63,8 @@
       "passwordRequired": "Password is required",
       "nameRequired": "Name is required",
       "invalidEmail": "Please enter a valid email address",
-      "passwordTooShort": "Password must be at least 8 characters"
+      "passwordTooShort": "Password must be at least 12 characters",
+      "passwordWeak": "Password must include uppercase, lowercase, number, and special character"
     },
     "errors": {
       "signInFailed": "Failed to sign in. Please try again.",

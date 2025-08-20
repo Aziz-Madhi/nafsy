@@ -120,4 +120,11 @@ export default defineSchema({
   })
     .index('by_user', ['userId', 'completedAt'])
     .index('by_exercise', ['exerciseId', 'completedAt']),
+
+  // Rate limiting store (DB-backed windowed counters)
+  rateLimits: defineTable({
+    key: v.string(), // e.g., "auth:login:<clerkId>" or "users:create:<clerkId>"
+    windowStart: v.number(), // epoch ms rounded to the start of the window
+    count: v.number(),
+  }).index('by_key_window', ['key', 'windowStart']),
 });

@@ -11,6 +11,8 @@ export { SessionStatusDisplay } from './SessionStatusDisplay';
 export { ChatWelcomeHeader } from './ChatWelcomeHeader';
 export { ChatMessageList } from './ChatMessageList';
 export { ChatInputWithNavConnection } from './ChatInputWithNavConnection';
+export { UnifiedChatInput } from './UnifiedChatInput';
+export { VentChatInput } from './VentChatInput';
 
 // Types
 export type {

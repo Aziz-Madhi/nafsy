@@ -4,6 +4,7 @@ import {
   createAuthError,
   createNotFoundError,
   withErrorHandling,
+  checkRateLimitDb,
 } from './errorUtils';
 
 // Helper function for user upsert logic
@@ -27,6 +28,9 @@ async function upsertUserHelper(
     }
     clerkId = identity.subject;
   }
+
+  // Apply per-user rate limit for upsert operations
+  await checkRateLimitDb(ctx, `auth:upsert:${clerkId}`, 30, 60000);
 
   const existingUser = await ctx.db
     .query('users')

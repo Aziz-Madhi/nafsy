@@ -4,6 +4,7 @@ import { MessageCircle, Heart, Activity } from 'lucide-react-native';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useColors } from '~/hooks/useColors';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { cn } from '~/lib/cn';
 
 const getIconForRoute = (routeName: string) => {
   switch (routeName) {
@@ -20,7 +21,6 @@ const getIconForRoute = (routeName: string) => {
 
 export function CustomBottomNavigation({
   state,
-  descriptors,
   navigation,
 }: BottomTabBarProps) {
   const colors = useColors();
@@ -43,15 +43,23 @@ export function CustomBottomNavigation({
     [navigation]
   );
 
+  // Check if we're on the chat tab
+  const isChatTab = state.routes[state.index].name === 'chat';
+
   return (
     <View
-      className="absolute bottom-0 left-0 right-0 h-20 rounded-t-2xl"
-      style={{ backgroundColor: colors.card }}
+      className={cn(
+        'absolute bottom-0 left-0 right-0 h-20',
+        // Only show rounded corners and background when NOT on chat tab
+        !isChatTab && 'rounded-t-2xl'
+      )}
+      style={{
+        backgroundColor: isChatTab ? 'transparent' : colors.card,
+      }}
     >
       {/* Tab buttons */}
       <View className="flex-row items-center justify-evenly h-full">
         {state.routes.map((route, index) => {
-          const { options } = descriptors[route.key];
           const isFocused = state.index === index;
           const Icon = getIconForRoute(route.name);
 

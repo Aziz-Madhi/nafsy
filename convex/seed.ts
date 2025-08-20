@@ -1,4 +1,5 @@
 import { mutation } from './_generated/server';
+import { v } from 'convex/values';
 
 export const seedExercises = mutation({
   args: {},
@@ -170,6 +171,231 @@ export const seedExercises = mutation({
     return {
       message: 'Successfully seeded exercises',
       count: exercises.length,
+    };
+  },
+});
+
+export const seedMoods = mutation({
+  args: {
+    userId: v.optional(v.id('users')), // Optional user ID, if not provided, use first user
+  },
+  handler: async (ctx, args) => {
+    // Get user ID - use provided one or find the first user
+    let userId = args.userId;
+    if (!userId) {
+      const firstUser = await ctx.db.query('users').first();
+      if (!firstUser) {
+        throw new Error('No users found. Please create a user first.');
+      }
+      userId = firstUser._id;
+    }
+
+    // Generate mood data for the last 30 days
+    const now = Date.now();
+    const thirtyDaysAgo = now - (30 * 24 * 60 * 60 * 1000);
+    
+    const moodEntries = [
+      // Recent entries (last week)
+      {
+        mood: 'happy' as const,
+        note: 'Had a great workout session today!',
+        tags: ['Exercise', 'Energy', 'Achievement'],
+        createdAt: now - (1 * 24 * 60 * 60 * 1000), // 1 day ago
+      },
+      {
+        mood: 'anxious' as const,
+        note: 'Big presentation tomorrow',
+        tags: ['Work', 'Stress', 'Presentation'],
+        createdAt: now - (2 * 24 * 60 * 60 * 1000), // 2 days ago
+      },
+      {
+        mood: 'neutral' as const,
+        note: 'Regular day, nothing special',
+        tags: ['Routine', 'Stable'],
+        createdAt: now - (3 * 24 * 60 * 60 * 1000), // 3 days ago
+      },
+      {
+        mood: 'sad' as const,
+        note: 'Missing my family today',
+        tags: ['Family', 'Loneliness', 'Missing'],
+        createdAt: now - (4 * 24 * 60 * 60 * 1000), // 4 days ago
+      },
+      {
+        mood: 'angry' as const,
+        note: 'Traffic was terrible this morning',
+        tags: ['Traffic', 'Frustration', 'Morning'],
+        createdAt: now - (5 * 24 * 60 * 60 * 1000), // 5 days ago
+      },
+      {
+        mood: 'happy' as const,
+        note: 'Got promoted at work!',
+        tags: ['Work', 'Achievement', 'Success', 'Career'],
+        createdAt: now - (6 * 24 * 60 * 60 * 1000), // 6 days ago
+      },
+      {
+        mood: 'neutral' as const,
+        note: 'Quiet weekend, reading books',
+        tags: ['Reading', 'Relaxation', 'Weekend'],
+        createdAt: now - (7 * 24 * 60 * 60 * 1000), // 7 days ago
+      },
+      
+      // Second week
+      {
+        mood: 'anxious' as const,
+        note: 'Worried about upcoming medical appointment',
+        tags: ['Health', 'Medical', 'Worry'],
+        createdAt: now - (8 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'happy' as const,
+        note: 'Wonderful dinner with friends',
+        tags: ['Friends', 'Social', 'Food', 'Connection'],
+        createdAt: now - (9 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'sad' as const,
+        note: 'Feeling overwhelmed with responsibilities',
+        tags: ['Overwhelmed', 'Responsibility', 'Stress'],
+        createdAt: now - (10 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'neutral' as const,
+        note: 'Productive day at work',
+        tags: ['Work', 'Productive', 'Focus'],
+        createdAt: now - (11 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'happy' as const,
+        note: 'Beautiful sunset walk',
+        tags: ['Nature', 'Walking', 'Beauty', 'Peace'],
+        createdAt: now - (12 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'angry' as const,
+        note: 'Frustrated with technical issues',
+        tags: ['Technology', 'Frustration', 'Work'],
+        createdAt: now - (13 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'anxious' as const,
+        note: 'Financial concerns keeping me up',
+        tags: ['Money', 'Finance', 'Sleep', 'Worry'],
+        createdAt: now - (14 * 24 * 60 * 60 * 1000),
+      },
+      
+      // Third week
+      {
+        mood: 'happy' as const,
+        note: 'Finished a challenging project',
+        tags: ['Achievement', 'Project', 'Completion', 'Pride'],
+        createdAt: now - (15 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'neutral' as const,
+        note: 'Regular gym session',
+        tags: ['Exercise', 'Routine', 'Health'],
+        createdAt: now - (16 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'sad' as const,
+        note: 'Feeling lonely today',
+        tags: ['Loneliness', 'Isolation', 'Emotional'],
+        createdAt: now - (17 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'happy' as const,
+        note: 'Video call with family made my day',
+        tags: ['Family', 'Connection', 'Love', 'Support'],
+        createdAt: now - (18 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'anxious' as const,
+        note: 'Job interview preparation stress',
+        tags: ['Job', 'Interview', 'Career', 'Preparation'],
+        createdAt: now - (19 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'neutral' as const,
+        note: 'Rainy day, staying indoors',
+        tags: ['Weather', 'Indoor', 'Calm'],
+        createdAt: now - (20 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'angry' as const,
+        note: 'Argument with roommate',
+        tags: ['Conflict', 'Living', 'Communication'],
+        createdAt: now - (21 * 24 * 60 * 60 * 1000),
+      },
+      
+      // Fourth week
+      {
+        mood: 'happy' as const,
+        note: 'Started learning a new hobby',
+        tags: ['Learning', 'Hobby', 'Growth', 'Excitement'],
+        createdAt: now - (22 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'sad' as const,
+        note: 'Pet is sick, very worried',
+        tags: ['Pet', 'Health', 'Worry', 'Care'],
+        createdAt: now - (23 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'neutral' as const,
+        note: 'Busy day with errands',
+        tags: ['Errands', 'Busy', 'Tasks'],
+        createdAt: now - (24 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'anxious' as const,
+        note: 'Upcoming travel plans causing stress',
+        tags: ['Travel', 'Planning', 'Logistics'],
+        createdAt: now - (25 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'happy' as const,
+        note: 'Great conversation with mentor',
+        tags: ['Mentorship', 'Guidance', 'Growth', 'Career'],
+        createdAt: now - (26 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'neutral' as const,
+        note: 'Peaceful morning meditation',
+        tags: ['Meditation', 'Peace', 'Morning', 'Mindfulness'],
+        createdAt: now - (27 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'angry' as const,
+        note: 'Delivery was delayed again',
+        tags: ['Delivery', 'Disappointment', 'Service'],
+        createdAt: now - (28 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'sad' as const,
+        note: 'Anniversary of a difficult loss',
+        tags: ['Loss', 'Memory', 'Grief', 'Anniversary'],
+        createdAt: now - (29 * 24 * 60 * 60 * 1000),
+      },
+      {
+        mood: 'happy' as const,
+        note: 'Started using this mood tracking app!',
+        tags: ['New Beginning', 'Self-care', 'Mental Health', 'App'],
+        createdAt: now - (30 * 24 * 60 * 60 * 1000),
+      },
+    ];
+
+    // Insert all mood entries
+    for (const entry of moodEntries) {
+      await ctx.db.insert('moods', {
+        ...entry,
+        userId,
+      });
+    }
+
+    return {
+      message: 'Successfully seeded mood data',
+      count: moodEntries.length,
+      userId,
     };
   },
 });

@@ -3,7 +3,6 @@
  * Uses standard Zustand patterns with MMKV persistence
  */
 
-import { shallow } from 'zustand/shallow';
 import { createPersistedStore } from '~/lib/store-factory';
 
 // Chat UI store state and actions interface
@@ -19,6 +18,12 @@ interface ChatUIStoreState {
 
   // Chat History Sidebar State
   isHistorySidebarVisible: boolean;
+
+  // Vent Chat State
+  isVentChatVisible: boolean;
+  currentVentMessage: string | null;
+  ventChatInput: string;
+  ventChatLoading: boolean;
 
   // Shared UI State
   chatInputFocused: boolean;
@@ -38,12 +43,19 @@ interface ChatUIStoreState {
   setHistorySidebarVisible: (visible: boolean) => void;
   setChatInputFocused: (focused: boolean) => void;
 
+  // Vent Chat Actions
+  setVentChatVisible: (visible: boolean) => void;
+  setCurrentVentMessage: (message: string | null) => void;
+  setVentChatInput: (input: string) => void;
+  setVentChatLoading: (loading: boolean) => void;
+  clearVentChat: () => void;
+
   resetChatUI: () => void;
 }
 
 export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
   { name: 'chat-ui-store' },
-  (set, get) => ({
+  (set) => ({
     // Initial state
     mainChatInput: '',
     currentMainSessionId: null,
@@ -51,6 +63,10 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
     sessionSwitchLoading: false,
     sessionError: null,
     isHistorySidebarVisible: false,
+    isVentChatVisible: false,
+    currentVentMessage: null,
+    ventChatInput: '',
+    ventChatLoading: false,
     chatInputFocused: false,
 
     // Main Chat Actions
@@ -138,6 +154,20 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
     setChatInputFocused: (focused: boolean) =>
       set({ chatInputFocused: focused }),
 
+    // Vent Chat Actions
+    setVentChatVisible: (visible: boolean) =>
+      set({ isVentChatVisible: visible }),
+    setCurrentVentMessage: (message: string | null) =>
+      set({ currentVentMessage: message }),
+    setVentChatInput: (input: string) => set({ ventChatInput: input }),
+    setVentChatLoading: (loading: boolean) => set({ ventChatLoading: loading }),
+    clearVentChat: () =>
+      set({
+        currentVentMessage: null,
+        ventChatInput: '',
+        ventChatLoading: false,
+      }),
+
     // Reset Action
     resetChatUI: () =>
       set({
@@ -147,6 +177,10 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
         sessionSwitchLoading: false,
         sessionError: null,
         isHistorySidebarVisible: false,
+        isVentChatVisible: false,
+        currentVentMessage: null,
+        ventChatInput: '',
+        ventChatLoading: false,
         chatInputFocused: false,
       }),
   })
@@ -170,27 +204,41 @@ export const useSessionSwitchLoading = () =>
 export const useSessionError = () =>
   useChatUIStore((state) => state.sessionError);
 
+// Vent Chat Selectors
+export const useVentChatVisible = () =>
+  useChatUIStore((state) => state.isVentChatVisible);
+export const useCurrentVentMessage = () =>
+  useChatUIStore((state) => state.currentVentMessage);
+export const useVentChatInput = () =>
+  useChatUIStore((state) => state.ventChatInput);
+export const useVentChatLoading = () =>
+  useChatUIStore((state) => state.ventChatLoading);
+
 // Action selectors with shallow comparison
 export const useChatUIActions = () =>
-  useChatUIStore(
-    (state) => ({
-      // Main chat
-      setMainChatInput: state.setMainChatInput,
-      clearMainChatInput: state.clearMainChatInput,
+  useChatUIStore((state) => ({
+    // Main chat
+    setMainChatInput: state.setMainChatInput,
+    clearMainChatInput: state.clearMainChatInput,
 
-      // Session management
-      setCurrentMainSessionId: state.setCurrentMainSessionId,
-      setCurrentVentSessionId: state.setCurrentVentSessionId,
-      switchToMainSession: state.switchToMainSession,
-      switchToVentSession: state.switchToVentSession,
-      clearCurrentSessions: state.clearCurrentSessions,
+    // Session management
+    setCurrentMainSessionId: state.setCurrentMainSessionId,
+    setCurrentVentSessionId: state.setCurrentVentSessionId,
+    switchToMainSession: state.switchToMainSession,
+    switchToVentSession: state.switchToVentSession,
+    clearCurrentSessions: state.clearCurrentSessions,
 
-      // UI state
-      setHistorySidebarVisible: state.setHistorySidebarVisible,
-      setChatInputFocused: state.setChatInputFocused,
+    // UI state
+    setHistorySidebarVisible: state.setHistorySidebarVisible,
+    setChatInputFocused: state.setChatInputFocused,
 
-      // Utils
-      resetChatUI: state.resetChatUI,
-    }),
-    shallow
-  );
+    // Vent Chat
+    setVentChatVisible: state.setVentChatVisible,
+    setCurrentVentMessage: state.setCurrentVentMessage,
+    setVentChatInput: state.setVentChatInput,
+    setVentChatLoading: state.setVentChatLoading,
+    clearVentChat: state.clearVentChat,
+
+    // Utils
+    resetChatUI: state.resetChatUI,
+  }));
