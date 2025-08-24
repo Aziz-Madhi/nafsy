@@ -147,6 +147,22 @@ module.exports = {
           'bubble-user': 'rgb(var(--chat-bubble-user) / <alpha-value>)',
           'bubble-ai': 'rgb(var(--chat-bubble-ai) / <alpha-value>)',
           text: 'rgb(var(--chat-text) / <alpha-value>)',
+          // Chat type specific colors
+          coach: {
+            primary: 'rgb(var(--chat-coach-primary) / <alpha-value>)',
+            bubble: 'rgb(var(--chat-coach-bubble) / <alpha-value>)',
+            accent: 'rgb(var(--chat-coach-accent) / <alpha-value>)',
+          },
+          event: {
+            primary: 'rgb(var(--chat-event-primary) / <alpha-value>)',
+            bubble: 'rgb(var(--chat-event-bubble) / <alpha-value>)',
+            accent: 'rgb(var(--chat-event-accent) / <alpha-value>)',
+          },
+          companion: {
+            primary: 'rgb(var(--chat-companion-primary) / <alpha-value>)',
+            bubble: 'rgb(var(--chat-companion-bubble) / <alpha-value>)',
+            accent: 'rgb(var(--chat-companion-accent) / <alpha-value>)',
+          },
         },
 
         // Navigation colors

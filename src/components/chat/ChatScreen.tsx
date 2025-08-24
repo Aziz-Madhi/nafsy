@@ -14,8 +14,8 @@ import { SessionStatusDisplay } from './SessionStatusDisplay';
 import { ChatMessageList, Message } from './ChatMessageList';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
 import { ChatBubble } from './ChatComponents';
-import { UnifiedChatInput } from './UnifiedChatInput';
 import { VentChatOverlay } from './VentChatOverlay';
+import { ChatType } from '~/store/useChatUIStore';
 
 interface ChatScreenProps {
   // State
@@ -28,7 +28,6 @@ interface ChatScreenProps {
   ventLoading?: boolean;
 
   // Data
-  welcomeSubtitle: string;
   navigationBarPadding: number;
 
   // Actions
@@ -40,6 +39,10 @@ interface ChatScreenProps {
   onOpenVentChat?: () => void;
   onCloseVentChat?: () => void;
   onSendVentMessage?: (message: string) => Promise<void>;
+
+  // Chat type management
+  activeChatType?: ChatType;
+  onChatTypeChange?: (type: ChatType) => void;
 }
 
 export const ChatScreen = memo(function ChatScreen({
@@ -50,7 +53,6 @@ export const ChatScreen = memo(function ChatScreen({
   showVentChat = false,
   ventCurrentMessage = null,
   ventLoading = false,
-  welcomeSubtitle,
   navigationBarPadding,
   onOpenSidebar,
   onCloseSidebar,
@@ -60,6 +62,8 @@ export const ChatScreen = memo(function ChatScreen({
   onOpenVentChat,
   onCloseVentChat,
   onSendVentMessage,
+  activeChatType = 'coach',
+  onChatTypeChange,
 }: ChatScreenProps) {
   const flashListRef = useRef<FlashList<Message>>(null as any);
 
@@ -78,13 +82,12 @@ export const ChatScreen = memo(function ChatScreen({
   // Auto-scroll to bottom when messages change or new messages arrive
   const scrollToBottom = useCallback(() => {
     if (flashListRef.current && messages.length > 0) {
-      // Use setTimeout to ensure FlashList has rendered the new data
+      // Reduced timeout for faster response
       setTimeout(() => {
         flashListRef.current?.scrollToEnd({
           animated: true,
-          // Ensure scroll goes to the actual bottom considering content insets
         });
-      }, 150); // Slightly longer timeout for better reliability
+      }, 50); // Much shorter timeout for better UX
     }
   }, [messages.length]);
 
@@ -93,13 +96,11 @@ export const ChatScreen = memo(function ChatScreen({
     scrollToBottom();
   }, [messages, scrollToBottom]);
 
-  // Additional scroll trigger for new messages with a slight delay
+  // Simplified scroll trigger - no additional delay
   useEffect(() => {
     if (messages.length > 0) {
-      const timer = setTimeout(() => {
-        scrollToBottom();
-      }, 200);
-      return () => clearTimeout(timer);
+      // Immediate scroll for new messages
+      scrollToBottom();
     }
   }, [messages.length, scrollToBottom]);
 
@@ -115,9 +116,10 @@ export const ChatScreen = memo(function ChatScreen({
           hour: '2-digit',
           minute: '2-digit',
         })}
+        chatType={activeChatType}
       />
     ),
-    []
+    [activeChatType]
   );
 
   const keyExtractor = useCallback((item: Message) => item._id, []);
@@ -132,7 +134,11 @@ export const ChatScreen = memo(function ChatScreen({
               className="flex-1"
               style={{ paddingBottom: navigationBarPadding }}
             >
-              <ChatHeader onOpenSidebar={onOpenSidebar} />
+              <ChatHeader
+                onOpenSidebar={onOpenSidebar}
+                activeChatType={activeChatType}
+                onChatTypeChange={onChatTypeChange}
+              />
 
               <SessionStatusDisplay
                 isLoading={sessionSwitchLoading}
@@ -146,7 +152,6 @@ export const ChatScreen = memo(function ChatScreen({
                 renderMessage={renderMessage}
                 keyExtractor={keyExtractor}
                 getItemType={getItemType}
-                welcomeSubtitle={welcomeSubtitle}
                 horizontalPadding={20}
               />
             </View>
@@ -160,9 +165,6 @@ export const ChatScreen = memo(function ChatScreen({
         onClose={onCloseSidebar}
         onSessionSelect={onSessionSelect}
       />
-
-      {/* Unified Chat Input */}
-      <UnifiedChatInput onSendMessage={onSendMessage} />
 
       {/* Vent Chat Overlay */}
       {onCloseVentChat && onSendVentMessage && (

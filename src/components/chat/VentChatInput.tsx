@@ -19,6 +19,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
+import { getChatStyles } from '~/lib/chatStyles';
 
 interface VentChatInputProps {
   onSendMessage: (message: string) => Promise<void>;
@@ -35,6 +36,9 @@ export function VentChatInput({
   const insets = useSafeAreaInsets();
   const { t } = useTranslation();
   const hasText = !!message.trim();
+
+  // Use Event personality styling
+  const eventStyles = getChatStyles('event');
 
   const handleSend = useCallback(async () => {
     if (message.trim() && !isLoading) {
@@ -80,7 +84,8 @@ export function VentChatInput({
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={() => setIsInputFocused(false)}
                 placeholder={
-                  t('chat.vent.placeholder') || 'Release your thoughts...'
+                  t('chat.vent.placeholder') ||
+                  "Quick release - what's on your mind?"
                 }
                 placeholderTextColor="rgba(255,255,255,0.6)"
                 className="flex-1 text-white text-base px-4 py-3"
@@ -97,18 +102,19 @@ export function VentChatInput({
                 disabled={!hasText || isLoading}
                 className={cn('mr-2 rounded-full p-2.5')}
                 style={({ pressed }) => ({
-                  backgroundColor: hasText && !isLoading
-                    ? 'rgba(255,255,255,0.28)'
-                    : 'rgba(255,255,255,0.10)',
+                  backgroundColor:
+                    hasText && !isLoading
+                      ? eventStyles.primaryColor + '50'
+                      : 'rgba(255,255,255,0.10)',
                   opacity: pressed ? 0.9 : 1,
                 })}
               >
                 <SymbolView
-                  name="arrow.up.circle"
+                  name="arrow.up.circle.fill"
                   size={20}
                   tintColor={
                     hasText && !isLoading
-                      ? 'rgba(255,255,255,0.95)'
+                      ? eventStyles.primaryColor
                       : 'rgba(255,255,255,0.6)'
                   }
                 />

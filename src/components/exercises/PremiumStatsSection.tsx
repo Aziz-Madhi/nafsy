@@ -4,6 +4,7 @@ import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Text } from '~/components/ui/text';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useCurrentLanguage } from '~/store/useAppStore';
 
 interface PremiumStatsSectionProps {
   completionsThisWeek: number;
@@ -31,6 +32,11 @@ function StatCard({
 }) {
   const { t } = useTranslation();
   const colors = useColors();
+  // Explicit language-driven alignment to avoid accidental global RTL influence
+  // We align numbers and encouraging text: left in EN, right in AR
+  // (Header remains unchanged as per request)
+  const currentLanguage = useCurrentLanguage();
+  const isRTL = currentLanguage === 'ar';
 
   const handlePress = () => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -69,17 +75,22 @@ function StatCard({
             </Text>
           </View>
 
-          {/* Value */}
-          <View className="w-full items-start rtl:items-end">
+          {/* Value (explicit LTR/RTL alignment by language) */}
+          <View
+            className="w-full"
+            style={{ alignItems: isRTL ? 'flex-end' : 'flex-start' }}
+          >
             <Text
-              className="text-foreground text-3xl font-extrabold text-start"
+              className="text-foreground text-3xl font-extrabold"
+              style={{ textAlign: isRTL ? 'right' : 'left' }}
               numberOfLines={1}
             >
               {value}
             </Text>
             {subtitle && (
               <Text
-                className="text-foreground font-medium mt-0.5 text-xs text-start"
+                className="text-foreground font-medium mt-0.5 text-xs"
+                style={{ textAlign: isRTL ? 'right' : 'left' }}
                 numberOfLines={1}
               >
                 {subtitle}
@@ -90,9 +101,9 @@ function StatCard({
           {/* Progress Bar */}
           {progress !== undefined && (
             <View className="mt-2">
-              <View className="h-1.5 bg-foreground/10 rounded overflow-hidden">
+              <View className="h-1.5 bg-brand-dark-blue/20 rounded overflow-hidden">
                 <View
-                  className="bg-foreground/30 rounded"
+                  className="bg-brand-dark-blue rounded"
                   style={{ height: '100%', width: `${(progress || 0) * 100}%` }}
                 />
               </View>

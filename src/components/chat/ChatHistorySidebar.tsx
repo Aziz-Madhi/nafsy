@@ -24,6 +24,10 @@ import { User } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
+import { ChatType } from '~/store/useChatUIStore';
+import { getChatTypeIcon, getChatTypeColor } from './ChatTypeToggle';
+import { getChatStyles } from '~/lib/chatStyles';
+import { ChatHistoryToggle } from './ChatHistoryToggle';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width
@@ -37,6 +41,7 @@ interface ChatHistorySidebarProps {
 
 interface SessionItemProps {
   session: any;
+  chatType: ChatType;
   isActive: boolean;
   onPress: () => void;
   onDelete: () => void;
@@ -44,15 +49,24 @@ interface SessionItemProps {
 
 const SessionItem = ({
   session,
+  chatType,
   isActive,
   onPress,
   onDelete,
 }: SessionItemProps) => {
   const { t } = useTranslation();
   const scale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const styles = getChatStyles(chatType);
+  const typeColor = getChatTypeColor(chatType);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.value }, { translateX: translateX.value }],
+  }));
+
+  const deleteButtonStyle = useAnimatedStyle(() => ({
+    opacity: translateX.value < -50 ? 1 : 0,
+    transform: [{ translateX: translateX.value + 80 }],
   }));
 
   const handlePressIn = () => {
@@ -63,92 +77,84 @@ const SessionItem = ({
     scale.value = withSpring(1, { damping: 12, stiffness: 400 });
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      return date.toLocaleTimeString('en-US', {
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: true,
-      });
-    } else if (diffDays === 1) {
-      return t('common.yesterday');
-    } else if (diffDays < 7) {
-      return date.toLocaleDateString('en-US', { weekday: 'short' });
-    } else {
-      return date.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      });
-    }
-  };
+  const panGesture = Gesture.Pan()
+    .onUpdate((event) => {
+      // Only allow swipe to left (negative X)
+      if (event.translationX < 0) {
+        translateX.value = Math.max(event.translationX, -80);
+      }
+    })
+    .onEnd((event) => {
+      if (event.translationX < -50) {
+        // Snap to reveal delete button
+        translateX.value = withSpring(-80);
+        runOnJS(impactAsync)(ImpactFeedbackStyle.Light);
+      } else {
+        // Snap back to original position
+        translateX.value = withSpring(0);
+      }
+    });
 
   return (
-    <Animated.View style={animatedStyle} className="mx-4 mb-3">
-      <Pressable
-        onPress={onPress}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        className={cn(
-          'rounded-2xl p-4 border',
-          isActive
-            ? 'bg-[#2F6A8D]/10 border-[#2F6A8D]/30'
-            : 'bg-black/[0.03] dark:bg-white/[0.04] border-border/10'
-        )}
-        style={{
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.05,
-          shadowRadius: 8,
-          elevation: 3,
-        }}
-      >
-        <View className="flex-row items-center justify-between mb-2">
-          <View className="flex-row items-center flex-1">
-            <View className="w-3 h-3 rounded-full me-3 bg-brand-dark-blue" />
+    <View className="mx-4 mb-3 relative">
+      <GestureDetector gesture={panGesture}>
+        <Animated.View style={animatedStyle}>
+          <Pressable
+            onPress={onPress}
+            onPressIn={handlePressIn}
+            onPressOut={handlePressOut}
+            className={cn(
+              'rounded-2xl p-4 border-l-4',
+              isActive
+                ? [
+                    `${styles.borderColorClass}`,
+                    'bg-black/[0.05] dark:bg-white/[0.08] border-border/20',
+                  ]
+                : [
+                    'border-l-transparent',
+                    'bg-black/[0.03] dark:bg-white/[0.04] border-border/10',
+                  ]
+            )}
+            style={{
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.05,
+              shadowRadius: 8,
+              elevation: 3,
+              borderLeftColor: isActive ? typeColor : 'transparent',
+              borderLeftWidth: 4,
+            }}
+          >
             <Text
               variant="subhead"
               className={cn(
-                'font-semibold flex-1',
-                isActive ? 'text-[#2F6A8D]' : 'text-foreground'
+                'font-semibold',
+                isActive ? styles.accentClass : 'text-foreground'
               )}
               numberOfLines={1}
             >
               {session.title || t('chat.history.untitledSession')}
             </Text>
-          </View>
-
-          <Pressable
-            onPress={onDelete}
-            className="p-2 ms-2"
-            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-          >
-            <SymbolView name="trash" size={16} tintColor="#9CA3AF" />
           </Pressable>
-        </View>
+        </Animated.View>
+      </GestureDetector>
 
-        <View className="flex-row items-center justify-between">
-          <View className="flex-row items-center">
-            <SymbolView name="bubble.left" size={14} tintColor="#9CA3AF" />
-            <Text variant="caption1" className="text-muted-foreground ms-1">
-              {`${session.messageCount ?? 0} ${t('chat.messages')}`}
-            </Text>
-          </View>
-
-          <Text variant="caption1" className="text-muted-foreground">
-            {formatDate(
-              session.lastMessageAt ||
-                session.startedAt ||
-                new Date().toISOString()
-            )}
-          </Text>
-        </View>
-      </Pressable>
-    </Animated.View>
+      {/* Delete button that appears on swipe */}
+      <Animated.View
+        style={[deleteButtonStyle]}
+        className="absolute right-0 top-0 bottom-0 w-20 justify-center items-center"
+      >
+        <Pressable
+          onPress={() => {
+            translateX.value = withSpring(0);
+            onDelete();
+          }}
+          className="w-12 h-12 bg-red-500 rounded-full items-center justify-center"
+        >
+          <SymbolView name="trash" size={20} tintColor="white" />
+        </Pressable>
+      </Animated.View>
+    </View>
   );
 };
 
@@ -162,8 +168,67 @@ export function ChatHistorySidebar({
   const colors = useColors();
   const { t } = useTranslation();
   const [searchQuery, setSearchQuery] = useState('');
+  const [activeHistoryType, setActiveHistoryType] = useState<ChatType>('coach');
   const insets = useSafeAreaInsets();
   const [skipExitAnimation, setSkipExitAnimation] = useState(false);
+
+  const getDateGroup = useCallback(
+    (dateString: string) => {
+      const date = new Date(dateString);
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - date.getTime());
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+      if (diffDays === 0) {
+        return { group: 'today', label: t('common.today'), sortOrder: 0 };
+      } else if (diffDays < 7) {
+        return {
+          group: 'thisWeek',
+          label: t('chat.history.thisWeek'),
+          sortOrder: 1,
+        };
+      } else {
+        const daysAgoLabel = t('chat.history.daysAgo', { count: diffDays });
+        return {
+          group: `${diffDays}daysAgo`,
+          label: daysAgoLabel,
+          sortOrder: diffDays,
+        };
+      }
+    },
+    [t]
+  );
+
+  const groupSessionsByDate = useCallback(
+    (sessions: any[]) => {
+      if (!sessions || sessions.length === 0) return [];
+
+      // Group sessions by date periods
+      const groups: Record<
+        string,
+        { label: string; sessions: any[]; sortOrder: number }
+      > = {};
+
+      sessions.forEach((session) => {
+        const dateInfo = getDateGroup(
+          session.lastMessageAt || session.startedAt || new Date().toISOString()
+        );
+
+        if (!groups[dateInfo.group]) {
+          groups[dateInfo.group] = {
+            label: dateInfo.label,
+            sessions: [],
+            sortOrder: dateInfo.sortOrder,
+          };
+        }
+        groups[dateInfo.group].sessions.push(session);
+      });
+
+      // Sort groups by sortOrder (Today first, then This week, then by days ago)
+      return Object.values(groups).sort((a, b) => a.sortOrder - b.sortOrder);
+    },
+    [getDateGroup]
+  );
 
   const handleSettingsPress = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -192,30 +257,52 @@ export function ChatHistorySidebar({
     }
   }, [visible, skipExitAnimation]);
 
-  // Convex queries
-  const mainSessions = useQuery(
+  // Convex queries - only for coach and companion (event sessions are not stored)
+  const coachSessions = useQuery(
     api.mainChat.getMainSessions,
     user ? {} : 'skip'
   );
+  // Event sessions are not stored or shown in history - overlay only
+  const companionSessions = useQuery(
+    api.companionChat.getCompanionChatSessions,
+    user ? {} : 'skip'
+  );
 
-  // Mutations
-  const deleteMainSession = useMutation(api.mainChat.deleteMainSession);
+  // Mutations - only for coach and companion (no event sessions to delete)
+  const deleteCoachSession = useMutation(api.mainChat.deleteMainSession);
+  const deleteCompanionSession = useMutation(
+    api.companionChat.deleteCompanionChatSession
+  );
 
   // Clean slate - no animations yet
 
-  const currentSessions = useMemo(() => {
-    const sessions = mainSessions || [];
-    const validSessions = Array.isArray(sessions) ? sessions : [];
+  const groupedSessions = useMemo(() => {
+    // Get sessions for the active history type only
+    let sessions: any[] = [];
+
+    if (activeHistoryType === 'coach') {
+      sessions = Array.isArray(coachSessions) ? coachSessions : [];
+    } else if (activeHistoryType === 'companion') {
+      sessions = Array.isArray(companionSessions) ? companionSessions : [];
+    }
+    // Event sessions are not stored - they're overlay-only and private
 
     // Filter sessions based on search query
-    if (!searchQuery.trim()) {
-      return validSessions;
+    if (searchQuery.trim()) {
+      sessions = sessions.filter((session) =>
+        session.title?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
     }
 
-    return validSessions.filter((session) =>
-      session.title?.toLowerCase().includes(searchQuery.toLowerCase())
-    );
-  }, [mainSessions, searchQuery]);
+    // Group sessions by date periods
+    return groupSessionsByDate(sessions);
+  }, [
+    coachSessions,
+    companionSessions,
+    searchQuery,
+    activeHistoryType,
+    groupSessionsByDate,
+  ]);
 
   const handleSessionSelect = (sessionId: string) => {
     impactAsync(ImpactFeedbackStyle.Light);
@@ -223,10 +310,15 @@ export function ChatHistorySidebar({
     onClose();
   };
 
-  const handleSessionDelete = async (sessionId: string) => {
+  const handleSessionDelete = async (sessionId: string, chatType: ChatType) => {
     try {
       impactAsync(ImpactFeedbackStyle.Medium);
-      await deleteMainSession({ sessionId });
+      if (chatType === 'coach') {
+        await deleteCoachSession({ sessionId });
+      } else if (chatType === 'companion') {
+        await deleteCompanionSession({ sessionId });
+      }
+      // Event sessions don't exist in backend, so no deletion needed
     } catch (error) {
       console.error('Error deleting session:', error);
     }
@@ -355,43 +447,86 @@ export function ChatHistorySidebar({
                       </View>
                     </View>
 
+                    {/* History Type Toggle */}
+                    <ChatHistoryToggle
+                      activeType={activeHistoryType}
+                      onTypeChange={setActiveHistoryType}
+                    />
+
                     {/* Sessions List */}
                     <SessionList
-                      data={currentSessions}
-                      keyExtractor={(item) => item._id}
-                      renderItem={(item, _index) => {
-                        const sessionId = item.sessionId;
-                        const isActive = currentSessionId === sessionId;
-
+                      data={groupedSessions}
+                      keyExtractor={(item) => `date-${item.label}`}
+                      renderItem={(dateGroup, _index) => {
                         return (
-                          <SessionItem
-                            session={item}
-                            isActive={isActive}
-                            onPress={() => {
-                              if (sessionId) handleSessionSelect(sessionId);
-                            }}
-                            onDelete={() => {
-                              if (sessionId) handleSessionDelete(sessionId);
-                            }}
-                          />
+                          <View key={`date-${dateGroup.label}-section`}>
+                            {/* Date Section Header */}
+                            <View className="px-4 py-3 mb-2">
+                              <Text
+                                variant="subhead"
+                                className="font-semibold text-foreground/80"
+                              >
+                                {dateGroup.label}
+                              </Text>
+                            </View>
+
+                            {/* Sessions for this date group */}
+                            {dateGroup.sessions.map((session) => {
+                              const sessionId = session.sessionId;
+                              const isActive = currentSessionId === sessionId;
+
+                              return (
+                                <SessionItem
+                                  key={session._id}
+                                  session={session}
+                                  chatType={activeHistoryType}
+                                  isActive={isActive}
+                                  onPress={() => {
+                                    if (sessionId)
+                                      handleSessionSelect(sessionId);
+                                  }}
+                                  onDelete={() => {
+                                    if (sessionId)
+                                      handleSessionDelete(
+                                        sessionId,
+                                        activeHistoryType
+                                      );
+                                  }}
+                                />
+                              );
+                            })}
+                          </View>
                         );
                       }}
                       emptyComponent={() => {
                         const hasSearchQuery = searchQuery.trim().length > 0;
-                        const emptyMessage = hasSearchQuery
-                          ? t('chat.history.noSearchResults')
-                          : t('chat.history.noMainSessions');
+                        let emptyMessage: string;
+
+                        if (hasSearchQuery) {
+                          emptyMessage = t('chat.history.noSearchResults');
+                        } else if (activeHistoryType === 'coach') {
+                          emptyMessage = t('chat.history.noCoachSessions');
+                        } else if (activeHistoryType === 'companion') {
+                          emptyMessage = t('chat.history.noCompanionSessions');
+                        } else {
+                          emptyMessage = t('chat.history.noMainSessions');
+                        }
+
                         const iconName = hasSearchQuery
                           ? 'magnifyingglass'
-                          : 'bubble.left';
+                          : getChatTypeIcon(activeHistoryType);
 
                         return (
                           <View className="flex-1 items-center justify-center py-12">
                             <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/[0.05] dark:bg-white/[0.06]">
                               <SymbolView
-                                name={iconName}
+                                name={iconName as any}
                                 size={24}
-                                tintColor="#9CA3AF"
+                                tintColor={
+                                  hasSearchQuery
+                                    ? '#9CA3AF'
+                                    : getChatTypeColor(activeHistoryType)
+                                }
                               />
                             </View>
                             <Text

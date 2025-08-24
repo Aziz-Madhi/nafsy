@@ -518,14 +518,20 @@ export default function MoodIndex() {
               // Force solid, identical background across themes once mood is logged
               ...(hasLoggedToday && todayMood
                 ? {
-                    backgroundColor:
-                      {
-                        happy: colors.moodHappyBg,
-                        sad: colors.moodSadBg,
-                        anxious: colors.moodAnxiousBg,
-                        neutral: colors.moodNeutralBg,
-                        angry: colors.moodAngryBg,
-                      }[todayMood.mood as 'happy' | 'sad' | 'anxious' | 'neutral' | 'angry'],
+                    backgroundColor: {
+                      happy: colors.moodHappyBg,
+                      sad: colors.moodSadBg,
+                      anxious: colors.moodAnxiousBg,
+                      neutral: colors.moodNeutralBg,
+                      angry: colors.moodAngryBg,
+                    }[
+                      todayMood.mood as
+                        | 'happy'
+                        | 'sad'
+                        | 'anxious'
+                        | 'neutral'
+                        | 'angry'
+                    ],
                   }
                 : {}),
             }}

@@ -1,22 +1,24 @@
 import React, { useCallback, useEffect } from 'react';
+import { sendMessageRef } from './_layout';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
-import { useTranslation } from '~/hooks/useTranslation';
 import {
   useHistorySidebarVisible,
   useCurrentMainSessionId,
-  useCurrentVentSessionId,
+  useCurrentCoachSessionId,
+  useCurrentCompanionSessionId,
   useSessionError,
   useSessionSwitchLoading,
   useChatUIStore,
   useVentChatVisible,
   useCurrentVentMessage,
   useVentChatLoading,
+  useActiveChatType,
+  ChatType,
 } from '~/store';
 import { ChatScreen } from '~/components/chat';
-
 // Auth is handled by root _layout.tsx - all screens here are protected
 
 interface Message {
@@ -26,14 +28,11 @@ interface Message {
   _creationTime: number;
 }
 
-const getWelcomeMessage = (t: any) => t('chat.welcomeMessage');
-
 // Screen padding is handled by useScreenPadding hook
 
 export default function ChatTab() {
   // ===== ALL HOOKS FIRST (before any early returns) =====
   const { user, isLoaded } = useUserSafe();
-  const { t } = useTranslation();
 
   // No specific spacing needed - chat handles its own
 
@@ -42,72 +41,121 @@ export default function ChatTab() {
   const showVentChat = useVentChatVisible();
   const currentVentMessage = useCurrentVentMessage();
   const ventChatLoading = useVentChatLoading();
+  const activeChatType = useActiveChatType();
   const {
     setHistorySidebarVisible,
     setVentChatVisible,
     setCurrentVentMessage,
     setVentChatLoading,
     clearVentChat,
+    switchChatType,
+    initializeEmptyChat,
   } = useChatUIStore();
 
-  // Session management
+  // Session management - only for coach and companion (event has no sessions)
   const currentMainSessionId = useCurrentMainSessionId();
-  const currentVentSessionId = useCurrentVentSessionId();
+  const currentCoachSessionId = useCurrentCoachSessionId();
+  const currentCompanionSessionId = useCurrentCompanionSessionId();
   const sessionError = useSessionError();
   const sessionSwitchLoading = useSessionSwitchLoading();
   const switchToMainSession = useChatUIStore(
     (state) => state.switchToMainSession
   );
-  const setSessionError = useChatUIStore((state) => state.setSessionError);
-  const switchToVentSession = useChatUIStore(
-    (state) => state.switchToVentSession
+  const switchToCompanionSession = useChatUIStore(
+    (state) => state.switchToCompanionSession
   );
+  const setSessionError = useChatUIStore((state) => state.setSessionError);
 
   // Convex hooks - only execute when auth is stable and user exists
   const currentUser = useQuery(
     api.users.getCurrentUser,
     isLoaded && user ? {} : 'skip'
   );
+
+  // Get server session IDs for coach and companion
   const serverMainSessionId = useQuery(
     api.mainChat.getCurrentMainSessionId,
     isLoaded && user ? {} : 'skip'
   );
 
-  // Use the current session ID from store, fallback to server session ID
-  const activeSessionId = currentMainSessionId || serverMainSessionId;
+  // Determine active session based on chat type - no auto-loading
+  // Event chat has no sessions (overlay-only)
+  const getActiveSessionId = () => {
+    switch (activeChatType) {
+      case 'coach':
+        return currentCoachSessionId || currentMainSessionId;
+      case 'event':
+        return null; // Event chat has no persistent sessions
+      case 'companion':
+        return currentCompanionSessionId;
+      default:
+        return currentMainSessionId;
+    }
+  };
+
+  const activeSessionId = getActiveSessionId();
 
   console.log('🔍 Query params:', {
     isLoaded,
     activeSessionId,
+    activeChatType,
     currentMainSessionId,
     serverMainSessionId,
   });
 
-  // Query args for messages
+  // Query args for messages based on chat type
   const queryArgs =
     isLoaded && user && activeSessionId
       ? { limit: 50, sessionId: activeSessionId }
       : ('skip' as const);
 
-  const mainChatMessages = useQuery(
+  // Get messages based on chat type (event messages are not queried - overlay only)
+  const coachMessages = useQuery(
     api.mainChat.getMainChatMessages,
-    queryArgs
+    activeChatType === 'coach' ? queryArgs : 'skip'
+  );
+  const companionMessages = useQuery(
+    api.companionChat.getCompanionChatMessages,
+    activeChatType === 'companion' ? queryArgs : 'skip'
   );
 
+  // Select messages based on active chat type
+  // Event messages are not shown in main chat - only in overlay
+  const getChatMessages = () => {
+    switch (activeChatType) {
+      case 'coach':
+        return coachMessages;
+      case 'event':
+        return []; // Event messages are overlay-only, never shown in main chat
+      case 'companion':
+        return companionMessages;
+      default:
+        return coachMessages;
+    }
+  };
+
+  const mainChatMessages = getChatMessages();
+
   console.log('📨 Messages count:', mainChatMessages?.length || 0);
+
+  // Mutations for coach and companion (event chat is local-only)
   const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
   const createUser = useMutation(api.users.createUser);
-  const sendVentMessage = useMutation(api.ventChat.sendVentMessage);
-  const createVentSession = useMutation(api.ventChat.createVentSession);
+  const sendCompanionMessage = useMutation(
+    api.companionChat.sendCompanionMessage
+  );
+  const createCompanionSession = useMutation(
+    api.companionChat.createCompanionChatSession
+  );
+  const createMainSession = useMutation(api.mainChat.createMainChatSession);
 
-  // Sync server session with local store - only on initial load
+  // Initialize with empty chat on app start (no auto-loading of previous sessions)
   useEffect(() => {
-    if (serverMainSessionId && !currentMainSessionId) {
-      // Only set server session if no local session is selected
-      const { setCurrentMainSessionId } = useChatUIStore.getState();
-      setCurrentMainSessionId(serverMainSessionId);
+    if (isLoaded && user) {
+      // Always start with empty chat to avoid personality conflicts
+      initializeEmptyChat();
     }
-  }, [serverMainSessionId, currentMainSessionId]);
+  }, [isLoaded, user, initializeEmptyChat]);
 
   // Auth is handled by root gate - no early returns needed
 
@@ -123,39 +171,16 @@ export default function ChatTab() {
     }
   }, [user, isLoaded, currentUser, createUser]);
 
-  // Send welcome message on first load
-  useEffect(() => {
-    if (
-      currentUser &&
-      isLoaded &&
-      mainChatMessages &&
-      mainChatMessages.length === 0
-    ) {
-      sendMainMessage({
-        content: getWelcomeMessage(t),
-        role: 'assistant',
-        sessionId: currentMainSessionId || serverMainSessionId || undefined,
-      });
-    }
-  }, [
-    currentUser,
-    isLoaded,
-    mainChatMessages,
-    sendMainMessage,
-    serverMainSessionId,
-    currentMainSessionId,
-  ]);
+  // Don't auto-send welcome messages - let users start conversations naturally
 
   // Transform Convex main chat messages to UI format
   const messages: Message[] =
-    mainChatMessages
-      ?.map((msg) => ({
-        _id: msg._id,
-        content: msg.content || '',
-        role: msg.role,
-        _creationTime: msg._creationTime,
-      }))
-      .reverse() || [];
+    mainChatMessages?.map((msg) => ({
+      _id: msg._id,
+      content: msg.content || '',
+      role: msg.role,
+      _creationTime: msg._creationTime,
+    })) || [];
 
   // Simple sidebar handlers
   const handleOpenSidebar = () => {
@@ -198,67 +223,114 @@ export default function ChatTab() {
     ]
   );
 
-  // Chat message sending
+  // Optimized message sending with immediate response
   const handleSendMessage = useCallback(
     async (text: string) => {
       if (!currentUser || !isLoaded) return;
 
-      try {
-        // Send user message
-        await sendMainMessage({
-          content: text,
-          role: 'user',
-          sessionId: currentMainSessionId || serverMainSessionId || undefined,
-        });
+      // Send message immediately without blocking UI
+      (async () => {
+        try {
+          let sessionId = activeSessionId;
 
-        // Simulate AI response
-        setTimeout(async () => {
-          await sendMainMessage({
-            content: "I'm here to listen and support you. How can I help?",
-            role: 'assistant',
-            sessionId: currentMainSessionId || serverMainSessionId || undefined,
-          });
-        }, 2000);
-      } catch (error) {
-        console.error('Failed to send message:', error);
-      }
+          // Create a new session if none exists for this personality
+          if (!sessionId) {
+            console.log(
+              `🆕 Creating new session for ${activeChatType} personality`
+            );
+
+            switch (activeChatType) {
+              case 'coach':
+                sessionId = await createMainSession({
+                  title: `Therapy Session`,
+                });
+                await switchToMainSession(sessionId);
+                break;
+              case 'event':
+                // Event chat has no sessions - this should not happen
+                console.warn('Event chat should not create sessions');
+                return;
+              case 'companion':
+                sessionId = await createCompanionSession({
+                  title: `Daily Check-in`,
+                });
+                await switchToCompanionSession(sessionId);
+                break;
+            }
+          }
+
+          // Send user message based on chat type
+          switch (activeChatType) {
+            case 'coach':
+              await sendMainMessage({
+                content: text,
+                role: 'user',
+                sessionId,
+              });
+              // Simulate AI response with reduced delay
+              setTimeout(async () => {
+                await sendMainMessage({
+                  content:
+                    "I'm here to listen and support you. How can I help?",
+                  role: 'assistant',
+                  sessionId,
+                });
+              }, 1500); // Reduced from 2000ms
+              break;
+
+            case 'event':
+              // Event messages are handled privately in overlay, not here
+              console.warn(
+                'Event messages should be handled in overlay, not main chat'
+              );
+              return;
+
+            case 'companion':
+              await sendCompanionMessage({
+                content: text,
+                role: 'user',
+                sessionId,
+              });
+              // Simulate friendly response
+              setTimeout(async () => {
+                await sendCompanionMessage({
+                  content: 'Thanks for sharing! Tell me more about that.',
+                  role: 'assistant',
+                  sessionId,
+                });
+              }, 1200); // Reduced from 1500ms
+              break;
+          }
+        } catch (error) {
+          console.error('Failed to send message:', error);
+        }
+      })();
     },
     [
       currentUser,
       isLoaded,
       sendMainMessage,
-      currentMainSessionId,
-      serverMainSessionId,
+      sendCompanionMessage,
+      activeSessionId,
+      activeChatType,
+      createMainSession,
+      createCompanionSession,
+      switchToMainSession,
+      switchToCompanionSession,
     ]
   );
-
-  // Welcome subtitle
-  const welcomeSubtitle = t('chat.welcomeSubtitle');
 
   // Error dismiss handler
   const handleDismissError = () => setSessionError(null);
 
-  // Vent Chat handlers
+  // Vent Chat handlers - now private/local only
   const handleOpenVentChat = useCallback(async () => {
-    console.log('🌀 Opening Vent Chat');
+    console.log('🌀 Opening Vent Chat (Private Overlay)');
 
-    // Create or get existing vent session
-    if (!currentVentSessionId) {
-      try {
-        const sessionId = await createVentSession({ title: 'Vent Session' });
-        await switchToVentSession(sessionId);
-      } catch (error) {
-        console.error('Failed to create vent session:', error);
-      }
-    }
-
+    // Event chat is now overlay-only, no backend session needed
+    // Just open the overlay - no persistence
     setVentChatVisible(true);
-  }, [
-    currentVentSessionId,
-    createVentSession,
-    switchToVentSession,
-    setVentChatVisible,
-  ]);
+  }, [setVentChatVisible]);
 
   const handleCloseVentChat = useCallback(() => {
     console.log('🌀 Closing Vent Chat');
@@ -273,42 +345,45 @@ export default function ChatTab() {
       setVentChatLoading(true);
       setCurrentVentMessage(`user:${text}`);
 
-      try {
-        // Send user message
-        await sendVentMessage({
-          content: text,
-          role: 'user',
-          sessionId: currentVentSessionId || undefined,
-        });
-
-        // Simulate AI response after a delay
-        setTimeout(async () => {
-          const aiResponse =
-            'I hear you. Your feelings are valid. Take a deep breath and let it all out.';
-          setCurrentVentMessage(`ai:${aiResponse}`);
-
-          await sendVentMessage({
-            content: aiResponse,
-            role: 'assistant',
-            sessionId: currentVentSessionId || undefined,
-          });
-
-          setVentChatLoading(false);
-        }, 2000);
-      } catch (error) {
-        console.error('Failed to send vent message:', error);
+      // Simulate AI response after a delay - no backend storage
+      setTimeout(() => {
+        const aiResponse =
+          'I hear you. Your feelings are valid. Take a deep breath and let it all out.';
+        setCurrentVentMessage(`ai:${aiResponse}`);
         setVentChatLoading(false);
-      }
+      }, 2000);
     },
-    [
-      currentUser,
-      isLoaded,
-      sendVentMessage,
-      currentVentSessionId,
-      setCurrentVentMessage,
-      setVentChatLoading,
-    ]
+    [currentUser, isLoaded, setCurrentVentMessage, setVentChatLoading]
   );
+
+  // Handle chat type change with session creation
+  // Event type is overlay-only and not part of regular chat switching
+  const handleChatTypeChange = useCallback(
+    async (type: ChatType) => {
+      console.log(`🔄 Switching from ${activeChatType} to ${type}`);
+
+      // Only allow switching between coach and companion for regular chat
+      if (type === 'event') {
+        // Event chat is overlay-only, don't switch to it in main chat
+        return;
+      }
+
+      await switchChatType(type);
+    },
+    [switchChatType, activeChatType]
+  );
+
+  // Set the message handler ref for the floating tab bar
+  useEffect(() => {
+    if (sendMessageRef) {
+      sendMessageRef.current = handleSendMessage;
+    }
+    return () => {
+      if (sendMessageRef) {
+        sendMessageRef.current = null;
+      }
+    };
+  }, [handleSendMessage]);
 
   return (
     <ChatScreen
@@ -319,7 +394,6 @@ export default function ChatTab() {
       showVentChat={showVentChat}
       ventCurrentMessage={currentVentMessage}
       ventLoading={ventChatLoading}
-      welcomeSubtitle={welcomeSubtitle}
       navigationBarPadding={0} // No padding needed - using custom navigation
       onOpenSidebar={handleOpenSidebar}
       onCloseSidebar={handleCloseSidebar}
@@ -329,6 +403,8 @@ export default function ChatTab() {
       onOpenVentChat={handleOpenVentChat}
       onCloseVentChat={handleCloseVentChat}
       onSendVentMessage={handleSendVentMessage}
+      activeChatType={activeChatType}
+      onChatTypeChange={handleChatTypeChange}
     />
   );
 }

@@ -121,6 +121,30 @@ export default defineSchema({
     .index('by_user', ['userId', 'completedAt'])
     .index('by_exercise', ['exerciseId', 'completedAt']),
 
+  // Companion chat messages (friendly daily check-ins)
+  companionChatMessages: defineTable({
+    userId: v.id('users'),
+    content: v.string(),
+    role: v.union(v.literal('user'), v.literal('assistant')),
+    sessionId: v.string(),
+    createdAt: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_session', ['sessionId'])
+    .index('by_user_session', ['userId', 'sessionId']),
+
+  // Companion chat sessions metadata
+  companionChatSessions: defineTable({
+    userId: v.id('users'),
+    sessionId: v.string(),
+    title: v.string(),
+    startedAt: v.number(),
+    lastMessageAt: v.number(),
+    messageCount: v.number(),
+  })
+    .index('by_user', ['userId'])
+    .index('by_session_id', ['sessionId']),
+
   // Rate limiting store (DB-backed windowed counters)
   rateLimits: defineTable({
     key: v.string(), // e.g., "auth:login:<clerkId>" or "users:create:<clerkId>"

@@ -98,6 +98,19 @@
   --chat-bubble-ai: 32 32 32;
   --chat-text: 255 255 255;
 
+  /* Chat Type Specific Colors */
+  --chat-coach-primary: 47 106 141; /* Professional blue */
+  --chat-coach-bubble: 47 106 141;
+  --chat-coach-accent: 35 82 110;
+
+  --chat-event-primary: 180 95 116; /* Warm pink */
+  --chat-event-bubble: 180 95 116;
+  --chat-event-accent: 150 79 97;
+
+  --chat-companion-primary: 123 160 91; /* Friendly green */
+  --chat-companion-bubble: 123 160 91;
+  --chat-companion-accent: 98 128 73;
+
   /* Overlay Colors */
   --overlay-light: 255 255 255;
   --overlay-dark: 0 0 0;
@@ -182,6 +195,19 @@
     --chat-bubble-user: 47 106 141;
     --chat-bubble-ai: 64 64 64;
     --chat-text: 245 245 245;
+
+    /* Chat Type Specific Colors - Dark Mode */
+    --chat-coach-primary: 47 106 141; /* Professional blue */
+    --chat-coach-bubble: 47 106 141;
+    --chat-coach-accent: 35 82 110;
+
+    --chat-event-primary: 180 95 116; /* Warm pink */
+    --chat-event-bubble: 180 95 116;
+    --chat-event-accent: 150 79 97;
+
+    --chat-companion-primary: 123 160 91; /* Friendly green */
+    --chat-companion-bubble: 123 160 91;
+    --chat-companion-accent: 98 128 73;
   }
 }
 
@@ -232,27 +258,27 @@
   --mood-happy: 252 211 77; /* same as light */
   --mood-happy-light: 254 243 199; /* same as light */
   --mood-happy-dark: 245 158 11; /* same as light */
-    --mood-happy-bg: 255 215 154; /* #FFD79A - warmer amber */
+  --mood-happy-bg: 255 215 154; /* #FFD79A - warmer amber */
 
   --mood-sad: 107 127 222; /* same as light */
   --mood-sad-light: 224 231 255; /* same as light */
   --mood-sad-dark: 76 94 189; /* same as light */
-    --mood-sad-bg: 231 204 255; /* #E7CCFF - warmer lavender */
+  --mood-sad-bg: 231 204 255; /* #E7CCFF - warmer lavender */
 
   --mood-anxious: 147 112 219; /* same as light */
   --mood-anxious-light: 243 244 246; /* same as light */
   --mood-anxious-dark: 107 114 128; /* same as light */
-    --mood-anxious-bg: 227 205 255; /* #E3CDFF - warmer mauve */
+  --mood-anxious-bg: 227 205 255; /* #E3CDFF - warmer mauve */
 
   --mood-neutral: 148 163 184; /* same as light */
   --mood-neutral-light: 226 232 240; /* same as light */
   --mood-neutral-dark: 100 116 139; /* same as light */
-    --mood-neutral-bg: 238 223 198; /* #EEDFC6 - warmer beige */
+  --mood-neutral-bg: 238 223 198; /* #EEDFC6 - warmer beige */
 
   --mood-angry: 248 113 113; /* same as light */
   --mood-angry-light: 254 226 226; /* same as light */
   --mood-angry-dark: 239 68 68; /* same as light */
-    --mood-angry-bg: 255 186 186; /* #FFBABA - warmer rose */
+  --mood-angry-bg: 255 186 186; /* #FFBABA - warmer rose */
 
   /* Navigation Colors - Dark Mode */
   --tab-active: 47 106 141;
@@ -261,6 +287,19 @@
   /* Chat Colors - Dark Mode */
   --chat-bubble-user: 47 106 141;
   --chat-bubble-ai: 64 64 64;
+
+  /* Chat Type Specific Colors - Dark Mode */
+  --chat-coach-primary: 47 106 141; /* Professional blue */
+  --chat-coach-bubble: 47 106 141;
+  --chat-coach-accent: 35 82 110;
+
+  --chat-event-primary: 180 95 116; /* Warm pink */
+  --chat-event-bubble: 180 95 116;
+  --chat-event-accent: 150 79 97;
+
+  --chat-companion-primary: 123 160 91; /* Friendly green */
+  --chat-companion-bubble: 123 160 91;
+  --chat-companion-accent: 98 128 73;
 
   /* Wellness Pastel Backgrounds (unified across themes) */
   --wellness-mindfulness-bg: 255 196 196; /* #FFC4C4 */

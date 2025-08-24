@@ -13,6 +13,9 @@ export { ChatMessageList } from './ChatMessageList';
 export { ChatInputWithNavConnection } from './ChatInputWithNavConnection';
 export { UnifiedChatInput } from './UnifiedChatInput';
 export { VentChatInput } from './VentChatInput';
+export { ChatTypeSelector } from './ChatTypeSelector';
+export { ChatTypeToggle } from './ChatTypeToggle';
+export { ChatPersonalityHeader } from './ChatPersonalityHeader';
 
 // Types
 export type {

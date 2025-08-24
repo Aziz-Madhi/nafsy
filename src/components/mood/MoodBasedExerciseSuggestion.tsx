@@ -131,9 +131,7 @@ export function MoodBasedExerciseSuggestion({
       className="mb-6"
       style={{ marginHorizontal: 6 }}
     >
-      <View
-        className="rounded-3xl overflow-hidden"
-      >
+      <View className="rounded-3xl overflow-hidden">
         {/* Top section - warmer category colors with theme consistency */}
         <View
           style={{

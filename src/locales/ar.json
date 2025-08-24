@@ -103,6 +103,8 @@
     },
     "history": {
       "title": "تاريخ المحادثات",
+      "coachHistory": "تاريخ المدرب",
+      "companionHistory": "تاريخ الرفيق",
       "mainChat": "المحادثة الرئيسية",
       "ventHistory": "تاريخ التفريغ",
       "mainSessions": "جلسات العلاج",
@@ -110,6 +112,8 @@
       "noHistory": "لا يوجد تاريخ {{type}} بعد",
       "noMainSessions": "ابدأ محادثة في الدردشة الرئيسية لرؤية تاريخك هنا.",
       "noVentSessions": "استخدم الدردشة العائمة للتفريغات السريعة لرؤية تاريخك هنا.",
+      "noCoachSessions": "ابدأ محادثة مع مدربك لرؤية تاريخك هنا.",
+      "noCompanionSessions": "ابدأ محادثة مع رفيقك لرؤية تاريخك هنا.",
       "noSearchResults": "لا توجد محادثات تطابق بحثك",
       "untitledSession": "جلسة بدون عنوان",
       "searchPlaceholder": "ابحث في المحادثات...",
@@ -117,7 +121,9 @@
       "deleteSession": "حذف الجلسة",
       "confirmDelete": "هل أنت متأكد من أنك تريد حذف هذه الجلسة؟",
       "startChatting": "ابدأ المحادثة",
-      "startVenting": "ابدأ التفريغ"
+      "startVenting": "ابدأ التفريغ",
+      "thisWeek": "هذا الأسبوع",
+      "daysAgo": "منذ {{count}} أيام"
     },
     "defaultResponse": "أسمعك. دعنا نتعامل مع هذا معاً. هل يمكنك أن تخبرني أكثر عما يدور في ذهنك؟",
     "status": {

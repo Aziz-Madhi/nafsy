@@ -240,6 +240,7 @@ The application demonstrates solid security practices with proper authentication
 ### Immediate Actions (High Priority)
 
 1. **Strengthen Password Policy**
+
    ```typescript
    const passwordRequirements = {
      minLength: 12,
@@ -247,7 +248,7 @@ The application demonstrates solid security practices with proper authentication
      requireLowercase: true,
      requireNumbers: true,
      requireSpecialChars: true,
-     preventCommonPasswords: true
+     preventCommonPasswords: true,
    };
    ```
 
@@ -309,6 +310,7 @@ The application demonstrates solid security practices with proper authentication
 The Nafsy application demonstrates a solid foundation for authentication security with proper use of established authentication providers (Clerk) and backend services (Convex). The multi-layered authentication approach and encrypted storage show security consciousness in the design.
 
 However, there are important areas for improvement:
+
 - Password policy needs strengthening
 - Rate limiting needs to be more robust
 - Bot protection should be added
@@ -317,6 +319,7 @@ However, there are important areas for improvement:
 Given the sensitive nature of mental health data, prioritizing these security improvements is crucial for protecting user privacy and maintaining trust.
 
 **Final Grade: B+ (80/100)**
+
 - Architecture & Design: A (90/100)
 - Implementation: B+ (85/100)
 - Data Protection: B+ (85/100)
@@ -325,4 +328,4 @@ Given the sensitive nature of mental health data, prioritizing these security im
 
 ---
 
-*This audit represents a point-in-time assessment. Regular security audits and penetration testing are recommended as the application evolves.*
+_This audit represents a point-in-time assessment. Regular security audits and penetration testing are recommended as the application evolves._

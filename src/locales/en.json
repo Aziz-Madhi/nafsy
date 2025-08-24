@@ -103,6 +103,8 @@
     },
     "history": {
       "title": "History",
+      "coachHistory": "Coach History",
+      "companionHistory": "Companion History",
       "mainChat": "Main Chat",
       "ventHistory": "Vent History",
       "mainSessions": "Therapy Sessions",
@@ -110,6 +112,8 @@
       "noHistory": "No chat history yet",
       "noMainSessions": "Start a conversation in the main chat to see your history here.",
       "noVentSessions": "Use the floating chat for quick vents to see your history here.",
+      "noCoachSessions": "Start a conversation with your coach to see your history here.",
+      "noCompanionSessions": "Start a conversation with your companion to see your history here.",
       "noSearchResults": "No conversations match your search",
       "untitledSession": "Untitled Session",
       "searchPlaceholder": "Search conversations...",
@@ -117,7 +121,9 @@
       "deleteSession": "Delete Session",
       "confirmDelete": "Are you sure you want to delete this session?",
       "startChatting": "Start Chatting",
-      "startVenting": "Start Venting"
+      "startVenting": "Start Venting",
+      "thisWeek": "This week",
+      "daysAgo": "{{count}} days ago"
     },
     "defaultResponse": "I hear you. Let's work through this together. Can you tell me more about what's on your mind?",
     "status": {

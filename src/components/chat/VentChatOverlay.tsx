@@ -21,6 +21,7 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
 import { VentChatInput } from './VentChatInput';
+import { getChatStyles } from '~/lib/chatStyles';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
 const CIRCLE_SIZE = Math.min(SCREEN_WIDTH * 0.7, 320);
@@ -86,6 +87,9 @@ export function VentChatOverlay({
 }: VentChatOverlayProps) {
   const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
+
+  // Use Event personality styling (pink theme)
+  const eventStyles = getChatStyles('event');
 
   // Animation values
   const overlayOpacity = useSharedValue(0);
@@ -196,18 +200,26 @@ export function VentChatOverlay({
               <View className="absolute inset-3 rounded-full bg-gray-900/80" />
               <View className="absolute inset-5 rounded-full bg-gray-800/70" />
 
-              {/* Subtle pulsing glow */}
+              {/* Subtle pulsing glow with Event personality color */}
               <Animated.View
-                style={pulseAnimatedStyle}
-                className="absolute -inset-8 rounded-full bg-purple-600/5"
+                style={[
+                  pulseAnimatedStyle,
+                  { backgroundColor: eventStyles.primaryColor + '0D' },
+                ]}
+                className="absolute -inset-8 rounded-full"
               />
 
-              {/* Rotating background effect (separate from message) */}
+              {/* Rotating background effect with Event colors */}
               <Animated.View
                 style={backgroundAnimatedStyle}
                 className="absolute inset-0 rounded-full"
               >
-                <View className="absolute inset-0 rounded-full bg-gradient-to-br from-purple-900/10 via-transparent to-blue-900/10" />
+                <View
+                  className="absolute inset-0 rounded-full"
+                  style={{
+                    background: `linear-gradient(135deg, ${eventStyles.primaryColor}10, transparent, ${eventStyles.accentColor}10)`,
+                  }}
+                />
               </Animated.View>
 
               {/* Message display area - NOT rotating */}
@@ -218,7 +230,7 @@ export function VentChatOverlay({
                 />
               )}
 
-              {/* Loading state - show subtle pulsing dots instead of circle */}
+              {/* Loading state with Event personality colors */}
               {isLoading && !displayMessage && (
                 <View className="absolute inset-0 items-center justify-center">
                   <Animated.View
@@ -226,14 +238,28 @@ export function VentChatOverlay({
                     exiting={FadeOut.duration(300)}
                     className="flex-row gap-2"
                   >
-                    <View className="w-2 h-2 rounded-full bg-white/30" />
-                    <View className="w-2 h-2 rounded-full bg-white/50" />
-                    <View className="w-2 h-2 rounded-full bg-white/30" />
+                    <View
+                      style={{
+                        backgroundColor: eventStyles.primaryColor + '50',
+                      }}
+                      className="w-2 h-2 rounded-full"
+                    />
+                    <View
+                      style={{
+                        backgroundColor: eventStyles.primaryColor + '80',
+                      }}
+                      className="w-2 h-2 rounded-full"
+                    />
+                    <View
+                      style={{
+                        backgroundColor: eventStyles.primaryColor + '50',
+                      }}
+                      className="w-2 h-2 rounded-full"
+                    />
                   </Animated.View>
                 </View>
               )}
             </Animated.View>
-
           </View>
 
           {/* Unified vent chat input */}

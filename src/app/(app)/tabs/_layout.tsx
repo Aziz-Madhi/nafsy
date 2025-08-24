@@ -1,8 +1,13 @@
 import React from 'react';
 import { Tabs, Redirect } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
-import { CustomBottomNavigation } from '~/components/navigation/CustomBottomNavigation';
+import { FloatingTabBar } from '~/components/navigation/FloatingTabBar';
 import { useColors } from '~/hooks/useColors';
+
+// Create the ref outside the component so it can be exported
+export const sendMessageRef = {
+  current: null as ((message: string) => void) | null,
+};
 
 export default function TabsLayout() {
   const colors = useColors();
@@ -29,12 +34,22 @@ export default function TabsLayout() {
         unmountOnBlur: false,
         sceneContainerStyle: { backgroundColor: colors.background },
       }}
-      tabBar={(props) => <CustomBottomNavigation {...props} />}
+      tabBar={(props) => (
+        <FloatingTabBar
+          {...props}
+          onSendMessage={sendMessageRef.current || undefined}
+        />
+      )}
     >
       <Tabs.Screen
         name="chat"
         options={{
           title: 'Chat',
+        }}
+        listeners={{
+          focus: () => {
+            // Hook will be set by the chat screen
+          },
         }}
       />
       <Tabs.Screen

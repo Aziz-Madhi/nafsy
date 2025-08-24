@@ -32,7 +32,7 @@ export const getMainChatMessages = query({
       query = query.filter((q) => q.eq(q.field('sessionId'), args.sessionId));
     }
 
-    return await query.order('desc').take(args.limit || 50);
+    return await query.order('asc').take(args.limit || 50);
   },
 });
 
@@ -154,6 +154,32 @@ export const startNewMainSession = mutation({
       startedAt: Date.now(),
       lastMessageAt: Date.now(),
       messageCount: 0,
+    });
+
+    return sessionId;
+  },
+});
+
+// Create main chat session (alias for compatibility)
+export const createMainChatSession = mutation({
+  args: {
+    title: v.optional(v.string()),
+  },
+  returns: v.string(),
+  handler: async (ctx, args) => {
+    // Authenticate user and get their ID
+    const user = await getAuthenticatedUser(ctx);
+
+    const sessionId = `main_${Date.now()}_${user._id}`;
+
+    await ctx.db.insert('chatSessions', {
+      userId: user._id,
+      sessionId,
+      title: args.title || 'Therapy Session',
+      startedAt: Date.now(),
+      lastMessageAt: Date.now(),
+      messageCount: 0,
+      type: 'main', // Explicitly mark as main chat session
     });
 
     return sessionId;

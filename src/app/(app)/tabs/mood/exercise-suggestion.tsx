@@ -40,24 +40,26 @@ function ExerciseSuggestionCard({
 }) {
   const { t, currentLanguage } = useTranslation();
   const themeColors = useColors();
-  const categoryVibrant = (
-    {
-      mindfulness: themeColors.wellnessMindfulness,
-      breathing: themeColors.wellnessBreathing,
-      movement: themeColors.wellnessMovement,
-      journaling: themeColors.wellnessJournaling,
-      relaxation: themeColors.wellnessRelaxation,
-    } as Record<string, string>
-  )[exercise.category] || themeColors.wellnessMindfulness;
-  const categoryPastel = (
-    {
-      mindfulness: themeColors.wellnessMindfulnessBg,
-      breathing: themeColors.wellnessBreathingBg,
-      movement: themeColors.wellnessMovementBg,
-      journaling: themeColors.wellnessJournalingBg,
-      relaxation: themeColors.wellnessRelaxationBg,
-    } as Record<string, string>
-  )[exercise.category] || themeColors.wellnessMindfulnessBg;
+  const categoryVibrant =
+    (
+      {
+        mindfulness: themeColors.wellnessMindfulness,
+        breathing: themeColors.wellnessBreathing,
+        movement: themeColors.wellnessMovement,
+        journaling: themeColors.wellnessJournaling,
+        relaxation: themeColors.wellnessRelaxation,
+      } as Record<string, string>
+    )[exercise.category] || themeColors.wellnessMindfulness;
+  const categoryPastel =
+    (
+      {
+        mindfulness: themeColors.wellnessMindfulnessBg,
+        breathing: themeColors.wellnessBreathingBg,
+        movement: themeColors.wellnessMovementBg,
+        journaling: themeColors.wellnessJournalingBg,
+        relaxation: themeColors.wellnessRelaxationBg,
+      } as Record<string, string>
+    )[exercise.category] || themeColors.wellnessMindfulnessBg;
   const categoryIcon = getCategoryIcon(exercise.category);
 
   return (

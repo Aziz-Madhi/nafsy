@@ -20,31 +20,47 @@ import { useColors } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
+import { ChatType } from '~/store/useChatUIStore';
+import { getChatStyles, getChatPlaceholder } from '~/lib/chatStyles';
 
 interface UnifiedChatInputProps {
   onSendMessage: (message: string) => void;
   placeholder?: string;
   disabled?: boolean;
+  chatType?: ChatType;
 }
 
 export function UnifiedChatInput({
   onSendMessage,
   placeholder,
   disabled = false,
+  chatType = 'coach',
 }: UnifiedChatInputProps) {
   const [message, setMessage] = useState('');
   const [isInputFocused, setIsInputFocused] = useState(false);
   const inputRef = useRef<TextInput>(null);
   const insets = useSafeAreaInsets();
   const colors = useColors();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const hasText = !!message.trim();
+  const styles = getChatStyles(chatType);
+  const defaultPlaceholder = getChatPlaceholder(
+    chatType,
+    i18n.language === 'ar'
+  );
 
   const handleSend = useCallback(async () => {
     if (message.trim() && !disabled) {
-      await impactAsync(ImpactFeedbackStyle.Medium);
-      onSendMessage(message.trim());
+      const messageText = message.trim();
+
+      // Clear input immediately for better UX
       setMessage('');
+
+      // Haptic feedback
+      impactAsync(ImpactFeedbackStyle.Medium);
+
+      // Send message (non-blocking)
+      onSendMessage(messageText);
     }
   }, [message, disabled, onSendMessage]);
 
@@ -81,13 +97,16 @@ export function UnifiedChatInput({
                 onChangeText={setMessage}
                 onFocus={() => setIsInputFocused(true)}
                 onBlur={() => setIsInputFocused(false)}
-                placeholder={
-                  placeholder ||
-                  t('chat.typingPlaceholder') ||
-                  'Type a message...'
-                }
+                placeholder={placeholder || defaultPlaceholder}
                 placeholderTextColor={withOpacity(colors.foreground, 0.55)}
                 className="flex-1 text-foreground text-base px-4 py-3"
+                style={{
+                  // Add subtle personality background when focused
+                  backgroundColor: isInputFocused
+                    ? styles.primaryColor + '08'
+                    : 'transparent',
+                  borderRadius: 12,
+                }}
                 multiline
                 maxLength={1000}
                 returnKeyType="send"
@@ -103,7 +122,7 @@ export function UnifiedChatInput({
                 style={({ pressed }) => ({
                   backgroundColor:
                     hasText && !disabled
-                      ? withOpacity(colors.primary, 0.28)
+                      ? styles.primaryColor + '45'
                       : colors.background === '#0A1514'
                         ? 'rgba(255,255,255,0.10)'
                         : 'rgba(0,0,0,0.08)',
@@ -115,7 +134,7 @@ export function UnifiedChatInput({
                   size={20}
                   tintColor={
                     hasText && !disabled
-                      ? colors.primary
+                      ? styles.primaryColor
                       : withOpacity(colors.foreground, 0.45)
                   }
                 />

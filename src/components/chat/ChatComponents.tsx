@@ -7,6 +7,8 @@ import Animated, { FadeInUp } from 'react-native-reanimated';
 import { ChatBubbleProps } from './types';
 import SendingSpinner from './SendingSpinner';
 import { AnimatedContainer, StaggeredListItem } from '~/lib/animations';
+import { ChatType } from '~/store/useChatUIStore';
+import { getChatStyles } from '~/lib/chatStyles';
 // Removed useIsRTL - UI layout always stays LTR
 
 // =====================
@@ -19,9 +21,11 @@ export const ChatBubble = React.memo(function ChatBubble({
   avatar,
   index = 0,
   status,
-}: ChatBubbleProps) {
+  chatType = 'coach',
+}: ChatBubbleProps & { chatType?: ChatType }) {
   // Consistent positioning: user messages right, AI messages left
   const justifyContent = isUser ? 'justify-end' : 'justify-start';
+  const styles = getChatStyles(chatType);
 
   return (
     <StaggeredListItem
@@ -34,12 +38,12 @@ export const ChatBubble = React.memo(function ChatBubble({
         <View
           className={cn(
             'px-4 py-3 rounded-2xl',
-            isUser ? 'bg-chat-bubble-user' : 'bg-transparent'
+            isUser ? styles.bubbleUserClass : 'bg-transparent'
           )}
           style={{
             ...(isUser
               ? {
-                  shadowColor: '#2F6A8D',
+                  shadowColor: styles.primaryColor,
                   shadowOffset: { width: 0, height: 3 },
                   shadowOpacity: 0.2,
                   shadowRadius: 8,
