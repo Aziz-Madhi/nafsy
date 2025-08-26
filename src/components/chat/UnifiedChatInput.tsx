@@ -73,7 +73,7 @@ export function UnifiedChatInput({
     if (!disabled) {
       // Haptic feedback
       impactAsync(ImpactFeedbackStyle.Medium);
-      
+
       // Call voice handler if provided, otherwise placeholder
       if (onVoicePress) {
         onVoicePress();
@@ -181,7 +181,14 @@ export function UnifiedChatInput({
                   justifyContent: 'center',
                 })}
               >
-                <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
+                <View
+                  style={{
+                    width: 28,
+                    height: 28,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
                   <Animated.View style={micIconStyle}>
                     <Mic
                       size={28}

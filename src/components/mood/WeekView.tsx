@@ -7,7 +7,9 @@ import { Text } from '~/components/ui/text';
 import { IconRenderer } from '~/components/ui/IconRenderer';
 import { MotiView, AnimatePresence } from 'moti';
 import { useMoodColor, useColors } from '~/hooks/useColors';
+import { mapMoodToRating } from '~/lib/mood-exercise-mapping';
 import { useTranslation } from '~/hooks/useTranslation';
+import { getMoodColor, getMoodPixelStyle } from '~/lib/mood-colors';
 
 // Mood names will be localized using translation hook
 
@@ -39,9 +41,18 @@ export function WeekView({ moodData }: WeekViewProps) {
   const happyColor = useMoodColor('happy');
   const angryColor = useMoodColor('angry');
 
-  // Helper function to get mood color without calling hooks
-  const getMoodColor = (mood: string): string => {
-    switch (mood) {
+  // Get unified color from rating scale, falling back to legacy mood mapping
+  const getEntryColor = (entry: Doc<'moods'> | undefined): string => {
+    if (!entry) return '#E5E7EB';
+    const rating =
+      entry.rating ?? (entry.mood ? mapMoodToRating(entry.mood) : undefined);
+    if (rating) {
+      const clamped = Math.max(1, Math.min(10, Math.round(rating)));
+      const key = `ratingScale${clamped}` as keyof typeof colors;
+      return colors[key] as string;
+    }
+    // Fallback to legacy mood color if rating couldn't be derived
+    switch (entry.mood) {
       case 'sad':
         return sadColor;
       case 'anxious':
@@ -57,17 +68,38 @@ export function WeekView({ moodData }: WeekViewProps) {
     }
   };
 
-  // Get last 7 days
+  // Get last 7 days with morning and evening moods
   const last7Days = Array.from({ length: 7 }, (_, i) => {
     const date = subDays(today, 6 - i);
     const dayName = weekDays[date.getDay()];
-    const mood = moodData?.find((m) => isSameDay(new Date(m.createdAt), date));
+    const dayMoods =
+      moodData?.filter((m) => isSameDay(new Date(m.createdAt), date)) || [];
+
+    // Separate morning and evening moods
+    const morningMood = dayMoods.find(
+      (m: any) =>
+        m.timeOfDay === 'morning' ||
+        (!m.timeOfDay && new Date(m.createdAt).getHours() < 12)
+    );
+    const eveningMood = dayMoods.find(
+      (m: any) =>
+        m.timeOfDay === 'evening' ||
+        (!m.timeOfDay &&
+          new Date(m.createdAt).getHours() >= 12 &&
+          m !== morningMood)
+    );
+
+    // Use latest mood for backward compatibility
+    const mood =
+      dayMoods.length > 0 ? dayMoods[dayMoods.length - 1] : undefined;
     const isToday = isSameDay(date, today);
 
     return {
       date,
       dayName,
       mood,
+      morningMood,
+      eveningMood,
       isToday,
     };
   });
@@ -97,18 +129,41 @@ export function WeekView({ moodData }: WeekViewProps) {
     <>
       <View className="py-4">
         <View className="flex-row justify-around">
-          {last7Days.map((day, index) => (
-            <WeekDayDot
-              key={index}
-              day={day.dayName}
-              color={day.mood ? getMoodColor(day.mood.mood) : '#E5E7EB'}
-              isToday={day.isToday}
-              hasData={!!day.mood}
-              onPress={() => handleDayPress(index)}
-              isSelected={selectedDayIndex === index}
-              mood={day.mood?.mood}
-            />
-          ))}
+          {last7Days.map((day, index) => {
+            // Calculate gradient for dual moods
+            const pixelStyle = getMoodPixelStyle(
+              day.morningMood as any,
+              day.eveningMood as any,
+              colors,
+              day.isToday
+            );
+
+            const hasGradient = pixelStyle.type === 'gradient';
+            const gradientColors = hasGradient ? pixelStyle.colors || [] : [];
+            const gradientLocations = hasGradient ? pixelStyle.locations || [] : [];
+            const solidColor =
+              pixelStyle.type === 'solid'
+                ? pixelStyle.color
+                : '#E5E7EB'; // Default gray for when gradient is used
+
+            return (
+              <WeekDayDot
+                key={index}
+                day={day.dayName}
+                color={solidColor}
+                isToday={day.isToday}
+                hasData={!!day.mood}
+                onPress={() => handleDayPress(index)}
+                isSelected={selectedDayIndex === index}
+                mood={day.mood?.mood}
+                hasGradient={hasGradient}
+                gradientColors={gradientColors}
+                gradientLocations={gradientLocations}
+                morningMood={day.morningMood?.mood}
+                eveningMood={day.eveningMood?.mood}
+              />
+            );
+          })}
         </View>
       </View>
 
@@ -199,7 +254,7 @@ export function WeekView({ moodData }: WeekViewProps) {
                   <View
                     className="w-14 h-14 rounded-2xl items-center justify-center me-4 overflow-hidden"
                     style={{
-                      backgroundColor: getMoodColor(selectedDay.mood.mood),
+                      backgroundColor: getEntryColor(selectedDay.mood as any),
                     }}
                   >
                     <IconRenderer

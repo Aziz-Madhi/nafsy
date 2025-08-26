@@ -19,10 +19,14 @@ import {
 } from 'date-fns';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTranslation } from '~/hooks/useTranslation';
+import { mapMoodToRating } from '~/lib/mood-exercise-mapping';
+import { LinearGradient } from 'expo-linear-gradient';
+import { getMoodPixelStyle } from '~/lib/mood-colors';
 
 interface MoodEntry {
   createdAt: string;
-  mood: 'sad' | 'anxious' | 'neutral' | 'happy' | 'angry';
+  mood?: 'sad' | 'anxious' | 'neutral' | 'happy' | 'angry';
+  rating?: number;
 }
 
 interface PixelCalendarProps {
@@ -76,12 +80,36 @@ export function PixelCalendar({
   // Get all days in the calendar view
   const allDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd });
 
-  // Create mood map for quick lookup
+  // Create mood map for quick lookup with morning/evening separation
   const moodDataMap = useMemo(() => {
-    const map = new Map<string, string>();
-    moodData?.forEach((entry) => {
+    const map = new Map<
+      string,
+      {
+        mood?: MoodEntry['mood'];
+        rating?: number;
+        morning?: MoodEntry;
+        evening?: MoodEntry;
+      }
+    >();
+
+    moodData?.forEach((entry: any) => {
       const dateKey = format(new Date(entry.createdAt), 'yyyy-MM-dd');
-      map.set(dateKey, entry.mood);
+      const existing = map.get(dateKey) || {};
+      const hour = new Date(entry.createdAt).getHours();
+      const isMorning =
+        entry.timeOfDay === 'morning' || (!entry.timeOfDay && hour < 12);
+
+      if (isMorning) {
+        existing.morning = entry;
+      } else {
+        existing.evening = entry;
+      }
+
+      // Keep latest mood for backward compatibility
+      existing.mood = entry.mood;
+      existing.rating = entry.rating;
+
+      map.set(dateKey, existing);
     });
     return map;
   }, [moodData]);
@@ -106,29 +134,32 @@ export function PixelCalendar({
     return rows;
   }, [allDays]);
 
-  const getDayColor = (day: Date, isInMonth: boolean) => {
+  const getDayPixelStyle = (day: Date, isInMonth: boolean) => {
     // Days outside the current month should be transparent/invisible
     if (!isInMonth) {
-      return 'transparent';
+      return { type: 'solid' as const, color: 'transparent' };
     }
 
     const dateKey = format(day, 'yyyy-MM-dd');
-    const mood = moodDataMap.get(dateKey) as
-      | keyof typeof moodColors
-      | undefined;
+    const entry = moodDataMap.get(dateKey);
 
-    // If there's a mood, use the EXACT mood color
-    if (mood && moodColors[mood]) {
-      return moodColors[mood];
+    if (entry && (entry.morning || entry.evening)) {
+      return getMoodPixelStyle(entry.morning, entry.evening, colors, isToday(day));
     }
 
     // No mood entry for this day - use very subtle background
     const isDarkMode = colors.background === '#0A1514';
     if (isFuture(day)) {
-      return isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)';
+      return {
+        type: 'solid' as const,
+        color: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)',
+      };
     }
 
-    return isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+    return {
+      type: 'solid' as const,
+      color: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+    };
   };
 
   const handlePress = () => {
@@ -197,7 +228,7 @@ export function PixelCalendar({
                 <View key={weekIndex} className="flex-row" style={{ gap }}>
                   {week.map((day) => {
                     const isInMonth = day >= monthStart && day <= monthEnd;
-                    const color = getDayColor(day, isInMonth);
+                    const pixelStyle = getDayPixelStyle(day, isInMonth);
                     const isTodayDate = isToday(day);
                     const dateKey = format(day, 'yyyy-MM-dd');
 
@@ -207,14 +238,33 @@ export function PixelCalendar({
                         style={{
                           width: pixelSize,
                           height: pixelSize,
-                          backgroundColor: color,
                           borderRadius: 8,
                           borderWidth: isTodayDate ? 2 : 0,
                           borderColor: isTodayDate
                             ? colors.primary
                             : 'transparent',
+                          backgroundColor:
+                            pixelStyle.type === 'solid'
+                              ? pixelStyle.color
+                              : 'transparent',
+                          overflow: 'hidden',
                         }}
-                      />
+                      >
+                        {pixelStyle.type === 'gradient' &&
+                          pixelStyle.colors && (
+                            <LinearGradient
+                              colors={pixelStyle.colors}
+                              locations={pixelStyle.locations}
+                              start={pixelStyle.start || { x: 0, y: 0 }}
+                              end={pixelStyle.end || { x: 1, y: 0 }}
+                              style={{
+                                position: 'absolute',
+                                width: '100%',
+                                height: '100%',
+                              }}
+                            />
+                          )}
+                      </View>
                     );
                   })}
                 </View>

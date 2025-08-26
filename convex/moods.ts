@@ -6,26 +6,60 @@ import { getAuthenticatedUser } from './authUtils';
 // Create a new mood entry
 export const createMood = mutation({
   args: {
-    mood: v.union(
-      v.literal('happy'),
-      v.literal('neutral'),
-      v.literal('sad'),
-      v.literal('anxious'),
-      v.literal('angry')
+    // Backward compatible: either provide legacy mood OR new rating
+    mood: v.optional(
+      v.union(
+        v.literal('happy'),
+        v.literal('neutral'),
+        v.literal('sad'),
+        v.literal('anxious'),
+        v.literal('angry')
+      )
     ),
+    rating: v.optional(v.number()), // 1-10
     note: v.optional(v.string()),
     tags: v.optional(v.array(v.string())), // Contributing factors/sub-emotions
+    timeOfDay: v.optional(v.union(v.literal('morning'), v.literal('evening'))),
     createdAt: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
 
+    // Derive mood category from rating when provided
+    function getMoodCategoryFromRating(rating: number | undefined):
+      | 'happy'
+      | 'neutral'
+      | 'sad'
+      | 'anxious'
+      | 'angry'
+      | undefined {
+      if (rating == null) return undefined;
+      if (rating <= 2) return 'sad';
+      if (rating <= 4) return 'anxious';
+      if (rating <= 6) return 'neutral';
+      if (rating <= 10) return 'happy';
+      return 'neutral';
+    }
+
+    const derivedCategory = getMoodCategoryFromRating(args.rating);
+    
+    // Determine time of day if not provided
+    let timeOfDay = args.timeOfDay;
+    if (!timeOfDay) {
+      const hour = new Date(args.createdAt || Date.now()).getHours();
+      timeOfDay = hour < 12 ? 'morning' : 'evening';
+    }
+
     const moodId = await ctx.db.insert('moods', {
       userId: user._id,
-      mood: args.mood,
+      // Populate both legacy mood and new fields when rating is provided
+      mood: args.mood ?? derivedCategory,
+      rating: args.rating,
+      moodCategory: derivedCategory,
       note: args.note,
       tags: args.tags,
+      timeOfDay,
       createdAt: args.createdAt || Date.now(),
     });
     return moodId;
@@ -90,7 +124,8 @@ export const getMoodStats = query({
       .collect();
 
     // Calculate statistics
-    const moodCounts: Record<string, number> = {
+    type MoodKey = 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry';
+    const moodCounts: Record<MoodKey, number> = {
       happy: 0,
       neutral: 0,
       sad: 0,
@@ -101,7 +136,14 @@ export const getMoodStats = query({
     const dailyMoods: Record<string, Doc<'moods'>> = {};
 
     moods.forEach((mood) => {
-      moodCounts[mood.mood]++;
+      // Count using explicit category fallback, guarding undefined
+      const category: MoodKey | undefined =
+        (mood.mood as MoodKey | undefined) ??
+        (mood.moodCategory as MoodKey | undefined);
+
+      if (category) {
+        moodCounts[category]++;
+      }
 
       // Track daily moods (last mood of each day)
       const date = new Date(mood.createdAt).toDateString();
@@ -147,10 +189,10 @@ export const getMoodStats = query({
   },
 });
 
-// Get today's mood for a user
+// Get today's mood for a user (backward compatible - returns latest)
 export const getTodayMood = query({
   args: {},
-  handler: async (ctx, args) => {
+  handler: async (ctx) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
 
@@ -166,5 +208,111 @@ export const getTodayMood = query({
       .first();
 
     return todayMoods;
+  },
+});
+
+// Get all of today's moods (morning and evening)
+export const getTodayMoods = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthenticatedUser(ctx);
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const startTimestamp = todayStart.getTime();
+
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const endTimestamp = todayEnd.getTime();
+
+    const moods = await ctx.db
+      .query('moods')
+      .withIndex('by_user_date', (q) => q.eq('userId', user._id))
+      .filter((q) => 
+        q.and(
+          q.gte(q.field('createdAt'), startTimestamp),
+          q.lte(q.field('createdAt'), endTimestamp)
+        )
+      )
+      .order('asc')
+      .collect();
+
+    // Organize by time of day
+    const morningMood = moods.find(m => m.timeOfDay === 'morning') || 
+                       moods.find(m => new Date(m.createdAt).getHours() < 12);
+    const eveningMood = moods.find(m => m.timeOfDay === 'evening') || 
+                       moods.find(m => new Date(m.createdAt).getHours() >= 12 && m !== morningMood);
+
+    return {
+      morning: morningMood || null,
+      evening: eveningMood || null,
+      all: moods
+    };
+  },
+});
+
+// Get morning mood for today
+export const getTodayMorningMood = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthenticatedUser(ctx);
+
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+    const startTimestamp = todayStart.getTime();
+    
+    const todayNoon = new Date();
+    todayNoon.setHours(12, 0, 0, 0);
+    const noonTimestamp = todayNoon.getTime();
+
+    const morningMood = await ctx.db
+      .query('moods')
+      .withIndex('by_user_date', (q) => q.eq('userId', user._id))
+      .filter((q) => 
+        q.and(
+          q.gte(q.field('createdAt'), startTimestamp),
+          q.or(
+            q.eq(q.field('timeOfDay'), 'morning'),
+            q.lt(q.field('createdAt'), noonTimestamp)
+          )
+        )
+      )
+      .order('desc')
+      .first();
+
+    return morningMood;
+  },
+});
+
+// Get evening mood for today
+export const getTodayEveningMood = query({
+  args: {},
+  handler: async (ctx) => {
+    const user = await getAuthenticatedUser(ctx);
+
+    const todayNoon = new Date();
+    todayNoon.setHours(12, 0, 0, 0);
+    const noonTimestamp = todayNoon.getTime();
+    
+    const todayEnd = new Date();
+    todayEnd.setHours(23, 59, 59, 999);
+    const endTimestamp = todayEnd.getTime();
+
+    const eveningMood = await ctx.db
+      .query('moods')
+      .withIndex('by_user_date', (q) => q.eq('userId', user._id))
+      .filter((q) => 
+        q.and(
+          q.lte(q.field('createdAt'), endTimestamp),
+          q.or(
+            q.eq(q.field('timeOfDay'), 'evening'),
+            q.gte(q.field('createdAt'), noonTimestamp)
+          )
+        )
+      )
+      .order('desc')
+      .first();
+
+    return eveningMood;
   },
 });

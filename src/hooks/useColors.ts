@@ -31,12 +31,47 @@ const nativeColors = {
     moodAnxious: '#9370DB', // matches --mood-anxious: 147 112 219
     moodNeutral: '#94A3B8', // matches --mood-neutral: 148 163 184
     moodAngry: '#F87171', // matches --mood-angry: 248 113 113
+    // Mood light/dark variants to enable layered scaling
+    moodHappyLight: '#FEF3C7', // --mood-happy-light
+    moodHappyDark: '#F59E0B', // --mood-happy-dark
+    moodSadLight: '#E0E7FF', // --mood-sad-light
+    moodSadDark: '#4C5EBD', // --mood-sad-dark
+    moodAnxiousLight: '#F3F4F6', // --mood-anxious-light (soft gray for relief)
+    moodAnxiousDark: '#6B7280', // --mood-anxious-dark
+    moodNeutralLight: '#E2E8F0', // --mood-neutral-light
+    moodNeutralDark: '#64748B', // --mood-neutral-dark
+    moodAngryLight: '#FEE2E2', // --mood-angry-light
+    moodAngryDark: '#EF4444', // --mood-angry-dark
     // Mood solid background pastels (warmer, identical across themes)
     moodHappyBg: '#FFD79A', // 255 215 154
     moodSadBg: '#E7CCFF', // 231 204 255
     moodAnxiousBg: '#E3CDFF', // 227 205 255
     moodNeutralBg: '#EEDFC6', // 238 223 198
     moodAngryBg: '#FFBABA', // 255 186 186
+
+    // Mood Rating Scale (1–10)
+    moodScale1: '#DC2626',
+    moodScale2: '#EF4444',
+    moodScale3: '#F97316',
+    moodScale4: '#F59E0B',
+    moodScale5: '#FACC15',
+    moodScale6: '#A3E635',
+    moodScale7: '#84CC16',
+    moodScale8: '#22C55E',
+    moodScale9: '#10B981',
+    moodScale10: '#14B8A6',
+
+    // Rating Scale (1–10) per product spec
+    ratingScale1: '#2F3A56',
+    ratingScale2: '#355B87',
+    ratingScale3: '#4E7FAE',
+    ratingScale4: '#4FA0A6',
+    ratingScale5: '#58B78C',
+    ratingScale6: '#8CC56A',
+    ratingScale7: '#C9D453',
+    ratingScale8: '#F0D247',
+    ratingScale9: '#F4B649',
+    ratingScale10: '#F19A3E',
 
     // Shadow colors
     shadow: '#000000', // for shadowColor props
@@ -96,12 +131,47 @@ const nativeColors = {
     moodAnxious: '#9370DB', // unified with light
     moodNeutral: '#94A3B8', // unified with light
     moodAngry: '#F87171', // unified with light
+    // Mood light/dark variants to enable layered scaling
+    moodHappyLight: '#FEF3C7',
+    moodHappyDark: '#F59E0B',
+    moodSadLight: '#E0E7FF',
+    moodSadDark: '#4C5EBD',
+    moodAnxiousLight: '#F3F4F6',
+    moodAnxiousDark: '#6B7280',
+    moodNeutralLight: '#E2E8F0',
+    moodNeutralDark: '#64748B',
+    moodAngryLight: '#FEE2E2',
+    moodAngryDark: '#EF4444',
     // Mood solid background pastels (warmer, identical across themes)
     moodHappyBg: '#FFD79A', // 255 215 154
     moodSadBg: '#E7CCFF', // 231 204 255
     moodAnxiousBg: '#E3CDFF', // 227 205 255
     moodNeutralBg: '#EEDFC6', // 238 223 198
     moodAngryBg: '#FFBABA', // 255 186 186
+
+    // Mood Rating Scale (1–10)
+    moodScale1: '#DC2626',
+    moodScale2: '#EF4444',
+    moodScale3: '#F97316',
+    moodScale4: '#F59E0B',
+    moodScale5: '#FACC15',
+    moodScale6: '#A3E635',
+    moodScale7: '#84CC16',
+    moodScale8: '#22C55E',
+    moodScale9: '#10B981',
+    moodScale10: '#14B8A6',
+
+    // Rating Scale (1–10) per product spec
+    ratingScale1: '#2F3A56',
+    ratingScale2: '#355B87',
+    ratingScale3: '#4E7FAE',
+    ratingScale4: '#4FA0A6',
+    ratingScale5: '#58B78C',
+    ratingScale6: '#8CC56A',
+    ratingScale7: '#C9D453',
+    ratingScale8: '#F0D247',
+    ratingScale9: '#F4B649',
+    ratingScale10: '#F19A3E',
 
     // Shadow colors - darker for dark mode
     shadow: '#000000',

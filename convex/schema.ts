@@ -74,15 +74,23 @@ export default defineSchema({
 
   moods: defineTable({
     userId: v.id('users'),
-    mood: v.union(
-      v.literal('happy'),
-      v.literal('neutral'),
-      v.literal('sad'),
-      v.literal('anxious'),
-      v.literal('angry')
+    // Keep old field for backward compatibility; new entries should still populate it
+    mood: v.optional(
+      v.union(
+        v.literal('happy'),
+        v.literal('neutral'),
+        v.literal('sad'),
+        v.literal('anxious'),
+        v.literal('angry')
+      )
     ),
+    // New fields for 1-10 rating system
+    rating: v.optional(v.number()), // 1-10 scale
+    moodCategory: v.optional(v.string()), // derived from rating (e.g., happy/sad/...)
     note: v.optional(v.string()),
     tags: v.optional(v.array(v.string())), // Contributing factors/sub-emotions
+    // Time of day for dual mood tracking (morning/evening)
+    timeOfDay: v.optional(v.union(v.literal('morning'), v.literal('evening'))),
     createdAt: v.number(),
   })
     .index('by_user_date', ['userId', 'createdAt'])

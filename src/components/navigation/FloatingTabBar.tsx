@@ -138,7 +138,7 @@ export function FloatingTabBar({
   // Voice handler
   const handleVoicePress = useCallback(async () => {
     await impactAsync(ImpactFeedbackStyle.Medium);
-    
+
     if (onVoicePress) {
       onVoicePress();
     } else {

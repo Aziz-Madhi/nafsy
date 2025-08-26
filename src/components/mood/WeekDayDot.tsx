@@ -6,6 +6,7 @@ import { MotiPressable } from 'moti/interactions';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { IconRenderer } from '~/components/ui/IconRenderer';
 import { useTranslation } from '~/hooks/useTranslation';
+import { LinearGradient } from 'expo-linear-gradient';
 
 interface WeekDayDotProps {
   day: string;
@@ -16,6 +17,11 @@ interface WeekDayDotProps {
   onPress?: () => void;
   isSelected?: boolean;
   mood?: string;
+  hasGradient?: boolean;
+  gradientColors?: string[];
+  gradientLocations?: number[];
+  morningMood?: string;
+  eveningMood?: string;
 }
 
 export function WeekDayDot({
@@ -27,15 +33,20 @@ export function WeekDayDot({
   onPress,
   isSelected = false,
   mood,
+  hasGradient = false,
+  gradientColors = [],
+  gradientLocations = [],
+  morningMood,
+  eveningMood,
 }: WeekDayDotProps) {
   const { t } = useTranslation();
   const dotStyle = React.useMemo(
     () => ({
       width: size,
       height: size,
-      backgroundColor: hasData ? color : 'transparent',
+      backgroundColor: hasGradient ? 'transparent' : (hasData ? color : 'transparent'),
     }),
-    [size, hasData, color]
+    [size, hasData, color, hasGradient]
   );
 
   const todayIndicatorStyle = React.useMemo(
@@ -80,9 +91,10 @@ export function WeekDayDot({
       >
         <View
           className={cn(
-            'rounded-2xl items-center justify-center',
+            'rounded-2xl items-center justify-center overflow-hidden',
             isSelected && 'border-3 border-primary',
-            !hasData && !isToday && !isSelected && 'border-2 border-gray-300'
+            !hasData && !isToday && !isSelected && 'border-2 border-gray-300',
+            isToday && hasData && hasGradient && 'border-2 border-gray-300'
           )}
           style={{
             ...dotStyle,
@@ -93,14 +105,24 @@ export function WeekDayDot({
             elevation: hasData ? 4 : 0,
           }}
         >
-          {hasData && mood ? (
-            <IconRenderer
-              iconType="mood"
-              iconName={mood}
-              size={size * 0.45}
-              color="#000000"
+          {/* Gradient background for dual moods */}
+          {hasGradient && gradientColors.length > 1 && (
+            <LinearGradient
+              colors={gradientColors}
+              locations={gradientLocations}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                position: 'absolute',
+                width: '100%',
+                height: '100%',
+                borderRadius: 14,
+              }}
             />
-          ) : isToday ? (
+          )}
+
+          {/* Today indicator only - no mood icons */}
+          {isToday && !hasData ? (
             <View style={todayIndicatorStyle} />
           ) : null}
         </View>

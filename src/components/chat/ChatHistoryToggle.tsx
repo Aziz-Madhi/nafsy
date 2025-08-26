@@ -40,7 +40,10 @@ export function ChatHistoryToggle({
       <View
         style={{
           flexDirection: 'row',
-          backgroundColor: colors.background === '#FFFFFF' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.06)',
+          backgroundColor:
+            colors.background === '#FFFFFF'
+              ? 'rgba(0,0,0,0.04)'
+              : 'rgba(255,255,255,0.06)',
           borderRadius: 16,
           padding: 4,
           position: 'relative',

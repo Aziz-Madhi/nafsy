@@ -144,7 +144,9 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
         ventChatInput: '',
       });
 
-      console.log(`🔄 Switched to ${type} personality without clearing sessions`);
+      console.log(
+        `🔄 Switched to ${type} personality without clearing sessions`
+      );
     },
 
     // Coach Chat Actions

@@ -41,6 +41,17 @@ module.exports = {
     'bg-card',
     'bg-card-elevated',
     'bg-card-darker',
+    // Rating scale colors (dynamic usage in mood UI)
+    'bg-rating-1',
+    'bg-rating-2',
+    'bg-rating-3',
+    'bg-rating-4',
+    'bg-rating-5',
+    'bg-rating-6',
+    'bg-rating-7',
+    'bg-rating-8',
+    'bg-rating-9',
+    'bg-rating-10',
   ],
   darkMode: 'class',
   presets: [require('nativewind/preset')],
@@ -130,6 +141,20 @@ module.exports = {
             dark: 'rgb(var(--mood-angry-dark) / <alpha-value>)',
             background: 'rgb(var(--mood-angry-bg) / <alpha-value>)',
           },
+        },
+
+        // Rating scale (1–10) using mood-scale CSS variables
+        rating: {
+          1: 'rgb(var(--mood-scale-1) / <alpha-value>)',
+          2: 'rgb(var(--mood-scale-2) / <alpha-value>)',
+          3: 'rgb(var(--mood-scale-3) / <alpha-value>)',
+          4: 'rgb(var(--mood-scale-4) / <alpha-value>)',
+          5: 'rgb(var(--mood-scale-5) / <alpha-value>)',
+          6: 'rgb(var(--mood-scale-6) / <alpha-value>)',
+          7: 'rgb(var(--mood-scale-7) / <alpha-value>)',
+          8: 'rgb(var(--mood-scale-8) / <alpha-value>)',
+          9: 'rgb(var(--mood-scale-9) / <alpha-value>)',
+          10: 'rgb(var(--mood-scale-10) / <alpha-value>)',
         },
 
         // Wellness colors

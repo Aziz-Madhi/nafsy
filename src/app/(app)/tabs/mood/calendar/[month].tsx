@@ -19,6 +19,9 @@ import {
 } from 'date-fns';
 import { cn } from '~/lib/cn';
 import { useColors } from '~/hooks/useColors';
+import { mapMoodToRating } from '~/lib/mood-exercise-mapping';
+import { LinearGradient } from 'expo-linear-gradient';
+import { getMoodPixelStyle } from '~/lib/mood-colors';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -47,9 +50,18 @@ export default function CalendarModal() {
   const moodData = useMoodData();
   const colors = useColors();
 
-  // Helper function to get mood color
-  const getMoodColor = (mood: string) => {
-    switch (mood) {
+  // Unified color: derive from rating (1–10), fallback to legacy mood mapping
+  const getEntryColor = (entry: any): string => {
+    if (!entry) return colors.muted;
+    const rating =
+      entry.rating ?? (entry.mood ? mapMoodToRating(entry.mood) : undefined);
+    if (rating) {
+      const clamped = Math.max(1, Math.min(10, Math.round(rating)));
+      const key = `ratingScale${clamped}` as keyof typeof colors;
+      return colors[key] as string;
+    }
+    // Fallback to legacy mood colors
+    switch (entry.mood) {
       case 'happy':
         return colors.moodHappy;
       case 'sad':
@@ -100,11 +112,30 @@ export default function CalendarModal() {
   const startPadding = monthStart.getDay();
   const paddingDays = Array(startPadding).fill(null);
 
-  const getMoodForDate = useCallback(
+  const getMoodsForDate = useCallback(
     (date: Date) => {
-      return moodData?.find((mood) =>
-        isSameDay(new Date(mood.createdAt), date)
+      const dayMoods =
+        moodData?.filter((mood) => isSameDay(new Date(mood.createdAt), date)) ||
+        [];
+
+      const morningMood = dayMoods.find(
+        (m: any) =>
+          m.timeOfDay === 'morning' ||
+          (!m.timeOfDay && new Date(m.createdAt).getHours() < 12)
       );
+      const eveningMood = dayMoods.find(
+        (m: any) =>
+          m.timeOfDay === 'evening' ||
+          (!m.timeOfDay &&
+            new Date(m.createdAt).getHours() >= 12 &&
+            m !== morningMood)
+      );
+
+      return {
+        any: dayMoods.length > 0 ? dayMoods[dayMoods.length - 1] : undefined,
+        morning: morningMood,
+        evening: eveningMood,
+      };
     },
     [moodData]
   );
@@ -133,9 +164,16 @@ export default function CalendarModal() {
         return <View style={{ width: '100%', height: 48 }} />;
       }
 
-      const mood = getMoodForDate(item.date);
+      const moods = getMoodsForDate(item.date);
       const isToday = isSameDay(item.date, new Date());
       const isSelected = selectedDate && isSameDay(item.date, selectedDate);
+
+      const pixelStyle = getMoodPixelStyle(
+        moods.morning as any,
+        moods.evening as any,
+        colors,
+        isToday
+      );
 
       return (
         <Pressable
@@ -155,24 +193,63 @@ export default function CalendarModal() {
               alignItems: 'center',
               justifyContent: 'center',
               borderRadius: 12,
-              backgroundColor: mood
-                ? getMoodColor(mood.mood)
+              backgroundColor: moods.any
+                ? pixelStyle.type === 'solid'
+                  ? pixelStyle.color
+                  : 'transparent'
                 : isSelected
                   ? '#E0F2FE'
                   : isToday
                     ? '#F3F4F6'
                     : 'transparent',
-              borderWidth: mood ? 2 : isSelected ? 2 : 0,
-              borderColor: mood ? getMoodColor(mood.mood) : colors.primary,
-              shadowColor: mood ? getMoodColor(mood.mood) : '#000',
+              borderWidth: moods.any ? 2 : isSelected ? 2 : 0,
+              borderColor: moods.any
+                ? pixelStyle.type === 'solid'
+                  ? pixelStyle.color
+                  : colors.primary
+                : colors.primary,
+              shadowColor: moods.any ? colors.primary : '#000',
               shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: mood ? 0.2 : 0,
+              shadowOpacity: moods.any ? 0.2 : 0,
               shadowRadius: 2,
-              elevation: mood ? 2 : 0,
+              elevation: moods.any ? 2 : 0,
+              overflow: 'hidden',
             }}
           >
-            {mood ? (
-              renderMoodIcon(mood.mood, 20, colors.foreground)
+            {pixelStyle.type === 'gradient' && pixelStyle.colors && (
+              <LinearGradient
+                colors={pixelStyle.colors as [string, string, ...string[]]}
+                locations={
+                  pixelStyle.locations as [number, number, ...number[]]
+                }
+                start={pixelStyle.start || { x: 0, y: 0 }}
+                end={pixelStyle.end || { x: 1, y: 0 }}
+                style={{
+                  position: 'absolute',
+                  width: '100%',
+                  height: '100%',
+                }}
+              />
+            )}
+            {moods.any ? (
+              moods.morning &&
+              moods.evening &&
+              moods.morning.mood &&
+              moods.evening.mood ? (
+                // Show both icons for dual moods - side by side
+                <View
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {renderMoodIcon(moods.morning.mood, 14, colors.foreground)}
+                  {renderMoodIcon(moods.evening.mood, 14, colors.foreground)}
+                </View>
+              ) : moods.any?.mood ? (
+                renderMoodIcon(moods.any.mood, 20, colors.foreground)
+              ) : null
             ) : (
               <Text
                 variant="body"
@@ -188,7 +265,7 @@ export default function CalendarModal() {
         </Pressable>
       );
     },
-    [selectedDate, setSelectedDate, getMoodForDate]
+    [selectedDate, setSelectedDate, getMoodsForDate, colors]
   );
 
   const keyExtractor = useCallback((item: any) => item.id, []);
@@ -293,54 +370,162 @@ export default function CalendarModal() {
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
               </Text>
               {(() => {
-                const selectedMoodData = getMoodForDate(selectedDate);
+                const selectedMoods = getMoodsForDate(selectedDate);
+                const selectedMoodData = selectedMoods.any;
                 if (selectedMoodData) {
+                  // Check if we have both morning and evening moods with valid mood values
+                  const hasBothMoods =
+                    selectedMoods.morning?.mood && selectedMoods.evening?.mood;
+
                   return (
                     <View>
-                      <View
-                        style={{
-                          flexDirection: 'row',
-                          alignItems: 'center',
-                          marginBottom: 12,
-                        }}
-                      >
-                        <View
-                          className="w-12 h-12 rounded-2xl items-center justify-center me-3 overflow-hidden"
-                          style={{
-                            backgroundColor: getMoodColor(
-                              selectedMoodData.mood
-                            ),
-                          }}
-                        >
-                          {renderMoodIcon(
-                            selectedMoodData.mood,
-                            22,
-                            colors.foreground
+                      {hasBothMoods ? (
+                        // Show both morning and evening moods
+                        <>
+                          <View style={{ marginBottom: 16 }}>
+                            <Text
+                              variant="caption1"
+                              className="text-gray-500 mb-2 font-medium"
+                            >
+                              🌅 {t('mood.morning')}
+                            </Text>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                marginBottom: 8,
+                              }}
+                            >
+                              <View
+                                className="w-12 h-12 rounded-2xl items-center justify-center me-3 overflow-hidden"
+                                style={{
+                                  backgroundColor: getEntryColor(
+                                    selectedMoods.morning
+                                  ),
+                                }}
+                              >
+                                {selectedMoods.morning?.mood &&
+                                  renderMoodIcon(
+                                    selectedMoods.morning.mood,
+                                    22,
+                                    colors.foreground
+                                  )}
+                              </View>
+                              <Text
+                                variant="body"
+                                className="text-[#5A4A3A] capitalize font-medium"
+                              >
+                                {selectedMoods.morning?.mood &&
+                                  t(`mood.moods.${selectedMoods.morning.mood}`)}
+                              </Text>
+                            </View>
+                            {selectedMoods.morning?.note && (
+                              <Text
+                                variant="caption1"
+                                className="text-gray-600 italic"
+                              >
+                                {`"${selectedMoods.morning.note}"`}
+                              </Text>
+                            )}
+                          </View>
+
+                          <View>
+                            <Text
+                              variant="caption1"
+                              className="text-gray-500 mb-2 font-medium"
+                            >
+                              🌙 {t('mood.evening')}
+                            </Text>
+                            <View
+                              style={{
+                                flexDirection: 'row',
+                                alignItems: 'center',
+                                marginBottom: 8,
+                              }}
+                            >
+                              <View
+                                className="w-12 h-12 rounded-2xl items-center justify-center me-3 overflow-hidden"
+                                style={{
+                                  backgroundColor: getEntryColor(
+                                    selectedMoods.evening
+                                  ),
+                                }}
+                              >
+                                {selectedMoods.evening?.mood &&
+                                  renderMoodIcon(
+                                    selectedMoods.evening.mood,
+                                    22,
+                                    colors.foreground
+                                  )}
+                              </View>
+                              <Text
+                                variant="body"
+                                className="text-[#5A4A3A] capitalize font-medium"
+                              >
+                                {selectedMoods.evening?.mood &&
+                                  t(`mood.moods.${selectedMoods.evening.mood}`)}
+                              </Text>
+                            </View>
+                            {selectedMoods.evening?.note && (
+                              <Text
+                                variant="caption1"
+                                className="text-gray-600 italic"
+                              >
+                                {`"${selectedMoods.evening.note}"`}
+                              </Text>
+                            )}
+                          </View>
+                        </>
+                      ) : (
+                        // Show single mood (morning or evening)
+                        <>
+                          <View
+                            style={{
+                              flexDirection: 'row',
+                              alignItems: 'center',
+                              marginBottom: 12,
+                            }}
+                          >
+                            <View
+                              className="w-12 h-12 rounded-2xl items-center justify-center me-3 overflow-hidden"
+                              style={{
+                                backgroundColor:
+                                  getEntryColor(selectedMoodData),
+                              }}
+                            >
+                              {selectedMoodData.mood &&
+                                renderMoodIcon(
+                                  selectedMoodData.mood,
+                                  22,
+                                  colors.foreground
+                                )}
+                            </View>
+                            <Text
+                              variant="body"
+                              className="text-[#5A4A3A] capitalize font-medium"
+                            >
+                              {t('mood.feeling')}{' '}
+                              {selectedMoodData.mood &&
+                                t(`mood.moods.${selectedMoodData.mood}`)}
+                            </Text>
+                          </View>
+                          {selectedMoodData.note && (
+                            <View className="bg-white rounded-xl p-3 border border-gray-100">
+                              <Text
+                                variant="caption1"
+                                className="text-gray-500 mb-1 font-medium"
+                              >
+                                {t('mood.note')}
+                              </Text>
+                              <Text
+                                variant="body"
+                                className="text-[#5A4A3A] leading-5"
+                              >
+                                {selectedMoodData.note}
+                              </Text>
+                            </View>
                           )}
-                        </View>
-                        <Text
-                          variant="body"
-                          className="text-[#5A4A3A] capitalize font-medium"
-                        >
-                          {t('mood.feeling')}{' '}
-                          {t(`mood.moods.${selectedMoodData.mood}`)}
-                        </Text>
-                      </View>
-                      {selectedMoodData.note && (
-                        <View className="bg-white rounded-xl p-3 border border-gray-100">
-                          <Text
-                            variant="caption1"
-                            className="text-gray-500 mb-1 font-medium"
-                          >
-                            {t('mood.note')}
-                          </Text>
-                          <Text
-                            variant="body"
-                            className="text-[#5A4A3A] leading-5"
-                          >
-                            {selectedMoodData.note}
-                          </Text>
-                        </View>
+                        </>
                       )}
                     </View>
                   );

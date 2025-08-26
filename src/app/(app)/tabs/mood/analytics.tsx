@@ -14,6 +14,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import Svg, { Path, Defs, LinearGradient, Stop } from 'react-native-svg';
 import { useColors } from '~/hooks/useColors';
+import { mapMoodToRating } from '~/lib/mood-exercise-mapping';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 import { useTranslation } from '~/hooks/useTranslation';
 
@@ -219,19 +220,62 @@ export default function AnalyticsModal() {
     router.back();
   }, []);
 
-  // Calculate mood distribution data
-  const chartData: MoodData[] = useMemo(() => {
-    return ['sad', 'anxious', 'neutral', 'happy', 'angry'].map((mood) => {
-      const count = moodData?.filter((m) => m.mood === mood).length || 0;
-      const percentage = moodData?.length ? (count / moodData.length) * 100 : 0;
+  // Calculate mood distribution data with morning/evening separation
+  const { chartData, morningData, eveningData } = useMemo(() => {
+    const allData = ['sad', 'anxious', 'neutral', 'happy', 'angry'].map(
+      (mood) => {
+        const count = moodData?.filter((m) => m.mood === mood).length || 0;
+        const percentage = moodData?.length
+          ? (count / moodData.length) * 100
+          : 0;
 
-      return {
-        mood,
-        count,
-        percentage,
-        color: getMoodColor(mood),
-      };
-    });
+        return {
+          mood,
+          count,
+          percentage,
+          color: getMoodColor(mood),
+        };
+      }
+    );
+
+    // Separate morning and evening moods
+    const morningMoods =
+      moodData?.filter((m: any) => {
+        const hour = new Date(m.createdAt).getHours();
+        return m.timeOfDay === 'morning' || (!m.timeOfDay && hour < 12);
+      }) || [];
+
+    const eveningMoods =
+      moodData?.filter((m: any) => {
+        const hour = new Date(m.createdAt).getHours();
+        return m.timeOfDay === 'evening' || (!m.timeOfDay && hour >= 12);
+      }) || [];
+
+    const morningStats = ['sad', 'anxious', 'neutral', 'happy', 'angry'].map(
+      (mood) => {
+        const count = morningMoods.filter((m) => m.mood === mood).length;
+        const percentage = morningMoods.length
+          ? (count / morningMoods.length) * 100
+          : 0;
+        return { mood, count, percentage, color: getMoodColor(mood) };
+      }
+    );
+
+    const eveningStats = ['sad', 'anxious', 'neutral', 'happy', 'angry'].map(
+      (mood) => {
+        const count = eveningMoods.filter((m) => m.mood === mood).length;
+        const percentage = eveningMoods.length
+          ? (count / eveningMoods.length) * 100
+          : 0;
+        return { mood, count, percentage, color: getMoodColor(mood) };
+      }
+    );
+
+    return {
+      chartData: allData,
+      morningData: morningStats,
+      eveningData: eveningStats,
+    };
   }, [moodData]);
 
   // Calculate summary stats
@@ -245,19 +289,13 @@ export default function AnalyticsModal() {
 
   const averageMoodScore = useMemo(() => {
     if (!moodData?.length) return 0;
-    const moodValues: Record<string, number> = {
-      angry: 1,
-      sad: 2,
-      neutral: 3,
-      happy: 4,
-      anxious: 2.5, // Between sad and neutral
-    };
-
-    const total = moodData.reduce((sum, mood) => {
-      return sum + (moodValues[mood.mood] || 3);
+    const total = moodData.reduce((sum, entry) => {
+      const rating = (entry as any).rating as number | undefined;
+      if (typeof rating === 'number') return sum + rating;
+      // Fallback from mood category
+      return sum + mapMoodToRating(entry.mood);
     }, 0);
-
-    return total / moodData.length;
+    return total / moodData.length; // 1-10 scale
   }, [moodData]);
 
   return (
@@ -312,7 +350,7 @@ export default function AnalyticsModal() {
               variant="title3"
               className="text-[#5A4A3A] font-bold text-center"
             >
-              {averageMoodScore.toFixed(1)}/5
+              {averageMoodScore.toFixed(1)}/10
             </Text>
             <Text variant="caption1" className="text-gray-600 text-center mt-1">
               {t('mood.analytics.averageScore')}
@@ -382,6 +420,78 @@ export default function AnalyticsModal() {
           </Text>
 
           <SimpleMoodVisualization data={chartData} />
+
+          {/* Morning vs Evening Comparison */}
+          {moodData && moodData.length > 0 && (
+            <View className="mt-6 pt-6 border-t border-gray-200">
+              <Text
+                variant="body"
+                className="text-[#5A4A3A] font-semibold mb-4"
+              >
+                {t('mood.analytics.morningVsEvening')}
+              </Text>
+              <View className="flex-row justify-between">
+                <View className="flex-1 mr-2">
+                  <Text
+                    variant="caption1"
+                    className="text-center text-gray-600 mb-2"
+                  >
+                    🌅 {t('mood.morning')}
+                  </Text>
+                  <View className="bg-gray-50 rounded-xl p-3">
+                    {morningData
+                      .filter((m) => m.count > 0)
+                      .slice(0, 2)
+                      .map((item) => (
+                        <View
+                          key={item.mood}
+                          className="flex-row justify-between items-center mb-1"
+                        >
+                          <Text variant="caption1" className="capitalize">
+                            {t(`mood.moods.${item.mood}`)}
+                          </Text>
+                          <Text
+                            variant="caption1"
+                            style={{ color: item.color }}
+                          >
+                            {item.percentage.toFixed(0)}%
+                          </Text>
+                        </View>
+                      ))}
+                  </View>
+                </View>
+                <View className="flex-1 ml-2">
+                  <Text
+                    variant="caption1"
+                    className="text-center text-gray-600 mb-2"
+                  >
+                    🌙 {t('mood.evening')}
+                  </Text>
+                  <View className="bg-gray-50 rounded-xl p-3">
+                    {eveningData
+                      .filter((m) => m.count > 0)
+                      .slice(0, 2)
+                      .map((item) => (
+                        <View
+                          key={item.mood}
+                          className="flex-row justify-between items-center mb-1"
+                        >
+                          <Text variant="caption1" className="capitalize">
+                            {t(`mood.moods.${item.mood}`)}
+                          </Text>
+                          <Text
+                            variant="caption1"
+                            style={{ color: item.color }}
+                          >
+                            {item.percentage.toFixed(0)}%
+                          </Text>
+                        </View>
+                      ))}
+                  </View>
+                </View>
+              </View>
+            </View>
+          )}
 
           {totalEntries > 0 && (
             <View className="mt-6 pt-4 border-t border-gray-200">

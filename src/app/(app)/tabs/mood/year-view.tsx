@@ -31,6 +31,7 @@ export default function YearViewModal() {
   const transformedMoodData = moodData?.map((entry) => ({
     createdAt: new Date(entry.createdAt).toISOString(),
     mood: entry.mood,
+    rating: entry.rating,
   }));
 
   return (

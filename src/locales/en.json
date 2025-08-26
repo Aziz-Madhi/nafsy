@@ -169,6 +169,16 @@
       "anxious": "Anxious",
       "angry": "Angry"
     },
+    "morning": "Morning",
+    "evening": "Evening",
+    "greetings": {
+      "morning": "Morning, how are you feeling?",
+      "evening": "Evening, how are you feeling?"
+    },
+    "reminder": {
+      "morning": "✨ Remember to log your morning mood tomorrow",
+      "evening": "🌙 Don't forget to log your evening mood later today"
+    },
     "moodEmojis": {
       "happy": "😊",
       "neutral": "😐",
@@ -344,7 +354,24 @@
       "mostFrequent": "Most Frequent",
       "timeCount": "{{count}} times",
       "distribution": "Mood Distribution",
-      "basedOn": "Based on {{count}} mood entries"
+      "basedOn": "Based on {{count}} mood entries",
+      "morningVsEvening": "Morning vs Evening Patterns"
+    },
+    "rating": {
+      "title": "How are you feeling?",
+      "description": "Rate your mood from 1 to 10",
+      "labels": {
+        "1": "Very Sad",
+        "2": "Sad",
+        "3": "Down",
+        "4": "Low",
+        "5": "Okay",
+        "6": "Fine",
+        "7": "Good",
+        "8": "Happy",
+        "9": "Very Happy",
+        "10": "Euphoric"
+      }
     },
     "yearView": {
       "subtitle": "Your emotional journey",

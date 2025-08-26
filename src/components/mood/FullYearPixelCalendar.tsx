@@ -20,10 +20,15 @@ import { ChevronLeft } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from '~/hooks/useTranslation';
+import { mapMoodToRating } from '~/lib/mood-exercise-mapping';
+import { LinearGradient } from 'expo-linear-gradient';
+import { getMoodPixelStyle } from '~/lib/mood-colors';
 
 interface MoodEntry {
   createdAt: string;
-  mood: 'sad' | 'anxious' | 'neutral' | 'happy' | 'angry';
+  mood?: 'sad' | 'anxious' | 'neutral' | 'happy' | 'angry';
+  rating?: number;
+  timeOfDay?: 'morning' | 'evening';
 }
 
 interface FullYearPixelCalendarProps {
@@ -151,12 +156,36 @@ export function FullYearPixelCalendar({
     };
   });
 
-  // Create mood data map for quick lookup
+  // Create mood data map for quick lookup with morning/evening separation
   const moodDataMap = useMemo(() => {
-    const map = new Map<string, string>();
-    moodData?.forEach((entry) => {
+    const map = new Map<
+      string,
+      {
+        mood?: MoodEntry['mood'];
+        rating?: number;
+        morning?: MoodEntry;
+        evening?: MoodEntry;
+      }
+    >();
+
+    moodData?.forEach((entry: any) => {
       const dateKey = format(new Date(entry.createdAt), 'yyyy-MM-dd');
-      map.set(dateKey, entry.mood);
+      const existing = map.get(dateKey) || {};
+      const hour = new Date(entry.createdAt).getHours();
+      const isMorning =
+        entry.timeOfDay === 'morning' || (!entry.timeOfDay && hour < 12);
+
+      if (isMorning) {
+        existing.morning = entry;
+      } else {
+        existing.evening = entry;
+      }
+
+      // Keep latest mood for backward compatibility
+      existing.mood = entry.mood;
+      existing.rating = entry.rating;
+
+      map.set(dateKey, existing);
     });
     return map;
   }, [moodData]);
@@ -192,7 +221,8 @@ export function FullYearPixelCalendar({
       for (let day = 1; day <= daysInMonth; day++) {
         const currentDate = new Date(currentYear, monthIndex, day);
         const dateKey = format(currentDate, 'yyyy-MM-dd');
-        const mood = moodDataMap.get(dateKey);
+        const rec = moodDataMap.get(dateKey);
+        const mood = rec?.mood;
 
         monthDays.push({
           date: currentDate,
@@ -254,24 +284,37 @@ export function FullYearPixelCalendar({
     return allRows;
   }, [currentYear, moodDataMap, today]);
 
-  // Get color for a day
-  const getDayColor = (day: any) => {
+  // Get pixel style for a day (solid color or gradient)
+  const getDayPixelStyle = (day: any) => {
     // If it's a filler day (not a real date), make it transparent
     if (!day.isReal) {
-      return 'transparent';
+      return { type: 'solid' as const, color: 'transparent' };
     }
 
-    // If there's a mood, use the EXACT mood color
-    if (day.mood && moodColors[day.mood as keyof typeof moodColors]) {
-      return moodColors[day.mood as keyof typeof moodColors];
+    const entry = moodDataMap.get(day.dateKey);
+
+    if (entry && (entry.morning || entry.evening)) {
+      return getMoodPixelStyle(entry.morning, entry.evening, colors, day.isToday);
     }
 
     // No mood entry for this day - use very subtle background
     if (day.isFuture) {
-      return isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)';
+      return {
+        type: 'solid' as const,
+        color: isDarkMode ? 'rgba(255, 255, 255, 0.06)' : 'rgba(0, 0, 0, 0.03)',
+      };
     }
 
-    return isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)';
+    return {
+      type: 'solid' as const,
+      color: isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.05)',
+    };
+  };
+
+  // Get color for a day (backward compatibility)
+  const getDayColor = (day: any) => {
+    const pixelStyle = getDayPixelStyle(day);
+    return pixelStyle.type === 'solid' ? pixelStyle.color : colors.moodNeutral;
   };
 
   // Handle touch on the grid container
@@ -512,7 +555,7 @@ export function FullYearPixelCalendar({
                                       );
                                     }
 
-                                    const color = getDayColor(day);
+                                    const pixelStyle = getDayPixelStyle(day);
 
                                     return (
                                       <View
@@ -520,14 +563,40 @@ export function FullYearPixelCalendar({
                                         style={{
                                           width: pixelSize,
                                           height: pixelSize,
-                                          backgroundColor: color,
+                                          backgroundColor:
+                                            pixelStyle.type === 'solid'
+                                              ? pixelStyle.color
+                                              : 'transparent',
+                                          overflow: 'hidden',
                                           borderRadius: 8,
                                           borderWidth: day.isToday ? 2 : 0,
                                           borderColor: day.isToday
                                             ? colors.primary
                                             : 'transparent',
                                         }}
-                                      />
+                                      >
+                                        {pixelStyle.type === 'gradient' &&
+                                          pixelStyle.colors && (
+                                            <LinearGradient
+                                              colors={pixelStyle.colors}
+                                              locations={pixelStyle.locations}
+                                              start={
+                                                pixelStyle.start || {
+                                                  x: 0,
+                                                  y: 0,
+                                                }
+                                              }
+                                              end={
+                                                pixelStyle.end || { x: 0, y: 1 }
+                                              }
+                                              style={{
+                                                position: 'absolute',
+                                                width: '100%',
+                                                height: '100%',
+                                              }}
+                                            />
+                                          )}
+                                      </View>
                                     );
                                   })}
                                 </View>
@@ -584,7 +653,7 @@ export function FullYearPixelCalendar({
                                 );
                               }
 
-                              const color = getDayColor(day);
+                              const pixelStyle = getDayPixelStyle(day);
 
                               return (
                                 <View
@@ -592,14 +661,35 @@ export function FullYearPixelCalendar({
                                   style={{
                                     width: pixelSize,
                                     height: pixelSize,
-                                    backgroundColor: color,
+                                    backgroundColor:
+                                      pixelStyle.type === 'solid'
+                                        ? pixelStyle.color
+                                        : 'transparent',
+                                    overflow: 'hidden',
                                     borderRadius: 8,
                                     borderWidth: day.isToday ? 2 : 0,
                                     borderColor: day.isToday
                                       ? colors.primary
                                       : 'transparent',
                                   }}
-                                />
+                                >
+                                  {pixelStyle.type === 'gradient' &&
+                                    pixelStyle.colors && (
+                                      <LinearGradient
+                                        colors={pixelStyle.colors}
+                                        locations={pixelStyle.locations}
+                                        start={
+                                          pixelStyle.start || { x: 0, y: 0 }
+                                        }
+                                        end={pixelStyle.end || { x: 1, y: 0 }}
+                                        style={{
+                                          position: 'absolute',
+                                          width: '100%',
+                                          height: '100%',
+                                        }}
+                                      />
+                                    )}
+                                </View>
                               );
                             })}
                           </View>

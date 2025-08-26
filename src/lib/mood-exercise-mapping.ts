@@ -80,3 +80,36 @@ export function getCategoryColor(category: ExerciseCategory): string {
 
   return colorMap[category] || 'primary';
 }
+
+// --- Rating helpers ---
+
+/**
+ * Map a 1-10 rating to a mood category for tags/exercises.
+ */
+export function getMoodCategoryFromRating(rating: number): MoodType {
+  if (rating <= 2) return 'sad';
+  if (rating <= 4) return 'anxious';
+  if (rating <= 6) return 'neutral';
+  if (rating <= 10) return 'happy';
+  return 'neutral';
+}
+
+/**
+ * Fallback mapping for legacy mood entries without rating.
+ */
+export function mapMoodToRating(mood: string): number {
+  switch (mood) {
+    case 'sad':
+      return 2;
+    case 'anxious':
+      return 4;
+    case 'neutral':
+      return 6;
+    case 'happy':
+      return 8;
+    case 'angry':
+      return 3;
+    default:
+      return 5;
+  }
+}

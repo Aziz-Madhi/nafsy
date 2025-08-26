@@ -74,6 +74,18 @@
   --mood-angry-dark: 239 68 68;
   --mood-angry-bg: 255 186 186; /* #FFBABA - warmer rose */
 
+  /* Mood Rating Scale (1–10) - product-specified ramp */
+  --mood-scale-1: 47 58 86;    /* #2F3A56 */
+  --mood-scale-2: 53 91 135;   /* #355B87 */
+  --mood-scale-3: 78 127 174;  /* #4E7FAE */
+  --mood-scale-4: 79 160 166;  /* #4FA0A6 */
+  --mood-scale-5: 88 183 140;  /* #58B78C */
+  --mood-scale-6: 140 197 106; /* #8CC56A */
+  --mood-scale-7: 201 212 83;  /* #C9D453 */
+  --mood-scale-8: 240 210 71;  /* #F0D247 */
+  --mood-scale-9: 244 182 73;  /* #F4B649 */
+  --mood-scale-10: 241 154 62; /* #F19A3E */
+
   /* Wellness Category Colors */
   --wellness-mindfulness: 255 107 107;
   --wellness-breathing: 78 205 196;
@@ -187,6 +199,18 @@
     --mood-angry-dark: 239 68 68; /* same as light */
     --mood-angry-bg: 255 186 186; /* #FFBABA - warmer */
 
+    /* Mood Rating Scale (1–10) - same values in dark mode for consistency */
+    --mood-scale-1: 47 58 86;    /* #2F3A56 */
+    --mood-scale-2: 53 91 135;   /* #355B87 */
+    --mood-scale-3: 78 127 174;  /* #4E7FAE */
+    --mood-scale-4: 79 160 166;  /* #4FA0A6 */
+    --mood-scale-5: 88 183 140;  /* #58B78C */
+    --mood-scale-6: 140 197 106; /* #8CC56A */
+    --mood-scale-7: 201 212 83;  /* #C9D453 */
+    --mood-scale-8: 240 210 71;  /* #F0D247 */
+    --mood-scale-9: 244 182 73;  /* #F4B649 */
+    --mood-scale-10: 241 154 62; /* #F19A3E */
+
     /* Navigation Colors - Dark Mode */
     --tab-active: 47 106 141;
     --tab-inactive: 140 140 140;
@@ -212,7 +236,7 @@
 }
 
 /* Manual dark mode class support (NativeWind toggles this via colorScheme or a parent .dark class) */
-.dark {
+  .dark {
   /* Core Brand Colors - Dark Mode */
   --brand-dark-blue: 47 106 141;
 
@@ -252,7 +276,7 @@
   --error-foreground: 255 255 255;
 
   --info: 96 165 250;
-  --info-foreground: 255 255 255;
+    --info-foreground: 255 255 255;
 
   /* Mood Colors - unified across light/dark for consistency */
   --mood-happy: 252 211 77; /* same as light */
@@ -278,7 +302,19 @@
   --mood-angry: 248 113 113; /* same as light */
   --mood-angry-light: 254 226 226; /* same as light */
   --mood-angry-dark: 239 68 68; /* same as light */
-  --mood-angry-bg: 255 186 186; /* #FFBABA - warmer rose */
+    --mood-angry-bg: 255 186 186; /* #FFBABA - warmer rose */
+
+  /* Mood Rating Scale (1–10) - same as light for manual dark class */
+  --mood-scale-1: 47 58 86;    /* #2F3A56 */
+  --mood-scale-2: 53 91 135;   /* #355B87 */
+  --mood-scale-3: 78 127 174;  /* #4E7FAE */
+  --mood-scale-4: 79 160 166;  /* #4FA0A6 */
+  --mood-scale-5: 88 183 140;  /* #58B78C */
+  --mood-scale-6: 140 197 106; /* #8CC56A */
+  --mood-scale-7: 201 212 83;  /* #C9D453 */
+  --mood-scale-8: 240 210 71;  /* #F0D247 */
+  --mood-scale-9: 244 182 73;  /* #F4B649 */
+  --mood-scale-10: 241 154 62; /* #F19A3E */
 
   /* Navigation Colors - Dark Mode */
   --tab-active: 47 106 141;

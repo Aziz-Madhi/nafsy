@@ -23,7 +23,12 @@ import Animated, {
   withSpring,
 } from 'react-native-reanimated';
 import { MoodBasedExerciseSuggestion } from '~/components/mood/MoodBasedExerciseSuggestion';
-import { getExerciseCategoriesForMood } from '~/lib/mood-exercise-mapping';
+import RatingSelector from '~/components/mood/RatingSelector';
+import {
+  getExerciseCategoriesForMood,
+  getMoodCategoryFromRating,
+  mapMoodToRating,
+} from '~/lib/mood-exercise-mapping';
 import { useTranslation } from '~/hooks/useTranslation';
 
 // Moods array will be localized in the component
@@ -156,7 +161,7 @@ const renderMoodIcon = (
   }
 };
 
-// Animated Mood Button Component
+// Animated Mood Button Component (legacy)
 const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
   mood,
   isSelected,
@@ -268,18 +273,18 @@ const TagButton = React.memo(function TagButton({
   }, [isSelected, colors]);
 
   return (
-    <Pressable onPress={onPress} className="w-full">
+    <Pressable onPress={onPress}>
       <Animated.View
         style={[
           animatedStyle,
           {
-            width: '100%',
-            paddingHorizontal: 12,
+            paddingHorizontal: 16,
             paddingVertical: 10,
             borderRadius: 20,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor,
+            minWidth: 80,
             // Ensure pill visibility on dark mode when not selected
             borderWidth: isSelected
               ? 0
@@ -295,8 +300,6 @@ const TagButton = React.memo(function TagButton({
             ...(colors.background === '#0A1514' && !isSelected
               ? { backgroundColor: 'rgba(255, 255, 255, 0.04)' }
               : {}),
-            overflow: 'hidden',
-            minWidth: 0,
           },
         ]}
       >
@@ -306,10 +309,9 @@ const TagButton = React.memo(function TagButton({
             fontWeight: '500',
             color: textColor,
             textAlign: 'center',
-            maxWidth: '100%',
+            lineHeight: 18,
           }}
           numberOfLines={1}
-          ellipsizeMode="tail"
         >
           {t(tagKey)}
         </Text>
@@ -350,36 +352,34 @@ const TagsSection = React.memo(function TagsSection({
       >
         {t('mood.contributing')}
       </Text>
-      <View>
-        {/* Row 1: First 4 tags */}
-        <View className="w-full flex-row justify-between mb-2 px-2">
+      <View className="px-4">
+        {/* Row 1: First 3 tags */}
+        <View className="flex-row justify-center gap-2 mb-3">
           {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
-            .slice(0, 4)
+            .slice(0, 3)
             .map((tagKey) => (
-              <View key={tagKey} className="w-1/4 items-center">
-                <TagButton
-                  tagKey={tagKey}
-                  isSelected={selectedTags.includes(tagKey)}
-                  moodType={selectedMood}
-                  onPress={() => onTagToggle(tagKey)}
-                />
-              </View>
+              <TagButton
+                key={tagKey}
+                tagKey={tagKey}
+                isSelected={selectedTags.includes(tagKey)}
+                moodType={selectedMood}
+                onPress={() => onTagToggle(tagKey)}
+              />
             ))}
         </View>
 
-        {/* Row 2: Next 4 tags */}
-        <View className="w-full flex-row justify-between px-2">
+        {/* Row 2: Next 3 tags */}
+        <View className="flex-row justify-center gap-2">
           {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
-            .slice(4, 8)
+            .slice(3, 6)
             .map((tagKey) => (
-              <View key={tagKey} className="w-1/4 items-center">
-                <TagButton
-                  tagKey={tagKey}
-                  isSelected={selectedTags.includes(tagKey)}
-                  moodType={selectedMood}
-                  onPress={() => onTagToggle(tagKey)}
-                />
-              </View>
+              <TagButton
+                key={tagKey}
+                tagKey={tagKey}
+                isSelected={selectedTags.includes(tagKey)}
+                moodType={selectedMood}
+                onPress={() => onTagToggle(tagKey)}
+              />
             ))}
         </View>
       </View>
@@ -393,21 +393,27 @@ export default function MoodIndex() {
   const todayMood = useTodayMood();
   const currentUser = useCurrentUser();
   const createMood = useMutation(api.moods.createMood);
+  const getTodayMoods = useQuery(api.moods.getTodayMoods);
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
   const isDarkMode = colors.background === '#0A1514';
 
-  // Localized moods array
-  const moods = useMemo(
-    () => [
-      { id: 'sad', label: t('mood.moods.sad'), value: 'sad' },
-      { id: 'anxious', label: t('mood.moods.anxious'), value: 'anxious' },
-      { id: 'neutral', label: t('mood.moods.neutral'), value: 'neutral' },
-      { id: 'happy', label: t('mood.moods.happy'), value: 'happy' },
-      { id: 'angry', label: t('mood.moods.angry'), value: 'angry' },
-    ],
-    [t]
-  );
+  // Determine current time of day
+  const currentHour = new Date().getHours();
+  const isMorning = currentHour < 12;
+  const timeOfDay = isMorning ? 'morning' : 'evening';
+
+  // Check what moods have been logged today
+  const hasMorningMood =
+    getTodayMoods?.morning !== null && getTodayMoods?.morning !== undefined;
+  const hasEveningMood =
+    getTodayMoods?.evening !== null && getTodayMoods?.evening !== undefined;
+  const hasLoggedCurrentPeriod = isMorning ? hasMorningMood : hasEveningMood;
+  const hasLoggedBothToday = hasMorningMood && hasEveningMood;
+
+  // Rating state (1-10). Start at neutral 5
+  const [rating, setRating] = useState<number>(5);
+  const [hasSelectedRating, setHasSelectedRating] = useState<boolean>(false);
 
   // Get exercise suggestion based on today's mood
   const exerciseCategories = useMemo(() => {
@@ -432,7 +438,6 @@ export default function MoodIndex() {
     return colors[moodColorMap[mood]] || colors.success;
   }; */
 
-  const [selectedMood, setSelectedMood] = useState('');
   const [selectedTags, setSelectedTags] = useState<string[]>([]);
   const [moodNote, setMoodNote] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -447,7 +452,14 @@ export default function MoodIndex() {
     );
   }, []);
 
-  const hasLoggedToday = !!todayMood;
+  // Legacy variable for backward compatibility
+  const hasLoggedToday = hasLoggedCurrentPeriod;
+
+  // Derived mood category from rating (for tags & suggestions)
+  const selectedMoodCategory = useMemo(
+    () => getMoodCategoryFromRating(rating),
+    [rating]
+  );
 
   // Select encouraging message based on day of week
   const selectedEncouragingMessage = useMemo(() => {
@@ -464,27 +476,30 @@ export default function MoodIndex() {
 
   // Save mood handler
   const handleSaveMood = useCallback(async () => {
-    if (!selectedMood || !currentUser || isSaving) return;
+    if (!currentUser || isSaving) return;
 
     try {
       setIsSaving(true);
       impactAsync(ImpactFeedbackStyle.Medium);
 
-      const selectedMoodObj = moods.find((m) => m.id === selectedMood);
-      const moodValue = selectedMoodObj?.value || selectedMood;
-
-      await createMood({
-        mood: moodValue as 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry',
+      // Call with rating (keep legacy mood populated server-side)
+      const create = createMood as unknown as (args: any) => Promise<string>;
+      await create({
+        rating,
+        // Also include mood for backwards compatibility with generated types
+        mood: selectedMoodCategory,
         note: moodNote.trim(),
         tags:
           selectedTags.length > 0
             ? selectedTags.map((tagKey) => t(tagKey))
             : undefined,
+        timeOfDay: timeOfDay as 'morning' | 'evening',
         createdAt: new Date().getTime(),
       });
 
       // Reset form
-      setSelectedMood('');
+      setHasSelectedRating(false);
+      setRating(5);
       setSelectedTags([]);
       setMoodNote('');
     } catch (error) {
@@ -492,7 +507,16 @@ export default function MoodIndex() {
     } finally {
       setIsSaving(false);
     }
-  }, [selectedMood, moodNote, selectedTags, currentUser, createMood, isSaving]);
+  }, [
+    rating,
+    selectedMoodCategory,
+    moodNote,
+    selectedTags,
+    currentUser,
+    createMood,
+    isSaving,
+    t,
+  ]);
 
   const screenTitle = t('tabs.mood');
 
@@ -515,23 +539,24 @@ export default function MoodIndex() {
             )}
             style={{
               ...shadowMedium,
-              // Force solid, identical background across themes once mood is logged
-              ...(hasLoggedToday && todayMood
+              // Use rating-based color for background once mood is logged
+              ...(hasLoggedToday
                 ? {
-                    backgroundColor: {
-                      happy: colors.moodHappyBg,
-                      sad: colors.moodSadBg,
-                      anxious: colors.moodAnxiousBg,
-                      neutral: colors.moodNeutralBg,
-                      angry: colors.moodAngryBg,
-                    }[
-                      todayMood.mood as
-                        | 'happy'
-                        | 'sad'
-                        | 'anxious'
-                        | 'neutral'
-                        | 'angry'
-                    ],
+                    backgroundColor: (() => {
+                      // Get the most recent mood for the current period
+                      const currentPeriodMood = isMorning 
+                        ? getTodayMoods?.morning 
+                        : getTodayMoods?.evening;
+                      
+                      // Use rating if available, otherwise fallback
+                      const moodRating = currentPeriodMood?.rating ?? 
+                        (currentPeriodMood?.mood ? mapMoodToRating(currentPeriodMood.mood) : null) ??
+                        (todayMood?.rating ?? (todayMood?.mood ? mapMoodToRating(todayMood.mood) : 5));
+                      
+                      const clamped = Math.max(1, Math.min(10, Math.round(moodRating)));
+                      const key = `ratingScale${clamped}` as keyof typeof colors;
+                      return colors[key] as string;
+                    })(),
                   }
                 : {}),
             }}
@@ -598,54 +623,72 @@ export default function MoodIndex() {
                   >
                     {selectedEncouragingMessage.suffix}
                   </Text>
+
+                  {/* Reminder for second mood entry */}
+                  {!hasLoggedBothToday && (
+                    <MotiView
+                      from={{ opacity: 0, translateY: 10 }}
+                      animate={{ opacity: 1, translateY: 0 }}
+                      transition={{ type: 'timing', duration: 400, delay: 200 }}
+                      className="mt-6"
+                    >
+                      <View
+                        className="rounded-2xl px-4 py-3"
+                        style={{
+                          backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                        }}
+                      >
+                        <Text
+                          className="text-center"
+                          style={{
+                            fontFamily: 'CrimsonPro-Regular',
+                            fontSize: 14,
+                            lineHeight: 20,
+                            color: '#1F2937',
+                            opacity: 0.85,
+                          }}
+                        >
+                          {hasMorningMood && !hasEveningMood
+                            ? t('mood.reminder.evening')
+                            : t('mood.reminder.morning')}
+                        </Text>
+                      </View>
+                    </MotiView>
+                  )}
                 </View>
               </MotiView>
             ) : (
               // Mood selection view
               <View>
-                <Text
-                  className="text-center mb-6"
-                  style={{
-                    fontFamily: 'CrimsonPro-Bold',
-                    fontSize: 28,
-                    lineHeight: 34,
-                    color: isDarkMode
-                      ? 'rgba(255, 255, 255, 0.92)'
-                      : colors.foreground,
-                  }}
-                >
-                  {t('mood.subtitle')}
-                </Text>
-
-                {/* Mood Selection */}
-                <View
-                  className="flex-row justify-center mb-6"
-                  style={{ columnGap: 6 }}
-                >
-                  {moods.map((mood) => (
-                    <AnimatedMoodButton
-                      key={mood.id}
-                      mood={mood}
-                      isSelected={selectedMood === mood.id}
-                      onPress={() => {
-                        impactAsync(ImpactFeedbackStyle.Light);
-                        setSelectedMood(mood.id);
-                        setSelectedTags([]); // Reset tags when mood changes
-                      }}
-                      t={t}
-                    />
-                  ))}
+                {/* Rating Selection */}
+                <View className="mb-6">
+                  <RatingSelector
+                    value={rating}
+                    activated={hasSelectedRating}
+                    isMorning={isMorning}
+                    onActivate={() => {
+                      setHasSelectedRating(true);
+                    }}
+                    onChange={(v) => {
+                      setRating(v);
+                      // Activation handled on thumb press; keep tags reset on first change too
+                      if (!hasSelectedRating) setHasSelectedRating(true);
+                      setSelectedTags([]);
+                    }}
+                  />
                 </View>
 
                 {/* Tags Section */}
-                <TagsSection
-                  selectedMood={selectedMood}
-                  selectedTags={selectedTags}
-                  onTagToggle={handleTagToggle}
-                />
+                {hasSelectedRating && (
+                  <TagsSection
+                    selectedMood={selectedMoodCategory}
+                    selectedTags={selectedTags}
+                    onTagToggle={handleTagToggle}
+                  />
+                )}
 
                 {/* Note Input */}
-                {selectedMood && (
+                {hasSelectedRating && (
                   <MotiView
                     from={{ opacity: 0, translateY: 10 }}
                     animate={{ opacity: 1, translateY: 0 }}
@@ -707,9 +750,9 @@ export default function MoodIndex() {
 
                     <Pressable
                       onPress={handleSaveMood}
-                      disabled={isSaving || !selectedMood}
+                      disabled={isSaving || !hasSelectedRating}
                       className={`py-4 rounded-2xl items-center bg-brand-dark-blue ${
-                        isSaving || !selectedMood ? 'opacity-60' : ''
+                        isSaving || !hasSelectedRating ? 'opacity-60' : ''
                       }`}
                       style={{
                         shadowColor: colors.brandDarkBlue,
