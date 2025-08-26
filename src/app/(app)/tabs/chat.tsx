@@ -226,7 +226,8 @@ export default function ChatTab() {
   // Optimized message sending with immediate response
   const handleSendMessage = useCallback(
     async (text: string) => {
-      if (!currentUser || !isLoaded) return;
+      // Allow sending once auth is ready, even if user doc hasn't hydrated yet
+      if (!user || !isLoaded) return;
 
       // Send message immediately without blocking UI
       (async () => {
@@ -340,7 +341,7 @@ export default function ChatTab() {
 
   const handleSendVentMessage = useCallback(
     async (text: string) => {
-      if (!currentUser || !isLoaded) return;
+      if (!user || !isLoaded) return;
 
       setVentChatLoading(true);
       setCurrentVentMessage(`user:${text}`);
@@ -353,7 +354,7 @@ export default function ChatTab() {
         setVentChatLoading(false);
       }, 2000);
     },
-    [currentUser, isLoaded, setCurrentVentMessage, setVentChatLoading]
+    [user, isLoaded, setCurrentVentMessage, setVentChatLoading]
   );
 
   // Handle chat type change with session creation

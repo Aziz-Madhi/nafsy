@@ -81,16 +81,16 @@ export function getChatPlaceholder(
 ): string {
   const placeholders = {
     coach: {
-      en: 'Share your thoughts with your coach...',
-      ar: 'شارك أفكارك مع مدربك...',
+      en: 'Share your thoughts...',
+      ar: 'شارك أفكارك...',
     },
     event: {
-      en: "Quick release - what's on your mind?",
-      ar: 'إطلاق سريع - ما الذي يدور في ذهنك؟',
+      en: "What's on your mind?",
+      ar: 'ما الذي يدور في ذهنك؟',
     },
     companion: {
-      en: 'Hey there! How are you feeling today?',
-      ar: 'مرحبا! كيف تشعر اليوم؟',
+      en: 'How are you feeling?',
+      ar: 'كيف تشعر؟',
     },
   };
 

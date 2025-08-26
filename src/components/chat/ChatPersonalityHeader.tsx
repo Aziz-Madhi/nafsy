@@ -20,8 +20,8 @@ interface PersonalityMessage {
 const personalityMessages: PersonalityMessage[] = [
   {
     type: 'coach',
-    title: 'Professional Therapy',
-    titleAr: 'العلاج المهني',
+    title: 'Coach',
+    titleAr: 'المدرب',
     subtitle: 'Your safe space for mental wellness',
     subtitleAr: 'مساحتك الآمنة للعافية النفسية',
   },
@@ -34,8 +34,8 @@ const personalityMessages: PersonalityMessage[] = [
   },
   {
     type: 'companion',
-    title: 'Daily Check-in',
-    titleAr: 'تسجيل يومي',
+    title: 'Companion',
+    titleAr: 'الرفيق',
     subtitle: 'Your friendly companion is here',
     subtitleAr: 'رفيقك الودود هنا',
   },

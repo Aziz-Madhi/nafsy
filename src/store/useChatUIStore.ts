@@ -127,26 +127,24 @@ export const useChatUIStore = createPersistedStore<ChatUIStoreState>(
     switchChatType: async (type: ChatType) => {
       const { activeChatType } = get();
 
-      // Don't do anything if switching to the same type
+      // No-op if switching to the same type
       if (activeChatType === type) return;
 
+      // Only update the active type. Do not clear session IDs.
+      // Sessions are created lazily on first message send, and existing
+      // sessions should be preserved across personality switches.
       set({ activeChatType: type });
 
-      // Clear all inputs and sessions when switching personalities
-      // Event chat doesn't have persistent sessions
+      // Optional: clear transient inputs only (they are not persisted/used by UI)
       set({
         coachChatInput: '',
         companionChatInput: '',
-        currentCoachSessionId: null,
-        currentCompanionSessionId: null,
-        // Clear legacy fields too
+        // Legacy fields
         mainChatInput: '',
         ventChatInput: '',
-        currentMainSessionId: null,
-        currentVentSessionId: null,
       });
 
-      console.log(`🔄 Switched to ${type} personality with clean session`);
+      console.log(`🔄 Switched to ${type} personality without clearing sessions`);
     },
 
     // Coach Chat Actions

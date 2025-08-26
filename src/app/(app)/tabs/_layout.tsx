@@ -37,7 +37,14 @@ export default function TabsLayout() {
       tabBar={(props) => (
         <FloatingTabBar
           {...props}
-          onSendMessage={sendMessageRef.current || undefined}
+          // Wrap to always read latest ref value at send time
+          onSendMessage={(message: string) => {
+            try {
+              sendMessageRef.current?.(message);
+            } catch {
+              // No-op; chat screen may not be mounted yet
+            }
+          }}
         />
       )}
     >
