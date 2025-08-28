@@ -30,7 +30,6 @@ Create server-side frameworks using "just code"
 
 Convex's built-in primitives are pretty low level! They're just functions. What about authentication frameworks? What about object-relational mappings? Do you need to wait until Convex ships some in-built feature to get those? Nope. In general, you should solve composition and encapsulation problems in your server-side Convex code using the same methods you use for the rest of your TypeScript code bases. After all, this is why Convex is "just code!" Stack always has great examples of ways to tackle these needs.
 
-
 Don't misuse actions
 
 Actions are powerful, but it's important to be intentional in how they fit into your app's data flow.

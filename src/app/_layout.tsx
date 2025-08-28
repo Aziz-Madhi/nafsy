@@ -80,13 +80,34 @@ function AuthAwareNavigation({ fontsReady }: { fontsReady: boolean }) {
 }
 
 export default function RootLayout() {
-  // Load custom fonts
+  // Load AveriaSerif fonts for English content and Arabic fonts for multilingual support
   const [fontsLoaded, fontError] = useFonts({
-    'CrimsonPro-Regular': require('../../assets/fonts/CrimsonPro-Regular.ttf'),
-    'CrimsonPro-Bold': require('../../assets/fonts/CrimsonPro-Bold.ttf'),
-    'CrimsonPro-Italic': require('../../assets/fonts/CrimsonPro-Italic.ttf'),
-    'CrimsonPro-VariableFont': require('../../assets/fonts/CrimsonPro-VariableFont_wght.ttf'),
-    'CrimsonPro-Italic-VariableFont': require('../../assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf'),
+    // Arabic font support - RubikArabic family
+    'RubikArabic-Light': require('../../assets/fonts/RubikArabic/Rubik-Light.ttf'),
+    'RubikArabic-Regular': require('../../assets/fonts/RubikArabic/Rubik-Regular.ttf'),
+    'RubikArabic-Medium': require('../../assets/fonts/RubikArabic/Rubik-Medium.ttf'),
+    'RubikArabic-SemiBold': require('../../assets/fonts/RubikArabic/Rubik-SemiBold.ttf'),
+    'RubikArabic-Bold': require('../../assets/fonts/RubikArabic/Rubik-Bold.ttf'),
+
+    // AveriaSerif font family - base variants
+    'AveriaSerif-Light': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Light.ttf'),
+    'AveriaSerif-Regular': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Regular.ttf'),
+    'AveriaSerif-Bold': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Bold.ttf'),
+
+    // AveriaSerif font family - backward compatibility with Inter naming
+    'Inter-Light': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Light.ttf'),
+    'Inter-Regular': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Regular.ttf'),
+    'Inter-Medium': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Regular.ttf'), // No medium, use regular
+    'Inter-SemiBold': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Bold.ttf'), // Map to bold for distinction
+    'Inter-Bold': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Bold.ttf'),
+
+    // AveriaSerif font family - 24pt variants (same files, different names for compatibility)
+    'Inter-Regular-24pt': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Regular.ttf'),
+    'Inter-SemiBold-24pt': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Bold.ttf'),
+    'Inter-Bold-24pt': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Bold.ttf'),
+
+    // AveriaSerif font family - 28pt variants (same files, different names for compatibility)
+    'Inter-Bold-28pt': require('../../assets/fonts/AveriaSerif/AveriaSerifLibre-Bold.ttf'),
   });
 
   // Handle font loading completion

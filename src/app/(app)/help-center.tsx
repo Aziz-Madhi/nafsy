@@ -143,16 +143,7 @@ export default function HelpCenter() {
               tintColor={colors.foreground}
             />
           </Pressable>
-          <Text
-            className="text-foreground flex-1"
-            style={{
-              fontFamily: 'CrimsonPro-Bold',
-              fontSize: 28,
-              fontWeight: 'normal',
-              lineHeight: 34,
-              // Text alignment handled by autoAlign
-            }}
-          >
+          <Text variant="heading" className="text-foreground flex-1">
             {t('helpCenter.title')}
           </Text>
         </View>
@@ -291,16 +282,7 @@ export default function HelpCenter() {
                     tintColor={colors.foreground}
                   />
                 </Pressable>
-                <Text
-                  className="text-foreground flex-1"
-                  style={{
-                    fontFamily: 'CrimsonPro-Bold',
-                    fontSize: 28,
-                    fontWeight: 'normal',
-                    lineHeight: 34,
-                    // Text alignment handled by autoAlign
-                  }}
-                >
+                <Text variant="heading" className="text-foreground flex-1">
                   {t('helpCenter.customerSupport')}
                 </Text>
               </View>

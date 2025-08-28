@@ -1,12 +1,12 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
-import { getAuthenticatedUser } from './authUtils';
-import {
-  createAuthError,
-  createValidationError,
-  checkRateLimitDb,
-} from './errorUtils';
+import { api } from './_generated/api';
+import type { Id } from './_generated/dataModel';
+import { getAuthenticatedUser } from './auth';
 
+/**
+ * @deprecated Use `api.auth.upsertUser` directly from clients.
+ */
 export const createUser = mutation({
   args: {
     clerkId: v.string(),
@@ -15,39 +15,21 @@ export const createUser = mutation({
     avatarUrl: v.optional(v.string()),
   },
   returns: v.id('users'),
-  handler: async (ctx, args) => {
-    // Require authentication and ensure caller can only create their own user record
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw createAuthError('Authentication required');
-    }
-
-    // Per-user rate limit to prevent abuse of user creation endpoint
-    await checkRateLimitDb(ctx, `users:create:${identity.subject}`, 5, 60000);
-
-    // Validate that provided clerkId matches authenticated subject
-    if (args.clerkId !== identity.subject) {
-      throw createValidationError('clerkId does not match authenticated user');
-    }
-
-    const existingUser = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))
-      .first();
-
-    if (existingUser) {
-      return existingUser._id;
-    }
-
-    return await ctx.db.insert('users', {
-      ...args,
-      language: 'en',
-      createdAt: Date.now(),
-      lastActive: Date.now(),
+  handler: async (ctx, args): Promise<Id<'users'>> => {
+    // Delegate to canonical upsertUser to avoid duplication
+    const id: Id<'users'> = await ctx.runMutation(api.auth.upsertUser, {
+      clerkId: args.clerkId,
+      email: args.email,
+      name: args.name,
+      avatarUrl: args.avatarUrl,
     });
+    return id;
   },
 });
 
+/**
+ * @deprecated Use `api.auth.upsertUser` directly from clients.
+ */
 export const updateUser = mutation({
   args: {
     name: v.optional(v.string()),
@@ -55,20 +37,20 @@ export const updateUser = mutation({
     language: v.optional(v.string()),
   },
   returns: v.id('users'),
-  handler: async (ctx, args) => {
-    // Authenticate user and get their record
-    const user = await getAuthenticatedUser(ctx);
-
-    // Update the authenticated user's record
-    await ctx.db.patch(user._id, {
-      ...args,
-      lastActive: Date.now(),
+  handler: async (ctx, args): Promise<Id<'users'>> => {
+    // Delegate to canonical upsertUser to avoid duplication
+    const id: Id<'users'> = await ctx.runMutation(api.auth.upsertUser, {
+      name: args.name,
+      avatarUrl: args.avatarUrl,
+      language: args.language,
     });
-
-    return user._id;
+    return id;
   },
 });
 
+/**
+ * @deprecated Use `api.auth.getCurrentUser`.
+ */
 export const getCurrentUser = query({
   args: {},
   returns: v.union(

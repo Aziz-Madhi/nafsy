@@ -68,7 +68,7 @@ export default function ChatTab() {
 
   // Convex hooks - only execute when auth is stable and user exists
   const currentUser = useQuery(
-    api.users.getCurrentUser,
+    api.auth.getCurrentUser,
     isLoaded && user ? {} : 'skip'
   );
 
@@ -140,7 +140,7 @@ export default function ChatTab() {
 
   // Mutations for coach and companion (event chat is local-only)
   const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
-  const createUser = useMutation(api.users.createUser);
+  const upsertUser = useMutation(api.auth.upsertUser);
   const sendCompanionMessage = useMutation(
     api.companionChat.sendCompanionMessage
   );
@@ -162,14 +162,14 @@ export default function ChatTab() {
   // Create user if doesn't exist
   useEffect(() => {
     if (user && isLoaded && currentUser === null && user.id) {
-      createUser({
+      upsertUser({
         clerkId: user.id,
         email: user.emailAddresses?.[0]?.emailAddress || '',
         name: user.fullName || user.firstName || undefined,
         avatarUrl: user.imageUrl || undefined,
       });
     }
-  }, [user, isLoaded, currentUser, createUser]);
+  }, [user, isLoaded, currentUser, upsertUser]);
 
   // Don't auto-send welcome messages - let users start conversations naturally
 

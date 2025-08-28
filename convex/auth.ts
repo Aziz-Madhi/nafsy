@@ -206,3 +206,15 @@ export const validateUserAccess = async (
 
   return authenticatedUser;
 };
+
+/**
+ * Rate-limited authentication helper (mutation-only)
+ * Applies a DB-backed rate limit keyed by clerkId and operation.
+ */
+export const getAuthenticatedUserWithRateLimit = withErrorHandling(
+  async (ctx: MutationCtx, operation: string = 'default') => {
+    const user = await getAuthenticatedUser(ctx);
+    await checkRateLimitDb(ctx, `${operation}:${user.clerkId}`, 100, 60000);
+    return user;
+  }
+);

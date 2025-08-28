@@ -11,7 +11,7 @@ import { api } from '../../convex/_generated/api';
 export function useCurrentUser() {
   const { isSignedIn } = useAuth();
 
-  return useQuery(api.users.getCurrentUser, isSignedIn ? {} : 'skip');
+  return useQuery(api.auth.getCurrentUser, isSignedIn ? {} : 'skip');
 }
 
 /**

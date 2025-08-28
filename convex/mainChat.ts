@@ -24,15 +24,14 @@ export const getMainChatMessages = query({
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
 
-    let query = ctx.db
-      .query('mainChatMessages')
-      .filter((q) => q.eq(q.field('userId'), user._id));
-
-    if (args.sessionId) {
-      query = query.filter((q) => q.eq(q.field('sessionId'), args.sessionId));
-    }
-
-    return await query.order('asc').take(args.limit || 50);
+    const limit = args.limit || 50;
+    const base = ctx.db.query('mainChatMessages');
+    const indexed = args.sessionId
+      ? base.withIndex('by_user_session', (qi) =>
+          qi.eq('userId', user._id).eq('sessionId', args.sessionId!)
+        )
+      : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
+    return await indexed.order('asc').take(limit);
   },
 });
 
@@ -90,7 +89,7 @@ export const getMainSessions = query({
 
     const sessions = await ctx.db
       .query('chatSessions')
-      .filter((q) => q.eq(q.field('userId'), user._id))
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
       .order('desc')
       .take(args.limit || 20);
 
@@ -117,7 +116,7 @@ export const getCurrentMainSessionId = query({
 
     const latestSession = await ctx.db
       .query('chatSessions')
-      .filter((q) => q.eq(q.field('userId'), user._id))
+      .withIndex('by_user', (q) => q.eq('userId', user._id))
       .order('desc')
       .first();
 
@@ -214,12 +213,7 @@ export const deleteMainSession = mutation({
     // Delete session metadata (ensure it belongs to the authenticated user)
     const session = await ctx.db
       .query('chatSessions')
-      .filter((q) =>
-        q.and(
-          q.eq(q.field('sessionId'), args.sessionId),
-          q.eq(q.field('userId'), user._id)
-        )
-      )
+      .withIndex('by_session_id', (q) => q.eq('sessionId', args.sessionId))
       .first();
 
     if (session) {
@@ -240,7 +234,7 @@ export const updateSessionTitle = mutation({
   handler: async (ctx, args) => {
     const session = await ctx.db
       .query('chatSessions')
-      .filter((q) => q.eq(q.field('sessionId'), args.sessionId))
+      .withIndex('by_session_id', (q) => q.eq('sessionId', args.sessionId))
       .first();
 
     if (session) {

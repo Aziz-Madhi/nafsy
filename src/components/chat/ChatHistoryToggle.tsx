@@ -92,10 +92,13 @@ export function ChatHistoryToggle({
               }}
             >
               <Text
+                variant="footnote"
+                className={
+                  isActive
+                    ? 'font-semibold text-center'
+                    : 'font-medium text-center'
+                }
                 style={{
-                  fontSize: 14,
-                  fontWeight: isActive ? '600' : '500',
-                  textAlign: 'center',
                   color: isActive ? colors.foreground : colors.mutedForeground,
                 }}
                 numberOfLines={1}

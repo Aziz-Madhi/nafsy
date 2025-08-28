@@ -1,127 +1,19 @@
-import { QueryCtx, MutationCtx } from './_generated/server';
-import {
-  createAuthError,
-  createNotFoundError,
-  createAuthzError,
-  withErrorHandling,
-  checkRateLimitDb,
-} from './errorUtils';
+import { getAuthenticatedUserWithRateLimit as coreGetAuthenticatedUserWithRateLimit } from './auth';
+
+// Canonical auth helpers live in auth.ts; re-export here for compatibility.
+export {
+  getAuthenticatedUser,
+  validateUserAccess,
+  getAuthenticatedClerkId,
+  requireAuth,
+} from './auth';
 
 /**
- * Gets the authenticated user from the context and returns their database record.
- * Throws an error if the user is not authenticated or not found in the database.
+ * Rate-limited authentication check (mutation-only helper)
+ * Wraps the canonical getAuthenticatedUser and applies a DB-backed rate limit.
  */
-export const getAuthenticatedUser = withErrorHandling(
-  async (ctx: QueryCtx | MutationCtx) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw createAuthError('Authentication required');
-    }
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .first();
-
-    if (!user) {
-      throw createNotFoundError('User', identity.subject);
-    }
-
-    return user;
-  }
-);
-
 /**
- * Validates that the authenticated user matches the provided userId parameter.
- * Throws an error if authentication fails or user doesn't match.
+ * @deprecated Import from './auth' instead. This alias will be removed.
  */
-export const validateUserAccess = withErrorHandling(
-  async (ctx: QueryCtx | MutationCtx, userId: string) => {
-    const authenticatedUser = await getAuthenticatedUser(ctx);
-
-    if (authenticatedUser._id !== userId) {
-      throw createAuthzError(
-        "Access denied: Cannot access another user's data"
-      );
-    }
-
-    return authenticatedUser;
-  }
-);
-
-/**
- * Gets the current authenticated user's Clerk ID.
- * Throws an error if not authenticated.
- */
-export const getAuthenticatedClerkId = withErrorHandling(
-  async (ctx: QueryCtx | MutationCtx): Promise<string> => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw createAuthError('Authentication required');
-    }
-
-    return identity.subject;
-  }
-);
-
-/**
- * Simplified function to require authentication and return user ID
- * Used for simpler auth checks without full user object
- */
-export const requireAuth = withErrorHandling(
-  async (ctx: QueryCtx | MutationCtx) => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw createAuthError('Authentication required');
-    }
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .first();
-
-    if (!user) {
-      throw createNotFoundError('User', identity.subject);
-    }
-
-    return user._id;
-  }
-);
-
-/**
- * Rate-limited authentication check
- */
-export const getAuthenticatedUserWithRateLimit = withErrorHandling(
-  async (ctx: QueryCtx | MutationCtx, operation: string = 'default') => {
-    const identity = await ctx.auth.getUserIdentity();
-
-    if (!identity) {
-      throw createAuthError('Authentication required');
-    }
-
-    // Apply rate limiting (DB-backed; requires mutation context where used)
-    // For query contexts, prefer calling from a mutation or use a higher-level throttle.
-    // Default policy: 100 requests per minute per subject per operation
-    // Note: If called from a query, this will throw on write — ensure callers use from mutations.
-    await checkRateLimitDb(
-      ctx as any,
-      `${operation}:${identity.subject}`,
-      100,
-      60000
-    );
-
-    const user = await ctx.db
-      .query('users')
-      .withIndex('by_clerk_id', (q) => q.eq('clerkId', identity.subject))
-      .first();
-
-    if (!user) {
-      throw createNotFoundError('User', identity.subject);
-    }
-
-    return user;
-  }
-);
+export const getAuthenticatedUserWithRateLimit =
+  coreGetAuthenticatedUserWithRateLimit;

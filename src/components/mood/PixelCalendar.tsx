@@ -144,7 +144,12 @@ export function PixelCalendar({
     const entry = moodDataMap.get(dateKey);
 
     if (entry && (entry.morning || entry.evening)) {
-      return getMoodPixelStyle(entry.morning, entry.evening, colors, isToday(day));
+      return getMoodPixelStyle(
+        entry.morning,
+        entry.evening,
+        colors,
+        isToday(day)
+      );
     }
 
     // No mood entry for this day - use very subtle background

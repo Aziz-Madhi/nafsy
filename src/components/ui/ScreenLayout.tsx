@@ -127,12 +127,9 @@ function ScreenHeader({
           <View style={{ width: '100%' }}>
             {title && (
               <Text
+                variant="heading"
                 className="text-foreground"
                 style={{
-                  fontFamily: 'CrimsonPro-Bold',
-                  fontSize: 28,
-                  fontWeight: 'normal',
-                  lineHeight: 34,
                   textAlign,
                   width: '100%',
                 }}

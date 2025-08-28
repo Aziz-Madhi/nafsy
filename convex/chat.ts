@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { updateChatSession } from './chatUtils';
 import { getAuthenticatedUser } from './authUtils';
+import { paginationOptsValidator } from 'convex/server';
 
 // Chat type enum for unified functions
 const ChatType = v.union(v.literal('main'), v.literal('vent'));
@@ -103,41 +104,90 @@ export const getChatMessages = query({
     const user = await getAuthenticatedUser(ctx);
     const limit = args.limit || 50;
 
-    const tableName =
-      args.type === 'main' ? 'mainChatMessages' : 'ventChatMessages';
-
-    let query = ctx.db
-      .query(tableName)
-      .filter((q) => q.eq(q.field('userId'), user._id));
-
-    if (args.sessionId) {
-      query = query.filter((q) => q.eq(q.field('sessionId'), args.sessionId));
-    }
-
-    const messages = await query.order('desc').take(limit);
-
-    // For vent messages without sessionId, get latest session if no specific session requested
-    if (args.type === 'vent' && !args.sessionId && messages.length === 0) {
-      const latestSession = await ctx.db
-        .query('ventChatSessions')
-        .withIndex('by_user', (q) => q.eq('userId', user._id))
-        .order('desc')
-        .first();
-
-      if (latestSession) {
-        const sessionMessages = await ctx.db
-          .query(tableName)
-          .withIndex('by_user_session', (q) =>
-            q.eq('userId', user._id).eq('sessionId', latestSession.sessionId)
+    if (args.type === 'main') {
+      const base = ctx.db.query('mainChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', user._id).eq('sessionId', args.sessionId!)
           )
-          .order('asc')
-          .take(limit);
+        : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
+      const messages = await indexed.order('desc').take(limit);
+      return messages;
+    } else {
+      const base = ctx.db.query('ventChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', user._id).eq('sessionId', args.sessionId!)
+          )
+        : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
+      const messages = await indexed.order('desc').take(limit);
 
-        return sessionMessages;
+      // For vent messages without sessionId, get latest session if no specific session requested
+      if (!args.sessionId && messages.length === 0) {
+        const latestSession = await ctx.db
+          .query('ventChatSessions')
+          .withIndex('by_user', (q) => q.eq('userId', user._id))
+          .order('desc')
+          .first();
+
+        if (latestSession) {
+          const sessionMessages = await ctx.db
+            .query('ventChatMessages')
+            .withIndex('by_user_session', (q) =>
+              q.eq('userId', user._id).eq('sessionId', latestSession.sessionId)
+            )
+            .order('asc')
+            .take(limit);
+
+          return sessionMessages;
+        }
       }
+      return messages;
     }
+  },
+});
 
-    return messages;
+// Paginated variant for chat messages
+export const getChatMessagesPaginated = query({
+  args: {
+    type: ChatType,
+    sessionId: v.optional(v.string()),
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: v.object({
+    page: v.array(
+      v.object({
+        _id: v.union(v.id('mainChatMessages'), v.id('ventChatMessages')),
+        _creationTime: v.number(),
+        userId: v.id('users'),
+        content: v.string(),
+        role: v.union(v.literal('user'), v.literal('assistant')),
+        sessionId: v.optional(v.string()),
+        createdAt: v.number(),
+      })
+    ),
+    isDone: v.boolean(),
+    continueCursor: v.union(v.string(), v.null()),
+  }),
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    if (args.type === 'main') {
+      const base = ctx.db.query('mainChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', user._id).eq('sessionId', args.sessionId!)
+          )
+        : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
+      return await indexed.order('desc').paginate(args.paginationOpts);
+    } else {
+      const base = ctx.db.query('ventChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', user._id).eq('sessionId', args.sessionId!)
+          )
+        : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
+      return await indexed.order('desc').paginate(args.paginationOpts);
+    }
   },
 });
 
@@ -169,7 +219,7 @@ export const getChatSessions = query({
     if (args.type === 'main') {
       const sessions = await ctx.db
         .query('chatSessions')
-        .filter((q) => q.eq(q.field('userId'), user._id))
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
         .order('desc')
         .take(limit);
 
@@ -193,6 +243,56 @@ export const getChatSessions = query({
   },
 });
 
+// Paginated variant for chat sessions
+export const getChatSessionsPaginated = query({
+  args: {
+    type: ChatType,
+    paginationOpts: paginationOptsValidator,
+  },
+  returns: v.object({
+    page: v.array(
+      v.object({
+        _id: v.union(v.id('chatSessions'), v.id('ventChatSessions')),
+        _creationTime: v.number(),
+        userId: v.id('users'),
+        sessionId: v.string(),
+        title: v.string(),
+        startedAt: v.number(),
+        lastMessageAt: v.number(),
+        messageCount: v.number(),
+      })
+    ),
+    isDone: v.boolean(),
+    continueCursor: v.union(v.string(), v.null()),
+  }),
+  handler: async (ctx, args) => {
+    const user = await getAuthenticatedUser(ctx);
+    if (args.type === 'main') {
+      const res = await ctx.db
+        .query('chatSessions')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .order('desc')
+        .paginate(args.paginationOpts);
+      // Filter main-only sessions in page to preserve index usage
+      const page = res.page
+        .filter(
+          (session) =>
+            !session.type ||
+            session.type === 'main' ||
+            session.sessionId.startsWith('main_')
+        )
+        .map(({ type, ...session }) => session);
+      return { ...res, page };
+    } else {
+      return await ctx.db
+        .query('ventChatSessions')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .order('desc')
+        .paginate(args.paginationOpts);
+    }
+  },
+});
+
 /**
  * Unified current session ID retrieval
  * Replaces: getCurrentMainSessionId + getCurrentVentSessionId
@@ -208,7 +308,7 @@ export const getCurrentSessionId = query({
     if (args.type === 'main') {
       const latestSession = await ctx.db
         .query('chatSessions')
-        .filter((q) => q.eq(q.field('userId'), user._id))
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
         .order('desc')
         .first();
 
@@ -356,7 +456,7 @@ export const updateChatSessionTitle = mutation({
     if (args.type === 'main') {
       session = await ctx.db
         .query(sessionsTableName)
-        .filter((q) => q.eq(q.field('sessionId'), args.sessionId))
+        .withIndex('by_session_id', (q) => q.eq('sessionId', args.sessionId))
         .first();
     } else {
       session = await ctx.db

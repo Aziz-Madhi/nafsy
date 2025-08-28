@@ -22,18 +22,15 @@ export const createMood = mutation({
     timeOfDay: v.optional(v.union(v.literal('morning'), v.literal('evening'))),
     createdAt: v.optional(v.number()),
   },
+  returns: v.id('moods'),
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
 
     // Derive mood category from rating when provided
-    function getMoodCategoryFromRating(rating: number | undefined):
-      | 'happy'
-      | 'neutral'
-      | 'sad'
-      | 'anxious'
-      | 'angry'
-      | undefined {
+    function getMoodCategoryFromRating(
+      rating: number | undefined
+    ): 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry' | undefined {
       if (rating == null) return undefined;
       if (rating <= 2) return 'sad';
       if (rating <= 4) return 'anxious';
@@ -43,7 +40,7 @@ export const createMood = mutation({
     }
 
     const derivedCategory = getMoodCategoryFromRating(args.rating);
-    
+
     // Determine time of day if not provided
     let timeOfDay = args.timeOfDay;
     if (!timeOfDay) {
@@ -73,6 +70,30 @@ export const getMoods = query({
     endDate: v.optional(v.number()),
     limit: v.optional(v.number()),
   },
+  returns: v.array(
+    v.object({
+      _id: v.id('moods'),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      mood: v.optional(
+        v.union(
+          v.literal('happy'),
+          v.literal('neutral'),
+          v.literal('sad'),
+          v.literal('anxious'),
+          v.literal('angry')
+        )
+      ),
+      rating: v.optional(v.number()),
+      moodCategory: v.optional(v.string()),
+      note: v.optional(v.string()),
+      tags: v.optional(v.array(v.string())),
+      timeOfDay: v.optional(
+        v.union(v.literal('morning'), v.literal('evening'))
+      ),
+      createdAt: v.number(),
+    })
+  ),
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
@@ -110,6 +131,43 @@ export const getMoodStats = query({
   args: {
     days: v.optional(v.number()), // Number of days to look back (default 30)
   },
+  returns: v.object({
+    totalEntries: v.number(),
+    totalSessions: v.number(),
+    moodCounts: v.object({
+      happy: v.number(),
+      neutral: v.number(),
+      sad: v.number(),
+      anxious: v.number(),
+      angry: v.number(),
+    }),
+    currentStreak: v.number(),
+    mostCommonMood: v.string(),
+    dailyMoods: v.array(
+      v.object({
+        _id: v.id('moods'),
+        _creationTime: v.number(),
+        userId: v.id('users'),
+        mood: v.optional(
+          v.union(
+            v.literal('happy'),
+            v.literal('neutral'),
+            v.literal('sad'),
+            v.literal('anxious'),
+            v.literal('angry')
+          )
+        ),
+        rating: v.optional(v.number()),
+        moodCategory: v.optional(v.string()),
+        note: v.optional(v.string()),
+        tags: v.optional(v.array(v.string())),
+        timeOfDay: v.optional(
+          v.union(v.literal('morning'), v.literal('evening'))
+        ),
+        createdAt: v.number(),
+      })
+    ),
+  }),
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
@@ -192,6 +250,31 @@ export const getMoodStats = query({
 // Get today's mood for a user (backward compatible - returns latest)
 export const getTodayMood = query({
   args: {},
+  returns: v.union(
+    v.object({
+      _id: v.id('moods'),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      mood: v.optional(
+        v.union(
+          v.literal('happy'),
+          v.literal('neutral'),
+          v.literal('sad'),
+          v.literal('anxious'),
+          v.literal('angry')
+        )
+      ),
+      rating: v.optional(v.number()),
+      moodCategory: v.optional(v.string()),
+      note: v.optional(v.string()),
+      tags: v.optional(v.array(v.string())),
+      timeOfDay: v.optional(
+        v.union(v.literal('morning'), v.literal('evening'))
+      ),
+      createdAt: v.number(),
+    }),
+    v.null()
+  ),
   handler: async (ctx) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
@@ -214,6 +297,82 @@ export const getTodayMood = query({
 // Get all of today's moods (morning and evening)
 export const getTodayMoods = query({
   args: {},
+  returns: v.object({
+    morning: v.union(
+      v.object({
+        _id: v.id('moods'),
+        _creationTime: v.number(),
+        userId: v.id('users'),
+        mood: v.optional(
+          v.union(
+            v.literal('happy'),
+            v.literal('neutral'),
+            v.literal('sad'),
+            v.literal('anxious'),
+            v.literal('angry')
+          )
+        ),
+        rating: v.optional(v.number()),
+        moodCategory: v.optional(v.string()),
+        note: v.optional(v.string()),
+        tags: v.optional(v.array(v.string())),
+        timeOfDay: v.optional(
+          v.union(v.literal('morning'), v.literal('evening'))
+        ),
+        createdAt: v.number(),
+      }),
+      v.null()
+    ),
+    evening: v.union(
+      v.object({
+        _id: v.id('moods'),
+        _creationTime: v.number(),
+        userId: v.id('users'),
+        mood: v.optional(
+          v.union(
+            v.literal('happy'),
+            v.literal('neutral'),
+            v.literal('sad'),
+            v.literal('anxious'),
+            v.literal('angry')
+          )
+        ),
+        rating: v.optional(v.number()),
+        moodCategory: v.optional(v.string()),
+        note: v.optional(v.string()),
+        tags: v.optional(v.array(v.string())),
+        timeOfDay: v.optional(
+          v.union(v.literal('morning'), v.literal('evening'))
+        ),
+        createdAt: v.number(),
+      }),
+      v.null()
+    ),
+    all: v.array(
+      v.object({
+        _id: v.id('moods'),
+        _creationTime: v.number(),
+        userId: v.id('users'),
+        mood: v.optional(
+          v.union(
+            v.literal('happy'),
+            v.literal('neutral'),
+            v.literal('sad'),
+            v.literal('anxious'),
+            v.literal('angry')
+          )
+        ),
+        rating: v.optional(v.number()),
+        moodCategory: v.optional(v.string()),
+        note: v.optional(v.string()),
+        tags: v.optional(v.array(v.string())),
+        timeOfDay: v.optional(
+          v.union(v.literal('morning'), v.literal('evening'))
+        ),
+        createdAt: v.number(),
+      })
+    ),
+  }),
   handler: async (ctx) => {
     const user = await getAuthenticatedUser(ctx);
 
@@ -228,7 +387,7 @@ export const getTodayMoods = query({
     const moods = await ctx.db
       .query('moods')
       .withIndex('by_user_date', (q) => q.eq('userId', user._id))
-      .filter((q) => 
+      .filter((q) =>
         q.and(
           q.gte(q.field('createdAt'), startTimestamp),
           q.lte(q.field('createdAt'), endTimestamp)
@@ -238,15 +397,19 @@ export const getTodayMoods = query({
       .collect();
 
     // Organize by time of day
-    const morningMood = moods.find(m => m.timeOfDay === 'morning') || 
-                       moods.find(m => new Date(m.createdAt).getHours() < 12);
-    const eveningMood = moods.find(m => m.timeOfDay === 'evening') || 
-                       moods.find(m => new Date(m.createdAt).getHours() >= 12 && m !== morningMood);
+    const morningMood =
+      moods.find((m) => m.timeOfDay === 'morning') ||
+      moods.find((m) => new Date(m.createdAt).getHours() < 12);
+    const eveningMood =
+      moods.find((m) => m.timeOfDay === 'evening') ||
+      moods.find(
+        (m) => new Date(m.createdAt).getHours() >= 12 && m !== morningMood
+      );
 
     return {
       morning: morningMood || null,
       evening: eveningMood || null,
-      all: moods
+      all: moods,
     };
   },
 });
@@ -254,13 +417,38 @@ export const getTodayMoods = query({
 // Get morning mood for today
 export const getTodayMorningMood = query({
   args: {},
+  returns: v.union(
+    v.object({
+      _id: v.id('moods'),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      mood: v.optional(
+        v.union(
+          v.literal('happy'),
+          v.literal('neutral'),
+          v.literal('sad'),
+          v.literal('anxious'),
+          v.literal('angry')
+        )
+      ),
+      rating: v.optional(v.number()),
+      moodCategory: v.optional(v.string()),
+      note: v.optional(v.string()),
+      tags: v.optional(v.array(v.string())),
+      timeOfDay: v.optional(
+        v.union(v.literal('morning'), v.literal('evening'))
+      ),
+      createdAt: v.number(),
+    }),
+    v.null()
+  ),
   handler: async (ctx) => {
     const user = await getAuthenticatedUser(ctx);
 
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const startTimestamp = todayStart.getTime();
-    
+
     const todayNoon = new Date();
     todayNoon.setHours(12, 0, 0, 0);
     const noonTimestamp = todayNoon.getTime();
@@ -268,7 +456,7 @@ export const getTodayMorningMood = query({
     const morningMood = await ctx.db
       .query('moods')
       .withIndex('by_user_date', (q) => q.eq('userId', user._id))
-      .filter((q) => 
+      .filter((q) =>
         q.and(
           q.gte(q.field('createdAt'), startTimestamp),
           q.or(
@@ -287,13 +475,38 @@ export const getTodayMorningMood = query({
 // Get evening mood for today
 export const getTodayEveningMood = query({
   args: {},
+  returns: v.union(
+    v.object({
+      _id: v.id('moods'),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      mood: v.optional(
+        v.union(
+          v.literal('happy'),
+          v.literal('neutral'),
+          v.literal('sad'),
+          v.literal('anxious'),
+          v.literal('angry')
+        )
+      ),
+      rating: v.optional(v.number()),
+      moodCategory: v.optional(v.string()),
+      note: v.optional(v.string()),
+      tags: v.optional(v.array(v.string())),
+      timeOfDay: v.optional(
+        v.union(v.literal('morning'), v.literal('evening'))
+      ),
+      createdAt: v.number(),
+    }),
+    v.null()
+  ),
   handler: async (ctx) => {
     const user = await getAuthenticatedUser(ctx);
 
     const todayNoon = new Date();
     todayNoon.setHours(12, 0, 0, 0);
     const noonTimestamp = todayNoon.getTime();
-    
+
     const todayEnd = new Date();
     todayEnd.setHours(23, 59, 59, 999);
     const endTimestamp = todayEnd.getTime();
@@ -301,7 +514,7 @@ export const getTodayEveningMood = query({
     const eveningMood = await ctx.db
       .query('moods')
       .withIndex('by_user_date', (q) => q.eq('userId', user._id))
-      .filter((q) => 
+      .filter((q) =>
         q.and(
           q.lte(q.field('createdAt'), endTimestamp),
           q.or(

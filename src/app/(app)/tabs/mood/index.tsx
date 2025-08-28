@@ -544,17 +544,25 @@ export default function MoodIndex() {
                 ? {
                     backgroundColor: (() => {
                       // Get the most recent mood for the current period
-                      const currentPeriodMood = isMorning 
-                        ? getTodayMoods?.morning 
+                      const currentPeriodMood = isMorning
+                        ? getTodayMoods?.morning
                         : getTodayMoods?.evening;
-                      
+
                       // Use rating if available, otherwise fallback
-                      const moodRating = currentPeriodMood?.rating ?? 
-                        (currentPeriodMood?.mood ? mapMoodToRating(currentPeriodMood.mood) : null) ??
-                        (todayMood?.rating ?? (todayMood?.mood ? mapMoodToRating(todayMood.mood) : 5));
-                      
-                      const clamped = Math.max(1, Math.min(10, Math.round(moodRating)));
-                      const key = `ratingScale${clamped}` as keyof typeof colors;
+                      const moodRating =
+                        currentPeriodMood?.rating ??
+                        (currentPeriodMood?.mood
+                          ? mapMoodToRating(currentPeriodMood.mood)
+                          : null) ??
+                        todayMood?.rating ??
+                        (todayMood?.mood ? mapMoodToRating(todayMood.mood) : 5);
+
+                      const clamped = Math.max(
+                        1,
+                        Math.min(10, Math.round(moodRating))
+                      );
+                      const key =
+                        `ratingScale${clamped}` as keyof typeof colors;
                       return colors[key] as string;
                     })(),
                   }
@@ -572,11 +580,9 @@ export default function MoodIndex() {
                   {/* Prefix text */}
                   {selectedEncouragingMessage.prefix && (
                     <Text
+                      variant="title3"
                       className="text-center mb-1"
                       style={{
-                        fontFamily: 'CrimsonPro-Regular',
-                        fontSize: 18,
-                        lineHeight: 24,
                         color: '#1F2937',
                         letterSpacing: 0.5,
                       }}
@@ -587,11 +593,9 @@ export default function MoodIndex() {
 
                   {/* Highlighted key phrase */}
                   <Text
+                    variant="largeTitle"
                     className="text-center mb-4"
                     style={{
-                      fontFamily: 'CrimsonPro-Bold',
-                      fontSize: 32,
-                      lineHeight: 38,
                       color: '#1F2937',
                       letterSpacing: 1.5,
                     }}
@@ -612,11 +616,10 @@ export default function MoodIndex() {
 
                   {/* Supporting text */}
                   <Text
+                    variant="body"
                     className="text-center px-6"
                     style={{
-                      fontFamily: 'CrimsonPro-Italic-VariableFont',
-                      fontSize: 16,
-                      lineHeight: 24,
+                      fontStyle: 'italic',
                       color: '#1F2937',
                       letterSpacing: 0,
                     }}
@@ -639,11 +642,9 @@ export default function MoodIndex() {
                         }}
                       >
                         <Text
+                          variant="caption1"
                           className="text-center"
                           style={{
-                            fontFamily: 'CrimsonPro-Regular',
-                            fontSize: 14,
-                            lineHeight: 20,
                             color: '#1F2937',
                             opacity: 0.85,
                           }}

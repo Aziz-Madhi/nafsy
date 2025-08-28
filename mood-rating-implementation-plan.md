@@ -1,9 +1,11 @@
 # Mood Rating System Implementation Plan: 1-10 Scale
 
 ## Overview
+
 Transition from emoji-based mood selection (5 moods) to a numerical 1-10 rating system while maintaining the existing minimalist design, tag system, notes, and all other functionality.
 
 ## Design Philosophy
+
 - **Maintain minimalist aesthetic**: Clean, uncluttered interface
 - **Progressive disclosure**: Show tags and notes only after rating selection
 - **Smooth transitions**: Use existing animation patterns
@@ -13,6 +15,7 @@ Transition from emoji-based mood selection (5 moods) to a numerical 1-10 rating 
 ## Rating Scale Mapping
 
 ### Numerical to Emotional State Mapping
+
 ```
 1-2: Very Sad (Deep sadness, despair) → moodSad color
 3-4: Sad/Low (Feeling down, melancholic) → moodSad color (lighter)
@@ -22,6 +25,7 @@ Transition from emoji-based mood selection (5 moods) to a numerical 1-10 rating 
 ```
 
 ### Mood Category Determination (for tags and exercises)
+
 ```typescript
 function getMoodCategoryFromRating(rating: number): MoodType {
   if (rating <= 2) return 'sad';
@@ -37,27 +41,31 @@ function getMoodCategoryFromRating(rating: number): MoodType {
 ### Phase 1: Backend Updates
 
 #### 1.1 Update Convex Schema (`convex/schema.ts`)
+
 ```typescript
 moods: defineTable({
   userId: v.id('users'),
   // KEEP OLD FIELD for backward compatibility
-  mood: v.optional(v.union(
-    v.literal('happy'),
-    v.literal('neutral'),
-    v.literal('sad'),
-    v.literal('anxious'),
-    v.literal('angry')
-  )),
+  mood: v.optional(
+    v.union(
+      v.literal('happy'),
+      v.literal('neutral'),
+      v.literal('sad'),
+      v.literal('anxious'),
+      v.literal('angry')
+    )
+  ),
   // ADD NEW FIELDS
   rating: v.optional(v.number()), // 1-10 scale
   moodCategory: v.optional(v.string()), // derived from rating
   note: v.optional(v.string()),
   tags: v.optional(v.array(v.string())),
   createdAt: v.number(),
-})
+});
 ```
 
 #### 1.2 Update Mood Mutations (`convex/moods.ts`)
+
 - Add `rating` parameter to `createMood`
 - Auto-derive `moodCategory` from rating
 - Maintain backward compatibility by keeping `mood` field
@@ -65,13 +73,16 @@ moods: defineTable({
 ### Phase 2: UI Component Design
 
 #### 2.1 Rating Selector Component
+
 **Design Elements:**
+
 - **Horizontal slider**: Interactive 1-10 scale
 - **Visual feedback**: Number highlights on selection
 - **Descriptive labels**: Show emotional state for current rating
 - **Color gradient**: Transition from sad colors (1) to happy colors (10)
 
 **Component Structure:**
+
 ```tsx
 <RatingSelector>
   <RatingSlider /> // Interactive slider 1-10
@@ -82,6 +93,7 @@ moods: defineTable({
 ```
 
 #### 2.2 Visual Design Specifications
+
 ```css
 /* Slider Track */
 - Height: 8px
@@ -112,12 +124,14 @@ moods: defineTable({
 #### 3.1 Create New Components
 
 **`src/components/mood/RatingSelector.tsx`**
+
 - Interactive slider component
 - Haptic feedback on value change
 - Animated number display
 - Dynamic color transitions
 
 **`src/components/mood/RatingDescription.tsx`**
+
 - Maps rating to descriptive text
 - Supports i18n translations
 - Smooth text transitions
@@ -125,6 +139,7 @@ moods: defineTable({
 #### 3.2 Update Existing Components
 
 **`src/app/(app)/tabs/mood/index.tsx`**
+
 - Replace `AnimatedMoodButton` grid with `RatingSelector`
 - Keep `TagsSection` component (update to use rating-based categories)
 - Maintain note input and save functionality
@@ -133,6 +148,7 @@ moods: defineTable({
 ### Phase 4: Data Migration Strategy
 
 #### 4.1 Backward Compatibility
+
 ```typescript
 // In mood display components
 const displayRating = mood.rating || mapMoodToRating(mood.mood);
@@ -140,15 +156,22 @@ const displayCategory = mood.moodCategory || mood.mood;
 ```
 
 #### 4.2 Rating Mapping for Old Data
+
 ```typescript
 const mapMoodToRating = (mood: string): number => {
-  switch(mood) {
-    case 'sad': return 2;
-    case 'anxious': return 4;
-    case 'neutral': return 6;
-    case 'happy': return 8;
-    case 'angry': return 3;
-    default: return 5;
+  switch (mood) {
+    case 'sad':
+      return 2;
+    case 'anxious':
+      return 4;
+    case 'neutral':
+      return 6;
+    case 'happy':
+      return 8;
+    case 'angry':
+      return 3;
+    default:
+      return 5;
   }
 };
 ```
@@ -156,11 +179,13 @@ const mapMoodToRating = (mood: string): number => {
 ### Phase 5: Calendar & Analytics Updates
 
 #### 5.1 Update Color Mapping
+
 - Pixel calendar: Map 1-10 ratings to color intensity
 - Week view: Use gradient colors based on rating
 - Analytics: Show rating distribution charts
 
 #### 5.2 New Visualizations
+
 - Add average rating display
 - Show rating trends over time
 - Mood improvement indicators
@@ -168,6 +193,7 @@ const mapMoodToRating = (mood: string): number => {
 ## UI/UX Flow
 
 ### User Journey
+
 1. **Open mood tab** → See week view + rating card
 2. **Interact with slider** → See real-time number/color/description updates
 3. **Select rating** → Tags appear based on rating category
@@ -177,6 +203,7 @@ const mapMoodToRating = (mood: string): number => {
 7. **View suggestion** → Exercise based on rating category
 
 ### Animation Sequence
+
 ```
 1. Initial state: Slider at center (5), neutral colors
 2. User drags: Number scales up, color transitions, haptic feedback
@@ -188,6 +215,7 @@ const mapMoodToRating = (mood: string): number => {
 ## Localization Updates
 
 ### Translation Keys (`src/locales/`)
+
 ```json
 {
   "mood": {
@@ -214,6 +242,7 @@ const mapMoodToRating = (mood: string): number => {
 ## Testing Checklist
 
 ### Functionality
+
 - [ ] Rating selection works (1-10)
 - [ ] Tags appear for appropriate rating ranges
 - [ ] Save functionality with rating
@@ -221,6 +250,7 @@ const mapMoodToRating = (mood: string): number => {
 - [ ] Exercise suggestions based on rating
 
 ### Visual
+
 - [ ] Smooth color transitions
 - [ ] Responsive slider interaction
 - [ ] Dark mode compatibility
@@ -228,6 +258,7 @@ const mapMoodToRating = (mood: string): number => {
 - [ ] Accessibility (VoiceOver support)
 
 ### Data
+
 - [ ] Rating saves correctly to database
 - [ ] Category derivation is accurate
 - [ ] Calendar displays rating-based colors
@@ -236,18 +267,21 @@ const mapMoodToRating = (mood: string): number => {
 ## Implementation Priority
 
 ### MVP (Phase 1)
+
 1. Create `RatingSelector` component
 2. Update mood screen to use rating
 3. Modify save function for rating
 4. Basic color mapping
 
 ### Enhancement (Phase 2)
+
 1. Advanced animations
 2. Gradient colors in calendar
 3. Rating trends in analytics
 4. Migration of old data
 
 ### Polish (Phase 3)
+
 1. Haptic feedback refinement
 2. Advanced visualizations
 3. Predictive insights
@@ -256,18 +290,19 @@ const mapMoodToRating = (mood: string): number => {
 ## Code Examples
 
 ### Rating Selector Component (Simplified)
+
 ```tsx
 const RatingSelector = ({ value, onChange }) => {
   const colors = useColors();
   const { t } = useTranslation();
-  
+
   const getRatingColor = (rating: number) => {
     if (rating <= 3) return colors.moodSad;
     if (rating <= 5) return colors.moodAnxious;
     if (rating <= 7) return colors.moodNeutral;
     return colors.moodHappy;
   };
-  
+
   return (
     <View className="items-center">
       <Text variant="h3" style={{ color: getRatingColor(value) }}>
@@ -286,21 +321,21 @@ const RatingSelector = ({ value, onChange }) => {
         maximumTrackTintColor={colors.border}
         thumbTintColor={getRatingColor(value)}
       />
-      <Text variant="body">
-        {t(`mood.rating.labels.${value}`)}
-      </Text>
+      <Text variant="body">{t(`mood.rating.labels.${value}`)}</Text>
     </View>
   );
 };
 ```
 
 ## Success Metrics
+
 - User engagement: Track if users log moods more frequently
 - Data richness: More nuanced mood data (1-10 vs 5 categories)
 - User satisfaction: Feedback on new system
 - Performance: No degradation in app performance
 
 ## Rollback Plan
+
 - Keep old `mood` field in database
 - Feature flag to switch between systems
 - Export/backup user data before migration

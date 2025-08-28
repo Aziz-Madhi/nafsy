@@ -76,12 +76,9 @@ export default function ExerciseDetail({
                 <Text className="text-5xl">{exercise.icon}</Text>
               </View>
               <Text
+                variant="heading"
                 className="text-center mb-2"
                 style={{
-                  fontFamily: 'CrimsonPro-Bold',
-                  fontSize: 28,
-                  fontWeight: 'normal',
-                  lineHeight: 36,
                   color: isDarkMode ? colors.foreground : undefined,
                 }}
                 numberOfLines={2}

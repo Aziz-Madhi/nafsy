@@ -141,7 +141,7 @@ export function RatingSelector({
             <Text
               className="text-center"
               style={{
-                fontFamily: 'CrimsonPro-Bold',
+                fontFamily: 'AveriaSerif-Bold',
                 fontSize: 44,
                 lineHeight: 52,
                 color: ratingColor,
@@ -161,7 +161,7 @@ export function RatingSelector({
           <View style={{ width: '100%', alignItems: 'center' }}>
             <Text
               style={{
-                fontFamily: 'CrimsonPro-Bold',
+                fontFamily: 'AveriaSerif-Bold',
                 fontSize: 26,
                 lineHeight: 32,
                 color: colors.foreground,
@@ -169,8 +169,10 @@ export function RatingSelector({
                 width: '100%',
               }}
             >
-              {isMorning !== undefined 
-                ? (isMorning ? t('mood.greetings.morning') : t('mood.greetings.evening'))
+              {isMorning !== undefined
+                ? isMorning
+                  ? t('mood.greetings.morning')
+                  : t('mood.greetings.evening')
                 : t('mood.rating.title')}
             </Text>
             <Text

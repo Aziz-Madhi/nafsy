@@ -142,15 +142,12 @@ export function MoodBasedExerciseSuggestion({
           }}
         >
           <Text
-            className="mb-2"
+            variant="caption2"
+            className="mb-2 uppercase"
             style={{
               color: getCategoryColors.text,
-              fontFamily: 'Inter_600SemiBold',
-              fontSize: 11,
-              textTransform: 'uppercase',
               letterSpacing: 0.5,
               opacity: 0.7,
-              lineHeight: 16,
             }}
           >
             {t('mood.exerciseSuggestion.recommendedForYou')}
@@ -168,11 +165,10 @@ export function MoodBasedExerciseSuggestion({
               }}
             />
             <Text
+              variant="caption1"
+              className="uppercase font-bold"
               style={{
                 color: getCategoryColors.text,
-                fontFamily: 'Inter_700Bold',
-                fontSize: 12,
-                textTransform: 'uppercase',
                 letterSpacing: 1.5,
               }}
             >
@@ -190,11 +186,9 @@ export function MoodBasedExerciseSuggestion({
           </View>
 
           <Text
-            className="mb-2"
+            variant="title2"
+            className="mb-2 font-bold"
             style={{
-              fontFamily: 'Inter_700Bold',
-              fontSize: 22,
-              lineHeight: 28,
               color: getCategoryColors.text,
             }}
           >
@@ -204,10 +198,8 @@ export function MoodBasedExerciseSuggestion({
           </Text>
 
           <Text
+            variant="footnote"
             style={{
-              fontFamily: 'Inter_400Regular',
-              fontSize: 14,
-              lineHeight: 21,
               color: getCategoryColors.text,
               opacity: 0.8,
               paddingBottom: 2,
@@ -226,9 +218,8 @@ export function MoodBasedExerciseSuggestion({
           <View className="flex-row items-center mb-4">
             <View className="flex-row items-center">
               <Text
+                variant="caption1"
                 style={{
-                  fontFamily: 'Inter_400Regular',
-                  fontSize: 13,
                   color: colors.foreground,
                   opacity: colors.background === '#0A1514' ? 0.6 : 0.5,
                 }}
@@ -236,9 +227,9 @@ export function MoodBasedExerciseSuggestion({
                 {t('exercises.duration')}
               </Text>
               <Text
+                variant="caption1"
+                className="font-semibold"
                 style={{
-                  fontFamily: 'Inter_600SemiBold',
-                  fontSize: 13,
                   color: colors.foreground,
                   marginLeft: 6,
                 }}
@@ -260,9 +251,8 @@ export function MoodBasedExerciseSuggestion({
                 </Text>
                 <View className="flex-row items-center">
                   <Text
+                    variant="caption1"
                     style={{
-                      fontFamily: 'Inter_400Regular',
-                      fontSize: 13,
                       color: colors.foreground,
                       opacity: colors.background === '#0A1514' ? 0.6 : 0.5,
                     }}
@@ -270,12 +260,11 @@ export function MoodBasedExerciseSuggestion({
                     {t('mood.level')}
                   </Text>
                   <Text
+                    variant="caption1"
+                    className="font-semibold capitalize"
                     style={{
-                      fontFamily: 'Inter_600SemiBold',
-                      fontSize: 13,
                       color: colors.foreground,
                       marginLeft: 6,
-                      textTransform: 'capitalize',
                     }}
                   >
                     {t(`exercises.difficulty.${exercise.difficulty}`)}
@@ -298,10 +287,9 @@ export function MoodBasedExerciseSuggestion({
             }}
           >
             <Text
+              variant="subhead"
               className="font-semibold"
               style={{
-                fontFamily: 'Inter_600SemiBold',
-                fontSize: 15,
                 color: '#FFFFFF',
               }}
             >

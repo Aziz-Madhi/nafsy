@@ -37,11 +37,19 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       'expo-font',
       {
         fonts: [
-          './assets/fonts/CrimsonPro-Regular.ttf',
-          './assets/fonts/CrimsonPro-Bold.ttf',
-          './assets/fonts/CrimsonPro-Italic.ttf',
-          './assets/fonts/CrimsonPro-VariableFont_wght.ttf',
-          './assets/fonts/CrimsonPro-Italic-VariableFont_wght.ttf',
+          // AveriaSerif font family
+          './assets/fonts/AveriaSerif/AveriaSerifLibre-Light.ttf',
+          './assets/fonts/AveriaSerif/AveriaSerifLibre-Regular.ttf',
+          './assets/fonts/AveriaSerif/AveriaSerifLibre-Bold.ttf',
+          './assets/fonts/AveriaSerif/AveriaSerifLibre-Italic.ttf',
+          './assets/fonts/AveriaSerif/AveriaSerifLibre-LightItalic.ttf',
+          './assets/fonts/AveriaSerif/AveriaSerifLibre-BoldItalic.ttf',
+          // Arabic font support - RubikArabic family
+          './assets/fonts/RubikArabic/Rubik-Regular.ttf',
+          './assets/fonts/RubikArabic/Rubik-Bold.ttf',
+          './assets/fonts/RubikArabic/Rubik-Medium.ttf',
+          './assets/fonts/RubikArabic/Rubik-SemiBold.ttf',
+          './assets/fonts/RubikArabic/Rubik-Light.ttf',
         ],
       },
     ],

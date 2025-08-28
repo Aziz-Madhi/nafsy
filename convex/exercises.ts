@@ -1,10 +1,36 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { query, internalMutation } from './_generated/server';
 import { getAuthenticatedUser } from './authUtils';
 
 // Get all exercises
 export const getAllExercises = query({
   args: {},
+  returns: v.array(
+    v.object({
+      _id: v.id('exercises'),
+      _creationTime: v.number(),
+      title: v.string(),
+      titleAr: v.string(),
+      description: v.string(),
+      descriptionAr: v.string(),
+      category: v.union(
+        v.literal('breathing'),
+        v.literal('mindfulness'),
+        v.literal('journaling'),
+        v.literal('movement'),
+        v.literal('relaxation')
+      ),
+      duration: v.number(),
+      difficulty: v.union(
+        v.literal('beginner'),
+        v.literal('intermediate'),
+        v.literal('advanced')
+      ),
+      imageUrl: v.optional(v.string()),
+      instructions: v.array(v.string()),
+      instructionsAr: v.array(v.string()),
+    })
+  ),
   handler: async (ctx) => {
     const exercises = await ctx.db.query('exercises').collect();
     return exercises;
@@ -22,6 +48,32 @@ export const getExercisesByCategory = query({
       v.literal('relaxation')
     ),
   },
+  returns: v.array(
+    v.object({
+      _id: v.id('exercises'),
+      _creationTime: v.number(),
+      title: v.string(),
+      titleAr: v.string(),
+      description: v.string(),
+      descriptionAr: v.string(),
+      category: v.union(
+        v.literal('breathing'),
+        v.literal('mindfulness'),
+        v.literal('journaling'),
+        v.literal('movement'),
+        v.literal('relaxation')
+      ),
+      duration: v.number(),
+      difficulty: v.union(
+        v.literal('beginner'),
+        v.literal('intermediate'),
+        v.literal('advanced')
+      ),
+      imageUrl: v.optional(v.string()),
+      instructions: v.array(v.string()),
+      instructionsAr: v.array(v.string()),
+    })
+  ),
   handler: async (ctx, args) => {
     const exercises = await ctx.db
       .query('exercises')
@@ -36,6 +88,33 @@ export const getExercise = query({
   args: {
     exerciseId: v.id('exercises'),
   },
+  returns: v.union(
+    v.object({
+      _id: v.id('exercises'),
+      _creationTime: v.number(),
+      title: v.string(),
+      titleAr: v.string(),
+      description: v.string(),
+      descriptionAr: v.string(),
+      category: v.union(
+        v.literal('breathing'),
+        v.literal('mindfulness'),
+        v.literal('journaling'),
+        v.literal('movement'),
+        v.literal('relaxation')
+      ),
+      duration: v.number(),
+      difficulty: v.union(
+        v.literal('beginner'),
+        v.literal('intermediate'),
+        v.literal('advanced')
+      ),
+      imageUrl: v.optional(v.string()),
+      instructions: v.array(v.string()),
+      instructionsAr: v.array(v.string()),
+    }),
+    v.null()
+  ),
   handler: async (ctx, args) => {
     const exercise = await ctx.db.get(args.exerciseId);
     return exercise;
@@ -55,6 +134,33 @@ export const getRandomExerciseByCategories = query({
       )
     ),
   },
+  returns: v.union(
+    v.object({
+      _id: v.id('exercises'),
+      _creationTime: v.number(),
+      title: v.string(),
+      titleAr: v.string(),
+      description: v.string(),
+      descriptionAr: v.string(),
+      category: v.union(
+        v.literal('breathing'),
+        v.literal('mindfulness'),
+        v.literal('journaling'),
+        v.literal('movement'),
+        v.literal('relaxation')
+      ),
+      duration: v.number(),
+      difficulty: v.union(
+        v.literal('beginner'),
+        v.literal('intermediate'),
+        v.literal('advanced')
+      ),
+      imageUrl: v.optional(v.string()),
+      instructions: v.array(v.string()),
+      instructionsAr: v.array(v.string()),
+    }),
+    v.null()
+  ),
   handler: async (ctx, args) => {
     // Get all exercises from the specified categories
     const exercisePromises = args.categories.map((category) =>
@@ -78,7 +184,7 @@ export const getRandomExerciseByCategories = query({
 });
 
 // Create a new exercise (admin function)
-export const createExercise = mutation({
+export const createExercise = internalMutation({
   args: {
     title: v.string(),
     titleAr: v.string(),
@@ -101,6 +207,7 @@ export const createExercise = mutation({
     instructions: v.array(v.string()),
     instructionsAr: v.array(v.string()),
   },
+  returns: v.id('exercises'),
   handler: async (ctx, args) => {
     const exerciseId = await ctx.db.insert('exercises', args);
     return exerciseId;
@@ -108,7 +215,7 @@ export const createExercise = mutation({
 });
 
 // Update an exercise (admin function)
-export const updateExercise = mutation({
+export const updateExercise = internalMutation({
   args: {
     exerciseId: v.id('exercises'),
     title: v.optional(v.string()),
@@ -136,6 +243,7 @@ export const updateExercise = mutation({
     instructions: v.optional(v.array(v.string())),
     instructionsAr: v.optional(v.array(v.string())),
   },
+  returns: v.id('exercises'),
   handler: async (ctx, args) => {
     const { exerciseId, ...updates } = args;
     await ctx.db.patch(exerciseId, updates);
@@ -157,6 +265,34 @@ export const getExercisesWithProgress = query({
       )
     ),
   },
+  returns: v.array(
+    v.object({
+      _id: v.id('exercises'),
+      _creationTime: v.number(),
+      title: v.string(),
+      titleAr: v.string(),
+      description: v.string(),
+      descriptionAr: v.string(),
+      category: v.union(
+        v.literal('breathing'),
+        v.literal('mindfulness'),
+        v.literal('journaling'),
+        v.literal('movement'),
+        v.literal('relaxation')
+      ),
+      duration: v.number(),
+      difficulty: v.union(
+        v.literal('beginner'),
+        v.literal('intermediate'),
+        v.literal('advanced')
+      ),
+      imageUrl: v.optional(v.string()),
+      instructions: v.array(v.string()),
+      instructionsAr: v.array(v.string()),
+      completionCount: v.number(),
+      lastCompleted: v.optional(v.number()),
+    })
+  ),
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
@@ -212,6 +348,35 @@ export const getExercisesWithProgress = query({
 // Get daily exercise for the authenticated user
 export const getDailyExercise = query({
   args: {},
+  returns: v.union(
+    v.object({
+      _id: v.id('exercises'),
+      _creationTime: v.number(),
+      title: v.string(),
+      titleAr: v.string(),
+      description: v.string(),
+      descriptionAr: v.string(),
+      category: v.union(
+        v.literal('breathing'),
+        v.literal('mindfulness'),
+        v.literal('journaling'),
+        v.literal('movement'),
+        v.literal('relaxation')
+      ),
+      duration: v.number(),
+      difficulty: v.union(
+        v.literal('beginner'),
+        v.literal('intermediate'),
+        v.literal('advanced')
+      ),
+      imageUrl: v.optional(v.string()),
+      instructions: v.array(v.string()),
+      instructionsAr: v.array(v.string()),
+      completionCount: v.number(),
+      lastCompleted: v.optional(v.number()),
+    }),
+    v.null()
+  ),
   handler: async (ctx) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);

@@ -1,13 +1,14 @@
-import { mutation } from './_generated/server';
+import { internalMutation } from './_generated/server';
 import { v } from 'convex/values';
 
-export const seedExercises = mutation({
+export const seedExercises = internalMutation({
   args: {},
+  returns: v.object({ message: v.string(), count: v.number() }),
   handler: async (ctx) => {
     // Check if exercises already exist
     const existingExercises = await ctx.db.query('exercises').first();
     if (existingExercises) {
-      return { message: 'Exercises already seeded' };
+      return { message: 'Exercises already seeded', count: 0 };
     }
 
     const exercises = [
@@ -175,10 +176,15 @@ export const seedExercises = mutation({
   },
 });
 
-export const seedMoods = mutation({
+export const seedMoods = internalMutation({
   args: {
     userId: v.optional(v.id('users')), // Optional user ID, if not provided, use first user
   },
+  returns: v.object({
+    message: v.string(),
+    count: v.number(),
+    userId: v.id('users'),
+  }),
   handler: async (ctx, args) => {
     // Get user ID - use provided one or find the first user
     let userId = args.userId;

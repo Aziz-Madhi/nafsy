@@ -13,6 +13,7 @@ export const sendVentMessage = mutation({
     role: v.union(v.literal('user'), v.literal('assistant')),
     sessionId: v.optional(v.string()),
   },
+  returns: v.id('ventChatMessages'),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
@@ -67,6 +68,17 @@ export const getVentMessages = query({
     sessionId: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
+  returns: v.array(
+    v.object({
+      _id: v.id('ventChatMessages'),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      content: v.string(),
+      role: v.union(v.literal('user'), v.literal('assistant')),
+      sessionId: v.optional(v.string()),
+      createdAt: v.number(),
+    })
+  ),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     const limit = args.limit || 50;
@@ -108,6 +120,18 @@ export const getVentSessions = query({
   args: {
     limit: v.optional(v.number()),
   },
+  returns: v.array(
+    v.object({
+      _id: v.id('ventChatSessions'),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      sessionId: v.string(),
+      title: v.string(),
+      startedAt: v.number(),
+      lastMessageAt: v.number(),
+      messageCount: v.number(),
+    })
+  ),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     const limit = args.limit || 20;
@@ -127,6 +151,7 @@ export const getVentSessions = query({
  */
 export const getCurrentVentSessionId = query({
   args: {},
+  returns: v.union(v.string(), v.null()),
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
 
@@ -147,6 +172,7 @@ export const createVentSession = mutation({
   args: {
     title: v.optional(v.string()),
   },
+  returns: v.string(),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
@@ -175,6 +201,7 @@ export const updateVentSessionTitle = mutation({
     sessionId: v.string(),
     title: v.string(),
   },
+  returns: v.string(),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
@@ -202,6 +229,7 @@ export const deleteVentSession = mutation({
   args: {
     sessionId: v.string(),
   },
+  returns: v.string(),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 

@@ -44,7 +44,11 @@ export function WeekDayDot({
     () => ({
       width: size,
       height: size,
-      backgroundColor: hasGradient ? 'transparent' : (hasData ? color : 'transparent'),
+      backgroundColor: hasGradient
+        ? 'transparent'
+        : hasData
+          ? color
+          : 'transparent',
     }),
     [size, hasData, color, hasGradient]
   );
@@ -122,9 +126,7 @@ export function WeekDayDot({
           )}
 
           {/* Today indicator only - no mood icons */}
-          {isToday && !hasData ? (
-            <View style={todayIndicatorStyle} />
-          ) : null}
+          {isToday && !hasData ? <View style={todayIndicatorStyle} /> : null}
         </View>
       </MotiPressable>
       <Text
@@ -135,7 +137,7 @@ export function WeekDayDot({
             ? 'text-primary font-bold'
             : 'text-muted-foreground font-medium'
         )}
-        style={{ textAlign: 'center', fontSize: 12, letterSpacing: 0.1 }}
+        style={{ textAlign: 'center', letterSpacing: 0.1 }}
       >
         {isToday ? t('common.today') : day}
       </Text>

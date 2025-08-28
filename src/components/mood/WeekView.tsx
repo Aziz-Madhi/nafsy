@@ -140,11 +140,11 @@ export function WeekView({ moodData }: WeekViewProps) {
 
             const hasGradient = pixelStyle.type === 'gradient';
             const gradientColors = hasGradient ? pixelStyle.colors || [] : [];
-            const gradientLocations = hasGradient ? pixelStyle.locations || [] : [];
+            const gradientLocations = hasGradient
+              ? pixelStyle.locations || []
+              : [];
             const solidColor =
-              pixelStyle.type === 'solid'
-                ? pixelStyle.color
-                : '#E5E7EB'; // Default gray for when gradient is used
+              pixelStyle.type === 'solid' ? pixelStyle.color : '#E5E7EB'; // Default gray for when gradient is used
 
             return (
               <WeekDayDot
@@ -243,9 +243,9 @@ export function WeekView({ moodData }: WeekViewProps) {
                 }}
               >
                 <Text
-                  variant="subhead"
+                  variant="callout"
                   className="text-[#2D3748] font-bold mb-3"
-                  style={{ fontSize: 16, letterSpacing: 0.3 }}
+                  style={{ letterSpacing: 0.3 }}
                 >
                   {format(selectedDay.date, 'EEEE, MMMM d')}
                 </Text>
@@ -265,9 +265,9 @@ export function WeekView({ moodData }: WeekViewProps) {
                     />
                   </View>
                   <Text
-                    variant="body"
+                    variant="callout"
                     className="text-[#2D3748] font-bold"
-                    style={{ fontSize: 16, letterSpacing: 0.3 }}
+                    style={{ letterSpacing: 0.3 }}
                   >
                     {t('mood.feeling')}{' '}
                     {t(`mood.moods.${selectedDay.mood.mood}`)}
@@ -306,17 +306,17 @@ export function WeekView({ moodData }: WeekViewProps) {
                         }}
                       />
                       <Text
-                        variant="caption1"
+                        variant="footnote"
                         className="text-[#5A4A3A] font-bold"
-                        style={{ fontSize: 13, letterSpacing: 0.5 }}
+                        style={{ letterSpacing: 0.5 }}
                       >
                         {t('mood.note')}
                       </Text>
                     </View>
                     <Text
-                      variant="body"
+                      variant="callout"
                       className="text-[#2D3748] italic"
-                      style={{ fontSize: 15, lineHeight: 22 }}
+                      style={{ lineHeight: 22 }}
                     >
                       {`"${selectedDay.mood.note}"`}
                     </Text>
@@ -333,9 +333,8 @@ export function WeekView({ moodData }: WeekViewProps) {
                     }}
                   >
                     <Text
-                      variant="body"
+                      variant="subhead"
                       className="text-gray-500 italic font-medium text-center"
-                      style={{ fontSize: 14 }}
                     >
                       {t('mood.noNotesForDay')}
                     </Text>

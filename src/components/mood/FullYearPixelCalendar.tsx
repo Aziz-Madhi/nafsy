@@ -294,7 +294,12 @@ export function FullYearPixelCalendar({
     const entry = moodDataMap.get(day.dateKey);
 
     if (entry && (entry.morning || entry.evening)) {
-      return getMoodPixelStyle(entry.morning, entry.evening, colors, day.isToday);
+      return getMoodPixelStyle(
+        entry.morning,
+        entry.evening,
+        colors,
+        day.isToday
+      );
     }
 
     // No mood entry for this day - use very subtle background
@@ -391,10 +396,9 @@ export function FullYearPixelCalendar({
           >
             <ChevronLeft size={20} color={colors.foreground} />
             <Text
-              variant="body"
+              variant="title3"
               style={{
                 color: withOpacity(colors.foreground, 0.85),
-                fontSize: 18,
                 marginLeft: 2,
               }}
             >
@@ -403,10 +407,9 @@ export function FullYearPixelCalendar({
           </Pressable>
 
           <Text
-            variant="title2"
+            variant="title1"
             style={{
               color: colors.foreground,
-              fontSize: 24,
               fontWeight: '700',
               letterSpacing: -0.2,
               position: 'absolute',
@@ -433,9 +436,8 @@ export function FullYearPixelCalendar({
           <View style={{ marginBottom: 20, marginTop: 0 }}>
             {/* Subtitle */}
             <Text
-              variant="body"
+              variant="callout"
               style={{
-                fontSize: 15,
                 fontWeight: '500',
                 textAlign: 'center',
                 marginBottom: 16,
@@ -448,9 +450,8 @@ export function FullYearPixelCalendar({
 
             {/* Description */}
             <Text
-              variant="caption1"
+              variant="footnote"
               style={{
-                fontSize: 13,
                 lineHeight: 19,
                 textAlign: 'center',
                 paddingHorizontal: 20,
@@ -519,10 +520,9 @@ export function FullYearPixelCalendar({
                                 {/* Month label above the pixels for first row of each month */}
                                 {monthRow.isMonthStart && (
                                   <Text
-                                    variant="body"
+                                    variant="subhead"
                                     style={{
                                       color: colors.primary,
-                                      fontSize: 14,
                                       fontWeight: '700',
                                       letterSpacing: 0.5,
                                       marginBottom: 8,
@@ -617,10 +617,9 @@ export function FullYearPixelCalendar({
                           {/* Month label above the pixels for first row of each month */}
                           {isMonthStart && (
                             <Text
-                              variant="body"
+                              variant="subhead"
                               style={{
                                 color: colors.foreground,
-                                fontSize: 14,
                                 fontWeight: '600',
                                 letterSpacing: 0.5,
                                 marginBottom: 8,

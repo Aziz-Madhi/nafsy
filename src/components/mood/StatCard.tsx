@@ -49,16 +49,16 @@ export function StatCard({
           <Icon size={28} color={iconColor} strokeWidth={2.5} />
         </View>
         <Text
-          variant="title1"
+          variant="heading"
           className="font-bold text-[#2D3748] mb-1"
-          style={{ fontSize: 28, letterSpacing: 0.5 }}
+          style={{ letterSpacing: 0.5 }}
         >
           {value}
         </Text>
         <Text
           variant="subhead"
           className="text-[#4A5568] font-medium"
-          style={{ fontSize: 14, letterSpacing: 0.2 }}
+          style={{ letterSpacing: 0.2 }}
         >
           {label}
         </Text>

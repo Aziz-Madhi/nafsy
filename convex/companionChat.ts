@@ -16,6 +16,7 @@ export const sendCompanionMessage = mutation({
     role: v.union(v.literal('user'), v.literal('assistant')),
     sessionId: v.optional(v.string()),
   },
+  returns: v.id('companionChatMessages'),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
@@ -70,6 +71,17 @@ export const getCompanionChatMessages = query({
     sessionId: v.optional(v.string()),
     limit: v.optional(v.number()),
   },
+  returns: v.array(
+    v.object({
+      _id: v.id('companionChatMessages'),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      content: v.string(),
+      role: v.union(v.literal('user'), v.literal('assistant')),
+      sessionId: v.string(),
+      createdAt: v.number(),
+    })
+  ),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     const limit = args.limit || 50;
@@ -111,6 +123,18 @@ export const getCompanionChatSessions = query({
   args: {
     limit: v.optional(v.number()),
   },
+  returns: v.array(
+    v.object({
+      _id: v.id('companionChatSessions'),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      sessionId: v.string(),
+      title: v.string(),
+      startedAt: v.number(),
+      lastMessageAt: v.number(),
+      messageCount: v.number(),
+    })
+  ),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
     const limit = args.limit || 20;
@@ -130,6 +154,7 @@ export const getCompanionChatSessions = query({
  */
 export const getCurrentCompanionSessionId = query({
   args: {},
+  returns: v.union(v.string(), v.null()),
   handler: async (ctx) => {
     const userId = await requireAuth(ctx);
 
@@ -150,6 +175,7 @@ export const createCompanionChatSession = mutation({
   args: {
     title: v.optional(v.string()),
   },
+  returns: v.string(),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
@@ -183,6 +209,7 @@ export const updateCompanionSessionTitle = mutation({
     sessionId: v.string(),
     title: v.string(),
   },
+  returns: v.string(),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 
@@ -210,6 +237,7 @@ export const deleteCompanionChatSession = mutation({
   args: {
     sessionId: v.string(),
   },
+  returns: v.string(),
   handler: async (ctx, args) => {
     const userId = await requireAuth(ctx);
 

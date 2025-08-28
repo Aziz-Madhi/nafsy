@@ -169,16 +169,7 @@ export default function CrisisResources() {
               tintColor={colors.brandDarkBlue}
             />
           </Pressable>
-          <Text
-            className="text-foreground flex-1"
-            style={{
-              fontFamily: 'CrimsonPro-Bold',
-              fontSize: 28,
-              fontWeight: 'normal',
-              lineHeight: 34,
-              // Text alignment handled by autoAlign
-            }}
-          >
+          <Text variant="heading" className="text-foreground flex-1">
             {t('crisisResources.title')}
           </Text>
         </View>

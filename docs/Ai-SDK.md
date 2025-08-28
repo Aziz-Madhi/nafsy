@@ -1,4 +1,3 @@
-
 # Expo Quickstart
 
 In this quickstart tutorial, you'll build a simple AI-chatbot with a streaming user interface with [Expo](https://expo.dev/). Along the way, you'll learn key concepts and techniques that are fundamental to using the SDK in your own projects.
@@ -13,7 +12,6 @@ To follow this quickstart, you'll need:
 - An OpenAI API key.
 
 If you haven't obtained your OpenAI API key, you can do so by [signing up](https://platform.openai.com/signup/) on the OpenAI website.
-
 
 <Note>This guide requires Expo 52 or higher.</Note>
 
@@ -102,7 +100,7 @@ export default function App() {
       fetch: expoFetch as unknown as typeof globalThis.fetch,
       api: generateAPIUrl('/api/chat'),
     }),
-    onError: error => console.error(error, 'ERROR'),
+    onError: (error) => console.error(error, 'ERROR'),
   });
 
   if (error) return <Text>{error.message}</Text>;
@@ -118,7 +116,7 @@ export default function App() {
         }}
       >
         <ScrollView style={{ flex: 1 }}>
-          {messages.map(m => (
+          {messages.map((m) => (
             <View key={m.id} style={{ marginVertical: 8 }}>
               <View>
                 <Text style={{ fontWeight: 700 }}>{m.role}</Text>
@@ -138,8 +136,8 @@ export default function App() {
             style={{ backgroundColor: 'white', padding: 8 }}
             placeholder="Say something..."
             value={input}
-            onChange={e => setInput(e.nativeEvent.text)}
-            onSubmitEditing={e => {
+            onChange={(e) => setInput(e.nativeEvent.text)}
+            onSubmitEditing={(e) => {
               e.preventDefault();
               sendMessage({ text: input });
               setInput('');
@@ -185,7 +183,7 @@ export const generateAPIUrl = (relativePath: string) => {
 
   if (!process.env.EXPO_PUBLIC_API_BASE_URL) {
     throw new Error(
-      'EXPO_PUBLIC_API_BASE_URL environment variable is not defined',
+      'EXPO_PUBLIC_API_BASE_URL environment variable is not defined'
     );
   }
 
@@ -269,7 +267,6 @@ In this updated code:
 
 1. You import the `tool` function from the `ai` package and `z` from `zod` for schema validation.
 2. You define a `tools` object with a `weather` tool. This tool:
-
    - Has a description that helps the model understand when to use it.
    - Defines `inputSchema` using a Zod schema, specifying that it requires a `location` string to execute this tool. The model will attempt to extract this input from the context of the conversation. If it can't, it will ask the user for the missing information.
    - Defines an `execute` function that simulates getting weather data (in this case, it returns a random temperature). This is an asynchronous function running on the server so you can fetch real data from an external API.
@@ -310,7 +307,7 @@ export default function App() {
       fetch: expoFetch as unknown as typeof globalThis.fetch,
       api: generateAPIUrl('/api/chat'),
     }),
-    onError: error => console.error(error, 'ERROR'),
+    onError: (error) => console.error(error, 'ERROR'),
   });
 
   if (error) return <Text>{error.message}</Text>;
@@ -326,7 +323,7 @@ export default function App() {
         }}
       >
         <ScrollView style={{ flex: 1 }}>
-          {messages.map(m => (
+          {messages.map((m) => (
             <View key={m.id} style={{ marginVertical: 8 }}>
               <View>
                 <Text style={{ fontWeight: 700 }}>{m.role}</Text>
@@ -352,8 +349,8 @@ export default function App() {
             style={{ backgroundColor: 'white', padding: 8 }}
             placeholder="Say something..."
             value={input}
-            onChange={e => setInput(e.nativeEvent.text)}
-            onSubmitEditing={e => {
+            onChange={(e) => setInput(e.nativeEvent.text)}
+            onSubmitEditing={(e) => {
               e.preventDefault();
               sendMessage({ text: input });
               setInput('');
@@ -525,7 +522,7 @@ export default function App() {
       fetch: expoFetch as unknown as typeof globalThis.fetch,
       api: generateAPIUrl('/api/chat'),
     }),
-    onError: error => console.error(error, 'ERROR'),
+    onError: (error) => console.error(error, 'ERROR'),
   });
 
   if (error) return <Text>{error.message}</Text>;
@@ -541,7 +538,7 @@ export default function App() {
         }}
       >
         <ScrollView style={{ flex: 1 }}>
-          {messages.map(m => (
+          {messages.map((m) => (
             <View key={m.id} style={{ marginVertical: 8 }}>
               <View>
                 <Text style={{ fontWeight: 700 }}>{m.role}</Text>
@@ -568,8 +565,8 @@ export default function App() {
             style={{ backgroundColor: 'white', padding: 8 }}
             placeholder="Say something..."
             value={input}
-            onChange={e => setInput(e.nativeEvent.text)}
-            onSubmitEditing={e => {
+            onChange={(e) => setInput(e.nativeEvent.text)}
+            onSubmitEditing={(e) => {
               e.preventDefault();
               sendMessage({ text: input });
               setInput('');

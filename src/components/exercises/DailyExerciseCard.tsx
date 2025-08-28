@@ -51,25 +51,12 @@ function DailyExerciseCardComponent({
             {exercise ? (
               <>
                 {/* Greeting */}
-                <Text
-                  className="text-muted-foreground mb-2"
-                  style={{
-                    fontFamily: 'Inter_400Regular',
-                    fontSize: 14,
-                  }}
-                >
+                <Text variant="footnote" className="text-muted-foreground mb-2">
                   {greeting}
                 </Text>
 
                 {/* Today's Exercise title */}
-                <Text
-                  className="text-foreground mb-5"
-                  style={{
-                    fontFamily: 'Inter_700Bold',
-                    fontSize: 26,
-                    lineHeight: 32,
-                  }}
-                >
+                <Text variant="heading" className="text-foreground mb-5">
                   {t('exercises.dailyExercise.title')}
                 </Text>
 
@@ -77,8 +64,8 @@ function DailyExerciseCardComponent({
                 <View className="items-center mb-2">
                   <View className="px-4 py-1.5 rounded-full bg-white">
                     <Text
-                      className="text-foreground"
-                      style={{ fontFamily: 'Inter_500Medium', fontSize: 13 }}
+                      variant="footnote"
+                      className="text-foreground font-medium"
                     >
                       {t(`exercises.categories.${exercise.category}`)}
                     </Text>
@@ -87,24 +74,14 @@ function DailyExerciseCardComponent({
 
                 {/* Duration centered */}
                 <Text
+                  variant="footnote"
                   className="text-muted-foreground text-center mb-5"
-                  style={{
-                    fontFamily: 'Inter_400Regular',
-                    fontSize: 14,
-                  }}
                 >
                   {exercise.duration}
                 </Text>
 
                 {/* Exercise title */}
-                <Text
-                  className="text-foreground mb-2"
-                  style={{
-                    fontFamily: 'Inter_600SemiBold',
-                    fontSize: 20,
-                    lineHeight: 26,
-                  }}
-                >
+                <Text variant="title2" className="text-foreground mb-2">
                   {currentLanguage === 'ar' && exercise.titleAr
                     ? exercise.titleAr
                     : exercise.title}
@@ -112,12 +89,8 @@ function DailyExerciseCardComponent({
 
                 {/* Description */}
                 <Text
+                  variant="footnote"
                   className="text-muted-foreground mb-6"
-                  style={{
-                    fontFamily: 'Inter_400Regular',
-                    fontSize: 14,
-                    lineHeight: 20,
-                  }}
                   numberOfLines={2}
                 >
                   {currentLanguage === 'ar' && exercise.descriptionAr
@@ -128,12 +101,8 @@ function DailyExerciseCardComponent({
                 {/* Motivational message and button */}
                 <View className="flex-row items-center justify-between">
                   <Text
+                    variant="footnote"
                     className="text-muted-foreground flex-1 me-3"
-                    style={{
-                      fontFamily: 'Inter_400Regular',
-                      fontSize: 13,
-                      lineHeight: 18,
-                    }}
                   >
                     {motivationalMessage}
                   </Text>
@@ -152,11 +121,8 @@ function DailyExerciseCardComponent({
                     }}
                   >
                     <Text
+                      variant="footnote"
                       className="text-white font-semibold"
-                      style={{
-                        fontFamily: 'Inter_600SemiBold',
-                        fontSize: 14,
-                      }}
                     >
                       {t('exercises.dailyExercise.startNow')}
                     </Text>
@@ -239,11 +205,8 @@ function DailyExerciseCardComponent({
                     }}
                   >
                     <Text
+                      variant="callout"
                       className="text-white font-semibold"
-                      style={{
-                        fontFamily: 'Inter_600SemiBold',
-                        fontSize: 17,
-                      }}
                     >
                       {t('exercises.dailyExercise.startNow')}
                     </Text>
