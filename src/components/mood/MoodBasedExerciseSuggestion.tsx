@@ -100,7 +100,7 @@ export function MoodBasedExerciseSuggestion({
   if (isLoading || !exercise) {
     // Loading skeleton
     return (
-      <View className="mb-6" style={{ marginHorizontal: 6 }}>
+      <View className="mb-4" style={{ marginHorizontal: 6 }}>
         <View
           className="rounded-3xl p-6 bg-black/[0.03] dark:bg-white/[0.03]"
           style={{
@@ -128,7 +128,7 @@ export function MoodBasedExerciseSuggestion({
         duration: 400,
         delay: 100,
       }}
-      className="mb-6"
+      className="mb-4"
       style={{ marginHorizontal: 6 }}
     >
       <View className="rounded-3xl overflow-hidden">

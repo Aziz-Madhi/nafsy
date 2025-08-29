@@ -8,7 +8,11 @@ import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
 import { withOpacity } from '~/lib/colors';
 import { useTranslation } from '~/hooks/useTranslation';
-import { useChatUIStore, ChatType } from '~/store/useChatUIStore';
+import {
+  useChatUIStore,
+  ChatType,
+  useVentChatVisible,
+} from '~/store/useChatUIStore';
 import { getChatStyles, getChatPlaceholder } from '~/lib/chatStyles';
 import Animated, {
   useSharedValue,
@@ -45,6 +49,14 @@ export function FloatingTabBar({
   const colors = useColors();
   const { i18n } = useTranslation();
   const activeChatType = useChatUIStore((state) => state.activeChatType);
+  const isVentOpen = useVentChatVisible();
+  const setCoachChatInput = useChatUIStore((s) => s.setCoachChatInput);
+  const clearCoachChatInput = useChatUIStore((s) => s.clearCoachChatInput);
+  const setCompanionChatInput = useChatUIStore((s) => s.setCompanionChatInput);
+  const clearCompanionChatInput = useChatUIStore((s) => s.clearCompanionChatInput);
+  const setMainChatInput = useChatUIStore((s) => s.setMainChatInput);
+  const clearMainChatInput = useChatUIStore((s) => s.clearMainChatInput);
+  const setChatInputFocused = useChatUIStore((s) => s.setChatInputFocused);
 
   // Animation values
   const isChatExpanded = useSharedValue(0);
@@ -100,6 +112,13 @@ export function FloatingTabBar({
     if (message.trim() && onSendMessage) {
       const messageText = message.trim();
       setMessage('');
+      // Clear shared draft for current personality so intro can reappear
+      if (activeChatType === 'companion') {
+        clearCompanionChatInput();
+      } else {
+        clearCoachChatInput();
+        clearMainChatInput();
+      }
       await impactAsync(ImpactFeedbackStyle.Medium);
       onSendMessage(messageText);
     }
@@ -158,6 +177,11 @@ export function FloatingTabBar({
     position: 'absolute',
   }));
 
+  // If private overlay is open, render nothing while keeping hooks order stable
+  if (isVentOpen) {
+    return <View />;
+  }
+
   return (
     <View className="absolute bottom-0 left-0 right-0 px-4 pb-8">
       <Animated.View
@@ -198,10 +222,7 @@ export function FloatingTabBar({
           {/* Input Section - Only visible in chat */}
           {isChatTab && (
             <Animated.View
-              style={[
-                inputContainerStyle,
-                { paddingHorizontal: 12, paddingTop: 8 },
-              ]}
+              style={[inputContainerStyle, { paddingHorizontal: 12, paddingTop: 8 }]}
             >
               {/* Row layout with explicit spacing */}
               <View className="flex-row items-end gap-7 pr-3">
@@ -210,18 +231,34 @@ export function FloatingTabBar({
                   <TextInput
                     ref={inputRef}
                     value={message}
-                    onChangeText={setMessage}
-                    onFocus={() => setIsInputFocused(true)}
-                    onBlur={() => setIsInputFocused(false)}
+                    onChangeText={(text) => {
+                      setMessage(text);
+                      if (activeChatType === 'companion') {
+                        setCompanionChatInput(text);
+                      } else {
+                        setCoachChatInput(text);
+                        setMainChatInput(text);
+                      }
+                    }}
+                    onFocus={() => {
+                      setIsInputFocused(true);
+                      setChatInputFocused(true);
+                    }}
+                    onBlur={() => {
+                      setIsInputFocused(false);
+                      setChatInputFocused(false);
+                    }}
                     placeholder={placeholder}
                     placeholderTextColor={withOpacity(colors.foreground, 0.45)}
                     className="text-foreground text-base px-3 py-2"
                     style={{
-                      backgroundColor: isInputFocused
-                        ? chatStyles.primaryColor + '12'
-                        : colors.background + '30',
+                      backgroundColor: colors.background + '30',
                       borderRadius: 16,
                       minHeight: 36,
+                      ...Platform.select({
+                        web: { outlineStyle: 'none' as any },
+                        default: {},
+                      }),
                     }}
                     multiline
                     maxLength={1000}
@@ -231,47 +268,66 @@ export function FloatingTabBar({
                 </View>
 
                 {/* Voice/Send button */}
-                <Pressable
-                  onPress={hasText ? handleSend : handleVoicePress}
-                  className="rounded-full bg-white dark:bg-card-elevated border border-border/10"
-                  style={({ pressed }) => ({
-                    opacity: pressed ? 0.9 : 1,
-                    transform: [{ scale: pressed ? 0.95 : 1 }],
-                    width: 48,
-                    height: 48,
+                <View
+                  className="rounded-full"
+                  style={{
+                    width: 40,
+                    height: 40,
+                    backgroundColor:
+                      colors.background === '#0A1514'
+                        ? 'rgba(255, 255, 255, 0.15)'
+                        : 'rgba(255, 255, 255, 0.4)',
+                    borderColor:
+                      colors.background === '#0A1514'
+                        ? 'rgba(255, 255, 255, 0.25)'
+                        : 'rgba(255, 255, 255, 0.6)',
+                    borderWidth: 0.5,
+                    shadowColor: '#000',
+                    shadowOffset: { width: 0, height: 3 },
+                    shadowOpacity: 0.15,
+                    shadowRadius: 6,
+                    elevation: 5,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    shadowColor: colors.shadow,
-                    shadowOffset: { width: 0, height: 2 },
-                    shadowOpacity: 0.12,
-                    shadowRadius: 4,
-                    elevation: 3,
-                  })}
+                    marginTop: 4,
+                  }}
                 >
-                  <View
-                    style={{
-                      width: 28,
-                      height: 28,
+                  <Pressable
+                    onPress={hasText ? handleSend : handleVoicePress}
+                    style={({ pressed }) => ({
+                      opacity: pressed ? 0.9 : 1,
+                      transform: [{ scale: pressed ? 0.95 : 1 }],
+                      width: '100%',
+                      height: '100%',
                       alignItems: 'center',
                       justifyContent: 'center',
-                    }}
+                    })}
                   >
-                    <Animated.View style={micIconStyle}>
-                      <SoundWaveIcon
-                        size={28}
-                        color={chatStyles.primaryColor}
-                        strokeWidth={2}
-                      />
-                    </Animated.View>
-                    <Animated.View style={sendIconStyle}>
-                      <ArrowUp
-                        size={28}
-                        color={chatStyles.primaryColor}
-                        strokeWidth={2}
-                      />
-                    </Animated.View>
-                  </View>
-                </Pressable>
+                    <View
+                      style={{
+                        width: 24,
+                        height: 24,
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                    >
+                      <Animated.View style={micIconStyle}>
+                        <SoundWaveIcon
+                          size={24}
+                          color={chatStyles.primaryColor}
+                          strokeWidth={2}
+                        />
+                      </Animated.View>
+                      <Animated.View style={sendIconStyle}>
+                        <ArrowUp
+                          size={24}
+                          color={chatStyles.primaryColor}
+                          strokeWidth={2}
+                        />
+                      </Animated.View>
+                    </View>
+                  </Pressable>
+                </View>
               </View>
             </Animated.View>
           )}
@@ -324,6 +380,181 @@ export function FloatingTabBar({
           </View>
         </View>
       </Animated.View>
+    </View>
+  );
+}
+
+// Standalone floating chat input used by the private overlay
+// Reuses the same visuals and behavior as the tab bar's input section
+export function FloatingChatInputStandalone({
+  onSendMessage,
+  chatType = 'coach',
+  dark = true,
+}: {
+  onSendMessage: (message: string) => void | Promise<void>;
+  chatType?: ChatType;
+  dark?: boolean; // render dark container suitable for black overlay
+}) {
+  const colors = useColors();
+  const { i18n } = useTranslation();
+  const inputRef = React.useRef<TextInput>(null);
+  const [message, setMessage] = React.useState('');
+  const [isInputFocused, setIsInputFocused] = React.useState(false);
+  const isIOS = Platform.OS === 'ios';
+  const hasText = !!message.trim();
+
+  // Use event styling for accent in private mode
+  const chatStyles = getChatStyles(chatType);
+  const placeholder = getChatPlaceholder(chatType, i18n.language === 'ar');
+
+  // Private vent input uses a dedicated style (no mic crossfade)
+
+  const handleSend = useCallback(async () => {
+    if (message.trim()) {
+      const text = message.trim();
+      setMessage('');
+      await impactAsync(ImpactFeedbackStyle.Medium);
+      onSendMessage(text);
+    }
+  }, [message, onSendMessage]);
+
+  // Layout box keeps input position; visual card is trimmed inside
+  const CONTAINER_HEIGHT = 92; // outer box height (increased to push down)
+  const CARD_HEIGHT = 72; // inner card visual height
+
+  return (
+    <View
+      className="absolute left-0 right-0 px-4"
+      style={{ bottom: -10, paddingBottom: 64 }}
+    >
+      <View style={{ height: CONTAINER_HEIGHT }}>
+        <View
+          className="rounded-3xl overflow-hidden shadow-lg"
+          style={{
+            backgroundColor: dark
+              ? 'rgba(20,20,20,0.95)'
+              : isIOS
+                ? 'transparent'
+                : colors.card + 'F0',
+            height: CARD_HEIGHT,
+          }}
+        >
+          {isIOS && !dark ? (
+            <BlurView
+              intensity={80}
+              tint={colors.background === '#0A1514' ? 'dark' : 'light'}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+          ) : null}
+
+          <View
+            style={{
+              backgroundColor: dark
+                ? 'transparent'
+                : isIOS
+                  ? withOpacity(colors.card, 0.65)
+                  : 'transparent',
+              borderRadius: 24,
+              height: '100%',
+              paddingHorizontal: 12,
+              paddingBottom: 6,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <View className="flex-row items-center gap-2 pr-3">
+              {/* Text Input */}
+              <View className="flex-1">
+                <TextInput
+                  ref={inputRef}
+                  value={message}
+                  onChangeText={setMessage}
+                  onFocus={() => setIsInputFocused(true)}
+                  onBlur={() => setIsInputFocused(false)}
+                  placeholder={placeholder}
+                  placeholderTextColor={
+                    dark
+                      ? 'rgba(255,255,255,0.55)'
+                      : withOpacity(colors.foreground, 0.45)
+                  }
+                  className={
+                    dark
+                      ? 'text-white text-base px-3 py-2'
+                      : 'text-foreground text-base px-3 py-2'
+                  }
+                  style={{
+                    backgroundColor: 'transparent',
+                    borderRadius: 0,
+                    minHeight: 36,
+                    borderWidth: 0,
+                    borderColor: 'transparent',
+                    ...Platform.select({
+                      web: {
+                        outlineStyle: 'none' as any,
+                        outline: 'none',
+                      },
+                      default: {},
+                    }),
+                  }}
+                  multiline
+                  maxLength={1000}
+                  returnKeyType="send"
+                  onSubmitEditing={handleSend}
+                />
+              </View>
+
+              {/* Send button with glass morphic circle */}
+              <View
+                className="rounded-full"
+                style={{
+                  width: 40,
+                  height: 40,
+                  backgroundColor: dark
+                    ? 'rgba(255, 255, 255, 0.15)'
+                    : 'rgba(255, 255, 255, 0.4)',
+                  borderColor: dark
+                    ? 'rgba(255, 255, 255, 0.25)'
+                    : 'rgba(255, 255, 255, 0.6)',
+                  borderWidth: 0.5,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 3 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 6,
+                  elevation: 5,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}
+              >
+                <Pressable
+                  onPress={handleSend}
+                  disabled={!hasText}
+                  style={({ pressed }) => ({
+                    opacity: pressed ? 0.9 : 1,
+                    transform: [{ scale: pressed ? 0.95 : 1 }],
+                    width: '100%',
+                    height: '100%',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  })}
+                >
+                  <ArrowUp
+                    size={24}
+                    color={hasText ? '#FFFFFF' : 'rgba(255,255,255,0.75)'}
+                    strokeWidth={2}
+                  />
+                </Pressable>
+              </View>
+            </View>
+          </View>
+        </View>
+      </View>
     </View>
   );
 }

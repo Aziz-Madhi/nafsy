@@ -28,6 +28,7 @@ import { ChatType } from '~/store/useChatUIStore';
 import { getChatTypeIcon, getChatTypeColor } from './ChatTypeToggle';
 import { getChatStyles } from '~/lib/chatStyles';
 import { ChatHistoryToggle } from './ChatHistoryToggle';
+import { useCurrentLanguage } from '~/store/useAppStore';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width
@@ -55,6 +56,7 @@ const SessionItem = ({
   onDelete,
 }: SessionItemProps) => {
   const { t } = useTranslation();
+  const lang = useCurrentLanguage();
   const scale = useSharedValue(1);
   const translateX = useSharedValue(0);
   const styles = getChatStyles(chatType);
@@ -95,6 +97,18 @@ const SessionItem = ({
       }
     });
 
+  // Localize default English titles for Arabic UI
+  const rawTitle: string = session.title || t('chat.history.untitledSession');
+  const localizedTitle: string = (() => {
+    if (lang === 'ar') {
+      const lower = rawTitle.toLowerCase();
+      if (lower.includes('therapy session')) return 'جلسة علاجية';
+      if (lower.includes('check-in')) return 'تسجيل يومي';
+      if (lower.includes('quick vent')) return 'تنفيس سريع';
+    }
+    return rawTitle;
+  })();
+
   return (
     <View className="mx-4 mb-3 relative">
       <GestureDetector gesture={panGesture}>
@@ -133,7 +147,7 @@ const SessionItem = ({
               )}
               numberOfLines={1}
             >
-              {session.title || t('chat.history.untitledSession')}
+              {localizedTitle}
             </Text>
           </Pressable>
         </Animated.View>
@@ -167,6 +181,8 @@ export function ChatHistorySidebar({
   const { user } = useUserSafe();
   const colors = useColors();
   const { t } = useTranslation();
+  const currentLanguage = useCurrentLanguage();
+  const isArabic = currentLanguage === 'ar';
   const [searchQuery, setSearchQuery] = useState('');
   const [activeHistoryType, setActiveHistoryType] = useState<ChatType>('coach');
   const insets = useSafeAreaInsets();
@@ -403,18 +419,38 @@ export function ChatHistorySidebar({
                     {/* Header and Search */}
                     <View className="p-4 border-b border-border/10">
                       <View className="flex-row items-center justify-between mb-3">
-                        <Text
-                          variant="title3"
-                          className="font-bold text-foreground"
-                        >
-                          {t('chat.history.title')}
-                        </Text>
-                        <Pressable
-                          onPress={handleSettingsPress}
-                          className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
-                        >
-                          <User size={20} color={colors.foreground} />
-                        </Pressable>
+                        {isArabic ? (
+                          <>
+                            {/* Settings icon on the left for Arabic */}
+                            <Pressable
+                              onPress={handleSettingsPress}
+                              className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
+                            >
+                              <User size={20} color={colors.foreground} />
+                            </Pressable>
+                            <Text
+                              variant="title3"
+                              className="font-bold text-foreground"
+                            >
+                              {t('chat.history.title')}
+                            </Text>
+                          </>
+                        ) : (
+                          <>
+                            <Text
+                              variant="title3"
+                              className="font-bold text-foreground"
+                            >
+                              {t('chat.history.title')}
+                            </Text>
+                            <Pressable
+                              onPress={handleSettingsPress}
+                              className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
+                            >
+                              <User size={20} color={colors.foreground} />
+                            </Pressable>
+                          </>
+                        )}
                       </View>
                       <View className="flex-row items-center rounded-xl px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-border/10">
                         <SymbolView
@@ -427,9 +463,18 @@ export function ChatHistorySidebar({
                           onChangeText={setSearchQuery}
                           placeholder={t('common.search')}
                           placeholderTextColor="#9CA3AF"
-                          className="flex-1 ms-3 text-base text-foreground"
+                          className={cn(
+                            'flex-1 ms-3 text-base text-foreground',
+                            isArabic && 'text-right'
+                          )}
                           autoCapitalize="none"
                           autoCorrect={false}
+                          // Arabic should type RTL
+                          style={
+                            isArabic
+                              ? { writingDirection: 'rtl', textAlign: 'right' }
+                              : undefined
+                          }
                         />
                         {searchQuery.length > 0 && (
                           <Pressable

@@ -15,7 +15,9 @@ import { ChatMessageList, Message } from './ChatMessageList';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
 import { ChatBubble } from './ChatComponents';
 import { VentChatOverlay } from './VentChatOverlay';
-import { ChatType } from '~/store/useChatUIStore';
+import { ChatType, useChatUIStore } from '~/store/useChatUIStore';
+import Animated from 'react-native-reanimated';
+import { ChatPersonalityHeader } from './ChatPersonalityHeader';
 
 interface ChatScreenProps {
   // State
@@ -66,6 +68,14 @@ export const ChatScreen = memo(function ChatScreen({
   onChatTypeChange,
 }: ChatScreenProps) {
   const flashListRef = useRef<FlashList<Message>>(null as any);
+
+  // Read typing state from shared store to hide intro while composing
+  const coachInput = useChatUIStore((s) => s.coachChatInput || s.mainChatInput);
+  const companionInput = useChatUIStore((s) => s.companionChatInput);
+  const chatInputFocused = useChatUIStore((s) => s.chatInputFocused);
+  const currentDraft =
+    activeChatType === 'companion' ? companionInput : coachInput;
+  const isTyping = !!currentDraft?.trim() || chatInputFocused;
 
   // Double tap gesture to open Vent Chat
   const doubleTapGesture = Gesture.Tap()
@@ -146,14 +156,22 @@ export const ChatScreen = memo(function ChatScreen({
                 onDismissError={onDismissError}
               />
 
-              <ChatMessageList
-                flashListRef={flashListRef}
-                messages={messages}
-                renderMessage={renderMessage}
-                keyExtractor={keyExtractor}
-                getItemType={getItemType}
-                horizontalPadding={20}
-              />
+              {messages.length === 0 && !isTyping ? (
+                <View className="flex-1 items-center justify-center px-8">
+                  <View style={{ marginBottom: 185 }}>
+                    <ChatPersonalityHeader chatType={activeChatType} />
+                  </View>
+                </View>
+              ) : (
+                <ChatMessageList
+                  flashListRef={flashListRef}
+                  messages={messages}
+                  renderMessage={renderMessage}
+                  keyExtractor={keyExtractor}
+                  getItemType={getItemType}
+                  horizontalPadding={20}
+                />
+              )}
             </View>
           </TouchableWithoutFeedback>
         </View>

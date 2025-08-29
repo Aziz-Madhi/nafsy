@@ -1,31 +1,25 @@
 /**
  * Vent Chat Overlay Component
- * A focused black hole interface for emotional venting sessions
+ * Private mode overlay that mirrors the main chat layout
+ * with a dark theme, header text only (no icons), and the
+ * same bottom text input experience.
  */
 
-import React, { useState, useEffect } from 'react';
-import { View, Modal, Dimensions } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { View, Modal } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
-  withSpring,
   withTiming,
-  withSequence,
-  withDelay,
-  FadeIn,
-  FadeOut,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useTranslation } from '~/hooks/useTranslation';
 import { cn } from '~/lib/cn';
-import { VentChatInput } from './VentChatInput';
+// Reuse the main chat input design from the floating tab bar
+import { FloatingChatInputStandalone } from '~/components/navigation/FloatingTabBar';
 import { getChatStyles } from '~/lib/chatStyles';
-
-const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
-const CIRCLE_SIZE = Math.min(SCREEN_WIDTH * 0.7, 320);
-const CIRCLE_RADIUS = CIRCLE_SIZE / 2;
 
 interface VentChatOverlayProps {
   visible: boolean;
@@ -35,37 +29,18 @@ interface VentChatOverlayProps {
   isLoading?: boolean;
 }
 
-interface MessageDisplayProps {
+// Simple message cross-fade centered on screen
+const MessageDisplay = ({
+  message,
+  isUser,
+  itemKey,
+}: {
   message: string;
   isUser: boolean;
-}
-
-const MessageDisplay = ({ message, isUser }: MessageDisplayProps) => {
-  const opacity = useSharedValue(0);
-  const translateY = useSharedValue(20);
-
-  useEffect(() => {
-    // Fade in from below
-    opacity.value = withTiming(1, { duration: 400 });
-    translateY.value = withSpring(0, { damping: 15, stiffness: 150 });
-
-    return () => {
-      // Fade out and move up
-      opacity.value = withTiming(0, { duration: 300 });
-      translateY.value = withTiming(-20, { duration: 300 });
-    };
-  }, [message]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    opacity: opacity.value,
-    transform: [{ translateY: translateY.value }],
-  }));
-
-  return (
-    <Animated.View
-      style={animatedStyle}
-      className="absolute inset-0 items-center justify-center p-8"
-    >
+  itemKey?: string;
+}) => (
+  <Animated.View key={itemKey}>
+    <View className="items-center justify-center px-8">
       <Text
         className={cn(
           'text-lg text-center font-medium',
@@ -74,9 +49,9 @@ const MessageDisplay = ({ message, isUser }: MessageDisplayProps) => {
       >
         {message}
       </Text>
-    </Animated.View>
-  );
-};
+    </View>
+  </Animated.View>
+);
 
 export function VentChatOverlay({
   visible,
@@ -88,65 +63,32 @@ export function VentChatOverlay({
   const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
 
-  // Use Event personality styling (pink theme)
+  // Use Event personality styling (for accent color only)
   const eventStyles = getChatStyles('event');
 
   // Animation values
   const overlayOpacity = useSharedValue(0);
-  const circleScale = useSharedValue(0.5);
-  const backgroundRotation = useSharedValue(0);
-  const pulseScale = useSharedValue(1);
 
   // Manage modal visibility to allow exit animations
   useEffect(() => {
     if (visible) {
       setModalVisible(true);
-      // Entry animations
-      overlayOpacity.value = withTiming(1, { duration: 300 });
-      circleScale.value = withSpring(1, { damping: 12, stiffness: 150 });
-
-      // Very slow rotation for background effect only
-      backgroundRotation.value = withTiming(360, { duration: 60000 });
-
-      // Subtle pulsing
-      pulseScale.value = withSequence(
-        withDelay(500, withTiming(1.05, { duration: 2000 })),
-        withTiming(1, { duration: 2000 })
-      );
+      overlayOpacity.value = withTiming(1, { duration: 250 });
     } else {
-      // Exit animations - mirror the entry animations
-      overlayOpacity.value = withTiming(0, { duration: 300 });
-      circleScale.value = withSpring(0.5, { damping: 12, stiffness: 150 });
-      backgroundRotation.value = withTiming(0, { duration: 300 });
-      pulseScale.value = withTiming(1, { duration: 200 });
-
-      // Delay unmounting the modal to allow exit animations to complete
-      const timer = setTimeout(() => {
-        setModalVisible(false);
-      }, 400); // Slightly longer than the longest animation
-
+      overlayOpacity.value = withTiming(0, { duration: 200 });
+      const timer = setTimeout(() => setModalVisible(false), 240);
       return () => clearTimeout(timer);
     }
   }, [visible]);
 
-  // Double tap gesture to close (when tapping outside the circle)
+  // Double tap anywhere to close
   const doubleTapGesture = Gesture.Tap()
     .numberOfTaps(2)
     .maxDuration(250)
     .runOnJS(true)
-    .onStart((event) => {
-      // Check if tap is outside the circle
-      const centerX = SCREEN_WIDTH / 2;
-      const centerY = SCREEN_HEIGHT / 2;
-      const distance = Math.sqrt(
-        Math.pow(event.x - centerX, 2) + Math.pow(event.y - centerY, 2)
-      );
-
-      if (distance > CIRCLE_RADIUS) {
-        // Trigger exit animations before closing
-        impactAsync(ImpactFeedbackStyle.Light);
-        onClose();
-      }
+    .onStart(() => {
+      impactAsync(ImpactFeedbackStyle.Light);
+      onClose();
     });
 
   // Animated styles
@@ -154,21 +96,31 @@ export function VentChatOverlay({
     opacity: overlayOpacity.value,
   }));
 
-  const circleAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: circleScale.value }],
-  }));
+  // Always show the latest user message on top and the latest AI response below
+  const [lastUserText, setLastUserText] = useState<string | null>(null);
+  const [lastAIText, setLastAIText] = useState<string | null>(null);
+  const lastHandled = useRef<string | null>(null);
 
-  const pulseAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: pulseScale.value }],
-  }));
+  useEffect(() => {
+    if (!currentMessage || currentMessage === lastHandled.current) return;
+    lastHandled.current = currentMessage;
+    const isUser = currentMessage.startsWith('user:');
+    const text = currentMessage.replace(/^(user:|ai:)/, '').trim();
+    if (isUser) {
+      // New user input: show it on top and clear previous AI until response arrives
+      setLastUserText(text);
+      setLastAIText(null);
+    } else {
+      // AI response updates (may stream); keep latest
+      setLastAIText(text);
+    }
+  }, [currentMessage]);
 
-  const backgroundAnimatedStyle = useAnimatedStyle(() => ({
-    transform: [{ rotate: `${backgroundRotation.value}deg` }],
-  }));
-
-  // Parse current message to determine if it's user or AI
-  const isUserMessage = currentMessage?.startsWith('user:');
-  const displayMessage = currentMessage?.replace(/^(user:|ai:)/, '').trim();
+  // Reserve space for the bottom input so center looks visually centered
+  // Matches FloatingChatInputStandalone layout: height 88 + pb-16 (64) = 152
+  const RESERVED_BOTTOM = 152;
+  // Match the top spacing created by ChatHeader (pt-16 + pb-4 ≈ 80px)
+  const HEADER_TOP_SPACE = 80;
 
   return (
     <Modal
@@ -178,92 +130,116 @@ export function VentChatOverlay({
       statusBarTranslucent
     >
       <GestureDetector gesture={doubleTapGesture}>
-        <Animated.View
-          style={overlayAnimatedStyle}
-          className="flex-1 bg-black/95"
-        >
-          {/* Center black hole container */}
-          <View className="flex-1 items-center justify-center">
-            {/* Black hole with multiple gradient layers */}
-            <Animated.View
-              style={[
-                circleAnimatedStyle,
-                { width: CIRCLE_SIZE, height: CIRCLE_SIZE },
-              ]}
-              className="relative"
-            >
-              {/* Base black circle */}
-              <View className="absolute inset-0 rounded-full bg-black" />
-
-              {/* Gradient layers for depth */}
-              <View className="absolute inset-1 rounded-full bg-gray-950/90" />
-              <View className="absolute inset-3 rounded-full bg-gray-900/80" />
-              <View className="absolute inset-5 rounded-full bg-gray-800/70" />
-
-              {/* Subtle pulsing glow with Event personality color */}
-              <Animated.View
-                style={[
-                  pulseAnimatedStyle,
-                  { backgroundColor: eventStyles.primaryColor + '0D' },
-                ]}
-                className="absolute -inset-8 rounded-full"
-              />
-
-              {/* Rotating background effect with Event colors */}
-              <Animated.View
-                style={backgroundAnimatedStyle}
-                className="absolute inset-0 rounded-full"
-              >
+        <Animated.View style={overlayAnimatedStyle} className="flex-1 bg-black">
+          {/* Center content: show intro text until user starts chatting */}
+          <View style={{ flex: 1 }}>
+            {!lastUserText && !lastAIText && !isLoading ? (
+              <View style={{ flex: 1, paddingBottom: RESERVED_BOTTOM }}>
                 <View
-                  className="absolute inset-0 rounded-full"
-                  style={{
-                    background: `linear-gradient(135deg, ${eventStyles.primaryColor}10, transparent, ${eventStyles.accentColor}10)`,
-                  }}
-                />
-              </Animated.View>
-
-              {/* Message display area - NOT rotating */}
-              {displayMessage && (
-                <MessageDisplay
-                  message={displayMessage}
-                  isUser={isUserMessage || false}
-                />
-              )}
-
-              {/* Loading state with Event personality colors */}
-              {isLoading && !displayMessage && (
-                <View className="absolute inset-0 items-center justify-center">
-                  <Animated.View
-                    entering={FadeIn.duration(300)}
-                    exiting={FadeOut.duration(300)}
-                    className="flex-row gap-2"
+                  className="flex-1 items-center justify-center px-8"
+                  style={{ paddingTop: HEADER_TOP_SPACE }}
+                >
+                  <Text
+                    variant="title3"
+                    className="font-bold text-center text-white"
                   >
-                    <View
-                      style={{
-                        backgroundColor: eventStyles.primaryColor + '50',
-                      }}
-                      className="w-2 h-2 rounded-full"
-                    />
-                    <View
-                      style={{
-                        backgroundColor: eventStyles.primaryColor + '80',
-                      }}
-                      className="w-2 h-2 rounded-full"
-                    />
-                    <View
-                      style={{
-                        backgroundColor: eventStyles.primaryColor + '50',
-                      }}
-                      className="w-2 h-2 rounded-full"
-                    />
-                  </Animated.View>
+                    Vent
+                  </Text>
+                  <Text
+                    variant="subhead"
+                    className="text-center text-gray-300 mt-2"
+                    style={{ textAlign: 'center' }}
+                  >
+                    Your private space.
+                  </Text>
                 </View>
-              )}
-            </Animated.View>
+              </View>
+            ) : (
+              <View style={{ paddingBottom: RESERVED_BOTTOM, flex: 1 }}>
+                {/* Top half: user message pinned to the bottom of the top half */}
+                <View
+                  style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'flex-end',
+                  }}
+                >
+                  {lastUserText && (
+                    <Animated.View
+                      key={`user-${lastUserText}`}
+                      style={{ paddingHorizontal: 32 }}
+                    >
+                      <Text className="text-center text-white text-xl font-semibold">
+                        {lastUserText}
+                      </Text>
+                    </Animated.View>
+                  )}
+                </View>
+
+                {/* Divider centered in the available space */}
+                <View className="items-center" style={{ paddingVertical: 12 }}>
+                  {(lastUserText || lastAIText) && (
+                    <Animated.View>
+                      <View
+                        style={{ backgroundColor: eventStyles.primaryColor + '55' }}
+                        className="h-[2px] w-16 rounded-full"
+                      />
+                    </Animated.View>
+                  )}
+                </View>
+
+                {/* Bottom half: AI response pinned to the top of the bottom half */}
+                <View
+                  style={{
+                    flex: 1,
+                    alignItems: 'center',
+                    justifyContent: 'flex-start',
+                  }}
+                >
+                  {lastAIText && (
+                    <Animated.View
+                      key={`ai-${lastAIText}`}
+                      style={{ paddingHorizontal: 32 }}
+                    >
+                      <Text className="text-center text-gray-200 text-lg">
+                        {lastAIText}
+                      </Text>
+                    </Animated.View>
+                  )}
+
+                  {/* Loading indicator while waiting for AI; stays in the same slot */}
+                  {isLoading && lastUserText && !lastAIText && (
+                    <Animated.View
+                      className="flex-row gap-2"
+                      style={{ marginTop: 12 }}
+                    >
+                      <View
+                        style={{ backgroundColor: eventStyles.primaryColor + '60' }}
+                        className="w-2 h-2 rounded-full"
+                      />
+                      <View
+                        style={{ backgroundColor: eventStyles.primaryColor + '90' }}
+                        className="w-2 h-2 rounded-full"
+                      />
+                      <View
+                        style={{ backgroundColor: eventStyles.primaryColor + '60' }}
+                        className="w-2 h-2 rounded-full"
+                      />
+                    </Animated.View>
+                  )}
+                </View>
+              </View>
+            )}
           </View>
 
-          {/* Unified vent chat input */}
-          <VentChatInput onSendMessage={onSendMessage} isLoading={isLoading} />
+          {/* (Legacy centered loaders removed in favor of structured layout above) */}
+
+          {/* Bottom text input — reuse main chat's floating input (dark variant) */}
+          <FloatingChatInputStandalone
+            onSendMessage={onSendMessage}
+            chatType="event"
+            dark
+          />
         </Animated.View>
       </GestureDetector>
     </Modal>

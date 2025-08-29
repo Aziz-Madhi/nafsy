@@ -84,8 +84,12 @@ export const ChatHeader = memo(function ChatHeader({
           className="w-10 h-10 rounded-full items-center justify-center"
           style={{
             backgroundColor: isDarkMode
-              ? 'rgba(255, 255, 255, 0.10)'
-              : 'rgba(255, 255, 255, 0.80)',
+              ? 'rgba(255, 255, 255, 0.15)'
+              : 'rgba(255, 255, 255, 0.4)',
+            borderColor: isDarkMode
+              ? 'rgba(255, 255, 255, 0.25)'
+              : 'rgba(255, 255, 255, 0.6)',
+            borderWidth: 0.5,
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 3 },
             shadowOpacity: 0.15,
@@ -101,28 +105,8 @@ export const ChatHeader = memo(function ChatHeader({
         </View>
       </Pressable>
 
-      {/* Center: Personality Text - Only show for coach/companion */}
-      {activeChatType !== 'event' && (
-        <Animated.View
-          entering={FadeIn.duration(300)}
-          exiting={FadeOut.duration(200)}
-          key={activeChatType}
-          className="flex-1 items-center px-4"
-        >
-          <Text
-            variant="title3"
-            className="font-bold text-center text-foreground"
-          >
-            {isArabic ? message.titleAr : message.title}
-          </Text>
-          <Text
-            variant="caption"
-            className="text-center text-muted-foreground mt-0.5"
-          >
-            {isArabic ? message.subtitleAr : message.subtitle}
-          </Text>
-        </Animated.View>
-      )}
+      {/* Center section intentionally empty: intro moved to main content area */}
+      <View className="flex-1" />
 
       {/* Right: Personality Toggle Button - Only show for coach/companion */}
       {onChatTypeChange && activeChatType !== 'event' && (
@@ -134,8 +118,12 @@ export const ChatHeader = memo(function ChatHeader({
             className="w-10 h-10 rounded-full items-center justify-center"
             style={{
               backgroundColor: isDarkMode
-                ? 'rgba(255, 255, 255, 0.10)'
-                : 'rgba(255, 255, 255, 0.80)',
+                ? 'rgba(255, 255, 255, 0.15)'
+                : 'rgba(255, 255, 255, 0.4)',
+              borderColor: isDarkMode
+                ? 'rgba(255, 255, 255, 0.25)'
+                : 'rgba(255, 255, 255, 0.6)',
+              borderWidth: 0.5,
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 3 },
               shadowOpacity: 0.15,

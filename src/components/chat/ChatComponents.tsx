@@ -38,7 +38,9 @@ export const ChatBubble = React.memo(function ChatBubble({
         <View
           className={cn(
             'px-4 py-3 rounded-2xl',
-            isUser ? styles.bubbleUserClass : 'bg-transparent'
+            // For AI responses we keep a transparent background but ensure the
+            // container itself anchors to the left in RTL as well
+            isUser ? styles.bubbleUserClass : 'bg-transparent items-start'
           )}
           style={{
             ...(isUser
@@ -55,8 +57,12 @@ export const ChatBubble = React.memo(function ChatBubble({
           <View className="relative">
             <Text
               variant="callout"
+              // Force assistant text to be left-aligned even in Arabic.
+              // We disable auto alignment (which mirrors to RTL for ar)
+              // and explicitly set text-left for consistent layout.
+              autoAlign={isUser}
               className={cn(
-                isUser ? 'text-primary-foreground' : 'text-foreground'
+                isUser ? 'text-primary-foreground' : 'text-foreground text-left'
               )}
             >
               {message}
@@ -65,8 +71,9 @@ export const ChatBubble = React.memo(function ChatBubble({
             {timestamp && !isUser && (
               <Text
                 variant="footnote"
+                autoAlign={false}
                 className={cn(
-                  'mt-2',
+                  'mt-2 text-left',
                   isUser
                     ? 'text-primary-foreground/70'
                     : 'text-muted-foreground'
@@ -104,5 +111,5 @@ export const ChatBubble = React.memo(function ChatBubble({
   );
 });
 
-// ChatInput component removed - was unused
-// The actual chat input is now in ChatInputWithNavConnection.tsx
+// ChatInput component removed - unified input lives with the tab bar.
+// See: `src/components/navigation/FloatingTabBar.tsx` (canonical source)

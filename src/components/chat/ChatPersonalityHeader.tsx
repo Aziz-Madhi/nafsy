@@ -3,7 +3,6 @@ import { View } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { ChatType } from '~/store/useChatUIStore';
 import { useTranslation } from '~/hooks/useTranslation';
-import Animated, { FadeIn, FadeOut, SlideInUp } from 'react-native-reanimated';
 
 interface ChatPersonalityHeaderProps {
   chatType: ChatType;
@@ -41,9 +40,7 @@ const personalityMessages: PersonalityMessage[] = [
   },
 ];
 
-export function ChatPersonalityHeader({
-  chatType,
-}: ChatPersonalityHeaderProps) {
+export function ChatPersonalityHeader({ chatType }: ChatPersonalityHeaderProps) {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
 
@@ -52,36 +49,13 @@ export function ChatPersonalityHeader({
     personalityMessages[0];
 
   return (
-    <Animated.View
-      entering={FadeIn.duration(300).delay(100)}
-      exiting={FadeOut.duration(200)}
-      key={chatType} // Force re-animation on type change
-    >
-      <View className="items-center px-6 py-4 mt-2">
-        <Animated.View
-          entering={SlideInUp.duration(400).delay(100).springify()}
-          key={`${chatType}-title`}
-        >
-          <Text
-            variant="title3"
-            className="font-bold text-center text-foreground"
-          >
-            {isArabic ? message.titleAr : message.title}
-          </Text>
-        </Animated.View>
-
-        <Animated.View
-          entering={SlideInUp.duration(400).delay(150).springify()}
-          key={`${chatType}-subtitle`}
-        >
-          <Text
-            variant="subhead"
-            className="text-center text-muted-foreground mt-1"
-          >
-            {isArabic ? message.subtitleAr : message.subtitle}
-          </Text>
-        </Animated.View>
-      </View>
-    </Animated.View>
+    <View className="items-center px-6">
+      <Text variant="title3" className="font-bold text-center text-foreground">
+        {isArabic ? message.titleAr : message.title}
+      </Text>
+      <Text variant="subhead" className="text-center text-muted-foreground mt-1">
+        {isArabic ? message.subtitleAr : message.subtitle}
+      </Text>
+    </View>
   );
 }

@@ -1,2 +1,2 @@
-// Custom navigation components with pure React Native + NativeWind
-export { CustomBottomNavigation } from './CustomBottomNavigation';
+// Canonical unified bottom bar + chat input
+export { FloatingTabBar, FloatingChatInputStandalone } from './FloatingTabBar';

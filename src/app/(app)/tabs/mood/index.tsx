@@ -10,7 +10,41 @@ import {
   useTodayMood,
   useCurrentUser,
 } from '~/hooks/useSharedData';
-import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
+import {
+  Frown,
+  Zap,
+  Minus,
+  Smile,
+  Flame,
+  Briefcase,
+  Users,
+  Heart,
+  DollarSign,
+  Calendar,
+  Users2,
+  GraduationCap,
+  User,
+  ThumbsDown,
+  X,
+  ArrowRightLeft,
+  Brain,
+  Thermometer,
+  XCircle,
+  Trophy,
+  TrendingUp,
+  ThumbsUp,
+  Leaf,
+  CheckCircle,
+  Scale,
+  Swords,
+  UserX,
+  Clock,
+  RotateCcw,
+  Bed,
+  Mountain,
+  Eye,
+  Search,
+} from 'lucide-react-native';
 import { cn } from '~/lib/cn';
 import { MotiView } from 'moti';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
@@ -24,6 +58,7 @@ import Animated, {
 } from 'react-native-reanimated';
 import { MoodBasedExerciseSuggestion } from '~/components/mood/MoodBasedExerciseSuggestion';
 import RatingSelector from '~/components/mood/RatingSelector';
+import { MoodLogReminder } from '~/components/mood/MoodLogReminder';
 import {
   getExerciseCategoriesForMood,
   getMoodCategoryFromRating,
@@ -34,59 +69,365 @@ import { useTranslation } from '~/hooks/useTranslation';
 // Moods array will be localized in the component
 
 // Encouraging messages configuration
-// Tag categories keys for translation
-const tagCategoryKeys = {
-  anxious: [
-    'mood.tags.work',
-    'mood.tags.family',
-    'mood.tags.health',
-    'mood.tags.finances',
-    'mood.tags.relationship',
-    'mood.tags.future',
-    'mood.tags.social',
-    'mood.tags.school',
+// Rating-based tag categories keys for translation
+const ratingTagKeys = {
+  1: [
+    'mood.tags.crisis',
+    'mood.tags.helpless',
+    'mood.tags.despair',
+    'mood.tags.exhausted',
+    'mood.tags.overwhelmed',
+    'mood.tags.trapped',
+    'mood.tags.empty',
+    'mood.tags.isolated',
   ],
-  sad: [
-    'mood.tags.loss',
-    'mood.tags.loneliness',
-    'mood.tags.disappointment',
-    'mood.tags.rejection',
-    'mood.tags.change',
-    'mood.tags.memory',
-    'mood.tags.illness',
-    'mood.tags.failure',
+  2: [
+    'mood.tags.grief',
+    'mood.tags.hopeless',
+    'mood.tags.drained',
+    'mood.tags.withdrawn',
+    'mood.tags.numb',
+    'mood.tags.defeated',
+    'mood.tags.lost',
+    'mood.tags.heavy',
   ],
-  happy: [
-    'mood.tags.achievement',
-    'mood.tags.love',
-    'mood.tags.friends',
-    'mood.tags.progress',
-    'mood.tags.gratitude',
-    'mood.tags.fun',
-    'mood.tags.peace',
-    'mood.tags.success',
+  3: [
+    'mood.tags.struggling',
+    'mood.tags.tired',
+    'mood.tags.upset',
+    'mood.tags.disappointed',
+    'mood.tags.hurt',
+    'mood.tags.vulnerable',
+    'mood.tags.down',
+    'mood.tags.worried',
   ],
-  angry: [
-    'mood.tags.frustration',
-    'mood.tags.injustice',
-    'mood.tags.disrespect',
-    'mood.tags.disappointment',
-    'mood.tags.stress',
-    'mood.tags.conflict',
-    'mood.tags.betrayal',
-    'mood.tags.pressure',
+  4: [
+    'mood.tags.uneasy',
+    'mood.tags.tense',
+    'mood.tags.uncertain',
+    'mood.tags.restless',
+    'mood.tags.concerned',
+    'mood.tags.stressed',
+    'mood.tags.doubtful',
+    'mood.tags.fragile',
   ],
-  neutral: [
+  5: [
+    'mood.tags.indifferent',
+    'mood.tags.bored',
+    'mood.tags.distracted',
+    'mood.tags.unmotivated',
     'mood.tags.routine',
-    'mood.tags.rest',
-    'mood.tags.calm',
+    'mood.tags.waiting',
+    'mood.tags.processing',
+    'mood.tags.adjusting',
+  ],
+  6: [
+    'mood.tags.okay',
     'mood.tags.stable',
+    'mood.tags.calm',
+    'mood.tags.present',
     'mood.tags.observing',
     'mood.tags.reflecting',
-    'mood.tags.waiting',
+    'mood.tags.resting',
     'mood.tags.balanced',
   ],
+  7: [
+    'mood.tags.content',
+    'mood.tags.relaxed',
+    'mood.tags.comfortable',
+    'mood.tags.pleased',
+    'mood.tags.hopeful',
+    'mood.tags.engaged',
+    'mood.tags.positive',
+    'mood.tags.refreshed',
+  ],
+  8: [
+    'mood.tags.happy',
+    'mood.tags.excited',
+    'mood.tags.energized',
+    'mood.tags.confident',
+    'mood.tags.grateful',
+    'mood.tags.accomplished',
+    'mood.tags.connected',
+    'mood.tags.inspired',
+  ],
+  9: [
+    'mood.tags.joyful',
+    'mood.tags.thriving',
+    'mood.tags.passionate',
+    'mood.tags.proud',
+    'mood.tags.fulfilled',
+    'mood.tags.creative',
+    'mood.tags.optimistic',
+    'mood.tags.strong',
+  ],
+  10: [
+    'mood.tags.euphoric',
+    'mood.tags.unstoppable',
+    'mood.tags.blessed',
+    'mood.tags.triumphant',
+    'mood.tags.ecstatic',
+    'mood.tags.radiant',
+    'mood.tags.invincible',
+    'mood.tags.transcendent',
+  ],
 } as const;
+
+// Icon mapping for mood tags (rating-based system)
+const getTagIcon = (
+  tagKey: string,
+  size: number = 16,
+  color: string = '#666'
+) => {
+  const iconProps = { size, color };
+
+  switch (tagKey) {
+    // Rating 1 (Severely Distressed)
+    case 'mood.tags.crisis':
+      return <XCircle {...iconProps} />;
+    case 'mood.tags.helpless':
+      return <UserX {...iconProps} />;
+    case 'mood.tags.despair':
+      return <Frown {...iconProps} />;
+    case 'mood.tags.exhausted':
+      return <Thermometer {...iconProps} />;
+    case 'mood.tags.overwhelmed':
+      return <Zap {...iconProps} />;
+    case 'mood.tags.trapped':
+      return <X {...iconProps} />;
+    case 'mood.tags.empty':
+      return <Minus {...iconProps} />;
+    case 'mood.tags.isolated':
+      return <User {...iconProps} />;
+
+    // Rating 2 (Very Low)
+    case 'mood.tags.grief':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.hopeless':
+      return <ThumbsDown {...iconProps} />;
+    case 'mood.tags.drained':
+      return <Thermometer {...iconProps} />;
+    case 'mood.tags.withdrawn':
+      return <UserX {...iconProps} />;
+    case 'mood.tags.numb':
+      return <Minus {...iconProps} />;
+    case 'mood.tags.defeated':
+      return <XCircle {...iconProps} />;
+    case 'mood.tags.lost':
+      return <Search {...iconProps} />;
+    case 'mood.tags.heavy':
+      return <Mountain {...iconProps} />;
+
+    // Rating 3 (Low)
+    case 'mood.tags.struggling':
+      return <Swords {...iconProps} />;
+    case 'mood.tags.tired':
+      return <Bed {...iconProps} />;
+    case 'mood.tags.upset':
+      return <Frown {...iconProps} />;
+    case 'mood.tags.disappointed':
+      return <ThumbsDown {...iconProps} />;
+    case 'mood.tags.hurt':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.vulnerable':
+      return <User {...iconProps} />;
+    case 'mood.tags.down':
+      return <Frown {...iconProps} />;
+    case 'mood.tags.worried':
+      return <Brain {...iconProps} />;
+
+    // Rating 4 (Somewhat Low)
+    case 'mood.tags.uneasy':
+      return <Zap {...iconProps} />;
+    case 'mood.tags.tense':
+      return <Flame {...iconProps} />;
+    case 'mood.tags.uncertain':
+      return <ArrowRightLeft {...iconProps} />;
+    case 'mood.tags.restless':
+      return <RotateCcw {...iconProps} />;
+    case 'mood.tags.concerned':
+      return <Eye {...iconProps} />;
+    case 'mood.tags.stressed':
+      return <Zap {...iconProps} />;
+    case 'mood.tags.doubtful':
+      return <Search {...iconProps} />;
+    case 'mood.tags.fragile':
+      return <Heart {...iconProps} />;
+
+    // Rating 5 (Neutral-Low)
+    case 'mood.tags.indifferent':
+      return <Minus {...iconProps} />;
+    case 'mood.tags.bored':
+      return <Clock {...iconProps} />;
+    case 'mood.tags.distracted':
+      return <Brain {...iconProps} />;
+    case 'mood.tags.unmotivated':
+      return <Bed {...iconProps} />;
+    case 'mood.tags.routine':
+      return <RotateCcw {...iconProps} />;
+    case 'mood.tags.waiting':
+      return <Clock {...iconProps} />;
+    case 'mood.tags.processing':
+      return <Brain {...iconProps} />;
+    case 'mood.tags.adjusting':
+      return <ArrowRightLeft {...iconProps} />;
+
+    // Rating 6 (Neutral-High)
+    case 'mood.tags.okay':
+      return <CheckCircle {...iconProps} />;
+    case 'mood.tags.stable':
+      return <Mountain {...iconProps} />;
+    case 'mood.tags.calm':
+      return <Leaf {...iconProps} />;
+    case 'mood.tags.present':
+      return <Eye {...iconProps} />;
+    case 'mood.tags.observing':
+      return <Eye {...iconProps} />;
+    case 'mood.tags.reflecting':
+      return <Search {...iconProps} />;
+    case 'mood.tags.resting':
+      return <Bed {...iconProps} />;
+    case 'mood.tags.balanced':
+      return <Scale {...iconProps} />;
+
+    // Rating 7 (Good)
+    case 'mood.tags.content':
+      return <Smile {...iconProps} />;
+    case 'mood.tags.relaxed':
+      return <Leaf {...iconProps} />;
+    case 'mood.tags.comfortable':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.pleased':
+      return <ThumbsUp {...iconProps} />;
+    case 'mood.tags.hopeful':
+      return <TrendingUp {...iconProps} />;
+    case 'mood.tags.engaged':
+      return <Users {...iconProps} />;
+    case 'mood.tags.positive':
+      return <CheckCircle {...iconProps} />;
+    case 'mood.tags.refreshed':
+      return <Leaf {...iconProps} />;
+
+    // Rating 8 (Very Good)
+    case 'mood.tags.happy':
+      return <Smile {...iconProps} />;
+    case 'mood.tags.excited':
+      return <Zap {...iconProps} />;
+    case 'mood.tags.energized':
+      return <Flame {...iconProps} />;
+    case 'mood.tags.confident':
+      return <Trophy {...iconProps} />;
+    case 'mood.tags.grateful':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.accomplished':
+      return <CheckCircle {...iconProps} />;
+    case 'mood.tags.connected':
+      return <Users {...iconProps} />;
+    case 'mood.tags.inspired':
+      return <Brain {...iconProps} />;
+
+    // Rating 9 (Excellent)
+    case 'mood.tags.joyful':
+      return <Smile {...iconProps} />;
+    case 'mood.tags.thriving':
+      return <TrendingUp {...iconProps} />;
+    case 'mood.tags.passionate':
+      return <Flame {...iconProps} />;
+    case 'mood.tags.proud':
+      return <Trophy {...iconProps} />;
+    case 'mood.tags.fulfilled':
+      return <CheckCircle {...iconProps} />;
+    case 'mood.tags.creative':
+      return <Brain {...iconProps} />;
+    case 'mood.tags.optimistic':
+      return <TrendingUp {...iconProps} />;
+    case 'mood.tags.strong':
+      return <Mountain {...iconProps} />;
+
+    // Rating 10 (Peak)
+    case 'mood.tags.euphoric':
+      return <Flame {...iconProps} />;
+    case 'mood.tags.unstoppable':
+      return <TrendingUp {...iconProps} />;
+    case 'mood.tags.blessed':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.triumphant':
+      return <Trophy {...iconProps} />;
+    case 'mood.tags.ecstatic':
+      return <Smile {...iconProps} />;
+    case 'mood.tags.radiant':
+      return <Flame {...iconProps} />;
+    case 'mood.tags.invincible':
+      return <Mountain {...iconProps} />;
+    case 'mood.tags.transcendent':
+      return <TrendingUp {...iconProps} />;
+
+    // Legacy tags (for backward compatibility)
+    case 'mood.tags.work':
+      return <Briefcase {...iconProps} />;
+    case 'mood.tags.family':
+      return <Users {...iconProps} />;
+    case 'mood.tags.health':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.finances':
+      return <DollarSign {...iconProps} />;
+    case 'mood.tags.relationship':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.future':
+      return <Calendar {...iconProps} />;
+    case 'mood.tags.social':
+      return <Users2 {...iconProps} />;
+    case 'mood.tags.school':
+      return <GraduationCap {...iconProps} />;
+    case 'mood.tags.loss':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.loneliness':
+      return <User {...iconProps} />;
+    case 'mood.tags.rejection':
+      return <X {...iconProps} />;
+    case 'mood.tags.change':
+      return <ArrowRightLeft {...iconProps} />;
+    case 'mood.tags.memory':
+      return <Brain {...iconProps} />;
+    case 'mood.tags.illness':
+      return <Thermometer {...iconProps} />;
+    case 'mood.tags.failure':
+      return <XCircle {...iconProps} />;
+    case 'mood.tags.achievement':
+      return <Trophy {...iconProps} />;
+    case 'mood.tags.love':
+      return <Heart {...iconProps} />;
+    case 'mood.tags.friends':
+      return <Users {...iconProps} />;
+    case 'mood.tags.progress':
+      return <TrendingUp {...iconProps} />;
+    case 'mood.tags.gratitude':
+      return <ThumbsUp {...iconProps} />;
+    case 'mood.tags.fun':
+      return <Smile {...iconProps} />;
+    case 'mood.tags.peace':
+      return <Leaf {...iconProps} />;
+    case 'mood.tags.success':
+      return <CheckCircle {...iconProps} />;
+    case 'mood.tags.frustration':
+      return <Zap {...iconProps} />;
+    case 'mood.tags.injustice':
+      return <Scale {...iconProps} />;
+    case 'mood.tags.disrespect':
+      return <Frown {...iconProps} />;
+    case 'mood.tags.stress':
+      return <Zap {...iconProps} />;
+    case 'mood.tags.conflict':
+      return <Swords {...iconProps} />;
+    case 'mood.tags.betrayal':
+      return <UserX {...iconProps} />;
+    case 'mood.tags.pressure':
+      return <Clock {...iconProps} />;
+
+    default:
+      return <Minus {...iconProps} />;
+  }
+};
 
 const encouragingMessageKeys = [
   {
@@ -133,113 +474,16 @@ const encouragingMessageKeys = [
   },
 ] as const;
 
-const renderMoodIcon = (
-  moodId: string,
-  size: number = 24,
-  color?: string,
-  colors?: ReturnType<typeof useColors>
-) => {
-  const iconProps = {
-    size,
-    color: color || colors?.foreground || '#5A4A3A',
-    fill: 'none',
-  };
-
-  switch (moodId) {
-    case 'sad':
-      return <Frown {...iconProps} />;
-    case 'anxious':
-      return <Zap {...iconProps} />;
-    case 'neutral':
-      return <Minus {...iconProps} />;
-    case 'happy':
-      return <Smile {...iconProps} />;
-    case 'angry':
-      return <Flame {...iconProps} />;
-    default:
-      return <Minus {...iconProps} />;
-  }
-};
-
-// Animated Mood Button Component (legacy)
-const AnimatedMoodButton = React.memo(function AnimatedMoodButton({
-  mood,
-  isSelected,
-  onPress,
-  t,
-}: {
-  mood: { id: string; label: string; value: string };
-  isSelected: boolean;
-  onPress: () => void;
-  t: (key: string) => string;
-}) {
-  const colors = useColors();
-  const isDarkModeLocal = colors.background === '#0A1514';
-
-  const animatedStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ scale: withSpring(isSelected ? 1.1 : 1) }],
-    };
-  }, [isSelected]);
-
-  const backgroundColor = useMemo(() => {
-    return isSelected
-      ? colors[
-          `mood${mood.id.charAt(0).toUpperCase() + mood.id.slice(1)}` as keyof typeof colors
-        ]
-      : colors.background === '#0A1514'
-        ? 'rgba(255, 255, 255, 0.04)'
-        : withOpacity(colors.shadow, 0.05);
-  }, [isSelected, mood.id, colors]);
-
-  const textColor = useMemo(() => {
-    // Keep label color consistent across states
-    return isDarkModeLocal ? 'rgba(255, 255, 255, 0.9)' : colors.foreground;
-  }, [colors, isDarkModeLocal]);
-
-  return (
-    <Pressable
-      onPress={onPress}
-      className="items-center"
-      style={{ marginHorizontal: 1 }}
-    >
-      <Animated.View
-        style={[
-          animatedStyle,
-          {
-            width: 64,
-            height: 64,
-            borderRadius: 20,
-            alignItems: 'center',
-            justifyContent: 'center',
-            backgroundColor,
-            overflow: 'hidden',
-          },
-        ]}
-      >
-        {renderMoodIcon(mood.id, 28, colors.foreground, colors)}
-      </Animated.View>
-      <Text
-        variant="caption1"
-        className="mt-2 text-center font-medium"
-        style={{ color: textColor }}
-      >
-        {t(`mood.moods.${mood.value}`)}
-      </Text>
-    </Pressable>
-  );
-});
-
-// Individual Tag Component - EXACT same pattern as AnimatedMoodButton
+// Individual Tag Component - now rating-based
 const TagButton = React.memo(function TagButton({
   tagKey,
   isSelected,
-  moodType,
+  rating,
   onPress,
 }: {
   tagKey: string;
   isSelected: boolean;
-  moodType: string;
+  rating: number;
   onPress: () => void;
 }) {
   const { t } = useTranslation();
@@ -251,26 +495,24 @@ const TagButton = React.memo(function TagButton({
     };
   }, [isSelected]);
 
-  // Get mood-specific color
-  const moodColor = useMemo(() => {
-    const moodColorKey =
-      `mood${moodType.charAt(0).toUpperCase() + moodType.slice(1)}` as keyof typeof colors;
-    return colors[moodColorKey] || colors.primary;
-  }, [moodType, colors]);
+  // Get rating-specific color based on rating scale
+  const ratingColor = useMemo(() => {
+    const clamped = Math.max(1, Math.min(10, Math.round(rating)));
+    const key = `ratingScale${clamped}` as keyof typeof colors;
+    return colors[key] || colors.primary;
+  }, [rating, colors]);
 
   const backgroundColor = useMemo(() => {
     return isSelected
-      ? moodColor + '33' // 20% opacity
+      ? ratingColor + '33' // 20% opacity
       : withOpacity(colors.shadow, 0.05);
-  }, [isSelected, moodColor, colors]);
+  }, [isSelected, ratingColor, colors]);
 
   const textColor = useMemo(() => {
-    return isSelected
-      ? 'rgba(255, 255, 255, 0.95)'
-      : colors.background === '#0A1514'
-        ? 'rgba(255, 255, 255, 0.9)'
-        : colors.foreground;
-  }, [isSelected, colors]);
+    return colors.background === '#0A1514'
+      ? 'rgba(255, 255, 255, 0.9)'
+      : colors.foreground;
+  }, [colors]);
 
   return (
     <Pressable onPress={onPress}>
@@ -278,13 +520,19 @@ const TagButton = React.memo(function TagButton({
         style={[
           animatedStyle,
           {
-            paddingHorizontal: 16,
+            paddingHorizontal: 12,
             paddingVertical: 10,
-            borderRadius: 20,
+            borderRadius: 8,
             alignItems: 'center',
             justifyContent: 'center',
             backgroundColor,
-            minWidth: 80,
+            flex: 1,
+            maxWidth:
+              tagKey === 'mood.tags.accomplished'
+                ? 130
+                : tagKey === 'mood.tags.unmotivated'
+                  ? 120
+                  : 110,
             // Ensure pill visibility on dark mode when not selected
             borderWidth: isSelected
               ? 0
@@ -303,87 +551,85 @@ const TagButton = React.memo(function TagButton({
           },
         ]}
       >
-        <Text
-          style={{
-            fontSize: 14,
-            fontWeight: '500',
-            color: textColor,
-            textAlign: 'center',
-            lineHeight: 18,
-          }}
-          numberOfLines={1}
-        >
-          {t(tagKey)}
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          {getTagIcon(tagKey, 16, textColor)}
+          <Text
+            style={{
+              fontSize: 14,
+              fontWeight: '500',
+              color: textColor,
+              textAlign: 'center',
+              lineHeight: 18,
+            }}
+            numberOfLines={1}
+          >
+            {t(tagKey)}
+          </Text>
+        </View>
       </Animated.View>
     </Pressable>
   );
 });
 
-// Memoized Tags Component to prevent unnecessary re-renders
+// Memoized Tags Component to prevent unnecessary re-renders (now rating-based)
 const TagsSection = React.memo(function TagsSection({
-  selectedMood,
+  rating,
   selectedTags,
   onTagToggle,
 }: {
-  selectedMood: string;
+  rating: number;
   selectedTags: string[];
   onTagToggle: (tagKey: string) => void;
 }) {
   const { t } = useTranslation();
 
-  if (
-    !selectedMood ||
-    !tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
-  ) {
+  if (!rating || rating < 1 || rating > 10) {
+    return null;
+  }
+
+  const tags = ratingTagKeys[rating as keyof typeof ratingTagKeys];
+
+  if (!tags) {
     return null;
   }
 
   return (
-    <MotiView
-      from={{ opacity: 0, translateY: 10 }}
-      animate={{ opacity: 1, translateY: 0 }}
-      transition={{ type: 'timing', duration: 200 }}
-      className="mb-4"
-    >
+    <View className="mb-4">
       <Text
         variant="body"
         className="text-center mb-4 text-foreground text-base font-medium"
       >
         {t('mood.contributing')}
       </Text>
+
       <View className="px-4">
         {/* Row 1: First 3 tags */}
         <View className="flex-row justify-center gap-2 mb-3">
-          {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
-            .slice(0, 3)
-            .map((tagKey) => (
-              <TagButton
-                key={tagKey}
-                tagKey={tagKey}
-                isSelected={selectedTags.includes(tagKey)}
-                moodType={selectedMood}
-                onPress={() => onTagToggle(tagKey)}
-              />
-            ))}
+          {tags.slice(0, 3).map((tagKey) => (
+            <TagButton
+              key={tagKey}
+              tagKey={tagKey}
+              isSelected={selectedTags.includes(tagKey)}
+              rating={rating}
+              onPress={() => onTagToggle(tagKey)}
+            />
+          ))}
         </View>
 
         {/* Row 2: Next 3 tags */}
         <View className="flex-row justify-center gap-2">
-          {tagCategoryKeys[selectedMood as keyof typeof tagCategoryKeys]
-            .slice(3, 6)
-            .map((tagKey) => (
-              <TagButton
-                key={tagKey}
-                tagKey={tagKey}
-                isSelected={selectedTags.includes(tagKey)}
-                moodType={selectedMood}
-                onPress={() => onTagToggle(tagKey)}
-              />
-            ))}
+          {tags.slice(3, 6).map((tagKey) => (
+            <TagButton
+              key={tagKey}
+              tagKey={tagKey}
+              isSelected={selectedTags.includes(tagKey)}
+              rating={rating}
+              onPress={() => onTagToggle(tagKey)}
+            />
+          ))}
         </View>
       </View>
-    </MotiView>
+    </View>
   );
 });
 
@@ -409,7 +655,6 @@ export default function MoodIndex() {
   const hasEveningMood =
     getTodayMoods?.evening !== null && getTodayMoods?.evening !== undefined;
   const hasLoggedCurrentPeriod = isMorning ? hasMorningMood : hasEveningMood;
-  const hasLoggedBothToday = hasMorningMood && hasEveningMood;
 
   // Rating state (1-10). Start at neutral 5
   const [rating, setRating] = useState<number>(5);
@@ -516,6 +761,7 @@ export default function MoodIndex() {
     createMood,
     isSaving,
     t,
+    timeOfDay,
   ]);
 
   const screenTitle = t('tabs.mood');
@@ -524,12 +770,23 @@ export default function MoodIndex() {
     <DashboardLayout title={screenTitle}>
       <View>
         {/* Week View Section */}
-        <View className="mb-1" style={{ marginHorizontal: 6 }}>
+        <View style={{ marginHorizontal: 6 }}>
           <WeekView moodData={moodData} />
         </View>
 
+        {/* Mood Log Reminder */}
+        <MoodLogReminder
+          hasMorningMood={hasMorningMood}
+          hasEveningMood={hasEveningMood}
+          isMorning={isMorning}
+          onPress={() => {
+            // Scroll to mood logging card if needed
+            // This can be enhanced with refs and scrolling if necessary
+          }}
+        />
+
         {/* Mood Logging Card */}
-        <View className="mb-6" style={{ marginHorizontal: 6 }}>
+        <View className="mb-4" style={{ marginHorizontal: 6 }}>
           <View
             className={cn(
               'rounded-3xl p-6 border border-border/20',
@@ -626,36 +883,6 @@ export default function MoodIndex() {
                   >
                     {selectedEncouragingMessage.suffix}
                   </Text>
-
-                  {/* Reminder for second mood entry */}
-                  {!hasLoggedBothToday && (
-                    <MotiView
-                      from={{ opacity: 0, translateY: 10 }}
-                      animate={{ opacity: 1, translateY: 0 }}
-                      transition={{ type: 'timing', duration: 400, delay: 200 }}
-                      className="mt-6"
-                    >
-                      <View
-                        className="rounded-2xl px-4 py-3"
-                        style={{
-                          backgroundColor: 'rgba(0, 0, 0, 0.08)',
-                        }}
-                      >
-                        <Text
-                          variant="caption1"
-                          className="text-center"
-                          style={{
-                            color: '#1F2937',
-                            opacity: 0.85,
-                          }}
-                        >
-                          {hasMorningMood && !hasEveningMood
-                            ? t('mood.reminder.evening')
-                            : t('mood.reminder.morning')}
-                        </Text>
-                      </View>
-                    </MotiView>
-                  )}
                 </View>
               </MotiView>
             ) : (
@@ -682,7 +909,8 @@ export default function MoodIndex() {
                 {/* Tags Section */}
                 {hasSelectedRating && (
                   <TagsSection
-                    selectedMood={selectedMoodCategory}
+                    key={rating}
+                    rating={rating}
                     selectedTags={selectedTags}
                     onTagToggle={handleTagToggle}
                   />
@@ -784,7 +1012,7 @@ export default function MoodIndex() {
         )}
 
         {/* Pixel Calendar - Mood Visualization */}
-        <View className="mb-6" style={{ marginHorizontal: 6 }}>
+        <View className="mb-4" style={{ marginHorizontal: 6 }}>
           <View
             className="rounded-3xl p-4 bg-black/[0.03] dark:bg-white/[0.03]"
             style={{

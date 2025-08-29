@@ -84,7 +84,8 @@ export function getCategoryColor(category: ExerciseCategory): string {
 // --- Rating helpers ---
 
 /**
- * Map a 1-10 rating to a mood category for tags/exercises.
+ * Map a 1-10 rating to a mood category for backward compatibility with exercises.
+ * Note: Tags now use rating-based system directly.
  */
 export function getMoodCategoryFromRating(rating: number): MoodType {
   if (rating <= 2) return 'sad';
@@ -92,6 +93,66 @@ export function getMoodCategoryFromRating(rating: number): MoodType {
   if (rating <= 6) return 'neutral';
   if (rating <= 10) return 'happy';
   return 'neutral';
+}
+
+/**
+ * Get appropriate exercise categories based on rating (more granular than mood categories).
+ */
+export function getExerciseCategoriesForRating(
+  rating: number
+): ExerciseCategory[] {
+  // Ratings 1-2: Severely distressed - focus on breathing and relaxation
+  if (rating <= 2) {
+    return ['breathing', 'relaxation', 'mindfulness'];
+  }
+  // Ratings 3-4: Low mood - breathing, mindfulness, gentle movement
+  if (rating <= 4) {
+    return ['breathing', 'mindfulness', 'relaxation', 'journaling'];
+  }
+  // Ratings 5-6: Neutral - all options available
+  if (rating <= 6) {
+    return ['mindfulness', 'breathing', 'movement', 'journaling', 'relaxation'];
+  }
+  // Ratings 7-8: Good mood - maintain energy, explore growth
+  if (rating <= 8) {
+    return ['movement', 'journaling', 'mindfulness'];
+  }
+  // Ratings 9-10: Excellent mood - celebration and maintaining positivity
+  return ['movement', 'journaling'];
+}
+
+/**
+ * Get a rating-based encouraging message.
+ */
+export function getRatingBasedEncouragement(
+  rating: number,
+  locale: 'en' | 'ar'
+): string {
+  const messages = {
+    en: {
+      low: 'Gentle care for difficult moments', // 1-3
+      challenging: 'Small steps toward feeling better', // 4-5
+      neutral: 'A balanced place to be', // 6
+      good: 'Building on positive momentum', // 7-8
+      excellent: 'Celebrating this wonderful feeling', // 9-10
+    },
+    ar: {
+      low: 'رعاية لطيفة للحظات الصعبة',
+      challenging: 'خطوات صغيرة نحو الشعور بتحسن',
+      neutral: 'مكان متوازن للوجود',
+      good: 'البناء على الزخم الإيجابي',
+      excellent: 'الاحتفال بهذا الشعور الرائع',
+    },
+  };
+
+  let category: keyof typeof messages.en;
+  if (rating <= 3) category = 'low';
+  else if (rating <= 5) category = 'challenging';
+  else if (rating === 6) category = 'neutral';
+  else if (rating <= 8) category = 'good';
+  else category = 'excellent';
+
+  return messages[locale][category];
 }
 
 /**
