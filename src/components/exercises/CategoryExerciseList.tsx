@@ -90,7 +90,11 @@ function CategoryExerciseListComponent({
         <Pressable onPress={handleBackPress} className="p-2 me-2">
           <SymbolView name="chevron.left" size={28} tintColor="#9CA3AF" />
         </Pressable>
-        <Text variant="title1" className="text-foreground flex-1 text-center">
+        <Text
+          variant="title1"
+          autoAlign={false}
+          className="text-foreground flex-1 text-center"
+        >
           {categoryName}
         </Text>
         {/* Spacer to balance the centered title against the back icon width */}

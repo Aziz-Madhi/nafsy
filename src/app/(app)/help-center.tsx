@@ -21,6 +21,7 @@ import { cn } from '~/lib/cn';
 // import { ProfileLayout } from '~/components/ui/ScreenLayout';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
+// no safe area needed for this header style
 // Removed useIsRTL - text alignment handled by Text component
 
 // FAQ Item Component
@@ -77,6 +78,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
 export default function HelpCenter() {
   const colors = useColors();
   const { t } = useTranslation();
+  // Header matches CategoryExerciseList style (no extra safe-area top padding)
   // Text alignment now handled by Text component autoAlign
   const [searchQuery, setSearchQuery] = useState('');
   const [showChat, setShowChat] = useState(false);
@@ -127,25 +129,23 @@ export default function HelpCenter() {
   return (
     <View className="flex-1 bg-background">
       {/* Manual Header - matching ProfileLayout styling */}
-      <View
-        className="bg-background"
-        style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}
-      >
-        <View className="flex-row items-center">
+      <View className="bg-background">
+        <View className="flex-row items-center px-4 py-3 mb-4">
           <Pressable
             onPress={() => router.back()}
-            className="me-4"
+            className="p-2 me-2"
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
-            <SymbolView
-              name="chevron.left"
-              size={24}
-              tintColor={colors.foreground}
-            />
+            <SymbolView name="chevron.left" size={28} tintColor="#9CA3AF" />
           </Pressable>
-          <Text variant="heading" className="text-foreground flex-1">
+          <Text
+            variant="title1"
+            autoAlign={false}
+            className="text-foreground flex-1 text-center"
+          >
             {t('helpCenter.title')}
           </Text>
+          <View style={{ width: 44 }} />
         </View>
       </View>
 
@@ -269,22 +269,23 @@ export default function HelpCenter() {
             className="absolute inset-0 bg-background"
           >
             {/* Chat Header */}
-            <View className="bg-background pt-12 pb-4 px-6">
-              <View className="flex-row items-center">
+            <View className="bg-background">
+              <View className="flex-row items-center px-4 py-3 mb-2">
                 <Pressable
                   onPress={() => setShowChat(false)}
-                  className="me-4"
+                  className="p-2 me-2"
                   style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
                 >
-                  <SymbolView
-                    name="xmark"
-                    size={24}
-                    tintColor={colors.foreground}
-                  />
+                  <SymbolView name="xmark" size={24} tintColor="#9CA3AF" />
                 </Pressable>
-                <Text variant="heading" className="text-foreground flex-1">
+                <Text
+                  variant="title1"
+                  autoAlign={false}
+                  className="text-foreground flex-1 text-center"
+                >
                   {t('helpCenter.customerSupport')}
                 </Text>
+                <View style={{ width: 44 }} />
               </View>
             </View>
 

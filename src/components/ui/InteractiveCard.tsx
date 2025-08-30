@@ -194,7 +194,8 @@ function ExerciseCardContent({
 
         <Text
           variant="title3"
-          className="mb-1"
+          autoAlign={false}
+          className="mb-1 text-center"
           style={{ color: isDarkMode ? colors.foreground : '#5A4A3A' }}
           numberOfLines={1}
           ellipsizeMode="tail"
@@ -203,7 +204,8 @@ function ExerciseCardContent({
         </Text>
         <Text
           variant="body"
-          className="text-sm"
+          autoAlign={false}
+          className="text-sm text-center"
           style={{
             color: isDarkMode ? 'rgba(255, 255, 255, 0.75)' : '#5A4A3A',
           }}

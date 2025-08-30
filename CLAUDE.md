@@ -72,29 +72,42 @@ src/
 └── locales/               # i18n translation files
 ```
 
-### State Management
+### State Management & Persistence
 
+- **Dual Storage Architecture**: 
+  - **MMKV**: For app state, settings, UI preferences, and small data (synchronous access)
+  - **SQLite**: For user data, offline persistence, and complex queries with sync capabilities
 - **Store Factory Pattern**: `createPersistedStore()` factory in `~/lib/store-factory` for consistent MMKV persistence
 - **Primary Stores**:
-  - `useAppStore`: Global app state, themes, settings, language
-  - `useChatUIStore`: Chat UI state, session management, floating chat
-- **MMKV Integration**: Custom `mmkv-storage.ts` with encryption and error handling
+  - `useAppStore`: Global app state, themes, settings, language (MMKV)
+  - `useChatUIStore`: Chat UI state, session management, floating chat (MMKV)
+- **MMKV Integration**: Unified encrypted storage with secure key management
+- **SQLite Integration**: Local-first database with WAL mode, migrations, and sync queues
 
-### Database Schema (Convex)
+### Database Architecture
 
-- **Dual Chat System**: `mainChatMessages` (therapy sessions) and `ventChatMessages` (quick vents)
-- **Session Management**: `chatSessions` and `ventChatSessions` for conversation metadata
+**Convex Backend (Server)**:
+- **Multi-Chat System**: `mainChatMessages`, `ventChatMessages`, `companionChatMessages` (3 chat personalities)
+- **Session Management**: `chatSessions`, `ventChatSessions`, `companionChatSessions` for conversation metadata
 - **User Data**: `users` (Clerk integration), `moods` (5 types), `exercises` (5 categories), `userProgress`
-- **Multilingual**: Full Arabic/English support in exercise content and UI
+- **Real-time**: Live updates via Convex subscriptions
+
+**SQLite Local Storage**:
+- **Local-first Tables**: `mood_entries`, `exercises`, `exercise_logs`, `chat_messages` (3 types), `chat_sessions`
+- **Sync Infrastructure**: `outbox_ops` (pending operations), `failed_ops` (dead letter queue), `sync_state` (cursors)
+- **Per-user Databases**: Separate SQLite files per authenticated user for data isolation
+- **Migrations**: Schema versioning with automatic migration system
+- **Multilingual Support**: Full Arabic/English content stored locally and synced
 
 ### Key Features
 
-1. **AI Chat**: Two types - structured therapy sessions and quick emotional vents
+1. **AI Chat**: Three personalities - Coach (structured therapy), Event (quick vents), Companion (daily support)
 2. **Mood Tracking**: Daily mood logging with 5 mood types (happy, sad, anxious, neutral, angry)
 3. **Wellness Exercises**: 5 categories (breathing, mindfulness, journaling, movement, relaxation)
 4. **Multilingual**: Full Arabic/English support with RTL layout
-5. **Real-time**: Live chat updates via Convex subscriptions
-6. **Offline Support**: MMKV caching for offline functionality
+5. **Real-time**: Live chat updates via Convex subscriptions when online
+6. **Offline Support**: Full offline functionality with SQLite local storage and automatic sync
+7. **Data Persistence**: Dual-layer storage (MMKV for app state, SQLite for user data)
 
 ## Code Style and Structure
 
@@ -130,15 +143,39 @@ The app uses a unified color system with CSS variables as the single source of t
 - When given an error or problem to fix, try a simple fix first
 - Do not run an iOS build. Always ask for confirmation before proceeding with iOS builds
 - Use `bun` as the package manager, not npm or yarn
-- MMKV provides synchronous storage - prefer it over AsyncStorage
+- **Storage Strategy**: 
+  - MMKV for app state, settings, and small synchronous data
+  - SQLite for user data, offline persistence, and complex queries
+  - Never use AsyncStorage - prefer MMKV for simple storage needs
 - Use `expo-router` for navigation - all routes are file-based
 - **Important Development Tip**: Do not start a dev server. Tell the user to do it
+
+## Offline Data & Sync System
+
+### Local-First Architecture
+- **SQLite Foundation**: `~/lib/local-first/sqlite.ts` - Core database operations with WAL mode
+- **Sync Manager**: `~/lib/offline/sync-manager.ts` - Bidirectional sync with Convex backend
+- **Offline Hooks**: `~/hooks/useOfflineData.ts` - React hooks for seamless offline/online data access
+- **Network Awareness**: Automatic sync when connectivity is restored
+
+### Key Files & Functions
+- **Database Init**: `initLocalFirstDB()` - Initialize SQLite with migrations
+- **User Management**: `setActiveLocalUser()` - Switch between per-user databases
+- **Outbox Pattern**: `enqueueOutbox()` - Queue operations for later sync
+- **Data Access**: `useOfflineMoodData()`, `useOfflineExercisesWithProgress()` - Offline-aware hooks
+- **Sync Status**: `useSyncStatus()` - Monitor sync state and pending operations
+
+### Sync Strategy
+- **Push-then-Pull**: Local changes uploaded first, then server updates downloaded
+- **Incremental Sync**: Cursor-based sync with `getSyncCursor()` / `setSyncCursor()`
+- **Conflict Resolution**: Server-authoritative with local deduplication
+- **Failed Operations**: Dead letter queue (`failed_ops` table) with retry logic
 
 ## Convex Development Notes
 
 - Convex functions are located in the `convex/` directory
 - Schema is defined in `convex/schema.ts` with indexed tables
-- Available Convex modules: auth, chat, exercises, moods, users, mainChat, ventChat, userProgress
+- Available Convex modules: auth, chat, exercises, moods, users, mainChat, ventChat, userProgress, companionChat
 - Use MCP tools for Convex operations: `mcp__convex__*` functions for database queries and management
 
 ## Testing Framework

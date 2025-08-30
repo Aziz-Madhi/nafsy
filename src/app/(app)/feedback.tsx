@@ -22,6 +22,7 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import { cn } from '~/lib/cn';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
+// no safe area needed for this header style
 // Removed useIsRTL - text alignment handled by Text component
 
 // Feedback Type Card
@@ -95,6 +96,7 @@ function RatingStar({
 export default function Feedback() {
   const colors = useColors();
   const { t } = useTranslation();
+  // Header matches CategoryExerciseList style (no extra safe-area top padding)
   // Text alignment now handled by Text component autoAlign
   const [feedbackType, setFeedbackType] = useState<
     'bug' | 'feature' | 'improvement' | 'other'
@@ -166,25 +168,23 @@ export default function Feedback() {
   return (
     <View className="flex-1 bg-background">
       {/* Manual Header - matching ProfileLayout styling */}
-      <View
-        className="bg-background"
-        style={{ paddingTop: 58, paddingBottom: 16, paddingHorizontal: 24 }}
-      >
-        <View className="flex-row items-center">
+      <View className="bg-background">
+        <View className="flex-row items-center px-4 py-3 mb-4">
           <Pressable
             onPress={() => router.back()}
-            className="me-4"
+            className="p-2 me-2"
             style={({ pressed }) => ({ opacity: pressed ? 0.6 : 1 })}
           >
-            <SymbolView
-              name="chevron.left"
-              size={24}
-              tintColor={colors.brandDarkBlue}
-            />
+            <SymbolView name="chevron.left" size={28} tintColor="#9CA3AF" />
           </Pressable>
-          <Text variant="heading" className="text-foreground flex-1">
+          <Text
+            variant="title1"
+            autoAlign={false}
+            className="text-foreground flex-1 text-center"
+          >
             {t('feedback.title')}
           </Text>
+          <View style={{ width: 44 }} />
         </View>
       </View>
 
