@@ -17,9 +17,8 @@ import { useScreenPadding } from '~/hooks/useScreenPadding';
 import { User } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
 import {
-  getAutoTextAlignment,
-  getLanguageClass,
-  isCurrentLanguageRTL,
+  useAutoTextAlignment,
+  useLanguageClass,
 } from '~/lib/rtl-utils';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
@@ -112,13 +111,13 @@ function ScreenHeader({
   style?: ViewStyle;
   showSettingsIcon?: boolean;
 }) {
-  const textAlign = getAutoTextAlignment();
+  const textAlign = useAutoTextAlignment();
 
   if (!title && !headerCenter && !headerLeft && !headerRight) return null;
 
   return (
     <View
-      className={`px-6 py-1 mb-1 items-center ${getLanguageClass('flex-row justify-between', 'flex-row-reverse justify-between')}`}
+      className={`px-6 py-1 mb-1 items-center ${useLanguageClass('flex-row justify-between', 'flex-row-reverse justify-between')}`}
       style={style}
     >
       {/* Title section */}
@@ -158,7 +157,7 @@ function ScreenHeader({
 
       {/* Settings Icon section */}
       <View
-        className={getLanguageClass('flex-1 items-end', 'flex-1 items-start')}
+        className={useLanguageClass('flex-1 items-end', 'flex-1 items-start')}
       >
         {headerRight || (showSettingsIcon && <SettingsIcon />)}
       </View>

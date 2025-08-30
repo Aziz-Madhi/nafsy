@@ -6,10 +6,10 @@
 import { useCurrentLanguage } from '~/store/useAppStore';
 
 /**
- * Get text alignment based on current language
+ * Hook-based text alignment utility
  * Arabic = right, English = left
  */
-export function getAutoTextAlignment(): 'left' | 'right' {
+export function useAutoTextAlignment(): 'left' | 'right' {
   const currentLanguage = useCurrentLanguage();
   return currentLanguage === 'ar' ? 'right' : 'left';
 }
@@ -24,33 +24,33 @@ export function getTextAlignmentForLanguage(
 }
 
 /**
- * Check if current language is RTL (for text alignment only)
+ * Hook to check if current language is RTL (for text alignment only)
  */
-export function isCurrentLanguageRTL(): boolean {
+export function useIsCurrentLanguageRTL(): boolean {
   const currentLanguage = useCurrentLanguage();
   return currentLanguage === 'ar';
 }
 
 /**
- * Hook-based text alignment utility
+ * Hook-based text alignment utility (alias)
  */
 export function useTextAlignment(): 'left' | 'right' {
-  return getAutoTextAlignment();
+  return useAutoTextAlignment();
 }
 
 /**
- * Get conditional classes based on language
+ * Hook to get conditional classes based on language
  */
-export function getLanguageClass(ltrClass: string, rtlClass: string): string {
+export function useLanguageClass(ltrClass: string, rtlClass: string): string {
   const currentLanguage = useCurrentLanguage();
   return currentLanguage === 'ar' ? rtlClass : ltrClass;
 }
 
 // Simple export for backward compatibility
 export default {
-  getAutoTextAlignment,
+  useAutoTextAlignment,
   getTextAlignmentForLanguage,
-  isCurrentLanguageRTL,
+  useIsCurrentLanguageRTL,
   useTextAlignment,
-  getLanguageClass,
+  useLanguageClass,
 };

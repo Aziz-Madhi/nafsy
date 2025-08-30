@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Text, TextProps, View, ViewProps } from 'react-native';
 import { TextClassContext } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
-import { getAutoTextAlignment } from '~/lib/rtl-utils';
+import { useAutoTextAlignment } from '~/lib/rtl-utils';
 
 function Card({
   className,
@@ -38,7 +38,7 @@ function CardTitle({
 }: TextProps & {
   ref?: React.RefObject<Text>;
 }) {
-  const textAlign = getAutoTextAlignment();
+  const textAlign = useAutoTextAlignment();
 
   return (
     <Text
@@ -60,7 +60,7 @@ function CardDescription({
 }: TextProps & {
   ref?: React.RefObject<Text>;
 }) {
-  const textAlign = getAutoTextAlignment();
+  const textAlign = useAutoTextAlignment();
 
   return (
     <Text

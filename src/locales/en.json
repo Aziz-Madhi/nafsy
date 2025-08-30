@@ -780,6 +780,18 @@
     "settingsSaved": "Settings saved!",
     "accountCreated": "Account created successfully!"
   },
+  "sync": {
+    "offline": "Offline",
+    "syncing": "Syncing...",
+    "synced": "Synced",
+    "pendingChanges": "{{count}} pending",
+    "lastSync": {
+      "justNow": "Just now",
+      "minutes": "{{count}}m ago",
+      "hours": "{{count}}h ago",
+      "days": "{{count}}d ago"
+    }
+  },
   "ui": {
     "error": {
       "somethingWrong": "Something went wrong",

@@ -2,6 +2,7 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { Doc } from './_generated/dataModel';
 import { getAuthenticatedUser } from './authUtils';
+import { checkRateLimitDb, createValidationError } from './errorUtils';
 
 // Create a new mood entry
 export const createMood = mutation({
@@ -26,6 +27,24 @@ export const createMood = mutation({
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
+    
+    // Apply rate limiting (100 mood entries per minute per user)
+    await checkRateLimitDb(ctx, `moods:create:${user._id}`, 100, 60000);
+    
+    // Validate rating bounds
+    if (args.rating !== undefined && (args.rating < 1 || args.rating > 10)) {
+      throw createValidationError('Rating must be between 1 and 10', { rating: args.rating });
+    }
+    
+    // Validate timeOfDay values
+    if (args.timeOfDay && !['morning', 'evening'].includes(args.timeOfDay)) {
+      throw createValidationError('Time of day must be either "morning" or "evening"', { timeOfDay: args.timeOfDay });
+    }
+    
+    // Validate tags length
+    if (args.tags && args.tags.length > 20) {
+      throw createValidationError('Maximum 20 tags allowed', { tagsCount: args.tags.length });
+    }
 
     // Derive mood category from rating when provided
     function getMoodCategoryFromRating(
@@ -469,6 +488,31 @@ export const getTodayMorningMood = query({
       .first();
 
     return morningMood;
+  },
+});
+
+// Delete a mood entry
+export const deleteMood = mutation({
+  args: {
+    id: v.id('moods'),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    // Authenticate user and get their ID
+    const user = await getAuthenticatedUser(ctx);
+
+    // Verify the mood belongs to the user
+    const mood = await ctx.db.get(args.id);
+    if (!mood) {
+      throw new Error('Mood not found');
+    }
+    if (mood.userId !== user._id) {
+      throw new Error('Unauthorized');
+    }
+
+    // Delete the mood
+    await ctx.db.delete(args.id);
+    return null;
   },
 });
 

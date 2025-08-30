@@ -4,25 +4,34 @@
  */
 
 import { MMKV } from 'react-native-mmkv';
-import { getFallbackKey } from './secure-key';
+import { getOrCreateMMKVKey, getFallbackKey } from './secure-key';
 import { logger } from './logger';
 
 // Single MMKV instance - no dual storage system
 let storage: MMKV;
+let isUpgradingKey = false;
 
 // Initialize with the best available encryption key
-const initializeStorage = (): MMKV => {
+const initializeStorage = async (): Promise<MMKV> => {
   try {
-    // Try to get secure key first, fallback to getFallbackKey if needed
-    const encryptionKey = getFallbackKey(); // Use fallback key for immediate availability
+    // First, try to get the secure key asynchronously
+    let encryptionKey: string;
+    try {
+      encryptionKey = await getOrCreateMMKVKey();
+      logger.info('Using secure encryption key for MMKV', 'MMKV');
+    } catch (error) {
+      // If secure key fails, use fallback key temporarily
+      logger.warn('Failed to get secure key, using fallback', 'MMKV', error);
+      encryptionKey = getFallbackKey();
+    }
 
-    storage = new MMKV({
+    const newStorage = new MMKV({
       id: 'nafsy-app-storage-unified', // New unified storage ID
       encryptionKey,
     });
 
     logger.info('MMKV unified storage initialized successfully', 'MMKV');
-    return storage;
+    return newStorage;
   } catch (error) {
     logger.security('MMKV encryption initialization failed', {
       context: 'MMKV',
@@ -35,8 +44,25 @@ const initializeStorage = (): MMKV => {
   }
 };
 
-// Initialize storage immediately
-storage = initializeStorage();
+// Initialize storage with fallback key first (for immediate availability)
+storage = new MMKV({
+  id: 'nafsy-app-storage-unified',
+  encryptionKey: getFallbackKey(),
+});
+
+// Upgrade to secure key asynchronously
+(async () => {
+  try {
+    if (!isUpgradingKey) {
+      isUpgradingKey = true;
+      storage = await initializeStorage();
+      isUpgradingKey = false;
+    }
+  } catch (error) {
+    logger.error('Failed to upgrade MMKV encryption key', 'MMKV', error);
+    isUpgradingKey = false;
+  }
+})();
 
 /**
  * Safe MMKV operations with basic error handling

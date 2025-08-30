@@ -55,6 +55,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     ],
     'expo-localization',
     'expo-updates',
+    'expo-sqlite',
   ],
   updates: {
     fallbackToCacheTimeout: 0,

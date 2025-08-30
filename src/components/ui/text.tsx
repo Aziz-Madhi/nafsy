@@ -2,7 +2,7 @@ import { type VariantProps, cva } from 'class-variance-authority';
 import * as React from 'react';
 import { Text as RNText, Platform } from 'react-native';
 import { cn } from '~/lib/cn';
-import { getAutoTextAlignment } from '~/lib/rtl-utils';
+import { useAutoTextAlignment } from '~/lib/rtl-utils';
 import { useCurrentLanguage } from '~/store/useAppStore';
 // Typography system using AveriaSerif fonts with proper hierarchy
 const typography = {
@@ -251,9 +251,8 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(
     const italicStyle = italic ? { fontStyle: 'italic' } : {};
 
     // Apply automatic text alignment if enabled
-    const autoAlignStyle = autoAlign
-      ? { textAlign: getAutoTextAlignment() }
-      : {};
+    const textAlignment = useAutoTextAlignment();
+    const autoAlignStyle = autoAlign ? { textAlign: textAlignment } : {};
 
     const combinedStyle = [typographyStyle, italicStyle, autoAlignStyle, style];
 

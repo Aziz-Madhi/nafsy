@@ -53,7 +53,9 @@ export function FloatingTabBar({
   const setCoachChatInput = useChatUIStore((s) => s.setCoachChatInput);
   const clearCoachChatInput = useChatUIStore((s) => s.clearCoachChatInput);
   const setCompanionChatInput = useChatUIStore((s) => s.setCompanionChatInput);
-  const clearCompanionChatInput = useChatUIStore((s) => s.clearCompanionChatInput);
+  const clearCompanionChatInput = useChatUIStore(
+    (s) => s.clearCompanionChatInput
+  );
   const setMainChatInput = useChatUIStore((s) => s.setMainChatInput);
   const clearMainChatInput = useChatUIStore((s) => s.clearMainChatInput);
   const setChatInputFocused = useChatUIStore((s) => s.setChatInputFocused);
@@ -222,7 +224,10 @@ export function FloatingTabBar({
           {/* Input Section - Only visible in chat */}
           {isChatTab && (
             <Animated.View
-              style={[inputContainerStyle, { paddingHorizontal: 12, paddingTop: 8 }]}
+              style={[
+                inputContainerStyle,
+                { paddingHorizontal: 12, paddingTop: 8 },
+              ]}
             >
               {/* Row layout with explicit spacing */}
               <View className="flex-row items-end gap-7 pr-3">

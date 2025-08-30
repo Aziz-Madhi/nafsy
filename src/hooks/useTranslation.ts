@@ -1,6 +1,6 @@
 import { useTranslation as useI18nextTranslation } from 'react-i18next';
 import { type SupportedLanguage } from '~/lib/language-utils';
-import { isCurrentLanguageRTL } from '~/lib/rtl-utils';
+import { useIsCurrentLanguageRTL } from '~/lib/rtl-utils';
 
 /**
  * Custom hook that extends react-i18next's useTranslation with app-specific functionality
@@ -17,7 +17,7 @@ export const useTranslation = () => {
    * Check if current language is RTL (for text direction only)
    * UI layout always stays LTR
    */
-  const isRTL = isCurrentLanguageRTL();
+  const isRTL = useIsCurrentLanguageRTL();
 
   /**
    * Get available languages

@@ -2,7 +2,7 @@ import React from 'react';
 import { View, TextInput, TextInputProps } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
-import { getAutoTextAlignment } from '~/lib/rtl-utils';
+import { useAutoTextAlignment } from '~/lib/rtl-utils';
 
 interface FormFieldProps extends Omit<TextInputProps, 'className'> {
   label: string;
@@ -22,7 +22,7 @@ export function FormField({
   containerClassName,
   ...inputProps
 }: FormFieldProps) {
-  const textAlign = getAutoTextAlignment();
+  const textAlign = useAutoTextAlignment();
 
   return (
     <View className={cn('gap-2', containerClassName)}>

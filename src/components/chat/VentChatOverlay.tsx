@@ -181,7 +181,9 @@ export function VentChatOverlay({
                   {(lastUserText || lastAIText) && (
                     <Animated.View>
                       <View
-                        style={{ backgroundColor: eventStyles.primaryColor + '55' }}
+                        style={{
+                          backgroundColor: eventStyles.primaryColor + '55',
+                        }}
                         className="h-[2px] w-16 rounded-full"
                       />
                     </Animated.View>
@@ -214,15 +216,21 @@ export function VentChatOverlay({
                       style={{ marginTop: 12 }}
                     >
                       <View
-                        style={{ backgroundColor: eventStyles.primaryColor + '60' }}
+                        style={{
+                          backgroundColor: eventStyles.primaryColor + '60',
+                        }}
                         className="w-2 h-2 rounded-full"
                       />
                       <View
-                        style={{ backgroundColor: eventStyles.primaryColor + '90' }}
+                        style={{
+                          backgroundColor: eventStyles.primaryColor + '90',
+                        }}
                         className="w-2 h-2 rounded-full"
                       />
                       <View
-                        style={{ backgroundColor: eventStyles.primaryColor + '60' }}
+                        style={{
+                          backgroundColor: eventStyles.primaryColor + '60',
+                        }}
                         className="w-2 h-2 rounded-full"
                       />
                     </Animated.View>

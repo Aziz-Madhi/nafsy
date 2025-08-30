@@ -9,7 +9,6 @@ import {
 import { FlashList, FlashListProps } from '@shopify/flash-list';
 import { Text } from './text';
 import { useTranslation } from '~/hooks/useTranslation';
-import { getAutoTextAlignment } from '~/lib/rtl-utils';
 
 // Generic item interface - all items must have an id
 interface ListItem {

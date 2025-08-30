@@ -40,7 +40,9 @@ const personalityMessages: PersonalityMessage[] = [
   },
 ];
 
-export function ChatPersonalityHeader({ chatType }: ChatPersonalityHeaderProps) {
+export function ChatPersonalityHeader({
+  chatType,
+}: ChatPersonalityHeaderProps) {
   const { i18n } = useTranslation();
   const isArabic = i18n.language === 'ar';
 
@@ -53,7 +55,10 @@ export function ChatPersonalityHeader({ chatType }: ChatPersonalityHeaderProps) 
       <Text variant="title3" className="font-bold text-center text-foreground">
         {isArabic ? message.titleAr : message.title}
       </Text>
-      <Text variant="subhead" className="text-center text-muted-foreground mt-1">
+      <Text
+        variant="subhead"
+        className="text-center text-muted-foreground mt-1"
+      >
         {isArabic ? message.subtitleAr : message.subtitle}
       </Text>
     </View>

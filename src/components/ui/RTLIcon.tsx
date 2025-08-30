@@ -1,6 +1,6 @@
 import React from 'react';
 import { View } from 'react-native';
-import { isCurrentLanguageRTL } from '~/lib/rtl-utils';
+import { useIsCurrentLanguageRTL } from '~/lib/rtl-utils';
 
 interface RTLIconProps {
   children: React.ReactNode;
@@ -34,7 +34,7 @@ export const RTLIcon: React.FC<RTLIconProps> = ({
   shouldFlip = true,
   forceRTL,
 }) => {
-  const isRTLFromStore = isCurrentLanguageRTL();
+  const isRTLFromStore = useIsCurrentLanguageRTL();
 
   // Determine if we should actually flip
   const isRTL = forceRTL !== undefined ? forceRTL : isRTLFromStore;
@@ -60,7 +60,7 @@ export const RTLIcon: React.FC<RTLIconProps> = ({
  * UI layout always stays LTR
  */
 export const useRTLDirection = () => {
-  const isRTLFromStore = isCurrentLanguageRTL();
+  const isRTLFromStore = useIsCurrentLanguageRTL();
 
   return {
     isRTL: isRTLFromStore,
@@ -80,7 +80,7 @@ export const useDirectionalValue = <T,>(
   rtlValue: T,
   isRTL?: boolean
 ): T => {
-  const isRTLFromStore = isCurrentLanguageRTL();
+  const isRTLFromStore = useIsCurrentLanguageRTL();
   const rtl = isRTL !== undefined ? isRTL : isRTLFromStore;
   return rtl ? rtlValue : ltrValue;
 };

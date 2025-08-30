@@ -47,7 +47,8 @@ import {
   useAppStore,
 } from '~/store/useAppStore';
 import { resetAllStores } from '~/store';
-import { getLanguageClass } from '~/lib/rtl-utils';
+import { clearLocalFirstDB } from '~/lib/local-first/sqlite';
+import { useLanguageClass } from '~/lib/rtl-utils';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -99,6 +100,9 @@ const SettingRow = React.memo(function SettingRow({
 }) {
   const colors = useColors();
   const scale = useSharedValue(1);
+  const flexDirection = useLanguageClass('flex-row', 'flex-row-reverse');
+  const iconMargin = useLanguageClass('me-3', 'ms-3');
+  const valueMargin = useLanguageClass('me-2', 'ms-2');
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [{ scale: scale.value }],
@@ -120,7 +124,7 @@ const SettingRow = React.memo(function SettingRow({
         onPressOut={handlePressOut}
         className={cn(
           'px-4 py-3.5 items-center',
-          getLanguageClass('flex-row', 'flex-row-reverse'),
+          flexDirection,
           !isLast && 'border-b border-border/10'
         )}
         disabled={type === 'switch'}
@@ -129,7 +133,7 @@ const SettingRow = React.memo(function SettingRow({
           <View
             className={cn(
               'w-7 h-7 rounded-md items-center justify-center',
-              getLanguageClass('me-3', 'ms-3')
+              iconMargin
             )}
             style={{
               backgroundColor: destructive
@@ -154,7 +158,7 @@ const SettingRow = React.memo(function SettingRow({
               <Text
                 className={cn(
                   'text-muted-foreground text-[15px]',
-                  getLanguageClass('me-2', 'ms-2')
+                  valueMargin
                 )}
               >
                 {value}
@@ -290,6 +294,11 @@ const SettingsScreen = React.memo(function SettingsScreen() {
 
       // Sign out from Clerk
       await signOut();
+
+      // Hard-wipe local SQLite data to prevent cross-account leakage
+      try {
+        await clearLocalFirstDB();
+      } catch {}
 
       // Clear all client state
       resetAllStores();

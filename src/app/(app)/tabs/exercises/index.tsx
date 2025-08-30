@@ -7,7 +7,12 @@ import { DailyExerciseCard } from '~/components/exercises/DailyExerciseCard';
 import { ExerciseDetail } from '~/components/exercises';
 import { useQuery, useMutation } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
-import { useCurrentUser, useUserStats } from '~/hooks/useSharedData';
+import { useCurrentUser } from '~/hooks/useSharedData';
+import {
+  useOfflineUserStats,
+  useOfflineExercisesWithProgress,
+  useOfflineRecordProgress,
+} from '~/hooks/useOfflineData';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import {
   getTimeBasedGreeting,
@@ -87,8 +92,8 @@ export default function ExercisesIndex() {
 
   // Data fetching
   const currentUser = useCurrentUser();
-  const userStats = useUserStats();
-  const recordCompletion = useMutation(api.userProgress.recordCompletion);
+  const userStats = useOfflineUserStats();
+  const recordCompletion = useOfflineRecordProgress();
   const dailyExerciseData = useQuery(
     api.exercises.getDailyExercise,
     currentUser ? {} : 'skip'

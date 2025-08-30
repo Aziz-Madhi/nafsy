@@ -780,6 +780,18 @@
     "settingsSaved": "تم حفظ الإعدادات!",
     "accountCreated": "تم إنشاء الحساب بنجاح!"
   },
+  "sync": {
+    "offline": "غير متصل",
+    "syncing": "جاري المزامنة...",
+    "synced": "تمت المزامنة",
+    "pendingChanges": "{{count}} في الانتظار",
+    "lastSync": {
+      "justNow": "الآن",
+      "minutes": "منذ {{count}} دقيقة",
+      "hours": "منذ {{count}} ساعة",
+      "days": "منذ {{count}} يوم"
+    }
+  },
   "ui": {
     "error": {
       "somethingWrong": "حدث خطأ ما",

@@ -5,6 +5,8 @@ import { ConvexProviderWithClerk } from 'convex/react-clerk';
 import { config } from '~/config/env';
 
 const convex = new ConvexReactClient(config.convex.url);
+// Export the shared Convex client for non-hook modules (e.g., sync manager)
+export const convexClient = convex;
 
 export function ConvexProvider({ children }: { children: React.ReactNode }) {
   return (

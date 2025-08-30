@@ -5,11 +5,12 @@ import { Text } from '~/components/ui/text';
 import { WeekView } from '~/components/mood/WeekView';
 import { PixelCalendar } from '~/components/mood/PixelCalendar';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { useCurrentUser } from '~/hooks/useSharedData';
 import {
-  useMoodData,
-  useTodayMood,
-  useCurrentUser,
-} from '~/hooks/useSharedData';
+  useOfflineMoodData,
+  useOfflineTodayMood,
+  useOfflineCreateMood,
+} from '~/hooks/useOfflineData';
 import {
   Frown,
   Zap,
@@ -635,10 +636,10 @@ const TagsSection = React.memo(function TagsSection({
 
 export default function MoodIndex() {
   const { t } = useTranslation();
-  const moodData = useMoodData();
-  const todayMood = useTodayMood();
+  const moodData = useOfflineMoodData();
+  const todayMood = useOfflineTodayMood();
   const currentUser = useCurrentUser();
-  const createMood = useMutation(api.moods.createMood);
+  const createMood = useOfflineCreateMood();
   const getTodayMoods = useQuery(api.moods.getTodayMoods);
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
