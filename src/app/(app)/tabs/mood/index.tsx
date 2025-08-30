@@ -487,7 +487,7 @@ const TagButton = React.memo(function TagButton({
   rating: number;
   onPress: () => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const colors = useColors();
 
   const animatedStyle = useAnimatedStyle(() => {
@@ -635,7 +635,7 @@ const TagsSection = React.memo(function TagsSection({
 });
 
 export default function MoodIndex() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const moodData = useOfflineMoodData();
   const todayMood = useOfflineTodayMood();
   const currentUser = useCurrentUser();
@@ -962,6 +962,9 @@ export default function MoodIndex() {
                             minHeight: 60,
                             fontSize: 16,
                             lineHeight: 22,
+                            textAlign: i18n.language === 'ar' ? 'right' : 'left',
+                            writingDirection:
+                              i18n.language === 'ar' ? 'rtl' : 'ltr',
                             color: colors.foreground,
                           }}
                         />

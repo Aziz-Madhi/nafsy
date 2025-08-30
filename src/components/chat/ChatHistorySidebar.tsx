@@ -16,7 +16,7 @@ import Animated, {
   FadeOut,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
-import { useQuery, useMutation } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { cn } from '~/lib/cn';
@@ -29,6 +29,10 @@ import { getChatTypeIcon, getChatTypeColor } from './ChatTypeToggle';
 import { getChatStyles } from '~/lib/chatStyles';
 import { ChatHistoryToggle } from './ChatHistoryToggle';
 import { useCurrentLanguage } from '~/store/useAppStore';
+import {
+  useOfflineChatSessions,
+  useNetworkStatus,
+} from '~/hooks/useOfflineData';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width
@@ -178,7 +182,6 @@ export function ChatHistorySidebar({
   onSessionSelect,
   currentSessionId,
 }: ChatHistorySidebarProps) {
-  const { user } = useUserSafe();
   const colors = useColors();
   const { t } = useTranslation();
   const currentLanguage = useCurrentLanguage();
@@ -273,16 +276,13 @@ export function ChatHistorySidebar({
     }
   }, [visible, skipExitAnimation]);
 
-  // Convex queries - only for coach and companion (event sessions are not stored)
-  const coachSessions = useQuery(
-    api.mainChat.getMainSessions,
-    user ? {} : 'skip'
-  );
+  // Use offline-aware hooks for sessions - only for coach and companion (event sessions are not stored)
+  const coachSessions = useOfflineChatSessions('coach');
   // Event sessions are not stored or shown in history - overlay only
-  const companionSessions = useQuery(
-    api.companionChat.getCompanionChatSessions,
-    user ? {} : 'skip'
-  );
+  const companionSessions = useOfflineChatSessions('companion');
+
+  // Network status for showing offline indicator
+  const { isOnline } = useNetworkStatus();
 
   // Mutations - only for coach and companion (no event sessions to delete)
   const deleteCoachSession = useMutation(api.mainChat.deleteMainSession);
@@ -418,6 +418,19 @@ export function ChatHistorySidebar({
                   <View className="flex-1" style={{ paddingTop: insets.top }}>
                     {/* Header and Search */}
                     <View className="p-4 border-b border-border/10">
+                      {/* Offline Indicator in Sidebar */}
+                      {!isOnline && (
+                        <View className="mb-3 p-2 rounded-lg bg-error/10 flex-row items-center gap-2">
+                          <SymbolView
+                            name="wifi.slash"
+                            size={16}
+                            tintColor={colors.error}
+                          />
+                          <Text className="text-sm text-error flex-1">
+                            {t('sync.viewingOfflineData')}
+                          </Text>
+                        </View>
+                      )}
                       <View className="flex-row items-center justify-between mb-3">
                         {isArabic ? (
                           <>

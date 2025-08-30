@@ -238,9 +238,27 @@ const Text = React.forwardRef<React.ComponentRef<typeof RNText>, TextProps>(
 
       const languageAwareFontFamily = getFontFamily(fontType, currentLanguage);
 
+      // Arabic font metrics on iOS can clip descenders with tight lineHeights.
+      // Nudge lineHeight slightly for Arabic to avoid bottom cut-offs
+      // seen in headers and single-letter weekday labels.
+      let adjustedLineHeight = baseStyle.lineHeight;
+      if (currentLanguage === 'ar') {
+        const fs = baseStyle.fontSize as number;
+        const lh = baseStyle.lineHeight as number | undefined;
+        // Ensure a minimum ratio and add a small buffer
+        const minRatio = fs <= 13 ? 1.45 : fs >= 24 ? 1.35 : 1.4;
+        const computed = Math.ceil(fs * minRatio);
+        adjustedLineHeight = Math.max(lh ?? computed, computed) + 1; // +1px safety buffer
+      }
+
       return {
         ...baseStyle,
         fontFamily: languageAwareFontFamily,
+        lineHeight: adjustedLineHeight,
+        // Tiny padding helps avoid visual clipping in iOS text rendering
+        ...(currentLanguage === 'ar' && Platform.OS === 'ios'
+          ? { paddingBottom: 1 }
+          : {}),
       };
     };
 

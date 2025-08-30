@@ -1,9 +1,15 @@
 import React, { useCallback, useEffect } from 'react';
 import { sendMessageRef } from './_layout';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { Alert } from 'react-native';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
+import {
+  useOfflineChatMessages,
+  useOfflineSendMessage,
+  useNetworkStatus,
+} from '~/hooks/useOfflineData';
 import {
   useHistorySidebarVisible,
   useCurrentMainSessionId,
@@ -33,6 +39,7 @@ interface Message {
 export default function ChatTab() {
   // ===== ALL HOOKS FIRST (before any early returns) =====
   const { user, isLoaded } = useUserSafe();
+  const { isOnline } = useNetworkStatus();
 
   // No specific spacing needed - chat handles its own
 
@@ -103,20 +110,15 @@ export default function ChatTab() {
     serverMainSessionId,
   });
 
-  // Query args for messages based on chat type
-  const queryArgs =
-    isLoaded && user && activeSessionId
-      ? { limit: 50, sessionId: activeSessionId }
-      : ('skip' as const);
 
-  // Get messages based on chat type (event messages are not queried - overlay only)
-  const coachMessages = useQuery(
-    api.mainChat.getMainChatMessages,
-    activeChatType === 'coach' ? queryArgs : 'skip'
+  // Use offline-aware hooks for messages
+  const coachMessages = useOfflineChatMessages(
+    activeChatType === 'coach' ? activeSessionId : null,
+    'coach'
   );
-  const companionMessages = useQuery(
-    api.companionChat.getCompanionChatMessages,
-    activeChatType === 'companion' ? queryArgs : 'skip'
+  const companionMessages = useOfflineChatMessages(
+    activeChatType === 'companion' ? activeSessionId : null,
+    'companion'
   );
 
   // Select messages based on active chat type
@@ -138,12 +140,12 @@ export default function ChatTab() {
 
   console.log('📨 Messages count:', mainChatMessages?.length || 0);
 
-  // Mutations for coach and companion (event chat is local-only)
-  const sendMainMessage = useMutation(api.mainChat.sendMainMessage);
+  // Use offline-aware send message hooks
+  const sendCoachMessage = useOfflineSendMessage('coach');
+  const sendCompanionMessage = useOfflineSendMessage('companion');
+  
+  // Keep mutations for session creation and user upsert
   const upsertUser = useMutation(api.auth.upsertUser);
-  const sendCompanionMessage = useMutation(
-    api.companionChat.sendCompanionMessage
-  );
   const createCompanionSession = useMutation(
     api.companionChat.createCompanionChatSession
   );
@@ -223,11 +225,19 @@ export default function ChatTab() {
     ]
   );
 
-  // Optimized message sending with immediate response
+  // Optimized message sending with offline check
   const handleSendMessage = useCallback(
     async (text: string) => {
       // Allow sending once auth is ready, even if user doc hasn't hydrated yet
       if (!user || !isLoaded) return;
+
+      // Check if offline
+      if (!isOnline) {
+        Alert.alert('Offline', 'You need to be online to chat with the AI', [
+          { text: 'OK' },
+        ]);
+        return;
+      }
 
       // Send message immediately without blocking UI
       (async () => {
@@ -260,23 +270,10 @@ export default function ChatTab() {
             }
           }
 
-          // Send user message based on chat type
+          // Send user message based on chat type using offline-aware hooks
           switch (activeChatType) {
             case 'coach':
-              await sendMainMessage({
-                content: text,
-                role: 'user',
-                sessionId,
-              });
-              // Simulate AI response with reduced delay
-              setTimeout(async () => {
-                await sendMainMessage({
-                  content:
-                    "I'm here to listen and support you. How can I help?",
-                  role: 'assistant',
-                  sessionId,
-                });
-              }, 1500); // Reduced from 2000ms
+              await sendCoachMessage(text, sessionId);
               break;
 
             case 'event':
@@ -287,30 +284,26 @@ export default function ChatTab() {
               return;
 
             case 'companion':
-              await sendCompanionMessage({
-                content: text,
-                role: 'user',
-                sessionId,
-              });
-              // Simulate friendly response
-              setTimeout(async () => {
-                await sendCompanionMessage({
-                  content: 'Thanks for sharing! Tell me more about that.',
-                  role: 'assistant',
-                  sessionId,
-                });
-              }, 1200); // Reduced from 1500ms
+              await sendCompanionMessage(text, sessionId);
               break;
           }
         } catch (error) {
           console.error('Failed to send message:', error);
+          // If the error is about being offline, show alert
+          if ((error as Error).message?.includes('online')) {
+            Alert.alert('Offline', 'You need to be online to chat with the AI', [
+              { text: 'OK' },
+            ]);
+          }
         }
       })();
     },
     [
+      user,
       currentUser,
       isLoaded,
-      sendMainMessage,
+      isOnline,
+      sendCoachMessage,
       sendCompanionMessage,
       activeSessionId,
       activeChatType,
@@ -406,6 +399,7 @@ export default function ChatTab() {
       onSendVentMessage={handleSendVentMessage}
       activeChatType={activeChatType}
       onChatTypeChange={handleChatTypeChange}
+      isOnline={isOnline}
     />
   );
 }

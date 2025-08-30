@@ -785,6 +785,7 @@
     "syncing": "جاري المزامنة...",
     "synced": "تمت المزامنة",
     "pendingChanges": "{{count}} في الانتظار",
+    "viewingOfflineData": "عرض البيانات غير المتصلة",
     "lastSync": {
       "justNow": "الآن",
       "minutes": "منذ {{count}} دقيقة",

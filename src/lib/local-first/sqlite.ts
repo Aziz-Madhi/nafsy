@@ -251,6 +251,109 @@ const migrations: {
       );
     },
   },
+  {
+    version: 4,
+    description: 'Add chat tables for offline persistence',
+    migrate: async (db) => {
+      // Coach chat messages (formerly mainChat)
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS coach_chat_messages (
+          id TEXT PRIMARY KEY,
+          server_id TEXT,
+          user_id TEXT,
+          session_id TEXT NOT NULL,
+          content TEXT NOT NULL,
+          role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          deleted INTEGER DEFAULT 0
+        );
+      `);
+      await db.execAsync(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_coach_msg_server_id ON coach_chat_messages (server_id);'
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_coach_msg_session ON coach_chat_messages (session_id, created_at);'
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_coach_msg_user_session ON coach_chat_messages (user_id, session_id);'
+      );
+
+      // Event/Vent chat messages
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS event_chat_messages (
+          id TEXT PRIMARY KEY,
+          server_id TEXT,
+          user_id TEXT,
+          session_id TEXT,
+          content TEXT NOT NULL,
+          role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          deleted INTEGER DEFAULT 0
+        );
+      `);
+      await db.execAsync(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_event_msg_server_id ON event_chat_messages (server_id);'
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_event_msg_session ON event_chat_messages (session_id, created_at);'
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_event_msg_user_session ON event_chat_messages (user_id, session_id);'
+      );
+
+      // Companion chat messages
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS companion_chat_messages (
+          id TEXT PRIMARY KEY,
+          server_id TEXT,
+          user_id TEXT,
+          session_id TEXT NOT NULL,
+          content TEXT NOT NULL,
+          role TEXT NOT NULL CHECK (role IN ('user', 'assistant')),
+          created_at INTEGER NOT NULL,
+          updated_at INTEGER NOT NULL,
+          deleted INTEGER DEFAULT 0
+        );
+      `);
+      await db.execAsync(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_companion_msg_server_id ON companion_chat_messages (server_id);'
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_companion_msg_session ON companion_chat_messages (session_id, created_at);'
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_companion_msg_user_session ON companion_chat_messages (user_id, session_id);'
+      );
+
+      // Chat sessions (all types)
+      await db.execAsync(`
+        CREATE TABLE IF NOT EXISTS chat_sessions (
+          id TEXT PRIMARY KEY,
+          server_id TEXT,
+          user_id TEXT,
+          session_id TEXT NOT NULL,
+          title TEXT,
+          chat_type TEXT NOT NULL CHECK (chat_type IN ('coach', 'event', 'companion')),
+          started_at INTEGER NOT NULL,
+          last_message_at INTEGER,
+          message_count INTEGER DEFAULT 0,
+          updated_at INTEGER NOT NULL,
+          deleted INTEGER DEFAULT 0
+        );
+      `);
+      await db.execAsync(
+        'CREATE UNIQUE INDEX IF NOT EXISTS idx_chat_session_server_id ON chat_sessions (server_id);'
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_chat_session_session_id ON chat_sessions (session_id);'
+      );
+      await db.execAsync(
+        'CREATE INDEX IF NOT EXISTS idx_chat_session_user_type ON chat_sessions (user_id, chat_type);'
+      );
+    },
+  },
 ];
 
 async function runMigrations(db: SQLiteDatabase) {
@@ -1078,6 +1181,267 @@ function secondsToMinutes(sec: number): number {
 }
 
 // =========================
+// Chat repository functions
+// =========================
+
+// Type definitions for chat data
+export type ChatType = 'coach' | 'event' | 'companion';
+
+interface ServerChatMessage {
+  _id: string;
+  _creationTime?: number;
+  userId?: string;
+  content: string;
+  role: 'user' | 'assistant';
+  sessionId: string;
+  createdAt?: number;
+}
+
+interface ServerChatSession {
+  _id?: string;
+  _creationTime?: number;
+  userId?: string;
+  sessionId: string;
+  title: string;
+  startedAt?: number;
+  lastMessageAt?: number;
+  messageCount?: number;
+}
+
+export interface ChatMessageRow {
+  id: string;
+  server_id?: string | null;
+  user_id?: string | null;
+  session_id: string;
+  content: string;
+  role: 'user' | 'assistant';
+  created_at: number;
+  updated_at: number;
+  deleted?: number;
+}
+
+export interface ChatSessionRow {
+  id: string;
+  server_id?: string | null;
+  user_id?: string | null;
+  session_id: string;
+  title?: string | null;
+  chat_type: ChatType;
+  started_at: number;
+  last_message_at?: number | null;
+  message_count?: number;
+  updated_at: number;
+  deleted?: number;
+}
+
+// Get table name for chat type
+function getChatMessageTable(chatType: ChatType): string {
+  switch (chatType) {
+    case 'coach':
+      return 'coach_chat_messages';
+    case 'event':
+      return 'event_chat_messages';
+    case 'companion':
+      return 'companion_chat_messages';
+    default:
+      throw new Error(`Invalid chat type: ${chatType}`);
+  }
+}
+
+// Import chat messages from server
+export async function importChatMessagesFromServer(
+  messages: ServerChatMessage[],
+  chatType: ChatType
+) {
+  const db = await getDB();
+  const tableName = getChatMessageTable(chatType);
+  
+  try {
+    for (const msg of messages) {
+      const serverId = String(msg._id);
+      const createdAt = (msg.createdAt as number) ?? (msg._creationTime as number) ?? now();
+      
+      await db.runAsync(
+        `INSERT INTO ${tableName} (id, server_id, user_id, session_id, content, role, created_at, updated_at, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
+         ON CONFLICT(id) DO UPDATE SET
+           content=excluded.content,
+           role=excluded.role,
+           updated_at=excluded.updated_at,
+           deleted=excluded.deleted`,
+        [
+          serverId, // Use server ID as local ID for imported messages
+          serverId,
+          (msg.userId as string) ?? null,
+          msg.sessionId,
+          msg.content,
+          msg.role,
+          createdAt,
+          createdAt,
+        ]
+      );
+    }
+    notify();
+  } catch (error) {
+    logger.error(`Failed to import ${chatType} chat messages`, 'SQLite', error);
+    throw error;
+  }
+}
+
+// Import chat sessions from server
+export async function importChatSessionsFromServer(
+  sessions: ServerChatSession[],
+  chatType: ChatType
+) {
+  const db = await getDB();
+  
+  try {
+    for (const session of sessions) {
+      const serverId = session._id ? String(session._id) : session.sessionId;
+      const startedAt = (session.startedAt as number) ?? (session._creationTime as number) ?? now();
+      const lastMessageAt = (session.lastMessageAt as number) ?? startedAt;
+      
+      await db.runAsync(
+        `INSERT INTO chat_sessions (id, server_id, user_id, session_id, title, chat_type, started_at, last_message_at, message_count, updated_at, deleted)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
+         ON CONFLICT(id) DO UPDATE SET
+           title=excluded.title,
+           last_message_at=excluded.last_message_at,
+           message_count=excluded.message_count,
+           updated_at=excluded.updated_at,
+           deleted=excluded.deleted`,
+        [
+          serverId,
+          serverId,
+          (session.userId as string) ?? null,
+          session.sessionId,
+          session.title ?? null,
+          chatType,
+          startedAt,
+          lastMessageAt,
+          session.messageCount ?? 0,
+          lastMessageAt,
+        ]
+      );
+    }
+    notify();
+  } catch (error) {
+    logger.error(`Failed to import ${chatType} chat sessions`, 'SQLite', error);
+    throw error;
+  }
+}
+
+// Get chat messages for a session
+export async function getChatMessages(
+  userId: string,
+  sessionId: string,
+  chatType: ChatType,
+  limit: number = 50
+): Promise<ChatMessageRow[]> {
+  const db = await getDB();
+  const tableName = getChatMessageTable(chatType);
+  
+  return db.getAllAsync<ChatMessageRow>(
+    `SELECT * FROM ${tableName} 
+     WHERE deleted = 0 AND user_id = ? AND session_id = ? 
+     ORDER BY created_at DESC 
+     LIMIT ?`,
+    [userId, sessionId, limit]
+  );
+}
+
+// Get all chat sessions for a user
+export async function getChatSessions(
+  userId: string,
+  chatType: ChatType
+): Promise<ChatSessionRow[]> {
+  const db = await getDB();
+  
+  return db.getAllAsync<ChatSessionRow>(
+    `SELECT * FROM chat_sessions 
+     WHERE deleted = 0 AND user_id = ? AND chat_type = ? 
+     ORDER BY last_message_at DESC`,
+    [userId, chatType]
+  );
+}
+
+// Get current session for a chat type
+export async function getCurrentChatSession(
+  userId: string,
+  sessionId: string,
+  chatType: ChatType
+): Promise<ChatSessionRow | undefined> {
+  const db = await getDB();
+  
+  const row = await db.getFirstAsync<ChatSessionRow>(
+    `SELECT * FROM chat_sessions 
+     WHERE deleted = 0 AND user_id = ? AND session_id = ? AND chat_type = ?`,
+    [userId, sessionId, chatType]
+  );
+  
+  return row ?? undefined;
+}
+
+// Record a chat message locally (for queueing when offline)
+export async function recordChatMessageLocal(params: {
+  userId: string;
+  sessionId: string;
+  content: string;
+  role: 'user' | 'assistant';
+  chatType: ChatType;
+}) {
+  const db = await getDB();
+  const id = generateId();
+  const tableName = getChatMessageTable(params.chatType);
+  const createdAt = now();
+  
+  await db.runAsync(
+    `INSERT INTO ${tableName} (id, server_id, user_id, session_id, content, role, created_at, updated_at, deleted)
+     VALUES (?, NULL, ?, ?, ?, ?, ?, ?, 0)`,
+    [
+      id,
+      params.userId,
+      params.sessionId,
+      params.content,
+      params.role,
+      createdAt,
+      createdAt,
+    ]
+  );
+  
+  // Queue for sync
+  await enqueueOutbox(`chat_${params.chatType}`, 'upsert', {
+    userId: params.userId,
+    localId: id,
+    sessionId: params.sessionId,
+    content: params.content,
+    role: params.role,
+    createdAt,
+  });
+  
+  notify();
+  return id;
+}
+
+// Acknowledge chat message synced
+export async function ackChatMessageSynced(params: {
+  localId: string;
+  serverId: string;
+  chatType: ChatType;
+}) {
+  const db = await getDB();
+  const tableName = getChatMessageTable(params.chatType);
+  
+  await db.runAsync(
+    `UPDATE ${tableName} SET server_id = ?, updated_at = ? WHERE id = ?`,
+    [params.serverId, now(), params.localId]
+  );
+  
+  await deleteOutboxByLocalId(`chat_${params.chatType}`, params.localId);
+  notify();
+}
+
+// =========================
 // Data hygiene utilities
 // =========================
 /**
@@ -1090,6 +1454,10 @@ export async function clearLocalFirstDB(): Promise<void> {
     try {
       await db.execAsync('DELETE FROM mood_entries;');
       await db.execAsync('DELETE FROM exercise_logs;');
+      await db.execAsync('DELETE FROM coach_chat_messages;');
+      await db.execAsync('DELETE FROM event_chat_messages;');
+      await db.execAsync('DELETE FROM companion_chat_messages;');
+      await db.execAsync('DELETE FROM chat_sessions;');
       await db.execAsync('DELETE FROM outbox_ops;');
       await db.execAsync('DELETE FROM failed_ops;');
       await db.execAsync('DELETE FROM sync_state;');

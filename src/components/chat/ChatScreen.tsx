@@ -18,6 +18,9 @@ import { VentChatOverlay } from './VentChatOverlay';
 import { ChatType, useChatUIStore } from '~/store/useChatUIStore';
 import Animated from 'react-native-reanimated';
 import { ChatPersonalityHeader } from './ChatPersonalityHeader';
+import { Text } from '~/components/ui/text';
+import { WifiOff } from 'lucide-react-native';
+import { useColors } from '~/hooks/useColors';
 
 interface ChatScreenProps {
   // State
@@ -31,6 +34,7 @@ interface ChatScreenProps {
 
   // Data
   navigationBarPadding: number;
+  isOnline?: boolean;
 
   // Actions
   onOpenSidebar: () => void;
@@ -56,6 +60,7 @@ export const ChatScreen = memo(function ChatScreen({
   ventCurrentMessage = null,
   ventLoading = false,
   navigationBarPadding,
+  isOnline = true,
   onOpenSidebar,
   onCloseSidebar,
   onSessionSelect,
@@ -68,6 +73,7 @@ export const ChatScreen = memo(function ChatScreen({
   onChatTypeChange,
 }: ChatScreenProps) {
   const flashListRef = useRef<FlashList<Message>>(null as any);
+  const colors = useColors();
 
   // Read typing state from shared store to hide intro while composing
   const coachInput = useChatUIStore((s) => s.coachChatInput || s.mainChatInput);
@@ -155,6 +161,24 @@ export const ChatScreen = memo(function ChatScreen({
                 error={sessionError}
                 onDismissError={onDismissError}
               />
+
+              {/* Offline Banner */}
+              {!isOnline && (
+                <View
+                  className="mx-4 mb-2 p-3 rounded-xl flex-row items-center gap-3 border border-border/20"
+                  style={{
+                    backgroundColor: colors.card,
+                  }}
+                >
+                  <WifiOff size={20} color={colors.error} />
+                  <Text
+                    className="flex-1 text-sm"
+                    style={{ color: colors.mutedForeground }}
+                  >
+                    You&apos;re offline - Chat history only
+                  </Text>
+                </View>
+              )}
 
               {messages.length === 0 && !isTyping ? (
                 <View className="flex-1 items-center justify-center px-8">

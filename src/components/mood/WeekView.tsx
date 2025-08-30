@@ -3,8 +3,8 @@ import { View, Pressable } from 'react-native';
 import { WeekDayDot } from './WeekDayDot';
 import { Doc } from '../../../convex/_generated/dataModel';
 import { subDays, isSameDay, format } from 'date-fns';
+import { ar, enUS } from 'date-fns/locale';
 import { Text } from '~/components/ui/text';
-import { IconRenderer } from '~/components/ui/IconRenderer';
 import { MotiView, AnimatePresence } from 'moti';
 import { useMoodColor, useColors } from '~/hooks/useColors';
 import { mapMoodToRating } from '~/lib/mood-exercise-mapping';
@@ -18,7 +18,7 @@ interface WeekViewProps {
 }
 
 export function WeekView({ moodData }: WeekViewProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null);
   const today = new Date();
   const weekDays = [
@@ -247,30 +247,72 @@ export function WeekView({ moodData }: WeekViewProps) {
                   className="text-[#2D3748] font-bold mb-3"
                   style={{ letterSpacing: 0.3 }}
                 >
-                  {format(selectedDay.date, 'EEEE, MMMM d')}
+                  {format(selectedDay.date, 'EEEE, MMMM d', {
+                    locale: i18n.language === 'ar' ? (ar as any) : (enUS as any),
+                  })}
                 </Text>
 
-                <View className="flex-row items-center mb-4">
+                <View
+                  className={
+                    i18n.language === 'ar'
+                      ? 'flex-row-reverse items-center mb-4'
+                      : 'flex-row items-center mb-4'
+                  }
+                >
                   <View
-                    className="w-14 h-14 rounded-2xl items-center justify-center me-4 overflow-hidden"
+                    className={
+                      i18n.language === 'ar'
+                        ? 'w-14 h-14 rounded-2xl items-center justify-center ml-4 overflow-hidden'
+                        : 'w-14 h-14 rounded-2xl items-center justify-center mr-4 overflow-hidden'
+                    }
                     style={{
                       backgroundColor: getEntryColor(selectedDay.mood as any),
                     }}
                   >
-                    <IconRenderer
-                      iconType="mood"
-                      iconName={selectedDay.mood.mood}
-                      size={24}
-                      color={colors.foreground}
-                    />
+                    {(() => {
+                      // Prefer explicit rating, fallback to mapping from legacy mood
+                      const raw =
+                        (selectedDay.mood as any)?.rating ??
+                        (selectedDay.mood?.mood
+                          ? mapMoodToRating(selectedDay.mood.mood)
+                          : undefined);
+                      const ratingValue = raw ? Math.max(1, Math.min(10, Math.round(raw))) : undefined;
+
+                      // Convert digits to Eastern Arabic if needed
+                      return (
+                        <Text
+                          variant="title1"
+                          autoAlign={false}
+                          className="text-foreground"
+                          style={{
+                            fontWeight: '700',
+                            // Force Latin font for numerals in Arabic to match English appearance
+                            fontFamily:
+                              i18n.language === 'ar' ? 'AveriaSerif-Bold' : undefined,
+                          }}
+                        >
+                          {ratingValue ? String(ratingValue) : '—'}
+                        </Text>
+                      );
+                    })()}
                   </View>
                   <Text
                     variant="callout"
                     className="text-[#2D3748] font-bold"
                     style={{ letterSpacing: 0.3 }}
                   >
-                    {t('mood.feeling')}{' '}
-                    {t(`mood.moods.${selectedDay.mood.mood}`)}
+                    {(() => {
+                      const raw =
+                        (selectedDay.mood as any)?.rating ??
+                        (selectedDay.mood?.mood
+                          ? mapMoodToRating(selectedDay.mood.mood)
+                          : undefined);
+                      const ratingValue = raw ? Math.max(1, Math.min(10, Math.round(raw))) : undefined;
+                      const label = ratingValue
+                        ? t(`mood.rating.labels.${ratingValue}` as any)
+                        : t(`mood.moods.${selectedDay.mood.mood}`);
+                      return `${t('mood.feeling')} ${label}`;
+                    })()}
                   </Text>
                 </View>
 

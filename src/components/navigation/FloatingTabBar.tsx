@@ -14,6 +14,7 @@ import {
   useVentChatVisible,
 } from '~/store/useChatUIStore';
 import { getChatStyles, getChatPlaceholder } from '~/lib/chatStyles';
+import { useNetworkStatus } from '~/hooks/useOfflineData';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
@@ -48,6 +49,7 @@ export function FloatingTabBar({
 }: FloatingTabBarProps) {
   const colors = useColors();
   const { i18n } = useTranslation();
+  const { isOnline } = useNetworkStatus();
   const activeChatType = useChatUIStore((state) => state.activeChatType);
   const isVentOpen = useVentChatVisible();
   const setCoachChatInput = useChatUIStore((s) => s.setCoachChatInput);
@@ -75,10 +77,9 @@ export function FloatingTabBar({
 
   // Chat personality styles
   const chatStyles = getChatStyles(activeChatType as ChatType);
-  const placeholder = getChatPlaceholder(
-    activeChatType as ChatType,
-    i18n.language === 'ar'
-  );
+  const isArabic = i18n.language === 'ar';
+  const defaultPlaceholder = getChatPlaceholder(activeChatType as ChatType, isArabic);
+  const placeholder = !isOnline ? 'You need to be online to chat' : defaultPlaceholder;
 
   // Animate when switching to/from chat - using timing for smooth linear animation
   useEffect(() => {
@@ -124,7 +125,14 @@ export function FloatingTabBar({
       await impactAsync(ImpactFeedbackStyle.Medium);
       onSendMessage(messageText);
     }
-  }, [message, onSendMessage]);
+  }, [
+    message,
+    onSendMessage,
+    activeChatType,
+    clearCoachChatInput,
+    clearCompanionChatInput,
+    clearMainChatInput,
+  ]);
 
   // Animated styles
   const containerAnimatedStyle = useAnimatedStyle(() => {
@@ -260,6 +268,9 @@ export function FloatingTabBar({
                       backgroundColor: colors.background + '30',
                       borderRadius: 16,
                       minHeight: 36,
+                      textAlign: isArabic ? 'right' : 'left',
+                      writingDirection: isArabic ? 'rtl' : 'ltr',
+                      opacity: !isOnline ? 0.6 : 1,
                       ...Platform.select({
                         web: { outlineStyle: 'none' as any },
                         default: {},
@@ -269,6 +280,7 @@ export function FloatingTabBar({
                     maxLength={1000}
                     returnKeyType="send"
                     onSubmitEditing={handleSend}
+                    editable={isOnline}
                   />
                 </View>
 
@@ -299,8 +311,9 @@ export function FloatingTabBar({
                 >
                   <Pressable
                     onPress={hasText ? handleSend : handleVoicePress}
+                    disabled={!isOnline}
                     style={({ pressed }) => ({
-                      opacity: pressed ? 0.9 : 1,
+                      opacity: !isOnline ? 0.5 : pressed ? 0.9 : 1,
                       transform: [{ scale: pressed ? 0.95 : 1 }],
                       width: '100%',
                       height: '100%',
@@ -410,7 +423,8 @@ export function FloatingChatInputStandalone({
 
   // Use event styling for accent in private mode
   const chatStyles = getChatStyles(chatType);
-  const placeholder = getChatPlaceholder(chatType, i18n.language === 'ar');
+  const isArabic = i18n.language === 'ar';
+  const placeholder = getChatPlaceholder(chatType, isArabic);
 
   // Private vent input uses a dedicated style (no mic crossfade)
 
@@ -500,6 +514,8 @@ export function FloatingChatInputStandalone({
                     minHeight: 36,
                     borderWidth: 0,
                     borderColor: 'transparent',
+                    textAlign: isArabic ? 'right' : 'left',
+                    writingDirection: isArabic ? 'rtl' : 'ltr',
                     ...Platform.select({
                       web: {
                         outlineStyle: 'none' as any,

@@ -8,10 +8,11 @@ import { SymbolView } from 'expo-symbols';
 import { cn } from '~/lib/cn';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useUserSafe } from '~/lib/useUserSafe';
-import { useMutation, useQuery } from 'convex/react';
+import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { router } from 'expo-router';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useOfflineChatSessions } from '~/hooks/useOfflineData';
 
 type HistoryTab = 'main' | 'vent';
 
@@ -31,15 +32,18 @@ function ChatHistoryScreen() {
   const { user, isLoaded } = useUserSafe();
 
   // All hooks must be called before any early returns
-  const mainSessions = useQuery(
-    api.mainChat.getMainSessions,
-    isLoaded && user ? { limit: 20 } : 'skip'
-  );
+  // Use offline-aware sessions hooks for history view
+  const mainSessionsRaw = useOfflineChatSessions('coach');
+  const ventSessionsRaw = useOfflineChatSessions('event');
 
-  const ventSessions = useQuery(
-    api.ventChat.getVentSessions,
-    isLoaded && user ? { limit: 20 } : 'skip'
-  );
+  const mainSessions: ChatSession[] = (mainSessionsRaw || []).map((s: any) => ({
+    ...s,
+    type: 'main',
+  }));
+  const ventSessions: ChatSession[] = (ventSessionsRaw || []).map((s: any) => ({
+    ...s,
+    type: 'vent',
+  }));
 
   const deleteMainSession = useMutation(api.mainChat.deleteMainSession);
   const deleteVentSession = useMutation(api.ventChat.deleteVentSession);

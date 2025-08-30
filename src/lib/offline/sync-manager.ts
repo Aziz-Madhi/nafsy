@@ -8,6 +8,7 @@ import NetInfo from '@react-native-community/netinfo';
 import type { Id } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
 import { convexClient } from '~/providers/ConvexProvider';
+import type { Doc } from '../../../convex/_generated/dataModel';
 
 // SQLite operations
 import {
@@ -25,6 +26,10 @@ import {
   moveOutboxToFailed,
   getFailedOpsCount,
   purgeFailedOps,
+  importChatMessagesFromServer,
+  importChatSessionsFromServer,
+  ackChatMessageSynced,
+  type ChatType,
 } from '~/lib/local-first/sqlite';
 
 // Sync configuration
@@ -55,11 +60,17 @@ interface SyncManagerState {
     moods: number;
     exercises: number;
     userProgress: number;
+    chatCoach: number;
+    chatEvent: number;
+    chatCompanion: number;
   };
   failedCounts?: {
     moods: number;
     exercises: number;
     userProgress: number;
+    chatCoach: number;
+    chatEvent: number;
+    chatCompanion: number;
   };
 }
 
@@ -71,8 +82,8 @@ class SimplifiedSyncManager {
     syncErrors: [],
     syncInterval: null,
     networkUnsubscribe: null,
-    pendingCounts: { moods: 0, exercises: 0, userProgress: 0 },
-    failedCounts: { moods: 0, exercises: 0, userProgress: 0 },
+    pendingCounts: { moods: 0, exercises: 0, userProgress: 0, chatCoach: 0, chatEvent: 0, chatCompanion: 0 },
+    failedCounts: { moods: 0, exercises: 0, userProgress: 0, chatCoach: 0, chatEvent: 0, chatCompanion: 0 },
   };
 
   private config: SyncConfig = defaultConfig;
@@ -168,11 +179,17 @@ class SimplifiedSyncManager {
         moods: await getOutboxCount('moods'),
         exercises: 0, // Exercises are read-only from server
         userProgress: await getOutboxCount('userProgress'),
+        chatCoach: await getOutboxCount('chat_coach'),
+        chatEvent: await getOutboxCount('chat_event'),
+        chatCompanion: await getOutboxCount('chat_companion'),
       };
       this.state.failedCounts = {
         moods: await getFailedOpsCount('moods'),
         exercises: 0,
         userProgress: await getFailedOpsCount('userProgress'),
+        chatCoach: await getFailedOpsCount('chat_coach'),
+        chatEvent: await getFailedOpsCount('chat_event'),
+        chatCompanion: await getFailedOpsCount('chat_companion'),
       };
     } catch (error) {
       logger.error('Failed to refresh pending counts', 'SyncManager', error);
@@ -233,15 +250,28 @@ class SimplifiedSyncManager {
 
     try {
       // Sync each entity type
-      const [moodsResult, exercisesResult, progressResult] = await Promise.all([
+      const [
+        moodsResult, 
+        exercisesResult, 
+        progressResult,
+        coachChatResult,
+        eventChatResult,
+        companionChatResult,
+      ] = await Promise.all([
         this.syncMoods(),
         this.syncExercises(),
         this.syncUserProgress(),
+        this.syncChatMessages('coach'),
+        this.syncChatMessages('event'),
+        this.syncChatMessages('companion'),
       ]);
 
       results.moods = moodsResult;
       results.exercises = exercisesResult;
       results.userProgress = progressResult;
+      results.chatCoach = coachChatResult;
+      results.chatEvent = eventChatResult;
+      results.chatCompanion = companionChatResult;
 
       // Update last sync time
       this.state.lastSyncTime = Date.now();
@@ -571,6 +601,105 @@ class SimplifiedSyncManager {
     } catch (error) {
       logger.error('Failed to sync user progress', 'SyncManager', error);
       this.state.syncErrors.push(`Progress: ${error?.toString()}`);
+      return {
+        success: false,
+        synced: 0,
+        failed: 1,
+        errors: [error?.toString() || 'Unknown error'],
+      };
+    }
+  }
+
+  /**
+   * Sync chat messages and sessions for a specific chat type
+   */
+  private async syncChatMessages(chatType: ChatType): Promise<SyncResult> {
+    try {
+      let pushed = 0;
+      let pulled = 0;
+
+      // Map chat type to Convex API
+      const getApiForChatType = () => {
+        switch (chatType) {
+          case 'coach':
+            return {
+              getMessages: api.mainChat.getMainChatMessages,
+              getSessions: api.mainChat.getMainSessions,
+              sendMessage: api.mainChat.sendMainMessage,
+            };
+          case 'event':
+            return {
+              getMessages: api.ventChat.getVentMessages,
+              getSessions: api.ventChat.getVentSessions,
+              sendMessage: api.ventChat.sendVentMessage,
+            };
+          case 'companion':
+            return {
+              getMessages: api.companionChat.getCompanionChatMessages,
+              getSessions: api.companionChat.getCompanionChatSessions,
+              sendMessage: api.companionChat.sendCompanionMessage,
+            };
+        }
+      };
+
+      const chatApi = getApiForChatType();
+
+      // Note: For now, we only pull chat data (read-only when offline)
+      // We don't push user messages as they require AI response
+      // which is not available offline
+
+      // Pull messages from server (if we have sessions)
+      if (this.userId) {
+        try {
+          // Get sessions first
+          const sessions = await convexClient.query(chatApi.getSessions, {});
+          
+          if (sessions && sessions.length > 0) {
+            // Import sessions
+            await importChatSessionsFromServer(sessions, chatType);
+            
+            // For each session, get recent messages
+            for (const session of sessions.slice(0, 3)) { // Limit to 3 most recent sessions
+              const messages = await convexClient.query(chatApi.getMessages, {
+                sessionId: session.sessionId,
+                limit: 50,
+              });
+              
+              if (messages && messages.length > 0) {
+                // Filter out messages without sessionId for event chat
+                const validMessages = messages.filter((msg: any) => 
+                  chatType !== 'event' || msg.sessionId
+                ).map((msg: any) => ({
+                  ...msg,
+                  sessionId: msg.sessionId || session.sessionId, // Fallback to session's ID
+                }));
+                
+                if (validMessages.length > 0) {
+                  await importChatMessagesFromServer(validMessages, chatType);
+                  pulled += validMessages.length;
+                }
+              }
+            }
+          }
+        } catch (error) {
+          logger.warn(`Failed to sync ${chatType} chat messages`, 'SyncManager', error);
+        }
+      }
+
+      logger.info(
+        `${chatType} chat sync complete: pulled ${pulled} messages`,
+        'SyncManager'
+      );
+
+      return {
+        success: true,
+        synced: pulled,
+        failed: 0,
+        errors: [],
+      };
+    } catch (error) {
+      logger.error(`Failed to sync ${chatType} chat`, 'SyncManager', error);
+      this.state.syncErrors.push(`${chatType} chat: ${error?.toString()}`);
       return {
         success: false,
         synced: 0,

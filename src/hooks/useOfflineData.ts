@@ -26,6 +26,17 @@ import {
   getUserProgressStats as dbGetUserProgressStats,
   recordProgressLocal,
   ackProgressSynced,
+  // Chat functions
+  getChatMessages as dbGetChatMessages,
+  getChatSessions as dbGetChatSessions,
+  getCurrentChatSession as dbGetCurrentChatSession,
+  importChatMessagesFromServer,
+  importChatSessionsFromServer,
+  recordChatMessageLocal,
+  ackChatMessageSynced,
+  type ChatType,
+  type ChatMessageRow,
+  type ChatSessionRow,
 } from '~/lib/local-first/sqlite';
 import { syncManager } from '~/lib/offline/sync-manager';
 import type {
@@ -96,6 +107,15 @@ export function useSyncStatus() {
     userProgress:
       (syncStatus.pendingCounts?.userProgress || 0) +
       ((syncStatus as any).failedCounts?.userProgress || 0),
+    chatCoach:
+      ((syncStatus.pendingCounts as any)?.chatCoach || 0) +
+      ((syncStatus as any).failedCounts?.chatCoach || 0),
+    chatEvent:
+      ((syncStatus.pendingCounts as any)?.chatEvent || 0) +
+      ((syncStatus as any).failedCounts?.chatEvent || 0),
+    chatCompanion:
+      ((syncStatus.pendingCounts as any)?.chatCompanion || 0) +
+      ((syncStatus as any).failedCounts?.chatCompanion || 0),
   };
 
   return { ...syncStatus, pendingCounts: mergedPending, triggerSync };
@@ -624,6 +644,233 @@ export function useOfflineRecordProgress() {
       return { localId } as any;
     },
     [isOnline, serverMutation, currentUser?._id]
+  );
+}
+
+/**
+ * Offline-aware chat messages hook
+ */
+export function useOfflineChatMessages(
+  sessionId: string | null,
+  chatType: ChatType
+) {
+  const { isSignedIn } = useAuth();
+  const { isOnline } = useNetworkStatus();
+  const currentUser = useCurrentUser();
+  const [messages, setMessages] = useState<ChatMessageRow[]>([]);
+
+  // Get the right API based on chat type
+  const getConvexQuery = () => {
+    switch (chatType) {
+      case 'coach':
+        return api.mainChat.getMainChatMessages;
+      case 'event':
+        return api.ventChat.getVentMessages;
+      case 'companion':
+        return api.companionChat.getCompanionChatMessages;
+    }
+  };
+
+  // Get data from Convex when online
+  const serverMessages = useQuery(
+    getConvexQuery(),
+    isSignedIn && isOnline && sessionId
+      ? { sessionId, limit: 50 }
+      : 'skip'
+  );
+
+  // Load local data (SQLite) and subscribe to changes
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!currentUser?._id || !sessionId) return;
+      try {
+        await initLocalFirstDB();
+        const rows = await dbGetChatMessages(
+          currentUser._id as any,
+          sessionId,
+          chatType,
+          50
+        );
+        if (!mounted) return;
+        setMessages(rows);
+      } catch (e) {
+        logger.warn('Failed to load chat messages from SQLite', 'OfflineData', e);
+      }
+    })();
+
+    const unsub = subscribeLocalFirst(async () => {
+      if (!mounted || !currentUser?._id || !sessionId) return;
+      try {
+        const rows = await dbGetChatMessages(
+          currentUser._id as any,
+          sessionId,
+          chatType,
+          50
+        );
+        setMessages(rows);
+      } catch (e) {
+        logger.warn('Failed to refresh chat messages', 'OfflineData', e);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsub();
+    };
+  }, [sessionId, chatType, currentUser?._id]);
+
+  // Sync server data to local store when available
+  useEffect(() => {
+    if (serverMessages && serverMessages.length > 0) {
+      const timeoutId = setTimeout(async () => {
+        try {
+          await importChatMessagesFromServer(serverMessages as any, chatType);
+        } catch (e) {
+          logger.warn('Failed importing chat messages to SQLite', 'OfflineData', e);
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [serverMessages, chatType]);
+
+  return messages.map(msg => ({
+    _id: msg.server_id || msg.id,
+    content: msg.content,
+    role: msg.role,
+    sessionId: msg.session_id,
+    createdAt: msg.created_at,
+    _creationTime: msg.created_at,
+  }));
+}
+
+/**
+ * Offline-aware chat sessions hook
+ */
+export function useOfflineChatSessions(chatType: ChatType) {
+  const { isSignedIn } = useAuth();
+  const { isOnline } = useNetworkStatus();
+  const currentUser = useCurrentUser();
+  const [sessions, setSessions] = useState<ChatSessionRow[]>([]);
+
+  // Get the right API based on chat type
+  const getConvexQuery = () => {
+    switch (chatType) {
+      case 'coach':
+        return api.mainChat.getMainSessions;
+      case 'event':
+        return api.ventChat.getVentSessions;
+      case 'companion':
+        return api.companionChat.getCompanionChatSessions;
+    }
+  };
+
+  // Get data from Convex when online
+  const serverSessions = useQuery(
+    getConvexQuery(),
+    isSignedIn && isOnline ? {} : 'skip'
+  );
+
+  // Load local data (SQLite) and subscribe to changes
+  useEffect(() => {
+    let mounted = true;
+    (async () => {
+      if (!currentUser?._id) return;
+      try {
+        await initLocalFirstDB();
+        const rows = await dbGetChatSessions(currentUser._id as any, chatType);
+        if (!mounted) return;
+        setSessions(rows);
+      } catch (e) {
+        logger.warn('Failed to load chat sessions from SQLite', 'OfflineData', e);
+      }
+    })();
+
+    const unsub = subscribeLocalFirst(async () => {
+      if (!mounted || !currentUser?._id) return;
+      try {
+        const rows = await dbGetChatSessions(currentUser._id as any, chatType);
+        setSessions(rows);
+      } catch (e) {
+        logger.warn('Failed to refresh chat sessions', 'OfflineData', e);
+      }
+    });
+
+    return () => {
+      mounted = false;
+      unsub();
+    };
+  }, [chatType, currentUser?._id]);
+
+  // Sync server data to local store when available
+  useEffect(() => {
+    if (serverSessions && serverSessions.length > 0) {
+      const timeoutId = setTimeout(async () => {
+        try {
+          await importChatSessionsFromServer(serverSessions as any, chatType);
+        } catch (e) {
+          logger.warn('Failed importing chat sessions to SQLite', 'OfflineData', e);
+        }
+      }, 100);
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [serverSessions, chatType]);
+
+  return sessions.map(session => ({
+    _id: session.server_id || session.id,
+    sessionId: session.session_id,
+    title: session.title || 'Untitled Session',
+    startedAt: session.started_at,
+    lastMessageAt: session.last_message_at || session.started_at,
+    messageCount: session.message_count || 0,
+  }));
+}
+
+/**
+ * Offline-aware send message hook (returns error when offline)
+ */
+export function useOfflineSendMessage(chatType: ChatType) {
+  const { isOnline } = useNetworkStatus();
+  const currentUser = useCurrentUser();
+
+  // Get the right API based on chat type
+  const getConvexMutation = () => {
+    switch (chatType) {
+      case 'coach':
+        return api.mainChat.sendMainMessage;
+      case 'event':
+        return api.ventChat.sendVentMessage;
+      case 'companion':
+        return api.companionChat.sendCompanionMessage;
+    }
+  };
+
+  const serverMutation = useMutation(getConvexMutation());
+
+  return useCallback(
+    async (content: string, sessionId?: string) => {
+      // Check if offline
+      if (!isOnline) {
+        throw new Error('You need to be online to chat with the AI');
+      }
+
+      // Send message to server
+      try {
+        const result = await serverMutation({
+          content,
+          role: 'user' as const,
+          sessionId,
+        });
+        
+        return result;
+      } catch (error) {
+        logger.error('Failed to send message', 'OfflineData', error);
+        throw error;
+      }
+    },
+    [isOnline, serverMutation]
   );
 }
 
