@@ -156,10 +156,7 @@ const SettingRow = React.memo(function SettingRow({
           <View className="flex-row items-center">
             {value && (
               <Text
-                className={cn(
-                  'text-muted-foreground text-[15px]',
-                  valueMargin
-                )}
+                className={cn('text-muted-foreground text-[15px]', valueMargin)}
               >
                 {value}
               </Text>

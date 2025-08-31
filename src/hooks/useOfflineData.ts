@@ -674,9 +674,7 @@ export function useOfflineChatMessages(
   // Get data from Convex when online
   const serverMessages = useQuery(
     getConvexQuery(),
-    isSignedIn && isOnline && sessionId
-      ? { sessionId, limit: 50 }
-      : 'skip'
+    isSignedIn && isOnline && sessionId ? { sessionId, limit: 50 } : 'skip'
   );
 
   // Load local data (SQLite) and subscribe to changes
@@ -695,7 +693,11 @@ export function useOfflineChatMessages(
         if (!mounted) return;
         setMessages(rows);
       } catch (e) {
-        logger.warn('Failed to load chat messages from SQLite', 'OfflineData', e);
+        logger.warn(
+          'Failed to load chat messages from SQLite',
+          'OfflineData',
+          e
+        );
       }
     })();
 
@@ -727,7 +729,11 @@ export function useOfflineChatMessages(
         try {
           await importChatMessagesFromServer(serverMessages as any, chatType);
         } catch (e) {
-          logger.warn('Failed importing chat messages to SQLite', 'OfflineData', e);
+          logger.warn(
+            'Failed importing chat messages to SQLite',
+            'OfflineData',
+            e
+          );
         }
       }, 100);
 
@@ -735,7 +741,7 @@ export function useOfflineChatMessages(
     }
   }, [serverMessages, chatType]);
 
-  return messages.map(msg => ({
+  return messages.map((msg) => ({
     _id: msg.server_id || msg.id,
     content: msg.content,
     role: msg.role,
@@ -783,7 +789,11 @@ export function useOfflineChatSessions(chatType: ChatType) {
         if (!mounted) return;
         setSessions(rows);
       } catch (e) {
-        logger.warn('Failed to load chat sessions from SQLite', 'OfflineData', e);
+        logger.warn(
+          'Failed to load chat sessions from SQLite',
+          'OfflineData',
+          e
+        );
       }
     })();
 
@@ -810,7 +820,11 @@ export function useOfflineChatSessions(chatType: ChatType) {
         try {
           await importChatSessionsFromServer(serverSessions as any, chatType);
         } catch (e) {
-          logger.warn('Failed importing chat sessions to SQLite', 'OfflineData', e);
+          logger.warn(
+            'Failed importing chat sessions to SQLite',
+            'OfflineData',
+            e
+          );
         }
       }, 100);
 
@@ -818,7 +832,7 @@ export function useOfflineChatSessions(chatType: ChatType) {
     }
   }, [serverSessions, chatType]);
 
-  return sessions.map(session => ({
+  return sessions.map((session) => ({
     _id: session.server_id || session.id,
     sessionId: session.session_id,
     title: session.title || 'Untitled Session',
@@ -863,7 +877,7 @@ export function useOfflineSendMessage(chatType: ChatType) {
           role: 'user' as const,
           sessionId,
         });
-        
+
         return result;
       } catch (error) {
         logger.error('Failed to send message', 'OfflineData', error);

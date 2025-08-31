@@ -16,10 +16,7 @@ import { useSegments, router } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
 import { User } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
-import {
-  useAutoTextAlignment,
-  useLanguageClass,
-} from '~/lib/rtl-utils';
+import { useAutoTextAlignment, useLanguageClass } from '~/lib/rtl-utils';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 
 // Calculate bottom padding based on current route (unchanged)

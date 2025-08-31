@@ -5,10 +5,9 @@
 import type { SyncResult } from './types';
 import { logger } from '../logger';
 import NetInfo from '@react-native-community/netinfo';
-import type { Id } from '../../../convex/_generated/dataModel';
+import type { Id, Doc } from '../../../convex/_generated/dataModel';
 import { api } from '../../../convex/_generated/api';
 import { convexClient } from '~/providers/ConvexProvider';
-import type { Doc } from '../../../convex/_generated/dataModel';
 
 // SQLite operations
 import {
@@ -82,8 +81,22 @@ class SimplifiedSyncManager {
     syncErrors: [],
     syncInterval: null,
     networkUnsubscribe: null,
-    pendingCounts: { moods: 0, exercises: 0, userProgress: 0, chatCoach: 0, chatEvent: 0, chatCompanion: 0 },
-    failedCounts: { moods: 0, exercises: 0, userProgress: 0, chatCoach: 0, chatEvent: 0, chatCompanion: 0 },
+    pendingCounts: {
+      moods: 0,
+      exercises: 0,
+      userProgress: 0,
+      chatCoach: 0,
+      chatEvent: 0,
+      chatCompanion: 0,
+    },
+    failedCounts: {
+      moods: 0,
+      exercises: 0,
+      userProgress: 0,
+      chatCoach: 0,
+      chatEvent: 0,
+      chatCompanion: 0,
+    },
   };
 
   private config: SyncConfig = defaultConfig;
@@ -251,8 +264,8 @@ class SimplifiedSyncManager {
     try {
       // Sync each entity type
       const [
-        moodsResult, 
-        exercisesResult, 
+        moodsResult,
+        exercisesResult,
         progressResult,
         coachChatResult,
         eventChatResult,
@@ -328,10 +341,18 @@ class SimplifiedSyncManager {
 
           if (op.op === 'upsert') {
             // Safety: ensure op belongs to current user if marked
-            if (payload?.userId && this.userId && payload.userId !== this.userId) {
-              logger.warn('Skipping mood op for different user', 'SyncManager', {
-                opId: op.op_id,
-              });
+            if (
+              payload?.userId &&
+              this.userId &&
+              payload.userId !== this.userId
+            ) {
+              logger.warn(
+                'Skipping mood op for different user',
+                'SyncManager',
+                {
+                  opId: op.op_id,
+                }
+              );
               // Skip without consuming; sign-out flow clears outbox
               continue;
             }
@@ -386,7 +407,10 @@ class SimplifiedSyncManager {
 
           // If this attempt exhausted retries, move to DLQ
           if (op.tries + 1 >= this.config.maxRetries) {
-            await moveOutboxToFailed(op, error?.toString?.() ?? 'Unknown error');
+            await moveOutboxToFailed(
+              op,
+              error?.toString?.() ?? 'Unknown error'
+            );
             this.state.syncErrors.push(
               `Mood op failed permanently: ${error?.toString?.() ?? 'Unknown error'}`
             );
@@ -514,14 +538,25 @@ class SimplifiedSyncManager {
 
           if (op.op === 'upsert') {
             // Safety: ensure op belongs to current user if marked
-            if (payload?.userId && this.userId && payload.userId !== this.userId) {
-              logger.warn('Skipping progress op for different user', 'SyncManager', {
-                opId: op.op_id,
-              });
+            if (
+              payload?.userId &&
+              this.userId &&
+              payload.userId !== this.userId
+            ) {
+              logger.warn(
+                'Skipping progress op for different user',
+                'SyncManager',
+                {
+                  opId: op.op_id,
+                }
+              );
               continue;
             }
-            const { localId: _localId, userId: _userId, ...payloadClean } =
-              payload || {};
+            const {
+              localId: _localId,
+              userId: _userId,
+              ...payloadClean
+            } = payload || {};
             const result = await convexClient.mutation(
               api.userProgress.recordCompletion,
               payloadClean
@@ -547,7 +582,10 @@ class SimplifiedSyncManager {
           await incrementOutboxTries(op.op_id);
 
           if (op.tries + 1 >= this.config.maxRetries) {
-            await moveOutboxToFailed(op, error?.toString?.() ?? 'Unknown error');
+            await moveOutboxToFailed(
+              op,
+              error?.toString?.() ?? 'Unknown error'
+            );
             this.state.syncErrors.push(
               `Progress op failed permanently: ${error?.toString?.() ?? 'Unknown error'}`
             );
@@ -573,12 +611,11 @@ class SimplifiedSyncManager {
 
           // Update cursor to server watermark (max of _creationTime and completedAt)
           const watermark = Math.max(
-            ...serverProgress.map(
-              (p: any) =>
-                Math.max(
-                  ((p?._creationTime as number) || 0),
-                  ((p?.completedAt as number) || 0)
-                )
+            ...serverProgress.map((p: any) =>
+              Math.max(
+                (p?._creationTime as number) || 0,
+                (p?.completedAt as number) || 0
+              )
             )
           );
           if (Number.isFinite(watermark) && watermark > 0) {
@@ -653,27 +690,28 @@ class SimplifiedSyncManager {
         try {
           // Get sessions first
           const sessions = await convexClient.query(chatApi.getSessions, {});
-          
+
           if (sessions && sessions.length > 0) {
             // Import sessions
             await importChatSessionsFromServer(sessions, chatType);
-            
+
             // For each session, get recent messages
-            for (const session of sessions.slice(0, 3)) { // Limit to 3 most recent sessions
+            for (const session of sessions.slice(0, 3)) {
+              // Limit to 3 most recent sessions
               const messages = await convexClient.query(chatApi.getMessages, {
                 sessionId: session.sessionId,
                 limit: 50,
               });
-              
+
               if (messages && messages.length > 0) {
                 // Filter out messages without sessionId for event chat
-                const validMessages = messages.filter((msg: any) => 
-                  chatType !== 'event' || msg.sessionId
-                ).map((msg: any) => ({
-                  ...msg,
-                  sessionId: msg.sessionId || session.sessionId, // Fallback to session's ID
-                }));
-                
+                const validMessages = messages
+                  .filter((msg: any) => chatType !== 'event' || msg.sessionId)
+                  .map((msg: any) => ({
+                    ...msg,
+                    sessionId: msg.sessionId || session.sessionId, // Fallback to session's ID
+                  }));
+
                 if (validMessages.length > 0) {
                   await importChatMessagesFromServer(validMessages, chatType);
                   pulled += validMessages.length;
@@ -682,7 +720,11 @@ class SimplifiedSyncManager {
             }
           }
         } catch (error) {
-          logger.warn(`Failed to sync ${chatType} chat messages`, 'SyncManager', error);
+          logger.warn(
+            `Failed to sync ${chatType} chat messages`,
+            'SyncManager',
+            error
+          );
         }
       }
 

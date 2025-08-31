@@ -248,7 +248,8 @@ export function WeekView({ moodData }: WeekViewProps) {
                   style={{ letterSpacing: 0.3 }}
                 >
                   {format(selectedDay.date, 'EEEE, MMMM d', {
-                    locale: i18n.language === 'ar' ? (ar as any) : (enUS as any),
+                    locale:
+                      i18n.language === 'ar' ? (ar as any) : (enUS as any),
                   })}
                 </Text>
 
@@ -276,7 +277,9 @@ export function WeekView({ moodData }: WeekViewProps) {
                         (selectedDay.mood?.mood
                           ? mapMoodToRating(selectedDay.mood.mood)
                           : undefined);
-                      const ratingValue = raw ? Math.max(1, Math.min(10, Math.round(raw))) : undefined;
+                      const ratingValue = raw
+                        ? Math.max(1, Math.min(10, Math.round(raw)))
+                        : undefined;
 
                       // Convert digits to Eastern Arabic if needed
                       return (
@@ -288,7 +291,9 @@ export function WeekView({ moodData }: WeekViewProps) {
                             fontWeight: '700',
                             // Force Latin font for numerals in Arabic to match English appearance
                             fontFamily:
-                              i18n.language === 'ar' ? 'AveriaSerif-Bold' : undefined,
+                              i18n.language === 'ar'
+                                ? 'AveriaSerif-Bold'
+                                : undefined,
                           }}
                         >
                           {ratingValue ? String(ratingValue) : '—'}
@@ -307,7 +312,9 @@ export function WeekView({ moodData }: WeekViewProps) {
                         (selectedDay.mood?.mood
                           ? mapMoodToRating(selectedDay.mood.mood)
                           : undefined);
-                      const ratingValue = raw ? Math.max(1, Math.min(10, Math.round(raw))) : undefined;
+                      const ratingValue = raw
+                        ? Math.max(1, Math.min(10, Math.round(raw)))
+                        : undefined;
                       const label = ratingValue
                         ? t(`mood.rating.labels.${ratingValue}` as any)
                         : t(`mood.moods.${selectedDay.mood.mood}`);

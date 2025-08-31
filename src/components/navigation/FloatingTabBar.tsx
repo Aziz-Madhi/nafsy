@@ -78,8 +78,13 @@ export function FloatingTabBar({
   // Chat personality styles
   const chatStyles = getChatStyles(activeChatType as ChatType);
   const isArabic = i18n.language === 'ar';
-  const defaultPlaceholder = getChatPlaceholder(activeChatType as ChatType, isArabic);
-  const placeholder = !isOnline ? 'You need to be online to chat' : defaultPlaceholder;
+  const defaultPlaceholder = getChatPlaceholder(
+    activeChatType as ChatType,
+    isArabic
+  );
+  const placeholder = !isOnline
+    ? 'You need to be online to chat'
+    : defaultPlaceholder;
 
   // Animate when switching to/from chat - using timing for smooth linear animation
   useEffect(() => {

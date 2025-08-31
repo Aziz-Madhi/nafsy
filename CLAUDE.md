@@ -74,7 +74,7 @@ src/
 
 ### State Management & Persistence
 
-- **Dual Storage Architecture**: 
+- **Dual Storage Architecture**:
   - **MMKV**: For app state, settings, UI preferences, and small data (synchronous access)
   - **SQLite**: For user data, offline persistence, and complex queries with sync capabilities
 - **Store Factory Pattern**: `createPersistedStore()` factory in `~/lib/store-factory` for consistent MMKV persistence
@@ -87,12 +87,14 @@ src/
 ### Database Architecture
 
 **Convex Backend (Server)**:
+
 - **Multi-Chat System**: `mainChatMessages`, `ventChatMessages`, `companionChatMessages` (3 chat personalities)
 - **Session Management**: `chatSessions`, `ventChatSessions`, `companionChatSessions` for conversation metadata
 - **User Data**: `users` (Clerk integration), `moods` (5 types), `exercises` (5 categories), `userProgress`
 - **Real-time**: Live updates via Convex subscriptions
 
 **SQLite Local Storage**:
+
 - **Local-first Tables**: `mood_entries`, `exercises`, `exercise_logs`, `chat_messages` (3 types), `chat_sessions`
 - **Sync Infrastructure**: `outbox_ops` (pending operations), `failed_ops` (dead letter queue), `sync_state` (cursors)
 - **Per-user Databases**: Separate SQLite files per authenticated user for data isolation
@@ -143,7 +145,7 @@ The app uses a unified color system with CSS variables as the single source of t
 - When given an error or problem to fix, try a simple fix first
 - Do not run an iOS build. Always ask for confirmation before proceeding with iOS builds
 - Use `bun` as the package manager, not npm or yarn
-- **Storage Strategy**: 
+- **Storage Strategy**:
   - MMKV for app state, settings, and small synchronous data
   - SQLite for user data, offline persistence, and complex queries
   - Never use AsyncStorage - prefer MMKV for simple storage needs
@@ -153,12 +155,14 @@ The app uses a unified color system with CSS variables as the single source of t
 ## Offline Data & Sync System
 
 ### Local-First Architecture
+
 - **SQLite Foundation**: `~/lib/local-first/sqlite.ts` - Core database operations with WAL mode
 - **Sync Manager**: `~/lib/offline/sync-manager.ts` - Bidirectional sync with Convex backend
 - **Offline Hooks**: `~/hooks/useOfflineData.ts` - React hooks for seamless offline/online data access
 - **Network Awareness**: Automatic sync when connectivity is restored
 
 ### Key Files & Functions
+
 - **Database Init**: `initLocalFirstDB()` - Initialize SQLite with migrations
 - **User Management**: `setActiveLocalUser()` - Switch between per-user databases
 - **Outbox Pattern**: `enqueueOutbox()` - Queue operations for later sync
@@ -166,6 +170,7 @@ The app uses a unified color system with CSS variables as the single source of t
 - **Sync Status**: `useSyncStatus()` - Monitor sync state and pending operations
 
 ### Sync Strategy
+
 - **Push-then-Pull**: Local changes uploaded first, then server updates downloaded
 - **Incremental Sync**: Cursor-based sync with `getSyncCursor()` / `setSyncCursor()`
 - **Conflict Resolution**: Server-authoritative with local deduplication

@@ -962,7 +962,8 @@ export default function MoodIndex() {
                             minHeight: 60,
                             fontSize: 16,
                             lineHeight: 22,
-                            textAlign: i18n.language === 'ar' ? 'right' : 'left',
+                            textAlign:
+                              i18n.language === 'ar' ? 'right' : 'left',
                             writingDirection:
                               i18n.language === 'ar' ? 'rtl' : 'ltr',
                             color: colors.foreground,
