@@ -29,6 +29,7 @@ export default defineSchema({
     role: v.union(v.literal('user'), v.literal('assistant')),
     sessionId: v.string(),
     createdAt: v.number(),
+    requestId: v.optional(v.string()),
   })
     .index('by_user', ['userId'])
     .index('by_session', ['sessionId'])
@@ -136,6 +137,7 @@ export default defineSchema({
     role: v.union(v.literal('user'), v.literal('assistant')),
     sessionId: v.string(),
     createdAt: v.number(),
+    requestId: v.optional(v.string()),
   })
     .index('by_user', ['userId'])
     .index('by_session', ['sessionId'])

@@ -98,6 +98,7 @@ export const getChatMessages = query({
       role: v.union(v.literal('user'), v.literal('assistant')),
       sessionId: v.optional(v.string()), // Made optional to accommodate ventChatMessages
       createdAt: v.number(),
+      requestId: v.optional(v.string()),
     })
   ),
   handler: async (ctx, args) => {
@@ -164,6 +165,7 @@ export const getChatMessagesPaginated = query({
         role: v.union(v.literal('user'), v.literal('assistant')),
         sessionId: v.optional(v.string()),
         createdAt: v.number(),
+        requestId: v.optional(v.string()),
       })
     ),
     isDone: v.boolean(),

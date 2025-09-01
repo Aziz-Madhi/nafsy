@@ -22,19 +22,33 @@ export const ChatBubble = React.memo(function ChatBubble({
   index = 0,
   status,
   chatType = 'coach',
+  animated = true,
 }: ChatBubbleProps & { chatType?: ChatType }) {
   // Consistent positioning: user messages right, AI messages left
   const justifyContent = isUser ? 'justify-end' : 'justify-start';
   const styles = getChatStyles(chatType);
 
+  const Wrapper = ({ children }: { children: React.ReactNode }) =>
+    animated ? (
+      <StaggeredListItem
+        index={index}
+        staggerDelay="quick"
+        springPreset="gentle"
+        className={cn('flex-row mb-5', justifyContent)}
+      >
+        {children}
+      </StaggeredListItem>
+    ) : (
+      <View className={cn('flex-row mb-5', justifyContent)}>{children}</View>
+    );
+
   return (
-    <StaggeredListItem
-      index={index}
-      staggerDelay="quick"
-      springPreset="gentle"
-      className={cn('flex-row mb-5', justifyContent)}
-    >
-      <AnimatedContainer pressable pressScale="subtle" className="max-w-[85%]">
+    <Wrapper>
+      <AnimatedContainer
+        pressable
+        pressScale="subtle"
+        className={cn('max-w-[85%]', isUser ? 'self-end' : 'self-start')}
+      >
         <View
           className={cn(
             'px-4 py-3 rounded-2xl',
@@ -107,7 +121,7 @@ export const ChatBubble = React.memo(function ChatBubble({
           </Animated.View>
         )}
       </AnimatedContainer>
-    </StaggeredListItem>
+    </Wrapper>
   );
 });
 

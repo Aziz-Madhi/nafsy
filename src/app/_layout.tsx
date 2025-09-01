@@ -1,5 +1,6 @@
 // CRITICAL: RTL bootstrap MUST be imported first to prevent style caching issues
 import '~/lib/rtl-bootstrap';
+import '../polyfills';
 import '../../global.css';
 import '~/lib/theme-bootstrap';
 import 'expo-dev-client';

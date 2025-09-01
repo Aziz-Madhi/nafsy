@@ -18,6 +18,7 @@ export const getMainChatMessages = query({
       role: v.union(v.literal('user'), v.literal('assistant')),
       sessionId: v.string(),
       createdAt: v.number(),
+      requestId: v.optional(v.string()),
     })
   ),
   handler: async (ctx, args) => {

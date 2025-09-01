@@ -10,6 +10,7 @@ import {
   useOfflineSendMessage,
   useNetworkStatus,
 } from '~/hooks/useOfflineData';
+import { useStreamingChat } from '~/hooks/useStreamingChat';
 import {
   useHistorySidebarVisible,
   useCurrentMainSessionId,
@@ -110,7 +111,6 @@ export default function ChatTab() {
     serverMainSessionId,
   });
 
-
   // Use offline-aware hooks for messages
   const coachMessages = useOfflineChatMessages(
     activeChatType === 'coach' ? activeSessionId : null,
@@ -143,7 +143,11 @@ export default function ChatTab() {
   // Use offline-aware send message hooks
   const sendCoachMessage = useOfflineSendMessage('coach');
   const sendCompanionMessage = useOfflineSendMessage('companion');
-  
+
+  // Add streaming hooks for AI responses
+  const coachStreaming = useStreamingChat('coach');
+  const companionStreaming = useStreamingChat('companion');
+
   // Keep mutations for session creation and user upsert
   const upsertUser = useMutation(api.auth.upsertUser);
   const createCompanionSession = useMutation(
@@ -273,7 +277,19 @@ export default function ChatTab() {
           // Send user message based on chat type using offline-aware hooks
           switch (activeChatType) {
             case 'coach':
-              await sendCoachMessage(text, sessionId);
+              const userMsgIdCoach = await sendCoachMessage(text, sessionId);
+              // Trigger streaming for AI response
+              const coachMessages =
+                mainChatMessages?.map((msg) => ({
+                  role: msg.role,
+                  content: msg.content,
+                })) || [];
+              await coachStreaming.sendStreamingMessage(
+                text,
+                sessionId,
+                coachMessages,
+                String(userMsgIdCoach)
+              );
               break;
 
             case 'event':
@@ -284,16 +300,30 @@ export default function ChatTab() {
               return;
 
             case 'companion':
-              await sendCompanionMessage(text, sessionId);
+              const userMsgIdComp = await sendCompanionMessage(text, sessionId);
+              // Trigger streaming for AI response
+              const companionMessages =
+                mainChatMessages?.map((msg) => ({
+                  role: msg.role,
+                  content: msg.content,
+                })) || [];
+              await companionStreaming.sendStreamingMessage(
+                text,
+                sessionId,
+                companionMessages,
+                String(userMsgIdComp)
+              );
               break;
           }
         } catch (error) {
           console.error('Failed to send message:', error);
           // If the error is about being offline, show alert
           if ((error as Error).message?.includes('online')) {
-            Alert.alert('Offline', 'You need to be online to chat with the AI', [
-              { text: 'OK' },
-            ]);
+            Alert.alert(
+              'Offline',
+              'You need to be online to chat with the AI',
+              [{ text: 'OK' }]
+            );
           }
         }
       })();
@@ -379,6 +409,16 @@ export default function ChatTab() {
     };
   }, [handleSendMessage]);
 
+  // Get streaming content based on active chat type
+  const streamingContent =
+    activeChatType === 'companion'
+      ? companionStreaming.streamingContent
+      : coachStreaming.streamingContent;
+  const isStreaming =
+    activeChatType === 'companion'
+      ? companionStreaming.isStreaming
+      : coachStreaming.isStreaming;
+
   return (
     <ChatScreen
       messages={messages}
@@ -389,6 +429,8 @@ export default function ChatTab() {
       ventCurrentMessage={currentVentMessage}
       ventLoading={ventChatLoading}
       navigationBarPadding={0} // No padding needed - using custom navigation
+      streamingContent={streamingContent}
+      isStreaming={isStreaming}
       onOpenSidebar={handleOpenSidebar}
       onCloseSidebar={handleCloseSidebar}
       onSessionSelect={handleSessionSelect}

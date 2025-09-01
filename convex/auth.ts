@@ -148,6 +148,38 @@ export const getCurrentUser = query({
 });
 
 /**
+ * Get user by Clerk ID
+ * Used by HTTP actions for authentication
+ */
+export const getUserByClerkId = query({
+  args: {
+    clerkId: v.string(),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.id('users'),
+      _creationTime: v.number(),
+      clerkId: v.string(),
+      email: v.string(),
+      name: v.optional(v.string()),
+      avatarUrl: v.optional(v.string()),
+      language: v.string(),
+      createdAt: v.number(),
+      lastActive: v.number(),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    const user = await ctx.db
+      .query('users')
+      .withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))
+      .first();
+    
+    return user;
+  },
+});
+
+/**
  * Legacy compatibility functions for gradual migration
  * These can be removed once all frontend code is updated
  */

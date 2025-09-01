@@ -4,7 +4,7 @@
  */
 
 import React, { useRef, useCallback, useEffect, memo } from 'react';
-import { View, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, TouchableWithoutFeedback, Keyboard, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -36,6 +36,10 @@ interface ChatScreenProps {
   navigationBarPadding: number;
   isOnline?: boolean;
 
+  // Streaming
+  streamingContent?: string;
+  isStreaming?: boolean;
+
   // Actions
   onOpenSidebar: () => void;
   onCloseSidebar: () => void;
@@ -61,6 +65,8 @@ export const ChatScreen = memo(function ChatScreen({
   ventLoading = false,
   navigationBarPadding,
   isOnline = true,
+  streamingContent = '',
+  isStreaming = false,
   onOpenSidebar,
   onCloseSidebar,
   onSessionSelect,
@@ -95,30 +101,41 @@ export const ChatScreen = memo(function ChatScreen({
       }
     });
 
-  // Auto-scroll to bottom when messages change or new messages arrive
+  // Auto-scroll only when already near the bottom to avoid jumpiness
+  const isNearBottomRef = useRef(true);
+  const SCROLL_BOTTOM_THRESHOLD = 120; // px
+
+  const handleScroll = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+      const distanceFromBottom =
+        contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      isNearBottomRef.current = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
+    },
+    []
+  );
+
   const scrollToBottom = useCallback(() => {
-    if (flashListRef.current && messages.length > 0) {
-      // Reduced timeout for faster response
-      setTimeout(() => {
-        flashListRef.current?.scrollToEnd({
-          animated: true,
-        });
-      }, 50); // Much shorter timeout for better UX
-    }
+    if (!flashListRef.current || messages.length === 0) return;
+    if (!isNearBottomRef.current) return; // respect user scroll
+    setTimeout(() => {
+      flashListRef.current?.scrollToEnd({ animated: true });
+    }, 50);
   }, [messages.length]);
 
-  // Scroll to bottom when messages change (session switch or new messages)
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages, scrollToBottom]);
+  // Force scroll used when the user submits a message, regardless of position
+  const forceScrollToBottom = useCallback(() => {
+    if (!flashListRef.current || messages.length === 0) return;
+    requestAnimationFrame(() => {
+      flashListRef.current?.scrollToEnd({ animated: true });
+      // Second pass after layout settles (prevents mid-list anchoring)
+      setTimeout(() => {
+        flashListRef.current?.scrollToEnd({ animated: true });
+      }, 90);
+    });
+  }, [messages.length]);
 
-  // Simplified scroll trigger - no additional delay
-  useEffect(() => {
-    if (messages.length > 0) {
-      // Immediate scroll for new messages
-      scrollToBottom();
-    }
-  }, [messages.length, scrollToBottom]);
+  // Do not force-scroll on each streaming tick; allow user to scroll freely
 
   // No complex offset logic needed with the new simplified approach
 
@@ -140,6 +157,57 @@ export const ChatScreen = memo(function ChatScreen({
 
   const keyExtractor = useCallback((item: Message) => item._id, []);
   const getItemType = useCallback((item: Message) => item.role, []);
+
+  // While streaming, prefer showing the footer and hide the newly inserted
+  // finalized assistant message to avoid sudden switch and duplication.
+  // Keep the footer visible until the persisted assistant message appears
+  const lastMessage = messages[messages.length - 1];
+  function normalize(s?: string) {
+    return (s || '').replace(/\s+/g, ' ').trim();
+  }
+  const hasFinalAssistant =
+    !!lastMessage &&
+    lastMessage.role === 'assistant' &&
+    typeof lastMessage.content === 'string' &&
+    lastMessage.content.length > 0;
+  const nLast = normalize(lastMessage?.content);
+  const nStream = normalize(streamingContent);
+  const finalMatchesStream = hasFinalAssistant
+    ? nLast === nStream ||
+      nLast.endsWith(nStream) ||
+      nStream.endsWith(nLast) ||
+      nLast.startsWith(nStream) ||
+      nStream.startsWith(nLast)
+    : false;
+  const showStreamingFooter = Boolean(streamingContent) && (isStreaming || !finalMatchesStream);
+
+  // Scroll on new rows only if near bottom. Avoid reacting to text updates.
+  useEffect(() => {
+    scrollToBottom();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages.length, showStreamingFooter]);
+
+  // Detect user-sent message appended at the end and force-scroll to bottom
+  const lastIdRef = React.useRef<string | null>(null);
+  useEffect(() => {
+    const last = messages[messages.length - 1];
+    if (!last) return;
+    if (lastIdRef.current !== last._id) {
+      // New tail message detected
+      if (last.role === 'user') {
+        forceScrollToBottom();
+      }
+      lastIdRef.current = last._id;
+    }
+  }, [messages, forceScrollToBottom]);
+  const displayMessages = (() => {
+    if (!isStreaming || messages.length === 0) return messages;
+    const last = messages[messages.length - 1];
+    if (last.role === 'assistant') {
+      return messages.slice(0, -1);
+    }
+    return messages;
+  })();
 
   return (
     <View className="flex-1 bg-background">
@@ -187,14 +255,33 @@ export const ChatScreen = memo(function ChatScreen({
                   </View>
                 </View>
               ) : (
-                <ChatMessageList
-                  flashListRef={flashListRef}
-                  messages={messages}
-                  renderMessage={renderMessage}
-                  keyExtractor={keyExtractor}
-                  getItemType={getItemType}
-                  horizontalPadding={20}
-                />
+                <View className="flex-1">
+                  <ChatMessageList
+                    flashListRef={flashListRef}
+                    messages={displayMessages}
+                    renderMessage={renderMessage}
+                    keyExtractor={keyExtractor}
+                    getItemType={getItemType}
+                    horizontalPadding={20}
+                    onScroll={handleScroll}
+                    footer={
+                      showStreamingFooter ? (
+                        <View className="w-full pb-2">
+                          <ChatBubble
+                            message={streamingContent}
+                            isUser={false}
+                            timestamp={new Date().toLocaleTimeString('en-US', {
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                            chatType={activeChatType}
+                            animated={false}
+                          />
+                        </View>
+                      ) : undefined
+                    }
+                  />
+                </View>
               )}
             </View>
           </TouchableWithoutFeedback>

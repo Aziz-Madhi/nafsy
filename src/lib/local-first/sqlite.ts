@@ -518,11 +518,13 @@ export async function ackMoodSynced(params: {
     if (existing && existing.id !== params.localId) {
       // A row already imported for this server id exists.
       // Merge by keeping the server-linked row, drop the local duplicate.
-      await db.runAsync(
-        'UPDATE mood_entries SET updated_at=? WHERE id=?',
-        [updatedAt, existing.id]
-      );
-      await db.runAsync('DELETE FROM mood_entries WHERE id=?', [params.localId]);
+      await db.runAsync('UPDATE mood_entries SET updated_at=? WHERE id=?', [
+        updatedAt,
+        existing.id,
+      ]);
+      await db.runAsync('DELETE FROM mood_entries WHERE id=?', [
+        params.localId,
+      ]);
       await deleteOutboxByLocalId('moods', params.localId);
     } else {
       await db.runAsync(
@@ -541,19 +543,19 @@ export async function importMoodsFromServer(serverMoods: ServerMood[]) {
     // Avoid starting a transaction here to prevent nested/parallel
     // transaction conflicts when multiple imports run concurrently.
     for (const m of serverMoods) {
-        const serverId = String(m._id);
-        const updated =
-          (m.updatedAt as number) ?? (m._creationTime as number) ?? now();
-        // Try to locate an existing local row that already linked to this server id
-        const existing = await db.getFirstAsync<{ id: string }>(
-          'SELECT id FROM mood_entries WHERE server_id = ? LIMIT 1',
-          [serverId]
-        );
-        const idForInsert = existing?.id ?? serverId; // avoid dupes; use serverId as id for imported rows
+      const serverId = String(m._id);
+      const updated =
+        (m.updatedAt as number) ?? (m._creationTime as number) ?? now();
+      // Try to locate an existing local row that already linked to this server id
+      const existing = await db.getFirstAsync<{ id: string }>(
+        'SELECT id FROM mood_entries WHERE server_id = ? LIMIT 1',
+        [serverId]
+      );
+      const idForInsert = existing?.id ?? serverId; // avoid dupes; use serverId as id for imported rows
 
-        // Direct SQL insert/update instead of calling upsertMoodLocal to avoid nested transaction issues
-        await db.runAsync(
-          `INSERT INTO mood_entries (id, server_id, user_id, mood, rating, mood_category, note, tags_json, time_of_day, at, updated_at, deleted)
+      // Direct SQL insert/update instead of calling upsertMoodLocal to avoid nested transaction issues
+      await db.runAsync(
+        `INSERT INTO mood_entries (id, server_id, user_id, mood, rating, mood_category, note, tags_json, time_of_day, at, updated_at, deleted)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, COALESCE(?,0))
            ON CONFLICT(id) DO UPDATE SET
              server_id=excluded.server_id,
@@ -568,21 +570,21 @@ export async function importMoodsFromServer(serverMoods: ServerMood[]) {
              updated_at=excluded.updated_at,
              deleted=excluded.deleted
           `,
-          [
-            idForInsert,
-            serverId,
-            (m.userId as string) ?? null,
-            (m.mood as MoodRow['mood']) ?? null,
-            (m.rating as number) ?? null,
-            (m.moodCategory as string) ?? null,
-            (m.note as string) ?? null,
-            m.tags ? JSON.stringify(m.tags) : null,
-            (m.timeOfDay as MoodRow['time_of_day']) ?? null,
-            (m.createdAt as number) ?? (m._creationTime as number) ?? updated,
-            updated,
-            0,
-          ]
-        );
+        [
+          idForInsert,
+          serverId,
+          (m.userId as string) ?? null,
+          (m.mood as MoodRow['mood']) ?? null,
+          (m.rating as number) ?? null,
+          (m.moodCategory as string) ?? null,
+          (m.note as string) ?? null,
+          m.tags ? JSON.stringify(m.tags) : null,
+          (m.timeOfDay as MoodRow['time_of_day']) ?? null,
+          (m.createdAt as number) ?? (m._creationTime as number) ?? updated,
+          updated,
+          0,
+        ]
+      );
     }
     notify();
   } catch (error) {
@@ -636,9 +638,9 @@ export async function getLastNMoods(
   }));
 }
 
-export async function getTodayMood(userId: string): Promise<
-  ReturnType<typeof getLastNMoods>[number] | undefined
-> {
+export async function getTodayMood(
+  userId: string
+): Promise<ReturnType<typeof getLastNMoods>[number] | undefined> {
   const db = await getDB();
   const d = new Date();
   d.setHours(0, 0, 0, 0);
@@ -736,10 +738,7 @@ export async function getOutboxCount(entity: string): Promise<number> {
 }
 
 // DLQ helpers
-export async function moveOutboxToFailed(
-  op: OutboxRow,
-  lastError: string
-) {
+export async function moveOutboxToFailed(op: OutboxRow, lastError: string) {
   const db = await getDB();
   const failId = `fail_${op.op_id}`;
   await db.withTransactionAsync(async () => {
@@ -802,11 +801,11 @@ export async function importExercisesFromServer(exercises: ServerExercise[]) {
   try {
     // Avoid wrapping in a transaction to prevent conflicts when called in parallel
     for (const e of exercises) {
-        const serverId = String(e._id);
-        const updated =
-          (e.updatedAt as number) ?? (e._creationTime as number) ?? now();
-        await db.runAsync(
-          `INSERT INTO exercises (
+      const serverId = String(e._id);
+      const updated =
+        (e.updatedAt as number) ?? (e._creationTime as number) ?? now();
+      await db.runAsync(
+        `INSERT INTO exercises (
             id, server_id, user_id, title, title_ar, description, description_ar, category, duration, difficulty, image_url, instructions_json, instructions_ar_json, updated_at, deleted
           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
           ON CONFLICT(id) DO UPDATE SET
@@ -823,23 +822,23 @@ export async function importExercisesFromServer(exercises: ServerExercise[]) {
             updated_at=excluded.updated_at,
             deleted=excluded.deleted
           `,
-          [
-            serverId,
-            serverId,
-            null,
-            e.title ?? '',
-            e.titleAr ?? '',
-            e.description ?? '',
-            e.descriptionAr ?? '',
-            e.category ?? 'mindfulness',
-            e.duration ?? 0,
-            e.difficulty ?? 'beginner',
-            e.imageUrl ?? null,
-            JSON.stringify(e.instructions ?? []),
-            JSON.stringify(e.instructionsAr ?? []),
-            updated,
-          ]
-        );
+        [
+          serverId,
+          serverId,
+          null,
+          e.title ?? '',
+          e.titleAr ?? '',
+          e.description ?? '',
+          e.descriptionAr ?? '',
+          e.category ?? 'mindfulness',
+          e.duration ?? 0,
+          e.difficulty ?? 'beginner',
+          e.imageUrl ?? null,
+          JSON.stringify(e.instructions ?? []),
+          JSON.stringify(e.instructionsAr ?? []),
+          updated,
+        ]
+      );
     }
     notify();
   } catch (error) {
@@ -965,12 +964,12 @@ export async function importUserProgressFromServer(
   try {
     // Avoid wrapping in a transaction to prevent conflicts when called in parallel
     for (const p of progressList) {
-        const serverId = String(p._id);
-        const updated =
-          (p.updatedAt as number) ?? (p._creationTime as number) ?? now();
-        const at = p.completedAt ?? p._creationTime ?? updated;
-        await db.runAsync(
-          `INSERT INTO exercise_logs (id, server_id, user_id, exercise_id, duration_sec, feedback, at, updated_at, deleted)
+      const serverId = String(p._id);
+      const updated =
+        (p.updatedAt as number) ?? (p._creationTime as number) ?? now();
+      const at = p.completedAt ?? p._creationTime ?? updated;
+      await db.runAsync(
+        `INSERT INTO exercise_logs (id, server_id, user_id, exercise_id, duration_sec, feedback, at, updated_at, deleted)
            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
            ON CONFLICT(id) DO UPDATE SET
              exercise_id=excluded.exercise_id,
@@ -980,18 +979,18 @@ export async function importUserProgressFromServer(
              updated_at=excluded.updated_at,
              deleted=excluded.deleted
           `,
-          // Convert duration from minutes to seconds when importing from server
-          [
-            serverId,
-            serverId,
-            p.userId ?? null,
-            String(p.exerciseId ?? ''),
-            minutesToSeconds(p.duration ?? 0),
-            p.feedback ?? null,
-            at,
-            updated,
-          ]
-        );
+        // Convert duration from minutes to seconds when importing from server
+        [
+          serverId,
+          serverId,
+          p.userId ?? null,
+          String(p.exerciseId ?? ''),
+          minutesToSeconds(p.duration ?? 0),
+          p.feedback ?? null,
+          at,
+          updated,
+        ]
+      );
     }
     notify();
   } catch (error) {
@@ -1255,12 +1254,13 @@ export async function importChatMessagesFromServer(
 ) {
   const db = await getDB();
   const tableName = getChatMessageTable(chatType);
-  
+
   try {
     for (const msg of messages) {
       const serverId = String(msg._id);
-      const createdAt = (msg.createdAt as number) ?? (msg._creationTime as number) ?? now();
-      
+      const createdAt =
+        (msg.createdAt as number) ?? (msg._creationTime as number) ?? now();
+
       await db.runAsync(
         `INSERT INTO ${tableName} (id, server_id, user_id, session_id, content, role, created_at, updated_at, deleted)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
@@ -1294,13 +1294,16 @@ export async function importChatSessionsFromServer(
   chatType: ChatType
 ) {
   const db = await getDB();
-  
+
   try {
     for (const session of sessions) {
       const serverId = session._id ? String(session._id) : session.sessionId;
-      const startedAt = (session.startedAt as number) ?? (session._creationTime as number) ?? now();
+      const startedAt =
+        (session.startedAt as number) ??
+        (session._creationTime as number) ??
+        now();
       const lastMessageAt = (session.lastMessageAt as number) ?? startedAt;
-      
+
       await db.runAsync(
         `INSERT INTO chat_sessions (id, server_id, user_id, session_id, title, chat_type, started_at, last_message_at, message_count, updated_at, deleted)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
@@ -1340,12 +1343,18 @@ export async function getChatMessages(
 ): Promise<ChatMessageRow[]> {
   const db = await getDB();
   const tableName = getChatMessageTable(chatType);
-  
+
+  // Return the most recent N messages in chronological order (oldest -> newest)
+  // so that lists render bottom-aligned and new messages appear at the bottom.
+  // We first pick the latest records (DESC limit) then re-order ASC.
   return db.getAllAsync<ChatMessageRow>(
-    `SELECT * FROM ${tableName} 
-     WHERE deleted = 0 AND user_id = ? AND session_id = ? 
-     ORDER BY created_at DESC 
-     LIMIT ?`,
+    `SELECT * FROM (
+        SELECT * FROM ${tableName}
+        WHERE deleted = 0 AND user_id = ? AND session_id = ?
+        ORDER BY created_at DESC
+        LIMIT ?
+     )
+     ORDER BY created_at ASC`,
     [userId, sessionId, limit]
   );
 }
@@ -1356,7 +1365,7 @@ export async function getChatSessions(
   chatType: ChatType
 ): Promise<ChatSessionRow[]> {
   const db = await getDB();
-  
+
   return db.getAllAsync<ChatSessionRow>(
     `SELECT * FROM chat_sessions 
      WHERE deleted = 0 AND user_id = ? AND chat_type = ? 
@@ -1372,13 +1381,13 @@ export async function getCurrentChatSession(
   chatType: ChatType
 ): Promise<ChatSessionRow | undefined> {
   const db = await getDB();
-  
+
   const row = await db.getFirstAsync<ChatSessionRow>(
     `SELECT * FROM chat_sessions 
      WHERE deleted = 0 AND user_id = ? AND session_id = ? AND chat_type = ?`,
     [userId, sessionId, chatType]
   );
-  
+
   return row ?? undefined;
 }
 
@@ -1394,7 +1403,7 @@ export async function recordChatMessageLocal(params: {
   const id = generateId();
   const tableName = getChatMessageTable(params.chatType);
   const createdAt = now();
-  
+
   await db.runAsync(
     `INSERT INTO ${tableName} (id, server_id, user_id, session_id, content, role, created_at, updated_at, deleted)
      VALUES (?, NULL, ?, ?, ?, ?, ?, ?, 0)`,
@@ -1408,7 +1417,7 @@ export async function recordChatMessageLocal(params: {
       createdAt,
     ]
   );
-  
+
   // Queue for sync
   await enqueueOutbox(`chat_${params.chatType}`, 'upsert', {
     userId: params.userId,
@@ -1418,7 +1427,7 @@ export async function recordChatMessageLocal(params: {
     role: params.role,
     createdAt,
   });
-  
+
   notify();
   return id;
 }
@@ -1431,12 +1440,12 @@ export async function ackChatMessageSynced(params: {
 }) {
   const db = await getDB();
   const tableName = getChatMessageTable(params.chatType);
-  
+
   await db.runAsync(
     `UPDATE ${tableName} SET server_id = ?, updated_at = ? WHERE id = ?`,
     [params.serverId, now(), params.localId]
   );
-  
+
   await deleteOutboxByLocalId(`chat_${params.chatType}`, params.localId);
   notify();
 }

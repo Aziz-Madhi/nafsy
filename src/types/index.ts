@@ -109,6 +109,7 @@ export interface ChatBubbleProps {
   avatar?: string;
   index?: number;
   status?: 'sending' | 'sent' | 'delivered';
+  animated?: boolean;
 }
 
 export interface ExerciseCardProps {

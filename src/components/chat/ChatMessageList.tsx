@@ -20,6 +20,8 @@ interface ChatMessageListProps {
   keyExtractor: (item: Message) => string;
   getItemType: (item: Message) => string;
   horizontalPadding: number;
+  footer?: React.ReactNode;
+  onScroll?: (e: any) => void;
 }
 
 export const ChatMessageList = memo(function ChatMessageList({
@@ -29,6 +31,8 @@ export const ChatMessageList = memo(function ChatMessageList({
   keyExtractor,
   getItemType,
   horizontalPadding,
+  footer,
+  onScroll,
 }: ChatMessageListProps) {
   // Content container style with proper bottom padding for floating tab bar with input
   const contentContainerStyle = {
@@ -48,14 +52,11 @@ export const ChatMessageList = memo(function ChatMessageList({
       showsVerticalScrollIndicator={false}
       contentContainerStyle={contentContainerStyle}
       ListHeaderComponent={undefined}
+      ListFooterComponent={footer}
       contentInsetAdjustmentBehavior="automatic"
+      onScroll={onScroll}
       // Ensure scroll indicator doesn't overlap with floating tab bar
       scrollIndicatorInsets={{ bottom: 160 }}
-      // Auto-scroll to end behavior
-      maintainVisibleContentPosition={{
-        minIndexForVisible: 0,
-        autoscrollToTopThreshold: 100,
-      }}
     />
   );
 });

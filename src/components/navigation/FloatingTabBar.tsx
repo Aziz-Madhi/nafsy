@@ -69,6 +69,7 @@ export function FloatingTabBar({
 
   // State for input
   const [message, setMessage] = React.useState('');
+  const sendingRef = React.useRef(false);
   const [isInputFocused, setIsInputFocused] = React.useState(false);
   const inputRef = React.useRef<TextInput>(null);
 
@@ -117,18 +118,24 @@ export function FloatingTabBar({
   );
 
   const handleSend = useCallback(async () => {
-    if (message.trim() && onSendMessage) {
-      const messageText = message.trim();
-      setMessage('');
-      // Clear shared draft for current personality so intro can reappear
-      if (activeChatType === 'companion') {
-        clearCompanionChatInput();
-      } else {
-        clearCoachChatInput();
-        clearMainChatInput();
-      }
-      await impactAsync(ImpactFeedbackStyle.Medium);
-      onSendMessage(messageText);
+    if (!message.trim() || !onSendMessage) return;
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+
+    const messageText = message.trim();
+    setMessage('');
+    // Clear shared draft for current personality so intro can reappear
+    if (activeChatType === 'companion') {
+      clearCompanionChatInput();
+    } else {
+      clearCoachChatInput();
+      clearMainChatInput();
+    }
+    await impactAsync(ImpactFeedbackStyle.Medium);
+    try {
+      await Promise.resolve(onSendMessage(messageText));
+    } finally {
+      sendingRef.current = false;
     }
   }, [
     message,
@@ -422,6 +429,7 @@ export function FloatingChatInputStandalone({
   const { i18n } = useTranslation();
   const inputRef = React.useRef<TextInput>(null);
   const [message, setMessage] = React.useState('');
+  const sendingRef = React.useRef(false);
   const [isInputFocused, setIsInputFocused] = React.useState(false);
   const isIOS = Platform.OS === 'ios';
   const hasText = !!message.trim();
@@ -434,11 +442,16 @@ export function FloatingChatInputStandalone({
   // Private vent input uses a dedicated style (no mic crossfade)
 
   const handleSend = useCallback(async () => {
-    if (message.trim()) {
-      const text = message.trim();
-      setMessage('');
-      await impactAsync(ImpactFeedbackStyle.Medium);
-      onSendMessage(text);
+    if (!message.trim()) return;
+    if (sendingRef.current) return;
+    sendingRef.current = true;
+    const text = message.trim();
+    setMessage('');
+    await impactAsync(ImpactFeedbackStyle.Medium);
+    try {
+      await Promise.resolve(onSendMessage(text));
+    } finally {
+      sendingRef.current = false;
     }
   }, [message, onSendMessage]);
 
