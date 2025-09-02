@@ -659,22 +659,15 @@ export function useOfflineChatMessages(
   const currentUser = useCurrentUser();
   const [messages, setMessages] = useState<ChatMessageRow[]>([]);
 
-  // Get the right API based on chat type
-  const getConvexQuery = () => {
-    switch (chatType) {
-      case 'coach':
-        return api.mainChat.getMainChatMessages;
-      case 'event':
-        return api.ventChat.getVentMessages;
-      case 'companion':
-        return api.companionChat.getCompanionChatMessages;
-    }
-  };
+  // Map UI chatType to unified Convex chat type
+  const unifiedType = chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
 
-  // Get data from Convex when online
+  // Get data from Convex when online via unified endpoint
   const serverMessages = useQuery(
-    getConvexQuery(),
-    isSignedIn && isOnline && sessionId ? { sessionId, limit: 50 } : 'skip'
+    api.chat.getChatMessages,
+    isSignedIn && isOnline && sessionId
+      ? { type: unifiedType as any, sessionId, limit: 50 }
+      : 'skip'
   );
 
   // Load local data (SQLite) and subscribe to changes
@@ -760,22 +753,11 @@ export function useOfflineChatSessions(chatType: ChatType) {
   const currentUser = useCurrentUser();
   const [sessions, setSessions] = useState<ChatSessionRow[]>([]);
 
-  // Get the right API based on chat type
-  const getConvexQuery = () => {
-    switch (chatType) {
-      case 'coach':
-        return api.mainChat.getMainSessions;
-      case 'event':
-        return api.ventChat.getVentSessions;
-      case 'companion':
-        return api.companionChat.getCompanionChatSessions;
-    }
-  };
-
-  // Get data from Convex when online
+  // Get data from Convex when online via unified endpoint
+  const unifiedType = chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
   const serverSessions = useQuery(
-    getConvexQuery(),
-    isSignedIn && isOnline ? {} : 'skip'
+    api.chat.getChatSessions,
+    isSignedIn && isOnline ? { type: unifiedType as any } : 'skip'
   );
 
   // Load local data (SQLite) and subscribe to changes
@@ -849,19 +831,8 @@ export function useOfflineSendMessage(chatType: ChatType) {
   const { isOnline } = useNetworkStatus();
   const currentUser = useCurrentUser();
 
-  // Get the right API based on chat type
-  const getConvexMutation = () => {
-    switch (chatType) {
-      case 'coach':
-        return api.mainChat.sendMainMessage;
-      case 'event':
-        return api.ventChat.sendVentMessage;
-      case 'companion':
-        return api.companionChat.sendCompanionMessage;
-    }
-  };
-
-  const serverMutation = useMutation(getConvexMutation());
+  const unifiedType = chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
+  const serverMutation = useMutation(api.chat.sendChatMessage);
 
   return useCallback(
     async (content: string, sessionId?: string) => {
@@ -876,6 +847,7 @@ export function useOfflineSendMessage(chatType: ChatType) {
           content,
           role: 'user' as const,
           sessionId,
+          type: unifiedType as any,
         });
 
         return result;

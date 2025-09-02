@@ -8,21 +8,33 @@ export const insertAssistantMessage = internalMutation({
   args: {
     sessionId: v.string(),
     userId: v.id('users'),
-    chatType: v.union(v.literal('main'), v.literal('companion')),
+    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
     content: v.string(),
     requestId: v.optional(v.string()),
   },
-  returns: v.id('mainChatMessages'),
+  returns: v.union(
+    v.id('mainChatMessages'),
+    v.id('companionChatMessages'),
+    v.id('ventChatMessages')
+  ),
   handler: async (ctx, args) => {
     const now = Date.now();
 
     // Determine which table to use based on chat type
     const table =
-      args.chatType === 'companion' ? 'companionChatMessages' : 'mainChatMessages';
+      args.chatType === 'companion'
+        ? 'companionChatMessages'
+        : args.chatType === 'vent'
+          ? 'ventChatMessages'
+          : 'mainChatMessages';
 
     // Enforce session ownership prior to insert and metadata updates
     const sessionType =
-      args.chatType === 'companion' ? 'companionChatSessions' : 'chatSessions';
+      args.chatType === 'companion'
+        ? 'companionChatSessions'
+        : args.chatType === 'vent'
+          ? 'ventChatSessions'
+          : 'chatSessions';
     const session = await ctx.db
       .query(sessionType as any)
       .withIndex('by_session_id', (q: any) => q.eq('sessionId', args.sessionId))
@@ -48,7 +60,7 @@ export const insertAssistantMessage = internalMutation({
       (latest.content.trim() === args.content.trim() ||
         (args.requestId && latest.requestId === args.requestId))
     ) {
-      return latest._id as Id<'mainChatMessages'>;
+      return latest._id as any;
     }
 
     // Insert final assistant message with full content
@@ -97,7 +109,7 @@ export const insertAssistantMessage = internalMutation({
       console.warn('Deduplication scan failed:', e);
     }
 
-    return messageId as Id<'mainChatMessages'>;
+    return messageId as any;
   },
 });
 
@@ -114,5 +126,40 @@ export const applyRateLimit = internalMutation({
     const windowMs = args.windowMs ?? 60_000; // 1 minute
     await checkRateLimitDb(ctx, args.key, limit, windowMs);
     return null;
+  },
+});
+
+// Basic telemetry recorder (internal-only)
+export const recordAITelemetry = internalMutation({
+  args: {
+    userId: v.id('users'),
+    sessionId: v.string(),
+    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    provider: v.string(),
+    model: v.string(),
+    requestId: v.optional(v.string()),
+    startedAt: v.number(),
+    finishedAt: v.number(),
+    durationMs: v.number(),
+    contentLength: v.number(),
+    success: v.boolean(),
+  },
+  returns: v.id('aiTelemetry'),
+  handler: async (ctx, args) => {
+    const id = await ctx.db.insert('aiTelemetry', {
+      userId: args.userId,
+      sessionId: args.sessionId,
+      chatType: args.chatType,
+      provider: args.provider,
+      model: args.model,
+      requestId: args.requestId,
+      startedAt: args.startedAt,
+      finishedAt: args.finishedAt,
+      durationMs: args.durationMs,
+      contentLength: args.contentLength,
+      success: args.success,
+      createdAt: Date.now(),
+    });
+    return id;
   },
 });

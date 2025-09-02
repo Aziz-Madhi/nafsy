@@ -102,29 +102,82 @@ export async function processUIMessageStream(
     return;
   }
 
-  let lastText = '';
-  // Keep client-side chunking simple; let the UI hook pace updates.
+  // Strategy:
+  // - Probe the stream quickly to detect "plain text-delta" SSE (our OpenAI Responses adapter)
+  // - If detected, stream deltas directly for immediate UI updates
+  // - Otherwise, fall back to AI SDK's readUIMessageStream aggregation
   try {
-    // Decode SSE (text/event-stream) into JSON UIMessageChunk objects
-    const eventStream = body
-      .pipeThrough(new TextDecoderStream())
-      .pipeThrough(new EventSourceParserStream());
+    const [probeStream, mainStream] = body.tee();
 
-    // Map EventSource messages to parsed UIMessageChunk objects
-    const chunkObjectStream = eventStream.pipeThrough(
-      new TransformStream<{ event: string; data: string }, any>({
-        transform({ data }, controller) {
-          if (data === '[DONE]') return; // end-of-stream marker
-          try {
-            controller.enqueue(JSON.parse(data));
-          } catch (e) {
-            // Ignore malformed chunks; downstream will handle errors via onError if needed
-          }
-        },
-      })
-    );
+    // Small helper to parse SSE into JSON objects
+    function toEventObjectStream(rs: ReadableStream<any>) {
+      const eventStream = rs
+        .pipeThrough(new TextDecoderStream())
+        .pipeThrough(new EventSourceParserStream());
+      return eventStream.pipeThrough(
+        new TransformStream<{ event: string; data: string }, any>({
+          transform({ data }, controller) {
+            if (data === '[DONE]') return; // end-of-stream marker
+            try {
+              controller.enqueue(JSON.parse(data));
+            } catch {
+              // ignore malformed
+            }
+          },
+        })
+      );
+    }
 
+    // 1) Probe branch: check the first meaningful event
+    const probeObjects = toEventObjectStream(probeStream);
+    const probeReader = (probeObjects as ReadableStream<any>).getReader();
+    let firstObj: any | null = null;
+    while (true) {
+      const { value, done } = await probeReader.read();
+      if (done) break;
+      if (value && typeof value === 'object') {
+        firstObj = value;
+        break;
+      }
+    }
+
+    // If we detected our simple delta format, continue reading directly from the probe branch
+    const isDirectDelta =
+      !!firstObj &&
+      (typeof firstObj.textDelta === 'string' ||
+        firstObj.type === 'text-delta');
+
+    if (isDirectDelta) {
+      // Stream direct deltas for smooth updates
+      if (typeof firstObj.textDelta === 'string' && firstObj.textDelta) {
+        onChunk(firstObj.textDelta);
+      }
+
+      // Continue consuming remaining events from the same probe branch
+      while (true) {
+        const { value, done } = await probeReader.read();
+        if (done) break;
+        const obj = value as any;
+        const delta: string | undefined =
+          typeof obj?.textDelta === 'string'
+            ? obj.textDelta
+            : typeof obj?.delta === 'string'
+              ? obj.delta
+              : undefined;
+        if (delta) onChunk(delta);
+      }
+      onComplete();
+      return;
+    }
+
+    // 2) Fallback: use AI SDK UI message stream on the main branch
+    try {
+      await probeReader.cancel();
+    } catch {}
+    const chunkObjectStream = toEventObjectStream(mainStream);
     const uiStream = readUIMessageStream({ stream: chunkObjectStream as any });
+
+    let lastText = '';
     for await (const message of uiStream as AsyncIterable<UIMessage>) {
       // Accumulate all text parts in order
       const currentText = (message.parts || [])
@@ -155,7 +208,7 @@ export function detectSentenceBoundary(text: string): boolean {
  * Stream chat completion from Convex HTTP endpoint
  */
 export interface StreamChatOptions {
-  personality: 'coach' | 'companion';
+  personality: 'coach' | 'companion' | 'vent';
   messages: { role: 'user' | 'assistant'; content: string }[];
   sessionId: string;
   requestId?: string;

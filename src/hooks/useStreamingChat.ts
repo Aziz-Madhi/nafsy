@@ -8,7 +8,7 @@ import { streamChat } from '~/lib/ai/streaming';
 import { useNetworkStatus } from '~/hooks/useOfflineData';
 import { Alert } from 'react-native';
 
-export type ChatPersonality = 'coach' | 'companion';
+export type ChatPersonality = 'coach' | 'companion' | 'vent';
 
 interface UseStreamingChatReturn {
   streamingContent: string;
@@ -39,14 +39,11 @@ export function useStreamingChat(
   const rafIdRef = useRef<number | null>(null);
   const stepRef = useRef(2); // 2 characters per frame by default
   // Queue for one pending request if user sends while streaming
-  const pendingRef = useRef<
-    | null
-    | {
-        text: string;
-        sessionId: string;
-        messages: { role: 'user' | 'assistant'; content: string }[];
-      }
-  >(null);
+  const pendingRef = useRef<null | {
+    text: string;
+    sessionId: string;
+    messages: { role: 'user' | 'assistant'; content: string }[];
+  }>(null);
   const isOnline = useNetworkStatus();
   const { getToken } = useAuth();
 
@@ -107,7 +104,6 @@ export function useStreamingChat(
         rafIdRef.current = requestAnimationFrame(tick);
       };
 
-
       // Create new abort controller
       const abortController = new AbortController();
       abortControllerRef.current = abortController;
@@ -160,7 +156,8 @@ export function useStreamingChat(
             // Handle 429 (session lock) gracefully with a short queued retry
             const msg = (err?.message || '').toLowerCase();
             const isConcurrencyLimit =
-              msg.includes('429') || msg.includes('another response is in progress');
+              msg.includes('429') ||
+              msg.includes('another response is in progress');
 
             if (isConcurrencyLimit && !abortController.signal.aborted) {
               // Queue this attempt and retry when lock likely clears

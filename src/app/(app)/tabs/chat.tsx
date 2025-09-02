@@ -58,12 +58,14 @@ export default function ChatTab() {
     clearVentChat,
     switchChatType,
     initializeEmptyChat,
+    setCurrentVentSessionId,
   } = useChatUIStore();
 
-  // Session management - only for coach and companion (event has no sessions)
+  // Session management
   const currentMainSessionId = useCurrentMainSessionId();
   const currentCoachSessionId = useCurrentCoachSessionId();
   const currentCompanionSessionId = useCurrentCompanionSessionId();
+  const currentVentSessionId = useChatUIStore((s) => s.currentVentSessionId);
   const sessionError = useSessionError();
   const sessionSwitchLoading = useSessionSwitchLoading();
   const switchToMainSession = useChatUIStore(
@@ -82,18 +84,17 @@ export default function ChatTab() {
 
   // Get server session IDs for coach and companion
   const serverMainSessionId = useQuery(
-    api.mainChat.getCurrentMainSessionId,
-    isLoaded && user ? {} : 'skip'
+    api.chat.getCurrentSessionId,
+    isLoaded && user ? { type: 'main' } : 'skip'
   );
 
-  // Determine active session based on chat type - no auto-loading
-  // Event chat has no sessions (overlay-only)
+  // Determine active session based on chat type
   const getActiveSessionId = () => {
     switch (activeChatType) {
       case 'coach':
         return currentCoachSessionId || currentMainSessionId;
       case 'event':
-        return null; // Event chat has no persistent sessions
+        return currentVentSessionId;
       case 'companion':
         return currentCompanionSessionId;
       default:
@@ -120,15 +121,18 @@ export default function ChatTab() {
     activeChatType === 'companion' ? activeSessionId : null,
     'companion'
   );
+  const ventMessages = useOfflineChatMessages(
+    activeChatType === 'event' ? activeSessionId : null,
+    'event'
+  );
 
   // Select messages based on active chat type
-  // Event messages are not shown in main chat - only in overlay
   const getChatMessages = () => {
     switch (activeChatType) {
       case 'coach':
         return coachMessages;
       case 'event':
-        return []; // Event messages are overlay-only, never shown in main chat
+        return ventMessages;
       case 'companion':
         return companionMessages;
       default:
@@ -143,17 +147,16 @@ export default function ChatTab() {
   // Use offline-aware send message hooks
   const sendCoachMessage = useOfflineSendMessage('coach');
   const sendCompanionMessage = useOfflineSendMessage('companion');
+  const sendVentMessage = useOfflineSendMessage('event');
 
   // Add streaming hooks for AI responses
   const coachStreaming = useStreamingChat('coach');
   const companionStreaming = useStreamingChat('companion');
+  const ventStreaming = useStreamingChat('vent');
 
   // Keep mutations for session creation and user upsert
   const upsertUser = useMutation(api.auth.upsertUser);
-  const createCompanionSession = useMutation(
-    api.companionChat.createCompanionChatSession
-  );
-  const createMainSession = useMutation(api.mainChat.createMainChatSession);
+  const createChatSession = useMutation(api.chat.createChatSession);
 
   // Initialize with empty chat on app start (no auto-loading of previous sessions)
   useEffect(() => {
@@ -256,17 +259,22 @@ export default function ChatTab() {
 
             switch (activeChatType) {
               case 'coach':
-                sessionId = await createMainSession({
+                sessionId = await createChatSession({
+                  type: 'main',
                   title: `Therapy Session`,
                 });
                 await switchToMainSession(sessionId);
                 break;
               case 'event':
-                // Event chat has no sessions - this should not happen
-                console.warn('Event chat should not create sessions');
-                return;
+                sessionId = await createChatSession({
+                  type: 'vent',
+                  title: `Quick Vent Session`,
+                });
+                setCurrentVentSessionId(sessionId);
+                break;
               case 'companion':
-                sessionId = await createCompanionSession({
+                sessionId = await createChatSession({
+                  type: 'companion',
                   title: `Daily Check-in`,
                 });
                 await switchToCompanionSession(sessionId);
@@ -292,11 +300,18 @@ export default function ChatTab() {
               break;
 
             case 'event':
-              // Event messages are handled privately in overlay, not here
-              console.warn(
-                'Event messages should be handled in overlay, not main chat'
+              const userMsgIdVent = await sendVentMessage(text, sessionId);
+              const eventMessages =
+                mainChatMessages?.map((msg) => ({
+                  role: msg.role,
+                  content: msg.content,
+                })) || [];
+              await ventStreaming.sendStreamingMessage(
+                text,
+                sessionId,
+                eventMessages
               );
-              return;
+              break;
 
             case 'companion':
               const userMsgIdComp = await sendCompanionMessage(text, sessionId);
@@ -333,10 +348,11 @@ export default function ChatTab() {
       isOnline,
       sendCoachMessage,
       sendCompanionMessage,
+      sendVentMessage,
       activeSessionId,
       activeChatType,
-      createMainSession,
-      createCompanionSession,
+      createChatSession,
+      setCurrentVentSessionId,
       switchToMainSession,
       switchToCompanionSession,
     ]
@@ -345,17 +361,12 @@ export default function ChatTab() {
   // Error dismiss handler
   const handleDismissError = () => setSessionError(null);
 
-  // Vent Chat handlers - now private/local only
+  // Vent Chat overlay handlers now optional; keep no-ops to preserve props
   const handleOpenVentChat = useCallback(async () => {
-    console.log('🌀 Opening Vent Chat (Private Overlay)');
-
-    // Event chat is now overlay-only, no backend session needed
-    // Just open the overlay - no persistence
     setVentChatVisible(true);
   }, [setVentChatVisible]);
 
   const handleCloseVentChat = useCallback(() => {
-    console.log('🌀 Closing Vent Chat');
     setVentChatVisible(false);
     clearVentChat();
   }, [setVentChatVisible, clearVentChat]);
@@ -363,37 +374,61 @@ export default function ChatTab() {
   const handleSendVentMessage = useCallback(
     async (text: string) => {
       if (!user || !isLoaded) return;
-
-      setVentChatLoading(true);
-      setCurrentVentMessage(`user:${text}`);
-
-      // Simulate AI response after a delay - no backend storage
-      setTimeout(() => {
-        const aiResponse =
-          'I hear you. Your feelings are valid. Take a deep breath and let it all out.';
-        setCurrentVentMessage(`ai:${aiResponse}`);
+      try {
+        setVentChatLoading(true);
+        // Ensure a vent session exists
+        let sessionId = currentVentSessionId;
+        if (!sessionId) {
+          sessionId = await createChatSession({ type: 'vent', title: 'Quick Vent Session' });
+          setCurrentVentSessionId(sessionId);
+        }
+        // Update overlay with user message instantly
+        setCurrentVentMessage(`user:${text}`);
+        // Persist user message (unified send)
+        await sendVentMessage(text, sessionId);
+        // Start streaming AI response (no prior context needed for vent)
+        await ventStreaming.sendStreamingMessage(text, sessionId, []);
+      } catch (e) {
+        console.error('Vent message failed:', e);
+      } finally {
         setVentChatLoading(false);
-      }, 2000);
+      }
     },
-    [user, isLoaded, setCurrentVentMessage, setVentChatLoading]
+    [
+      user,
+      isLoaded,
+      currentVentSessionId,
+      createChatSession,
+      setCurrentVentSessionId,
+      setCurrentVentMessage,
+      setVentChatLoading,
+      sendVentMessage,
+      ventStreaming,
+    ]
   );
 
-  // Handle chat type change with session creation
-  // Event type is overlay-only and not part of regular chat switching
+  // Handle chat type change
   const handleChatTypeChange = useCallback(
     async (type: ChatType) => {
       console.log(`🔄 Switching from ${activeChatType} to ${type}`);
-
-      // Only allow switching between coach and companion for regular chat
-      if (type === 'event') {
-        // Event chat is overlay-only, don't switch to it in main chat
-        return;
-      }
 
       await switchChatType(type);
     },
     [switchChatType, activeChatType]
   );
+
+  // Keep overlay UI in sync with vent streaming
+  useEffect(() => {
+    if (showVentChat && ventStreaming.streamingContent) {
+      setCurrentVentMessage(`ai:${ventStreaming.streamingContent}`);
+    }
+  }, [showVentChat, ventStreaming.streamingContent, setCurrentVentMessage]);
+
+  useEffect(() => {
+    if (showVentChat) {
+      setVentChatLoading(ventStreaming.isStreaming);
+    }
+  }, [showVentChat, ventStreaming.isStreaming, setVentChatLoading]);
 
   // Set the message handler ref for the floating tab bar
   useEffect(() => {
@@ -411,11 +446,15 @@ export default function ChatTab() {
   const streamingContent =
     activeChatType === 'companion'
       ? companionStreaming.streamingContent
-      : coachStreaming.streamingContent;
+      : activeChatType === 'event'
+        ? ventStreaming.streamingContent
+        : coachStreaming.streamingContent;
   const isStreaming =
     activeChatType === 'companion'
       ? companionStreaming.isStreaming
-      : coachStreaming.isStreaming;
+      : activeChatType === 'event'
+        ? ventStreaming.isStreaming
+        : coachStreaming.isStreaming;
 
   return (
     <ChatScreen

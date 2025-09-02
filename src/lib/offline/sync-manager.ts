@@ -655,31 +655,8 @@ class SimplifiedSyncManager {
       let pushed = 0;
       let pulled = 0;
 
-      // Map chat type to Convex API
-      const getApiForChatType = () => {
-        switch (chatType) {
-          case 'coach':
-            return {
-              getMessages: api.mainChat.getMainChatMessages,
-              getSessions: api.mainChat.getMainSessions,
-              sendMessage: api.mainChat.sendMainMessage,
-            };
-          case 'event':
-            return {
-              getMessages: api.ventChat.getVentMessages,
-              getSessions: api.ventChat.getVentSessions,
-              sendMessage: api.ventChat.sendVentMessage,
-            };
-          case 'companion':
-            return {
-              getMessages: api.companionChat.getCompanionChatMessages,
-              getSessions: api.companionChat.getCompanionChatSessions,
-              sendMessage: api.companionChat.sendCompanionMessage,
-            };
-        }
-      };
-
-      const chatApi = getApiForChatType();
+      // Unified type mapping for Convex
+      const unifiedType = chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
 
       // Note: For now, we only pull chat data (read-only when offline)
       // We don't push user messages as they require AI response
@@ -688,8 +665,10 @@ class SimplifiedSyncManager {
       // Pull messages from server (if we have sessions)
       if (this.userId) {
         try {
-          // Get sessions first
-          const sessions = await convexClient.query(chatApi.getSessions, {});
+          // Get sessions first via unified endpoint
+          const sessions = await convexClient.query(api.chat.getChatSessions, {
+            type: unifiedType as any,
+          });
 
           if (sessions && sessions.length > 0) {
             // Import sessions
@@ -698,7 +677,8 @@ class SimplifiedSyncManager {
             // For each session, get recent messages
             for (const session of sessions.slice(0, 3)) {
               // Limit to 3 most recent sessions
-              const messages = await convexClient.query(chatApi.getMessages, {
+              const messages = await convexClient.query(api.chat.getChatMessages, {
+                type: unifiedType as any,
                 sessionId: session.sessionId,
                 limit: 50,
               });

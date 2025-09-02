@@ -5,7 +5,7 @@ import { getAuthenticatedUser } from './authUtils';
 import { paginationOptsValidator } from 'convex/server';
 
 // Chat type enum for unified functions
-const ChatType = v.union(v.literal('main'), v.literal('vent'));
+const ChatType = v.union(v.literal('main'), v.literal('vent'), v.literal('companion'));
 
 /**
  * Unified chat message sending for both main and vent chats
@@ -18,7 +18,11 @@ export const sendChatMessage = mutation({
     type: ChatType,
     sessionId: v.optional(v.string()),
   },
-  returns: v.union(v.id('mainChatMessages'), v.id('ventChatMessages')),
+  returns: v.union(
+    v.id('mainChatMessages'),
+    v.id('ventChatMessages'),
+    v.id('companionChatMessages')
+  ),
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
 
@@ -40,7 +44,7 @@ export const sendChatMessage = mutation({
 
       // Update main session metadata using existing utility
       await updateChatSession(ctx, user._id, sessionId);
-    } else {
+    } else if (args.type === 'vent') {
       // Insert to vent chat messages table
       messageId = await ctx.db.insert('ventChatMessages', {
         userId: user._id,
@@ -73,6 +77,39 @@ export const sendChatMessage = mutation({
           messageCount: session.messageCount + 1,
         });
       }
+    } else {
+      // Insert to companion chat messages table
+      messageId = await ctx.db.insert('companionChatMessages', {
+        userId: user._id,
+        content: args.content,
+        role: args.role,
+        sessionId,
+        createdAt: Date.now(),
+      });
+
+      // Create/update companion session metadata
+      let session = await ctx.db
+        .query('companionChatSessions')
+        .withIndex('by_session_id', (q) => q.eq('sessionId', sessionId))
+        .first();
+
+      if (!session) {
+        // Create new companion session
+        await ctx.db.insert('companionChatSessions', {
+          userId: user._id,
+          sessionId,
+          title: `Check-in ${new Date().toLocaleDateString()}`,
+          startedAt: Date.now(),
+          lastMessageAt: Date.now(),
+          messageCount: 1,
+        });
+      } else {
+        // Update existing companion session
+        await ctx.db.patch(session._id, {
+          lastMessageAt: Date.now(),
+          messageCount: session.messageCount + 1,
+        });
+      }
     }
 
     return messageId;
@@ -91,7 +128,11 @@ export const getChatMessages = query({
   },
   returns: v.array(
     v.object({
-      _id: v.union(v.id('mainChatMessages'), v.id('ventChatMessages')),
+      _id: v.union(
+        v.id('mainChatMessages'),
+        v.id('ventChatMessages'),
+        v.id('companionChatMessages')
+      ),
       _creationTime: v.number(),
       userId: v.id('users'),
       content: v.string(),
@@ -114,7 +155,7 @@ export const getChatMessages = query({
         : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
       const messages = await indexed.order('desc').take(limit);
       return messages;
-    } else {
+    } else if (args.type === 'vent') {
       const base = ctx.db.query('ventChatMessages');
       const indexed = args.sessionId
         ? base.withIndex('by_user_session', (qi) =>
@@ -144,6 +185,35 @@ export const getChatMessages = query({
         }
       }
       return messages;
+    } else {
+      const base = ctx.db.query('companionChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', user._id).eq('sessionId', args.sessionId!)
+          )
+        : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
+      const messages = await indexed.order('desc').take(limit);
+
+      if (!args.sessionId && messages.length === 0) {
+        const latestSession = await ctx.db
+          .query('companionChatSessions')
+          .withIndex('by_user', (q) => q.eq('userId', user._id))
+          .order('desc')
+          .first();
+
+        if (latestSession) {
+          const sessionMessages = await ctx.db
+            .query('companionChatMessages')
+            .withIndex('by_user_session', (q) =>
+              q.eq('userId', user._id).eq('sessionId', latestSession.sessionId)
+            )
+            .order('asc')
+            .take(limit);
+
+          return sessionMessages;
+        }
+      }
+      return messages;
     }
   },
 });
@@ -158,7 +228,11 @@ export const getChatMessagesPaginated = query({
   returns: v.object({
     page: v.array(
       v.object({
-        _id: v.union(v.id('mainChatMessages'), v.id('ventChatMessages')),
+        _id: v.union(
+          v.id('mainChatMessages'),
+          v.id('ventChatMessages'),
+          v.id('companionChatMessages')
+        ),
         _creationTime: v.number(),
         userId: v.id('users'),
         content: v.string(),
@@ -181,8 +255,16 @@ export const getChatMessagesPaginated = query({
           )
         : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
       return await indexed.order('desc').paginate(args.paginationOpts);
-    } else {
+    } else if (args.type === 'vent') {
       const base = ctx.db.query('ventChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', user._id).eq('sessionId', args.sessionId!)
+          )
+        : base.withIndex('by_user', (qi) => qi.eq('userId', user._id));
+      return await indexed.order('desc').paginate(args.paginationOpts);
+    } else {
+      const base = ctx.db.query('companionChatMessages');
       const indexed = args.sessionId
         ? base.withIndex('by_user_session', (qi) =>
             qi.eq('userId', user._id).eq('sessionId', args.sessionId!)
@@ -204,7 +286,11 @@ export const getChatSessions = query({
   },
   returns: v.array(
     v.object({
-      _id: v.union(v.id('chatSessions'), v.id('ventChatSessions')),
+      _id: v.union(
+        v.id('chatSessions'),
+        v.id('ventChatSessions'),
+        v.id('companionChatSessions')
+      ),
       _creationTime: v.number(),
       userId: v.id('users'),
       sessionId: v.string(),
@@ -234,10 +320,17 @@ export const getChatSessions = query({
             session.sessionId.startsWith('main_')
         )
         .map(({ type, ...session }) => session);
-    } else {
+    } else if (args.type === 'vent') {
       // Vent sessions
       return await ctx.db
         .query('ventChatSessions')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .order('desc')
+        .take(limit);
+    } else {
+      // Companion sessions
+      return await ctx.db
+        .query('companionChatSessions')
         .withIndex('by_user', (q) => q.eq('userId', user._id))
         .order('desc')
         .take(limit);
@@ -254,7 +347,11 @@ export const getChatSessionsPaginated = query({
   returns: v.object({
     page: v.array(
       v.object({
-        _id: v.union(v.id('chatSessions'), v.id('ventChatSessions')),
+        _id: v.union(
+          v.id('chatSessions'),
+          v.id('ventChatSessions'),
+          v.id('companionChatSessions')
+        ),
         _creationTime: v.number(),
         userId: v.id('users'),
         sessionId: v.string(),
@@ -285,9 +382,15 @@ export const getChatSessionsPaginated = query({
         )
         .map(({ type, ...session }) => session);
       return { ...res, page };
-    } else {
+    } else if (args.type === 'vent') {
       return await ctx.db
         .query('ventChatSessions')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .order('desc')
+        .paginate(args.paginationOpts);
+    } else {
+      return await ctx.db
+        .query('companionChatSessions')
         .withIndex('by_user', (q) => q.eq('userId', user._id))
         .order('desc')
         .paginate(args.paginationOpts);
@@ -323,7 +426,7 @@ export const getCurrentSessionId = query({
       ) {
         return latestSession.sessionId;
       }
-    } else {
+    } else if (args.type === 'vent') {
       // Vent sessions
       const latestSession = await ctx.db
         .query('ventChatSessions')
@@ -331,6 +434,13 @@ export const getCurrentSessionId = query({
         .order('desc')
         .first();
 
+      return latestSession?.sessionId || null;
+    } else {
+      const latestSession = await ctx.db
+        .query('companionChatSessions')
+        .withIndex('by_user', (q) => q.eq('userId', user._id))
+        .order('desc')
+        .first();
       return latestSession?.sessionId || null;
     }
 
@@ -361,10 +471,25 @@ export const createChatSession = mutation({
         lastMessageAt: Date.now(),
         messageCount: 0,
       });
-    } else {
+    } else if (args.type === 'vent') {
       const title =
         args.title || `Vent Session ${new Date().toLocaleDateString()}`;
       await ctx.db.insert('ventChatSessions', {
+        userId: user._id,
+        sessionId,
+        title,
+        startedAt: Date.now(),
+        lastMessageAt: Date.now(),
+        messageCount: 0,
+      });
+    } else {
+      const title =
+        args.title ||
+        `Check-in ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`;
+      await ctx.db.insert('companionChatSessions', {
         userId: user._id,
         sessionId,
         title,
@@ -392,9 +517,17 @@ export const deleteChatSession = mutation({
     const user = await getAuthenticatedUser(ctx);
 
     const messagesTableName =
-      args.type === 'main' ? 'mainChatMessages' : 'ventChatMessages';
+      args.type === 'main'
+        ? 'mainChatMessages'
+        : args.type === 'vent'
+          ? 'ventChatMessages'
+          : 'companionChatMessages';
     const sessionsTableName =
-      args.type === 'main' ? 'chatSessions' : 'ventChatSessions';
+      args.type === 'main'
+        ? 'chatSessions'
+        : args.type === 'vent'
+          ? 'ventChatSessions'
+          : 'companionChatSessions';
 
     // Delete all messages in the session
     const messages = await ctx.db
@@ -448,11 +581,20 @@ export const updateChatSessionTitle = mutation({
     sessionId: v.string(),
     title: v.string(),
   },
-  returns: v.union(v.id('chatSessions'), v.id('ventChatSessions'), v.null()),
+  returns: v.union(
+    v.id('chatSessions'),
+    v.id('ventChatSessions'),
+    v.id('companionChatSessions'),
+    v.null()
+  ),
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
     const sessionsTableName =
-      args.type === 'main' ? 'chatSessions' : 'ventChatSessions';
+      args.type === 'main'
+        ? 'chatSessions'
+        : args.type === 'vent'
+          ? 'ventChatSessions'
+          : 'companionChatSessions';
 
     let session;
     if (args.type === 'main') {

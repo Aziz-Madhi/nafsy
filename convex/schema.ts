@@ -97,6 +97,40 @@ export default defineSchema({
     .index('by_user_date', ['userId', 'createdAt'])
     .index('by_mood', ['mood']),
 
+  // AI System Prompts (editable in cloud, supports OpenAI Prompt IDs)
+  aiPrompts: defineTable({
+    personality: v.union(v.literal('coach'), v.literal('companion'), v.literal('vent')),
+    
+    // Source of the prompt
+    source: v.union(
+      v.literal('openai_prompt_latest'),  // Use latest published version
+      v.literal('openai_prompt_pinned'),  // Use specific pinned version
+      v.literal('inline')                 // Use inline content
+    ),
+    
+    // OpenAI Prompt ID (e.g., "pmpt_...")
+    openaiPromptId: v.optional(v.string()),
+    
+    // Version number for pinned prompts
+    openaiPromptVersion: v.optional(v.number()),
+    
+    // Inline prompt content (fallback or when source is 'inline')
+    prompt: v.optional(v.string()),
+    
+    // Model configuration
+    model: v.optional(v.string()), // e.g., "gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"
+    temperature: v.optional(v.number()), // 0.0 to 2.0
+    maxTokens: v.optional(v.number()), // Optional token limit
+    topP: v.optional(v.number()), // Optional top-p parameter (0.0 to 1.0)
+    
+    // Metadata
+    active: v.boolean(),
+    version: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.string()),
+  })
+    .index('by_personality', ['personality', 'active']),
+
   exercises: defineTable({
     title: v.string(),
     titleAr: v.string(),
@@ -161,4 +195,22 @@ export default defineSchema({
     windowStart: v.number(), // epoch ms rounded to the start of the window
     count: v.number(),
   }).index('by_key_window', ['key', 'windowStart']),
+
+  // Basic AI telemetry for responses
+  aiTelemetry: defineTable({
+    userId: v.id('users'),
+    sessionId: v.string(),
+    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    provider: v.string(), // e.g., 'openai'
+    model: v.string(),
+    requestId: v.optional(v.string()),
+    startedAt: v.number(),
+    finishedAt: v.number(),
+    durationMs: v.number(),
+    contentLength: v.number(),
+    success: v.boolean(),
+    createdAt: v.number(),
+  })
+    .index('by_user_time', ['userId', 'startedAt'])
+    .index('by_session', ['sessionId']),
 });

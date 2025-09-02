@@ -2,13 +2,14 @@ import { httpRouter } from 'convex/server';
 import { httpAction } from './_generated/server';
 import { internal, api } from './_generated/api';
 import { openai } from '@ai-sdk/openai';
-import {
-  streamText,
-  convertToModelMessages,
-  UIMessage,
-  smoothStream,
-} from 'ai';
+import { streamText, convertToModelMessages, UIMessage } from 'ai';
 import { Id } from './_generated/dataModel';
+import {
+  buildResponsesPayload,
+  streamFromResponsesAPI,
+  transformResponsesStream,
+  isResponsesAPIEnabled,
+} from './openaiResponses';
 
 const http = httpRouter();
 
@@ -92,7 +93,7 @@ function toUiMessages(raw: any[]): UIMessage[] {
 async function handleChatStreaming(
   ctx: Parameters<Parameters<typeof httpAction>[0]>[0],
   request: Request,
-  personality: 'coach' | 'companion'
+  personality: 'coach' | 'companion' | 'vent'
 ) {
   const origin = request.headers.get('origin');
   const cors = buildCorsHeaders(origin);
@@ -139,6 +140,9 @@ async function handleChatStreaming(
     requestId?: string;
   };
 
+  const startedAt = Date.now();
+  let modelUsed = '';
+
   if (!messages || !sessionId) {
     return jsonError(400, 'VALIDATION', 'Missing messages or sessionId', cors);
   }
@@ -179,51 +183,225 @@ async function handleChatStreaming(
     }
   }
 
-  // System prompt per personality with language hint
-  const langHint = user.language === 'ar' ? 'Respond in Arabic when appropriate.' : '';
-  const systemPrompt =
-    (personality === 'coach'
-      ? process.env.COACH_SYSTEM_PROMPT
-      : process.env.COMPANION_SYSTEM_PROMPT) ||
-    (personality === 'coach'
-      ? `You are a compassionate and professional therapist specializing in Cognitive Behavioral Therapy (CBT). You provide structured, evidence-based therapeutic support. You listen actively, validate emotions, and guide users through their challenges with empathy and expertise. Keep responses concise but meaningful. ${langHint}`
-      : `You are a friendly and supportive daily companion. You check in on the user's wellbeing, celebrate their victories, and provide encouragement during difficult times. You're warm, approachable, and genuinely caring. Keep responses conversational and supportive. ${langHint}`);
+  // Check if we should use the new OpenAI Responses API
+  if (isResponsesAPIEnabled()) {
+    if (process.env.NODE_ENV !== 'production') {
+      console.debug('Using OpenAI Responses API for personality:', personality);
+    }
+    // New approach: OpenAI Responses API with Prompt IDs
+    try {
+      const { payload, modelConfig } = await buildResponsesPayload(
+        ctx,
+        personality,
+        messages
+      );
+      modelUsed = payload.model || 'unknown';
+      if (process.env.NODE_ENV !== 'production') {
+        console.debug('Built OpenAI Responses payload (redacted).');
+      }
+      const apiKey = process.env.OPENAI_API_KEY;
+      
+      if (!apiKey) {
+        return jsonError(500, 'CONFIG', 'OpenAI API key not configured', cors);
+      }
 
-  const uiMessages: UIMessage[] = toUiMessages(messages);
+      // Get streaming response from OpenAI
+      const openaiResponse = await streamFromResponsesAPI(apiKey, payload, modelConfig);
+      
+      // Transform to UI Message stream format
+      const transformedStream = new ReadableStream({
+        async start(controller) {
+          let accumulatedContent = '';
+          let chunkCount = 0;
+          
+          try {
+            if (process.env.NODE_ENV !== 'production') {
+              console.debug('Starting stream transformation');
+            }
 
-  // Single-write persistence: we'll only insert once on finish
+            for await (const chunk of transformResponsesStream(openaiResponse.body!)) {
+              chunkCount++;
+              controller.enqueue(new TextEncoder().encode(chunk));
+              
+              // Extract content for DB persistence
+              try {
+                const data = chunk.match(/data: (.+)\n/)?.[1];
+                if (data && data !== '[DONE]') {
+                  const parsed = JSON.parse(data);
+                  if (parsed.textDelta) {
+                    accumulatedContent += parsed.textDelta;
+                  }
+                }
+              } catch (e) {
+                if (process.env.NODE_ENV !== 'production') {
+                  console.warn('Failed to extract content from chunk:', e);
+                }
+              }
+            }
+            
+            if (process.env.NODE_ENV !== 'production') {
+              console.debug(
+                `Stream complete. chunks=${chunkCount} length=${accumulatedContent.length}`
+              );
+            }
+            
+            // Persist to database
+            if (accumulatedContent.trim()) {
+              await ctx.runMutation(internal.chatStreaming.insertAssistantMessage, {
+                sessionId,
+                userId: user._id as Id<'users'>,
+                chatType:
+                  personality === 'coach'
+                    ? 'main'
+                    : personality === 'companion'
+                      ? 'companion'
+                      : 'vent',
+                content: accumulatedContent.trim(),
+                requestId,
+              });
+              if (process.env.NODE_ENV !== 'production') {
+                console.debug('Message persisted to database');
+              }
+            } else {
+              if (process.env.NODE_ENV !== 'production') {
+                console.warn('No content to persist');
+              }
+            }
+            // Record telemetry
+            const finishedAt = Date.now();
+            const chatType =
+              personality === 'coach' ? 'main' : personality === 'companion' ? 'companion' : 'vent';
+            try {
+              await ctx.runMutation(internal.chatStreaming.recordAITelemetry, {
+                userId: user._id as Id<'users'>,
+                sessionId,
+                chatType: chatType as any,
+                provider: 'openai',
+                model: modelUsed || 'unknown',
+                requestId,
+                startedAt,
+                finishedAt,
+                durationMs: finishedAt - startedAt,
+                contentLength: accumulatedContent.length,
+                success: true,
+              });
+            } catch (e) {
+              // best-effort only
+            }
+          } catch (error) {
+            console.error('Stream processing error:', error);
+            controller.error(error);
+          } finally {
+            controller.close();
+          }
+        },
+      });
 
-  const result = streamText({
-    model: openai('gpt-4o-mini'),
-    messages: [
-      { role: 'system', content: systemPrompt },
-      ...convertToModelMessages(uiMessages),
-    ],
-    temperature: personality === 'coach' ? 0.7 : 0.8,
-    experimental_transform: smoothStream({ delayInMs: 40, chunking: 'word' }),
-    onFinish: async ({ text }) => {
+      return new Response(transformedStream, {
+        headers: {
+          ...cors,
+          'Content-Type': 'text/event-stream',
+          'Cache-Control': 'no-cache',
+          'Connection': 'keep-alive',
+        },
+      });
+    } catch (error) {
+      console.error('OpenAI Responses API error:', error);
+      return jsonError(500, 'AI_ERROR', 'Failed to generate response', cors);
+    }
+  } else {
+    // Legacy approach: Vercel AI SDK with inline prompts
+    const promptConfig = await ctx.runQuery(api.aiPrompts.getPrompt, {
+      personality,
+    });
+
+    // Get prompt content (inline or fallback)
+    const systemPrompt =
+      promptConfig?.prompt ||
+      (personality === 'coach'
+        ? process.env.COACH_SYSTEM_PROMPT
+        : personality === 'companion'
+          ? process.env.COMPANION_SYSTEM_PROMPT
+          : process.env.VENT_SYSTEM_PROMPT) ||
+      (personality === 'coach'
+        ? `You are a compassionate and professional therapist specializing in Cognitive Behavioral Therapy (CBT). You provide structured, evidence-based therapeutic support. You listen actively, validate emotions, and guide users through their challenges with empathy and expertise. Keep responses concise but meaningful. Detect the user's language from their messages and respond in the same language naturally.`
+        : personality === 'companion'
+          ? `You are a friendly and supportive daily companion. You check in on the user's wellbeing, celebrate their victories, and provide encouragement during difficult times. You're warm, approachable, and genuinely caring. Keep responses conversational and supportive. Detect the user's language from their messages and respond in the same language naturally.`
+          : `You are a safe, non-judgmental listener for emotional release. Acknowledge feelings without trying to fix them. Provide validation and gentle support, allowing the user to express themselves freely. Keep responses brief and empathetic. Detect the user's language from their messages and respond in the same language naturally.`);
+
+    const uiMessages: UIMessage[] = toUiMessages(messages);
+
+    // Use model configuration from database with fallbacks
+    const modelName = promptConfig?.model || 'gpt-4o-mini';
+    modelUsed = modelName;
+    const temperature = promptConfig?.temperature || (personality === 'coach' ? 0.7 : 0.8);
+    const maxTokens = promptConfig?.maxTokens;
+    const topP = promptConfig?.topP;
+
+    const streamTextConfig: any = {
+      model: openai(modelName),
+      messages: [
+        { role: 'system', content: systemPrompt },
+        ...convertToModelMessages(uiMessages),
+      ],
+      temperature: temperature,
+    };
+
+    // Add optional parameters if configured
+    if (maxTokens !== undefined) {
+      streamTextConfig.maxTokens = maxTokens;
+    }
+    if (topP !== undefined) {
+      streamTextConfig.topP = topP;
+    }
+
+    // Add onFinish callback for persistence
+    streamTextConfig.onFinish = async ({ text }: { text: string }) => {
       try {
         const finalText = (text ?? '').trim();
-        if (!finalText) return; // Avoid empty inserts
+        if (!finalText) return;
         await ctx.runMutation(internal.chatStreaming.insertAssistantMessage, {
           sessionId,
           userId: user._id as Id<'users'>,
-          chatType: personality === 'coach' ? 'main' : 'companion',
+          chatType:
+            personality === 'coach'
+              ? 'main'
+              : personality === 'companion'
+                ? 'companion'
+                : 'vent',
           content: finalText,
           requestId,
         });
+        // telemetry
+        const finishedAt = Date.now();
+        const chatType =
+          personality === 'coach' ? 'main' : personality === 'companion' ? 'companion' : 'vent';
+        try {
+          await ctx.runMutation(internal.chatStreaming.recordAITelemetry, {
+            userId: user._id as Id<'users'>,
+            sessionId,
+            chatType: chatType as any,
+            provider: 'openai',
+            model: modelUsed || 'unknown',
+            requestId,
+            startedAt,
+            finishedAt,
+            durationMs: finishedAt - startedAt,
+            contentLength: finalText.length,
+            success: true,
+          });
+        } catch {}
       } catch (err) {
         console.error('Failed to insert assistant message:', err);
       }
-    },
-  });
+    };
 
-  // Note: We no longer perform per-chunk DB writes. UI streaming remains intact
-  // via SSE response below; the DB is written exactly once in onFinish above.
+    const result = streamText(streamTextConfig);
 
-  return result.toUIMessageStreamResponse({
-    headers: cors,
-  });
+    return result.toUIMessageStreamResponse({
+      headers: cors,
+    });
+  }
 }
 
 // Coach personality streaming endpoint
@@ -240,7 +418,16 @@ http.route({
   path: '/chat/companion',
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
-    return handleChatStreaming(ctx, request, 'companion');
+  return handleChatStreaming(ctx, request, 'companion');
+  }),
+});
+
+// Vent personality streaming endpoint
+http.route({
+  path: '/chat/vent',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    return handleChatStreaming(ctx, request, 'vent');
   }),
 });
 
@@ -256,6 +443,15 @@ http.route({
 
 http.route({
   path: '/chat/companion',
+  method: 'OPTIONS',
+  handler: httpAction(async (_ctx, request) => {
+    const cors = buildCorsHeaders(request.headers.get('origin'));
+    return new Response(null, { status: 204, headers: cors });
+  }),
+});
+
+http.route({
+  path: '/chat/vent',
   method: 'OPTIONS',
   handler: httpAction(async (_ctx, request) => {
     const cors = buildCorsHeaders(request.headers.get('origin'));

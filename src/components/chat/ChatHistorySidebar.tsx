@@ -284,11 +284,8 @@ export function ChatHistorySidebar({
   // Network status for showing offline indicator
   const { isOnline } = useNetworkStatus();
 
-  // Mutations - only for coach and companion (no event sessions to delete)
-  const deleteCoachSession = useMutation(api.mainChat.deleteMainSession);
-  const deleteCompanionSession = useMutation(
-    api.companionChat.deleteCompanionChatSession
-  );
+  // Unified deletion for coach/companion sessions
+  const deleteChatSession = useMutation(api.chat.deleteChatSession);
 
   // Clean slate - no animations yet
 
@@ -329,12 +326,12 @@ export function ChatHistorySidebar({
   const handleSessionDelete = async (sessionId: string, chatType: ChatType) => {
     try {
       impactAsync(ImpactFeedbackStyle.Medium);
-      if (chatType === 'coach') {
-        await deleteCoachSession({ sessionId });
-      } else if (chatType === 'companion') {
-        await deleteCompanionSession({ sessionId });
+      if (chatType === 'coach' || chatType === 'companion') {
+        await deleteChatSession({
+          type: chatType === 'coach' ? 'main' : 'companion',
+          sessionId,
+        } as any);
       }
-      // Event sessions don't exist in backend, so no deletion needed
     } catch (error) {
       console.error('Error deleting session:', error);
     }

@@ -4,7 +4,13 @@
  */
 
 import React, { useRef, useCallback, useEffect, memo } from 'react';
-import { View, TouchableWithoutFeedback, Keyboard, NativeSyntheticEvent, NativeScrollEvent } from 'react-native';
+import {
+  View,
+  TouchableWithoutFeedback,
+  Keyboard,
+  NativeSyntheticEvent,
+  NativeScrollEvent,
+} from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -105,6 +111,10 @@ export const ChatScreen = memo(function ChatScreen({
   const isNearBottomRef = useRef(true);
   // While streaming, follow the bottom unless the user scrolls away
   const followStreamRef = useRef(false);
+  // Track active user interaction to temporarily disable auto-follow
+  const userInteractingRef = useRef(false);
+  // Global gate: once user interacts during a stream, disable auto-follow until stream ends
+  const autoFollowEnabledRef = useRef(true);
   const SCROLL_BOTTOM_THRESHOLD = 120; // px
 
   const handleScroll = useCallback(
@@ -114,11 +124,56 @@ export const ChatScreen = memo(function ChatScreen({
         contentSize.height - (contentOffset.y + layoutMeasurement.height);
       const nearBottom = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
       isNearBottomRef.current = nearBottom;
-      // Update follow flag dynamically so returning to bottom re-enables follow.
-      // Keep following while the streaming row is visible, even if isStreaming already flipped.
-      followStreamRef.current = nearBottom
-        ? followStreamRef.current || isStreaming || showStreamRow
-        : false;
+      // Update follow flag dynamically but respect user interaction and global gate
+      followStreamRef.current =
+        nearBottom &&
+        !userInteractingRef.current &&
+        autoFollowEnabledRef.current
+          ? followStreamRef.current || isStreaming || showStreamRow
+          : false;
+    },
+    [isStreaming, showStreamRow]
+  );
+
+  // User scroll interaction handlers to pause auto-follow during manual scrolling
+  const onScrollBeginDrag = useCallback(() => {
+    userInteractingRef.current = true;
+    // Immediately pause following to avoid fighting the gesture
+    followStreamRef.current = false;
+    // Disable auto-follow for the rest of this stream
+    autoFollowEnabledRef.current = false;
+  }, []);
+
+  const onMomentumScrollBegin = useCallback(() => {
+    userInteractingRef.current = true;
+    followStreamRef.current = false;
+    autoFollowEnabledRef.current = false;
+  }, []);
+
+  const onScrollEndDrag = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+      const distanceFromBottom =
+        contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      const nearBottom = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
+      isNearBottomRef.current = nearBottom;
+      // Do not resume auto-follow mid-stream; let user control
+      userInteractingRef.current = false;
+      followStreamRef.current = false;
+    },
+    [isStreaming, showStreamRow]
+  );
+
+  const onMomentumScrollEnd = useCallback(
+    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
+      const distanceFromBottom =
+        contentSize.height - (contentOffset.y + layoutMeasurement.height);
+      const nearBottom = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
+      isNearBottomRef.current = nearBottom;
+      // Keep auto-follow disabled mid-stream
+      userInteractingRef.current = false;
+      followStreamRef.current = false;
     },
     [isStreaming, showStreamRow]
   );
@@ -191,6 +246,8 @@ export const ChatScreen = memo(function ChatScreen({
         streamStartTimeRef.current = Date.now();
         setShowStreamRow(true);
       }
+      // Re-enable auto-follow at the beginning of a new stream
+      autoFollowEnabledRef.current = true;
       if (isNearBottomRef.current) followStreamRef.current = true;
       return;
     }
@@ -200,7 +257,10 @@ export const ChatScreen = memo(function ChatScreen({
       // Determine length of finalized assistant content (if present)
       let lastUserIdx = -1;
       for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].role === 'user') { lastUserIdx = i; break; }
+        if (messages[i].role === 'user') {
+          lastUserIdx = i;
+          break;
+        }
       }
       const finalizedAssistant =
         lastUserIdx >= 0 && messages[lastUserIdx + 1]?.role === 'assistant'
@@ -214,6 +274,8 @@ export const ChatScreen = memo(function ChatScreen({
           setShowStreamRow(false);
           streamStartTimeRef.current = null;
           followStreamRef.current = false;
+          // Stream fully ended; reset auto-follow for next time
+          autoFollowEnabledRef.current = true;
         }, 800);
         return () => clearTimeout(t);
       }
@@ -231,12 +293,16 @@ export const ChatScreen = memo(function ChatScreen({
           setShowStreamRow(false);
           streamStartTimeRef.current = null;
           followStreamRef.current = false;
+          autoFollowEnabledRef.current = true;
         } else {
           setTimeout(check, 60);
         }
       };
       const id = setTimeout(check, 60);
-      return () => { cancelled = true; clearTimeout(id); };
+      return () => {
+        cancelled = true;
+        clearTimeout(id);
+      };
     }
   }, [isStreaming, showStreamRow, streamingContent, messages]);
 
@@ -268,6 +334,10 @@ export const ChatScreen = memo(function ChatScreen({
     if (!showStreamRow) return;
     if (!flashListRef.current) return;
     if (!streamingContent || streamingContent.length === 0) return;
+    // Do not auto-scroll while the user is actively interacting
+    if (userInteractingRef.current) return;
+    // Respect global auto-follow disabling after user interaction
+    if (!autoFollowEnabledRef.current) return;
     // Only follow if user is near bottom or follow flag is set
     if (!isNearBottomRef.current && !followStreamRef.current) return;
     followStreamRef.current = true;
@@ -285,14 +355,15 @@ export const ChatScreen = memo(function ChatScreen({
     });
     return () => cancelAnimationFrame(raf);
   }, [showStreamRow, streamingContent]);
-  const streamingRow: Message | null = showStreamRow && streamingContent
-    ? {
-        _id: '_streaming',
-        content: streamingContent,
-        role: 'assistant',
-        _creationTime: streamStartTimeRef.current ?? Date.now(),
-      }
-    : null;
+  const streamingRow: Message | null =
+    showStreamRow && streamingContent
+      ? {
+          _id: '_streaming',
+          content: streamingContent,
+          role: 'assistant',
+          _creationTime: streamStartTimeRef.current ?? Date.now(),
+        }
+      : null;
 
   const displayMessages = React.useMemo(() => {
     if (!streamingRow) return messages;
@@ -301,7 +372,10 @@ export const ChatScreen = memo(function ChatScreen({
     // bubble (the ephemeral streaming row) for the current turn.
     let lastUserIdx = -1;
     for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === 'user') { lastUserIdx = i; break; }
+      if (messages[i].role === 'user') {
+        lastUserIdx = i;
+        break;
+      }
     }
     if (lastUserIdx >= 0) {
       return [...messages.slice(0, lastUserIdx + 1), streamingRow];
@@ -364,6 +438,10 @@ export const ChatScreen = memo(function ChatScreen({
                     getItemType={getItemType}
                     horizontalPadding={20}
                     onScroll={handleScroll}
+                    onScrollBeginDrag={onScrollBeginDrag}
+                    onScrollEndDrag={onScrollEndDrag}
+                    onMomentumScrollBegin={onMomentumScrollBegin}
+                    onMomentumScrollEnd={onMomentumScrollEnd}
                     extraData={{ showStreamRow, streamingContent }}
                   />
                 </View>

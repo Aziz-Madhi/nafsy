@@ -3,7 +3,13 @@ import { View, Alert, Pressable } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
-import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
+import Animated, {
+  FadeInUp,
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+  withSequence,
+} from 'react-native-reanimated';
 import { ChatBubbleProps } from './types';
 import SendingSpinner from './SendingSpinner';
 import { AnimatedContainer, StaggeredListItem } from '~/lib/animations';
@@ -31,7 +37,9 @@ export const ChatBubble = React.memo(function ChatBubble({
   const justifyContent = isUser ? 'justify-end' : 'justify-start';
   const styles = getChatStyles(chatType);
   const colors = useColors();
-  const containerWidthClass = isUser ? 'max-w-[85%] self-end' : 'w-full self-start';
+  const containerWidthClass = isUser
+    ? 'max-w-[85%] self-end'
+    : 'w-full self-start';
 
   const handleCopy = useCallback(async () => {
     if (isUser) return;
@@ -62,9 +70,12 @@ export const ChatBubble = React.memo(function ChatBubble({
   // Copied feedback state
   const [copied, setCopied] = useState(false);
   const copiedTimer = useRef<NodeJS.Timeout | null>(null);
-  useEffect(() => () => {
-    if (copiedTimer.current) clearTimeout(copiedTimer.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+    },
+    []
+  );
 
   const Wrapper = ({ children }: { children: React.ReactNode }) =>
     animated ? (
@@ -93,7 +104,9 @@ export const ChatBubble = React.memo(function ChatBubble({
             'px-4 py-3 rounded-2xl',
             // For AI responses we keep a transparent background but ensure the
             // container itself anchors to the left in RTL as well
-            isUser ? styles.bubbleUserClass : 'bg-transparent items-start w-full'
+            isUser
+              ? styles.bubbleUserClass
+              : 'bg-transparent items-start w-full'
           )}
           style={{
             ...(isUser

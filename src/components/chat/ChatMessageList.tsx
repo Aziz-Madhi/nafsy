@@ -5,6 +5,7 @@
 
 import React, { RefObject, memo } from 'react';
 import { FlashList } from '@shopify/flash-list';
+import { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
 export interface Message {
   _id: string;
@@ -22,6 +23,10 @@ interface ChatMessageListProps {
   horizontalPadding: number;
   footer?: React.ReactNode;
   onScroll?: (e: any) => void;
+  onScrollBeginDrag?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  onScrollEndDrag?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  onMomentumScrollBegin?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
+  onMomentumScrollEnd?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   extraData?: any;
 }
 
@@ -34,6 +39,10 @@ export const ChatMessageList = memo(function ChatMessageList({
   horizontalPadding,
   footer,
   onScroll,
+  onScrollBeginDrag,
+  onScrollEndDrag,
+  onMomentumScrollBegin,
+  onMomentumScrollEnd,
   extraData,
 }: ChatMessageListProps) {
   // Content container style with proper bottom padding for floating tab bar with input
@@ -57,6 +66,10 @@ export const ChatMessageList = memo(function ChatMessageList({
       ListFooterComponent={footer}
       contentInsetAdjustmentBehavior="automatic"
       onScroll={onScroll}
+      onScrollBeginDrag={onScrollBeginDrag as any}
+      onScrollEndDrag={onScrollEndDrag as any}
+      onMomentumScrollBegin={onMomentumScrollBegin as any}
+      onMomentumScrollEnd={onMomentumScrollEnd as any}
       // Ensure onScroll fires consistently for near-bottom detection
       scrollEventThrottle={16}
       extraData={extraData}

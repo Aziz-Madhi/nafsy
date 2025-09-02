@@ -45,26 +45,17 @@ function ChatHistoryScreen() {
     type: 'vent',
   }));
 
-  const deleteMainSession = useMutation(api.mainChat.deleteMainSession);
-  const deleteVentSession = useMutation(api.ventChat.deleteVentSession);
+  const deleteChatSession = useMutation(api.chat.deleteChatSession);
 
   const handleDeleteSession = useCallback(
     async (sessionId: string, type: 'main' | 'vent') => {
       try {
-        if (type === 'main') {
-          await deleteMainSession({
-            sessionId,
-          });
-        } else {
-          await deleteVentSession({
-            ventSessionId: sessionId,
-          });
-        }
+        await deleteChatSession({ type, sessionId });
       } catch (error) {
         console.error('Error deleting session:', error);
       }
     },
-    [deleteMainSession, deleteVentSession]
+    [deleteChatSession]
   );
 
   const handleOpenSession = useCallback(
