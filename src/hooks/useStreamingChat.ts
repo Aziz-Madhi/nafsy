@@ -17,8 +17,7 @@ interface UseStreamingChatReturn {
   sendStreamingMessage: (
     text: string,
     sessionId: string,
-    messages: { role: 'user' | 'assistant'; content: string }[],
-    requestId?: string
+    messages: { role: 'user' | 'assistant'; content: string }[]
   ) => Promise<void>;
   cancelStreaming: () => void;
 }
@@ -32,39 +31,48 @@ export function useStreamingChat(
 ): UseStreamingChatReturn {
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  const isStreamingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
   const abortControllerRef = useRef<AbortController | null>(null);
-  // Throttle streaming updates to avoid scroll jank.
-  // Buffer incoming chunks and flush at ~30fps.
-  const bufferRef = useRef('');
-  const flushTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  // Character pacing via RAF for smooth per-frame updates
+  const queueRef = useRef('');
+  const rafIdRef = useRef<number | null>(null);
+  const stepRef = useRef(2); // 2 characters per frame by default
+  // Queue for one pending request if user sends while streaming
+  const pendingRef = useRef<
+    | null
+    | {
+        text: string;
+        sessionId: string;
+        messages: { role: 'user' | 'assistant'; content: string }[];
+      }
+  >(null);
   const isOnline = useNetworkStatus();
   const { getToken } = useAuth();
 
   // Simple, direct chunk appending (no pacing)
 
-  // Cancel ongoing streaming
+  // Cancel ongoing streaming (user-initiated)
   const cancelStreaming = useCallback(() => {
     if (abortControllerRef.current) {
       abortControllerRef.current.abort();
       abortControllerRef.current = null;
     }
-    if (flushTimerRef.current) {
-      clearInterval(flushTimerRef.current);
-      flushTimerRef.current = null;
-    }
-    bufferRef.current = '';
     setIsStreaming(false);
+    isStreamingRef.current = false;
     setStreamingContent('');
+    queueRef.current = '';
+    if (rafIdRef.current != null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
   }, []);
 
-  // Send message and stream response
-  const sendStreamingMessage = useCallback(
+  const startStream = useCallback(
     async (
       text: string,
       sessionId: string,
-      messages: { role: 'user' | 'assistant'; content: string }[],
-      requestId?: string
+      messages: { role: 'user' | 'assistant'; content: string }[]
     ) => {
       // Check if offline
       if (!isOnline) {
@@ -74,25 +82,31 @@ export function useStreamingChat(
         return;
       }
 
-      // Cancel any existing streaming
-      cancelStreaming();
-
       // Reset state
       setError(null);
       setIsStreaming(true);
+      isStreamingRef.current = true;
       setStreamingContent('');
-      bufferRef.current = '';
+      queueRef.current = '';
+      // start RAF loop on demand
+      const ensureRaf = () => {
+        if (rafIdRef.current != null) return;
+        const tick = () => {
+          rafIdRef.current = null;
+          const q = queueRef.current;
+          if (q.length > 0) {
+            const n = stepRef.current;
+            const chunk = q.slice(0, n);
+            queueRef.current = q.slice(n);
+            setStreamingContent((prev) => prev + chunk);
+          }
+          if (queueRef.current.length > 0 || isStreamingRef.current) {
+            rafIdRef.current = requestAnimationFrame(tick);
+          }
+        };
+        rafIdRef.current = requestAnimationFrame(tick);
+      };
 
-      // Start periodic flush to batch UI updates
-      if (flushTimerRef.current) {
-        clearInterval(flushTimerRef.current);
-      }
-      flushTimerRef.current = setInterval(() => {
-        if (!bufferRef.current) return;
-        const chunk = bufferRef.current;
-        bufferRef.current = '';
-        setStreamingContent((prev) => prev + chunk);
-      }, 33); // ~30fps
 
       // Create new abort controller
       const abortController = new AbortController();
@@ -123,37 +137,53 @@ export function useStreamingChat(
           messages: updatedMessages,
           sessionId,
           signal: abortController.signal,
-          requestId,
           authToken: token,
           onChunk: (chunk) => {
-            if (chunk) bufferRef.current += chunk;
+            if (!chunk) return;
+            queueRef.current += chunk;
+            ensureRaf();
           },
           onComplete: () => {
-            // One final flush
-            if (bufferRef.current) {
-              setStreamingContent((prev) => prev + bufferRef.current);
-              bufferRef.current = '';
-            }
-            if (flushTimerRef.current) {
-              clearInterval(flushTimerRef.current);
-              flushTimerRef.current = null;
-            }
             setIsStreaming(false);
+            isStreamingRef.current = false;
+            // Ensure the remaining queue flushes with RAF; delay next stream slightly
+            // Start any queued request after a brief delay to let DB finalize
+            const next = pendingRef.current;
+            pendingRef.current = null;
+            if (next) {
+              setTimeout(() => {
+                startStream(next.text, next.sessionId, next.messages);
+              }, 300);
+            }
           },
           onError: (err) => {
-            console.error('Streaming error:', err);
-            setError(err.message);
-            setIsStreaming(false);
-            if (flushTimerRef.current) {
-              clearInterval(flushTimerRef.current);
-              flushTimerRef.current = null;
-            }
-
-            // Show user-friendly error
+            // Handle 429 (session lock) gracefully with a short queued retry
             const msg = (err?.message || '').toLowerCase();
             const isConcurrencyLimit =
               msg.includes('429') || msg.includes('another response is in progress');
-            if (!abortController.signal.aborted && !isConcurrencyLimit) {
+
+            if (isConcurrencyLimit && !abortController.signal.aborted) {
+              // Queue this attempt and retry when lock likely clears
+              pendingRef.current = { text, sessionId, messages };
+              setIsStreaming(false);
+              isStreamingRef.current = false;
+              // Try a delayed retry in case no onComplete will fire locally
+              setTimeout(() => {
+                if (!pendingRef.current) return;
+                if (!abortControllerRef.current && !isStreaming) {
+                  const p = pendingRef.current;
+                  pendingRef.current = null;
+                  startStream(p.text, p.sessionId, p.messages);
+                }
+              }, 1000);
+              return; // Do not alert user; queued for retry
+            }
+
+            // Non-429 errors
+            setError(err.message);
+            setIsStreaming(false);
+            isStreamingRef.current = false;
+            if (!abortController.signal.aborted) {
               Alert.alert(
                 'Chat Error',
                 'Failed to get AI response. Please try again.',
@@ -170,7 +200,24 @@ export function useStreamingChat(
         abortControllerRef.current = null;
       }
     },
-    [personality, isOnline, cancelStreaming, getToken]
+    [personality, isOnline, getToken]
+  );
+
+  // Send message entrypoint: if a stream is in progress, queue the new one
+  const sendStreamingMessage = useCallback(
+    async (
+      text: string,
+      sessionId: string,
+      messages: { role: 'user' | 'assistant'; content: string }[]
+    ) => {
+      if (isStreaming) {
+        // queue and let current onComplete start it
+        pendingRef.current = { text, sessionId, messages };
+        return;
+      }
+      await startStream(text, sessionId, messages);
+    },
+    [isStreaming, startStream]
   );
 
   return {

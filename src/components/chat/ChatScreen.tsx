@@ -103,6 +103,8 @@ export const ChatScreen = memo(function ChatScreen({
 
   // Auto-scroll only when already near the bottom to avoid jumpiness
   const isNearBottomRef = useRef(true);
+  // While streaming, follow the bottom unless the user scrolls away
+  const followStreamRef = useRef(false);
   const SCROLL_BOTTOM_THRESHOLD = 120; // px
 
   const handleScroll = useCallback(
@@ -110,9 +112,15 @@ export const ChatScreen = memo(function ChatScreen({
       const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
       const distanceFromBottom =
         contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      isNearBottomRef.current = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
+      const nearBottom = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
+      isNearBottomRef.current = nearBottom;
+      // Update follow flag dynamically so returning to bottom re-enables follow.
+      // Keep following while the streaming row is visible, even if isStreaming already flipped.
+      followStreamRef.current = nearBottom
+        ? followStreamRef.current || isStreaming || showStreamRow
+        : false;
     },
-    []
+    [isStreaming, showStreamRow]
   );
 
   const scrollToBottom = useCallback(() => {
@@ -141,51 +149,103 @@ export const ChatScreen = memo(function ChatScreen({
 
   // FlashList render functions
   const renderMessage = useCallback(
-    ({ item }: { item: Message }) => (
-      <ChatBubble
-        message={item.content}
-        isUser={item.role === 'user'}
-        timestamp={new Date(item._creationTime).toLocaleTimeString('en-US', {
-          hour: '2-digit',
-          minute: '2-digit',
-        })}
-        chatType={activeChatType}
-      />
-    ),
+    ({ item }: { item: Message }) => {
+      const isStreamRow = item._id === '_streaming';
+      const hasText = (item.content || '').trim().length > 0;
+      // Stable rule: show copy for any finalized assistant message with text.
+      // Never show for the ephemeral streaming row.
+      const showCopy = !isStreamRow && item.role === 'assistant' && hasText;
+
+      return (
+        <ChatBubble
+          message={item.content}
+          isUser={item.role === 'user'}
+          chatType={activeChatType}
+          animated={!isStreamRow}
+          showCopy={showCopy}
+        />
+      );
+    },
     [activeChatType]
   );
 
+  // Use stable keys. The ephemeral streaming row has its own id.
   const keyExtractor = useCallback((item: Message) => item._id, []);
-  const getItemType = useCallback((item: Message) => item.role, []);
+  // Give the streaming row a distinct type to avoid measurement collisions
+  const getItemType = useCallback(
+    (item: Message) => (item._id === '_streaming' ? 'streaming' : item.role),
+    []
+  );
 
-  // While streaming, prefer showing the footer and hide the newly inserted
-  // finalized assistant message to avoid sudden switch and duplication.
-  // Keep the footer visible until the persisted assistant message appears
-  const lastMessage = messages[messages.length - 1];
-  function normalize(s?: string) {
-    return (s || '').replace(/\s+/g, ' ').trim();
-  }
-  const hasFinalAssistant =
-    !!lastMessage &&
-    lastMessage.role === 'assistant' &&
-    typeof lastMessage.content === 'string' &&
-    lastMessage.content.length > 0;
-  const nLast = normalize(lastMessage?.content);
-  const nStream = normalize(streamingContent);
-  const finalMatchesStream = hasFinalAssistant
-    ? nLast === nStream ||
-      nLast.endsWith(nStream) ||
-      nStream.endsWith(nLast) ||
-      nLast.startsWith(nStream) ||
-      nStream.startsWith(nLast)
-    : false;
-  const showStreamingFooter = Boolean(streamingContent) && (isStreaming || !finalMatchesStream);
+  // Ephemeral in-list streaming row to avoid footer-induced layout shifts
+  const [showStreamRow, setShowStreamRow] = React.useState(false);
+  const streamStartTimeRef = React.useRef<number | null>(null);
+  // Control visibility of the ephemeral streaming row. We keep it mounted while
+  // tokens are still rendering locally, even if SSE has completed and isStreaming
+  // has flipped to false. This prevents the final server message from appearing
+  // before the streamed text visually finishes.
+  useEffect(() => {
+    // When streaming starts, ensure the row is visible and follow enabled
+    if (isStreaming) {
+      if (!showStreamRow) {
+        streamStartTimeRef.current = Date.now();
+        setShowStreamRow(true);
+      }
+      if (isNearBottomRef.current) followStreamRef.current = true;
+      return;
+    }
 
-  // Scroll on new rows only if near bottom. Avoid reacting to text updates.
+    // If not streaming anymore but the row is still showing, decide when to hide.
+    if (showStreamRow) {
+      // Determine length of finalized assistant content (if present)
+      let lastUserIdx = -1;
+      for (let i = messages.length - 1; i >= 0; i--) {
+        if (messages[i].role === 'user') { lastUserIdx = i; break; }
+      }
+      const finalizedAssistant =
+        lastUserIdx >= 0 && messages[lastUserIdx + 1]?.role === 'assistant'
+          ? messages[lastUserIdx + 1]
+          : null;
+      const targetLen = finalizedAssistant?.content?.length ?? 0;
+
+      // If we don't know the target length, fall back to a short grace timer
+      if (!targetLen) {
+        const t = setTimeout(() => {
+          setShowStreamRow(false);
+          streamStartTimeRef.current = null;
+          followStreamRef.current = false;
+        }, 800);
+        return () => clearTimeout(t);
+      }
+
+      // Hold the row until the locally rendered text catches up to the
+      // finalized assistant content length (or until timeout for safety)
+      let cancelled = false;
+      const start = Date.now();
+      const check = () => {
+        if (cancelled) return;
+        const currentLen = (streamingContent || '').length;
+        const done = currentLen >= targetLen - 1; // small tolerance
+        const timedOut = Date.now() - start > 2500;
+        if (done || timedOut) {
+          setShowStreamRow(false);
+          streamStartTimeRef.current = null;
+          followStreamRef.current = false;
+        } else {
+          setTimeout(check, 60);
+        }
+      };
+      const id = setTimeout(check, 60);
+      return () => { cancelled = true; clearTimeout(id); };
+    }
+  }, [isStreaming, showStreamRow, streamingContent, messages]);
+
+  // Scroll on new rows only if near bottom. Do NOT react to streaming text updates
+  // or ephemeral row toggling to avoid layout thrash while streaming.
   useEffect(() => {
     scrollToBottom();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length, showStreamingFooter]);
+  }, [messages.length]);
 
   // Detect user-sent message appended at the end and force-scroll to bottom
   const lastIdRef = React.useRef<string | null>(null);
@@ -196,18 +256,58 @@ export const ChatScreen = memo(function ChatScreen({
       // New tail message detected
       if (last.role === 'user') {
         forceScrollToBottom();
+        // When user sends, prepare to follow the upcoming stream
+        followStreamRef.current = true;
       }
       lastIdRef.current = last._id;
     }
   }, [messages, forceScrollToBottom]);
-  const displayMessages = (() => {
-    if (!isStreaming || messages.length === 0) return messages;
-    const last = messages[messages.length - 1];
-    if (last.role === 'assistant') {
-      return messages.slice(0, -1);
+
+  // Keep anchored to bottom while the streaming row grows, without jumpy animations
+  useEffect(() => {
+    if (!showStreamRow) return;
+    if (!flashListRef.current) return;
+    if (!streamingContent || streamingContent.length === 0) return;
+    // Only follow if user is near bottom or follow flag is set
+    if (!isNearBottomRef.current && !followStreamRef.current) return;
+    followStreamRef.current = true;
+    const raf = requestAnimationFrame(() => {
+      try {
+        // Avoid passing params to sidestep platform-specific scrollTo bugs
+        flashListRef.current?.scrollToEnd();
+      } catch {}
+      // Second pass after layout settles
+      setTimeout(() => {
+        try {
+          flashListRef.current?.scrollToEnd();
+        } catch {}
+      }, 50);
+    });
+    return () => cancelAnimationFrame(raf);
+  }, [showStreamRow, streamingContent]);
+  const streamingRow: Message | null = showStreamRow && streamingContent
+    ? {
+        _id: '_streaming',
+        content: streamingContent,
+        role: 'assistant',
+        _creationTime: streamStartTimeRef.current ?? Date.now(),
+      }
+    : null;
+
+  const displayMessages = React.useMemo(() => {
+    if (!streamingRow) return messages;
+    // Hide any assistant messages that appear after the latest user message
+    // while streaming is in progress. This guarantees a single assistant
+    // bubble (the ephemeral streaming row) for the current turn.
+    let lastUserIdx = -1;
+    for (let i = messages.length - 1; i >= 0; i--) {
+      if (messages[i].role === 'user') { lastUserIdx = i; break; }
     }
-    return messages;
-  })();
+    if (lastUserIdx >= 0) {
+      return [...messages.slice(0, lastUserIdx + 1), streamingRow];
+    }
+    return [streamingRow];
+  }, [messages, streamingRow]);
 
   return (
     <View className="flex-1 bg-background">
@@ -264,22 +364,7 @@ export const ChatScreen = memo(function ChatScreen({
                     getItemType={getItemType}
                     horizontalPadding={20}
                     onScroll={handleScroll}
-                    footer={
-                      showStreamingFooter ? (
-                        <View className="w-full pb-2">
-                          <ChatBubble
-                            message={streamingContent}
-                            isUser={false}
-                            timestamp={new Date().toLocaleTimeString('en-US', {
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                            chatType={activeChatType}
-                            animated={false}
-                          />
-                        </View>
-                      ) : undefined
-                    }
+                    extraData={{ showStreamRow, streamingContent }}
                   />
                 </View>
               )}

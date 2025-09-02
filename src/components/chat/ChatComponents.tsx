@@ -1,14 +1,17 @@
-import React from 'react';
-import { View } from 'react-native';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { View, Alert, Pressable } from 'react-native';
 import { SymbolView } from 'expo-symbols';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
-import Animated, { FadeInUp } from 'react-native-reanimated';
+import Animated, { FadeInUp, useSharedValue, useAnimatedStyle, withTiming, withSequence } from 'react-native-reanimated';
 import { ChatBubbleProps } from './types';
 import SendingSpinner from './SendingSpinner';
 import { AnimatedContainer, StaggeredListItem } from '~/lib/animations';
 import { ChatType } from '~/store/useChatUIStore';
 import { getChatStyles } from '~/lib/chatStyles';
+import * as Clipboard from 'expo-clipboard';
+import { Copy } from 'lucide-react-native';
+import { useColors } from '~/hooks/useColors';
 // Removed useIsRTL - UI layout always stays LTR
 
 // =====================
@@ -17,16 +20,51 @@ import { getChatStyles } from '~/lib/chatStyles';
 export const ChatBubble = React.memo(function ChatBubble({
   message,
   isUser,
-  timestamp,
   avatar,
   index = 0,
   status,
   chatType = 'coach',
   animated = true,
+  showCopy = true,
 }: ChatBubbleProps & { chatType?: ChatType }) {
   // Consistent positioning: user messages right, AI messages left
   const justifyContent = isUser ? 'justify-end' : 'justify-start';
   const styles = getChatStyles(chatType);
+  const colors = useColors();
+  const containerWidthClass = isUser ? 'max-w-[85%] self-end' : 'w-full self-start';
+
+  const handleCopy = useCallback(async () => {
+    if (isUser) return;
+    try {
+      await Clipboard.setStringAsync(message);
+      // animate icon feedback
+      copyScale.value = withSequence(
+        withTiming(0.9, { duration: 80 }),
+        withTiming(1, { duration: 120 })
+      );
+      setCopied(true);
+      if (copiedTimer.current) clearTimeout(copiedTimer.current);
+      copiedTimer.current = setTimeout(() => setCopied(false), 1200);
+    } catch (e) {
+      // Fall back to a quiet alert only on failure
+      try {
+        Alert.alert('Copy failed', 'Unable to copy message');
+      } catch {}
+    }
+  }, [isUser, message]);
+
+  // Small scale animation for copy icon
+  const copyScale = useSharedValue(1);
+  const copyStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: copyScale.value }],
+  }));
+
+  // Copied feedback state
+  const [copied, setCopied] = useState(false);
+  const copiedTimer = useRef<NodeJS.Timeout | null>(null);
+  useEffect(() => () => {
+    if (copiedTimer.current) clearTimeout(copiedTimer.current);
+  }, []);
 
   const Wrapper = ({ children }: { children: React.ReactNode }) =>
     animated ? (
@@ -45,16 +83,17 @@ export const ChatBubble = React.memo(function ChatBubble({
   return (
     <Wrapper>
       <AnimatedContainer
-        pressable
+        pressable={!isUser && showCopy}
         pressScale="subtle"
-        className={cn('max-w-[85%]', isUser ? 'self-end' : 'self-start')}
+        className={cn(containerWidthClass)}
+        onPress={handleCopy}
       >
         <View
           className={cn(
             'px-4 py-3 rounded-2xl',
             // For AI responses we keep a transparent background but ensure the
             // container itself anchors to the left in RTL as well
-            isUser ? styles.bubbleUserClass : 'bg-transparent items-start'
+            isUser ? styles.bubbleUserClass : 'bg-transparent items-start w-full'
           )}
           style={{
             ...(isUser
@@ -82,19 +121,28 @@ export const ChatBubble = React.memo(function ChatBubble({
               {message}
             </Text>
 
-            {timestamp && !isUser && (
-              <Text
-                variant="footnote"
-                autoAlign={false}
-                className={cn(
-                  'mt-2 text-left',
-                  isUser
-                    ? 'text-primary-foreground/70'
-                    : 'text-muted-foreground'
+            {!isUser && showCopy && (
+              <View className="mt-2 self-start flex-row items-center">
+                <Pressable
+                  onPress={handleCopy}
+                  accessibilityLabel="Copy message"
+                  className="p-1.5 rounded-full"
+                  hitSlop={8}
+                >
+                  <Animated.View style={copyStyle}>
+                    <Copy size={16} color={colors.mutedForeground} />
+                  </Animated.View>
+                </Pressable>
+                {copied && (
+                  <Text
+                    variant="footnote"
+                    autoAlign={false}
+                    className="ml-2 text-muted-foreground"
+                  >
+                    Copied
+                  </Text>
                 )}
-              >
-                {timestamp}
-              </Text>
+              </View>
             )}
           </View>
         </View>

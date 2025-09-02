@@ -22,6 +22,7 @@ interface ChatMessageListProps {
   horizontalPadding: number;
   footer?: React.ReactNode;
   onScroll?: (e: any) => void;
+  extraData?: any;
 }
 
 export const ChatMessageList = memo(function ChatMessageList({
@@ -33,6 +34,7 @@ export const ChatMessageList = memo(function ChatMessageList({
   horizontalPadding,
   footer,
   onScroll,
+  extraData,
 }: ChatMessageListProps) {
   // Content container style with proper bottom padding for floating tab bar with input
   const contentContainerStyle = {
@@ -55,6 +57,9 @@ export const ChatMessageList = memo(function ChatMessageList({
       ListFooterComponent={footer}
       contentInsetAdjustmentBehavior="automatic"
       onScroll={onScroll}
+      // Ensure onScroll fires consistently for near-bottom detection
+      scrollEventThrottle={16}
+      extraData={extraData}
       // Ensure scroll indicator doesn't overlap with floating tab bar
       scrollIndicatorInsets={{ bottom: 160 }}
     />

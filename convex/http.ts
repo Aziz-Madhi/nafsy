@@ -191,16 +191,7 @@ async function handleChatStreaming(
 
   const uiMessages: UIMessage[] = toUiMessages(messages);
 
-  // Progressive DB persistence variables
-  let assistantMessageId: Id<'mainChatMessages'> | null = null;
-  let accumulatedContent = '';
-  let lastSavedIndex = 0;
-  let lastWriteAt = 0;
-  const THROTTLE_MS = 1000; // min time between writes
-
-  function hasSentenceBoundary(text: string): boolean {
-    return /[.!?]\s/.test(text) || /[.!?]$/.test(text);
-  }
+  // Single-write persistence: we'll only insert once on finish
 
   const result = streamText({
     model: openai('gpt-4o-mini'),
@@ -212,79 +203,23 @@ async function handleChatStreaming(
     experimental_transform: smoothStream({ delayInMs: 40, chunking: 'word' }),
     onFinish: async ({ text }) => {
       try {
-        const finalText = (text ?? accumulatedContent).trim();
-        if (assistantMessageId) {
-          await ctx.runMutation(internal.chatStreaming.finalizeStreamingMessage, {
-            id: assistantMessageId,
-            content: finalText,
-            requestId,
-          });
-        } else {
-          // Fallback safety: create if missing (should not happen)
-          await ctx.runMutation(internal.chatStreaming.insertAssistantMessage, {
-            sessionId,
-            userId: user._id as Id<'users'>,
-            chatType: personality === 'coach' ? 'main' : 'companion',
-            content: finalText,
-            requestId,
-          });
-        }
+        const finalText = (text ?? '').trim();
+        if (!finalText) return; // Avoid empty inserts
+        await ctx.runMutation(internal.chatStreaming.insertAssistantMessage, {
+          sessionId,
+          userId: user._id as Id<'users'>,
+          chatType: personality === 'coach' ? 'main' : 'companion',
+          content: finalText,
+          requestId,
+        });
       } catch (err) {
-        console.error('Failed to finalize assistant message:', err);
+        console.error('Failed to insert assistant message:', err);
       }
     },
   });
 
-  // Progressive DB persistence (sentence-boundary + throttle)
-  // 1) Create placeholder message once per stream
-  try {
-    assistantMessageId = await ctx.runMutation(
-      internal.chatStreaming.createAssistantMessage,
-      {
-        sessionId,
-        userId: user._id as Id<'users'>,
-        chatType: personality === 'coach' ? 'main' : 'companion',
-        requestId,
-      }
-    );
-  } catch (e) {
-    console.error('Failed to create assistant placeholder:', e);
-  }
-
-  // 2) Accumulate content and periodically write at sentence boundaries
-  
-  // Fire-and-forget progressive saver in parallel with UI stream
-  (async () => {
-    try {
-      for await (const part of (result as any).textStream as AsyncIterable<string>) {
-        if (!part) continue;
-        accumulatedContent += String(part);
-        if (!assistantMessageId) continue;
-
-        const sinceLast = accumulatedContent.slice(lastSavedIndex);
-        const now = Date.now();
-        const shouldWrite =
-          sinceLast.length >= 40 &&
-          hasSentenceBoundary(sinceLast) &&
-          now - lastWriteAt >= THROTTLE_MS;
-
-        if (shouldWrite) {
-          try {
-            await ctx.runMutation(internal.chatStreaming.updateStreamingMessage, {
-              id: assistantMessageId,
-              content: accumulatedContent,
-            });
-            lastSavedIndex = accumulatedContent.length;
-            lastWriteAt = now;
-          } catch (e) {
-            console.warn('Progressive update failed:', e);
-          }
-        }
-      }
-    } catch (e) {
-      console.warn('textStream iteration failed:', e);
-    }
-  })();
+  // Note: We no longer perform per-chunk DB writes. UI streaming remains intact
+  // via SSE response below; the DB is written exactly once in onFinish above.
 
   return result.toUIMessageStreamResponse({
     headers: cors,

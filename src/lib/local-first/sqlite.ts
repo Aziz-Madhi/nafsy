@@ -1261,16 +1261,26 @@ export async function importChatMessagesFromServer(
       const createdAt =
         (msg.createdAt as number) ?? (msg._creationTime as number) ?? now();
 
+      // Reuse existing row if this server id is already linked locally
+      const existing = await db.getFirstAsync<{ id: string }>(
+        `SELECT id FROM ${tableName} WHERE server_id = ? LIMIT 1`,
+        [serverId]
+      );
+      const idForInsert = existing?.id ?? serverId;
+
       await db.runAsync(
         `INSERT INTO ${tableName} (id, server_id, user_id, session_id, content, role, created_at, updated_at, deleted)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)
          ON CONFLICT(id) DO UPDATE SET
+           server_id=excluded.server_id,
+           user_id=excluded.user_id,
+           session_id=excluded.session_id,
            content=excluded.content,
            role=excluded.role,
            updated_at=excluded.updated_at,
            deleted=excluded.deleted`,
         [
-          serverId, // Use server ID as local ID for imported messages
+          idForInsert,
           serverId,
           (msg.userId as string) ?? null,
           msg.sessionId,
@@ -1304,17 +1314,27 @@ export async function importChatSessionsFromServer(
         now();
       const lastMessageAt = (session.lastMessageAt as number) ?? startedAt;
 
+      // Reuse existing row if this server id is already linked locally
+      const existing = await db.getFirstAsync<{ id: string }>(
+        'SELECT id FROM chat_sessions WHERE server_id = ? LIMIT 1',
+        [serverId]
+      );
+      const idForInsert = existing?.id ?? serverId;
+
       await db.runAsync(
         `INSERT INTO chat_sessions (id, server_id, user_id, session_id, title, chat_type, started_at, last_message_at, message_count, updated_at, deleted)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)
          ON CONFLICT(id) DO UPDATE SET
+           server_id=excluded.server_id,
+           user_id=excluded.user_id,
+           session_id=excluded.session_id,
            title=excluded.title,
            last_message_at=excluded.last_message_at,
            message_count=excluded.message_count,
            updated_at=excluded.updated_at,
            deleted=excluded.deleted`,
         [
-          serverId,
+          idForInsert,
           serverId,
           (session.userId as string) ?? null,
           session.sessionId,

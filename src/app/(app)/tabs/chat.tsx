@@ -287,8 +287,7 @@ export default function ChatTab() {
               await coachStreaming.sendStreamingMessage(
                 text,
                 sessionId,
-                coachMessages,
-                String(userMsgIdCoach)
+                coachMessages
               );
               break;
 
@@ -310,8 +309,7 @@ export default function ChatTab() {
               await companionStreaming.sendStreamingMessage(
                 text,
                 sessionId,
-                companionMessages,
-                String(userMsgIdComp)
+                companionMessages
               );
               break;
           }

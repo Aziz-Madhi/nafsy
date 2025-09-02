@@ -103,6 +103,7 @@ export async function processUIMessageStream(
   }
 
   let lastText = '';
+  // Keep client-side chunking simple; let the UI hook pace updates.
   try {
     // Decode SSE (text/event-stream) into JSON UIMessageChunk objects
     const eventStream = body
