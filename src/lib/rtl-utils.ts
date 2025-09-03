@@ -6,6 +6,24 @@
 import { useCurrentLanguage } from '~/store/useAppStore';
 
 /**
+ * Heuristic to detect if a string contains Arabic characters.
+ * Covers Arabic, Arabic Supplement, Arabic Extended-A/B ranges.
+ */
+export function isArabicText(text: string): boolean {
+  if (!text) return false;
+  // Common Arabic Unicode blocks
+  const arabicRegex = /[\u0600-\u06FF\u0750-\u077F\u08A0-\u08FF]/;
+  return arabicRegex.test(text);
+}
+
+/**
+ * Decide text alignment from the content itself.
+ */
+export function getTextAlignmentForContent(content: string): 'left' | 'right' {
+  return isArabicText(content) ? 'right' : 'left';
+}
+
+/**
  * Hook-based text alignment utility
  * Arabic = right, English = left
  */
@@ -53,4 +71,6 @@ export default {
   useIsCurrentLanguageRTL,
   useTextAlignment,
   useLanguageClass,
+  isArabicText,
+  getTextAlignmentForContent,
 };

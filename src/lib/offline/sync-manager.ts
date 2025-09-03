@@ -33,16 +33,12 @@ import {
 
 // Sync configuration
 export interface SyncConfig {
-  autoSync: boolean;
-  syncInterval: number; // in milliseconds
   maxRetries: number;
   retryDelay: number; // in milliseconds
 }
 
 // Default configuration
 const defaultConfig: SyncConfig = {
-  autoSync: true,
-  syncInterval: 60000, // 1 minute
   maxRetries: 3,
   retryDelay: 5000, // 5 seconds
 };
@@ -53,7 +49,6 @@ interface SyncManagerState {
   isSyncing: boolean;
   lastSyncTime: number;
   syncErrors: string[];
-  syncInterval: ReturnType<typeof setInterval> | null;
   networkUnsubscribe: (() => void) | null;
   pendingCounts: {
     moods: number;
@@ -79,7 +74,6 @@ class SimplifiedSyncManager {
     isSyncing: false,
     lastSyncTime: 0,
     syncErrors: [],
-    syncInterval: null,
     networkUnsubscribe: null,
     pendingCounts: {
       moods: 0,
@@ -118,12 +112,7 @@ class SimplifiedSyncManager {
     // Opportunistic DLQ purge for hygiene
     await purgeFailedOps();
 
-    // Start auto-sync if enabled
-    if (this.config.autoSync) {
-      this.startAutoSync();
-    }
-
-    logger.info('Simplified sync manager initialized', 'SyncManager');
+    logger.info('Action-based sync manager initialized', 'SyncManager');
   }
 
   /**
@@ -141,46 +130,74 @@ class SimplifiedSyncManager {
       this.state.isOnline =
         state.isConnected === true && state.isInternetReachable !== false;
 
-      // Trigger sync when coming online
+      // Trigger sync when coming online ONLY if there are pending operations
       if (wasOffline && this.state.isOnline) {
-        logger.info(
-          'Network connection restored, triggering sync',
-          'SyncManager'
-        );
-        this.syncAll();
+        this.refreshPendingCounts().then(() => {
+          const hasPending = Object.values(this.state.pendingCounts).some(
+            (count) => count > 0
+          );
+          if (hasPending) {
+            logger.info(
+              'Network restored with pending operations, triggering sync',
+              'SyncManager'
+            );
+            this.syncAll();
+          }
+        });
       }
     });
   }
 
   /**
-   * Start automatic synchronization
+   * Sync after user action (when data is created/updated locally)
    */
-  private startAutoSync() {
-    // Clear existing interval
-    this.stopAutoSync();
+  async syncAfterAction(entityType?: string) {
+    // Only sync if online
+    if (!this.state.isOnline) {
+      logger.debug('Offline - queuing operation for later sync', 'SyncManager');
+      return;
+    }
 
-    // Set up new interval
-    this.state.syncInterval = setInterval(() => {
-      if (this.state.isOnline && !this.state.isSyncing) {
-        this.syncAll();
-      }
-    }, this.config.syncInterval);
+    // Debounce rapid successive calls
+    if (this.state.isSyncing) {
+      logger.debug('Sync already in progress, skipping', 'SyncManager');
+      return;
+    }
 
-    logger.info(
-      `Auto-sync started with interval: ${this.config.syncInterval}ms`,
-      'SyncManager'
-    );
+    // Perform targeted sync for the specific entity type if provided
+    if (entityType) {
+      logger.info(`Syncing ${entityType} after user action`, 'SyncManager');
+      // You could implement targeted sync here
+    }
+
+    // For now, sync all pending operations
+    await this.syncAll();
   }
 
   /**
-   * Stop automatic synchronization
+   * Sync after user action (when data is created/updated locally)
    */
-  stopAutoSync() {
-    if (this.state.syncInterval) {
-      clearInterval(this.state.syncInterval);
-      this.state.syncInterval = null;
-      logger.info('Auto-sync stopped', 'SyncManager');
+  async syncAfterAction(entityType?: string) {
+    // Only sync if online
+    if (!this.state.isOnline) {
+      logger.debug('Offline - queuing operation for later sync', 'SyncManager');
+      return;
     }
+
+    // Debounce rapid successive calls
+    if (this.state.isSyncing) {
+      logger.debug('Sync already in progress, skipping', 'SyncManager');
+      return;
+    }
+
+    // Perform targeted sync for the specific entity type if provided
+    if (entityType) {
+      logger.info(`Syncing ${entityType} after user action`, 'SyncManager');
+      // You could implement targeted sync here
+    }
+
+    // For now, sync all pending operations
+    await this.syncAll();
   }
 
   /**
@@ -431,7 +448,8 @@ class SimplifiedSyncManager {
         });
 
         if (serverMoods && serverMoods.length > 0) {
-          await importMoodsFromServer(serverMoods);
+          // Use full sync to handle deletions properly
+          await importMoodsFromServer(serverMoods, true);
           pulled = serverMoods.length;
 
           // Update cursor to server watermark (max _creationTime)
@@ -767,7 +785,6 @@ class SimplifiedSyncManager {
    * Cleanup
    */
   cleanup() {
-    this.stopAutoSync();
     if (this.state.networkUnsubscribe) {
       this.state.networkUnsubscribe();
       this.state.networkUnsubscribe = null;

@@ -6,16 +6,11 @@ import { SessionList } from '~/components/ui/GenericList';
 import { SymbolView } from 'expo-symbols';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withSpring,
-  runOnJS,
   SlideInLeft,
   SlideOutLeft,
   FadeIn,
   FadeOut,
 } from 'react-native-reanimated';
-import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
@@ -52,129 +47,87 @@ interface SessionItemProps {
   onDelete: () => void;
 }
 
-const SessionItem = ({
-  session,
-  chatType,
-  isActive,
-  onPress,
-  onDelete,
-}: SessionItemProps) => {
-  const { t } = useTranslation();
-  const lang = useCurrentLanguage();
-  const scale = useSharedValue(1);
-  const translateX = useSharedValue(0);
-  const styles = getChatStyles(chatType);
-  const typeColor = getChatTypeColor(chatType);
+const SessionItem = React.memo(
+  ({ session, chatType, isActive, onPress, onDelete }: SessionItemProps) => {
+    const { t } = useTranslation();
+    const lang = useCurrentLanguage();
+    const colors = useColors();
+    const [showDelete, setShowDelete] = useState(false);
+    const styles = getChatStyles(chatType);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }, { translateX: translateX.value }],
-  }));
+    // Simplified press handler without animations
+    const handlePress = useCallback(() => {
+      impactAsync(ImpactFeedbackStyle.Light);
+      onPress();
+    }, [onPress]);
 
-  const deleteButtonStyle = useAnimatedStyle(() => ({
-    opacity: translateX.value < -50 ? 1 : 0,
-    transform: [{ translateX: translateX.value + 80 }],
-  }));
+    const handleLongPress = useCallback(() => {
+      impactAsync(ImpactFeedbackStyle.Medium);
+      setShowDelete(true);
+      // Auto-hide delete after 3 seconds
+      setTimeout(() => setShowDelete(false), 3000);
+    }, []);
 
-  const handlePressIn = () => {
-    scale.value = withSpring(0.98, { damping: 12, stiffness: 400 });
-  };
+    const handleDelete = useCallback(() => {
+      impactAsync(ImpactFeedbackStyle.Medium);
+      setShowDelete(false);
+      onDelete();
+    }, [onDelete]);
 
-  const handlePressOut = () => {
-    scale.value = withSpring(1, { damping: 12, stiffness: 400 });
-  };
-
-  const panGesture = Gesture.Pan()
-    .onUpdate((event) => {
-      // Only allow swipe to left (negative X)
-      if (event.translationX < 0) {
-        translateX.value = Math.max(event.translationX, -80);
+    // Localize default English titles for Arabic UI
+    const rawTitle: string = session.title || t('chat.history.untitledSession');
+    const localizedTitle: string = (() => {
+      if (lang === 'ar') {
+        const lower = rawTitle.toLowerCase();
+        if (lower.includes('therapy session')) return 'جلسة علاجية';
+        if (lower.includes('check-in')) return 'تسجيل يومي';
+        if (lower.includes('quick vent')) return 'تنفيس سريع';
       }
-    })
-    .onEnd((event) => {
-      if (event.translationX < -50) {
-        // Snap to reveal delete button
-        translateX.value = withSpring(-80);
-        runOnJS(impactAsync)(ImpactFeedbackStyle.Light);
-      } else {
-        // Snap back to original position
-        translateX.value = withSpring(0);
-      }
-    });
+      return rawTitle;
+    })();
 
-  // Localize default English titles for Arabic UI
-  const rawTitle: string = session.title || t('chat.history.untitledSession');
-  const localizedTitle: string = (() => {
-    if (lang === 'ar') {
-      const lower = rawTitle.toLowerCase();
-      if (lower.includes('therapy session')) return 'جلسة علاجية';
-      if (lower.includes('check-in')) return 'تسجيل يومي';
-      if (lower.includes('quick vent')) return 'تنفيس سريع';
-    }
-    return rawTitle;
-  })();
-
-  return (
-    <View className="mx-4 mb-3 relative">
-      <GestureDetector gesture={panGesture}>
-        <Animated.View style={animatedStyle}>
-          <Pressable
-            onPress={onPress}
-            onPressIn={handlePressIn}
-            onPressOut={handlePressOut}
-            className={cn(
-              'rounded-2xl p-4 border-l-4',
-              isActive
-                ? [
-                    `${styles.borderColorClass}`,
-                    'bg-black/[0.05] dark:bg-white/[0.08] border-border/20',
-                  ]
-                : [
-                    'border-l-transparent',
-                    'bg-black/[0.03] dark:bg-white/[0.04] border-border/10',
-                  ]
-            )}
-            style={{
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.05,
-              shadowRadius: 8,
-              elevation: 3,
-              borderLeftColor: isActive ? typeColor : 'transparent',
-              borderLeftWidth: 4,
-            }}
-          >
+    return (
+      <View className="mx-4 mb-3">
+        <Pressable
+          onPress={handlePress}
+          onLongPress={handleLongPress}
+          className={cn(
+            'rounded-2xl p-4',
+            isActive
+              ? 'bg-black/[0.06] dark:bg-white/[0.09]'
+              : 'bg-black/[0.03] dark:bg-white/[0.04]'
+          )}
+          // Remove left highlight bar for cleaner look
+          // (no borderLeft accent)
+        >
+          <View className="flex-row items-center justify-between">
             <Text
               variant="subhead"
               className={cn(
-                'font-semibold',
+                'font-semibold flex-1',
                 isActive ? styles.accentClass : 'text-foreground'
               )}
               numberOfLines={1}
             >
               {localizedTitle}
             </Text>
-          </Pressable>
-        </Animated.View>
-      </GestureDetector>
 
-      {/* Delete button that appears on swipe */}
-      <Animated.View
-        style={[deleteButtonStyle]}
-        className="absolute right-0 top-0 bottom-0 w-20 justify-center items-center"
-      >
-        <Pressable
-          onPress={() => {
-            translateX.value = withSpring(0);
-            onDelete();
-          }}
-          className="w-12 h-12 bg-red-500 rounded-full items-center justify-center"
-        >
-          <SymbolView name="trash" size={20} tintColor="white" />
+            {/* Simple delete button - no animations */}
+            {showDelete && (
+              <Pressable
+                onPress={handleDelete}
+                className="ml-2 p-2"
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <SymbolView name="trash" size={18} tintColor={colors.error} />
+              </Pressable>
+            )}
+          </View>
         </Pressable>
-      </Animated.View>
-    </View>
-  );
-};
+      </View>
+    );
+  }
+);
 
 export function ChatHistorySidebar({
   visible,
@@ -257,8 +210,6 @@ export function ChatHistorySidebar({
     onClose();
   }, [onClose]);
 
-  // Simpler push-in/out animations using Reanimated presets
-  const ANIM_DURATION = 250;
   const [modalVisible, setModalVisible] = React.useState(false);
 
   React.useEffect(() => {
@@ -270,7 +221,7 @@ export function ChatHistorySidebar({
         // Close immediately without exit animation
         setModalVisible(false);
       } else {
-        const timeout = setTimeout(() => setModalVisible(false), ANIM_DURATION);
+        const timeout = setTimeout(() => setModalVisible(false), 200);
         return () => clearTimeout(timeout);
       }
     }
@@ -337,11 +288,6 @@ export function ChatHistorySidebar({
     }
   };
 
-  // Simple tap gesture to close sidebar
-  const backdropTapGesture = Gesture.Tap().onEnd(() => {
-    runOnJS(onClose)();
-  });
-
   // Use Modal to ensure sidebar renders above navigation bar
   return (
     <Modal
@@ -354,263 +300,237 @@ export function ChatHistorySidebar({
         {visible && (
           <>
             {/* Backdrop */}
-            <GestureDetector gesture={backdropTapGesture}>
-              {(() => {
-                const BackdropComponent: any = skipExitAnimation
-                  ? View
-                  : Animated.View;
-                const animationProps = skipExitAnimation
-                  ? {}
-                  : {
-                      entering: FadeIn.duration(ANIM_DURATION),
-                      exiting: FadeOut.duration(ANIM_DURATION),
-                    };
-                return (
-                  <BackdropComponent
-                    className="bg-black/50"
-                    {...(animationProps as any)}
-                    style={{
-                      position: 'absolute',
-                      top: 0,
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                    }}
-                  />
-                );
-              })()}
-            </GestureDetector>
+            <Pressable
+              onPress={onClose}
+              style={{
+                position: 'absolute',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            >
+              <Animated.View
+                className="bg-black/50"
+                entering={FadeIn.duration(200)}
+                exiting={skipExitAnimation ? undefined : FadeOut.duration(200)}
+                style={{ flex: 1 }}
+              />
+            </Pressable>
 
             {/* Sidebar */}
-            {(() => {
-              const SidebarComponent: any = skipExitAnimation
-                ? View
-                : Animated.View;
-              const animationProps = skipExitAnimation
-                ? {}
-                : {
-                    entering: SlideInLeft.duration(ANIM_DURATION),
-                    exiting: SlideOutLeft.duration(ANIM_DURATION),
-                  };
-              return (
-                <SidebarComponent
-                  className="bg-background"
-                  {...(animationProps as any)}
-                  style={{
-                    position: 'absolute',
-                    top: 0,
-                    bottom: 0,
-                    start: 0, // React Native automatically handles RTL positioning
-                    width: SIDEBAR_WIDTH,
-                    shadowColor: '#000000',
-                    shadowOffset: { width: 2, height: 0 },
-                    shadowOpacity: 0.1,
-                    shadowRadius: 12,
-                    elevation: 20, // Higher than navigation bar
-                    zIndex: 1001, // Ensure sidebar appears above everything
-                    borderTopEndRadius: 25, // RN automatically flips for RTL
-                    borderBottomEndRadius: 25,
-                  }}
-                >
-                  <View className="flex-1" style={{ paddingTop: insets.top }}>
-                    {/* Header and Search */}
-                    <View className="p-4 border-b border-border/10">
-                      {/* Offline Indicator in Sidebar */}
-                      {!isOnline && (
-                        <View className="mb-3 p-2 rounded-lg bg-error/10 flex-row items-center gap-2">
-                          <SymbolView
-                            name="wifi.slash"
-                            size={16}
-                            tintColor={colors.error}
-                          />
-                          <Text className="text-sm text-error flex-1">
-                            {t('sync.viewingOfflineData')}
-                          </Text>
-                        </View>
+            <Animated.View
+              className="bg-background rounded-tr-3xl rounded-br-3xl overflow-hidden"
+              entering={SlideInLeft.duration(200)}
+              exiting={
+                skipExitAnimation ? undefined : SlideOutLeft.duration(200)
+              }
+              style={{
+                position: 'absolute',
+                top: 0,
+                bottom: 0,
+                start: 0,
+                width: SIDEBAR_WIDTH,
+                elevation: 20,
+                zIndex: 1001,
+              }}
+            >
+              <View className="flex-1" style={{ paddingTop: insets.top }}>
+                {/* Header and Search */}
+                <View className="p-4 border-b border-border/10">
+                  {/* Offline Indicator in Sidebar */}
+                  {!isOnline && (
+                    <View className="mb-3 p-2 rounded-lg bg-error/10 flex-row items-center gap-2">
+                      <SymbolView
+                        name="wifi.slash"
+                        size={16}
+                        tintColor={colors.error}
+                      />
+                      <Text className="text-sm text-error flex-1">
+                        {t('sync.viewingOfflineData')}
+                      </Text>
+                    </View>
+                  )}
+                  <View className="flex-row items-center justify-between mb-3">
+                    {isArabic ? (
+                      <>
+                        {/* Settings icon on the left for Arabic */}
+                        <Pressable
+                          onPress={handleSettingsPress}
+                          className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
+                        >
+                          <User size={20} color={colors.foreground} />
+                        </Pressable>
+                        <Text
+                          variant="title3"
+                          className="font-bold text-foreground"
+                        >
+                          {t('chat.history.title')}
+                        </Text>
+                      </>
+                    ) : (
+                      <>
+                        <Text
+                          variant="title3"
+                          className="font-bold text-foreground"
+                        >
+                          {t('chat.history.title')}
+                        </Text>
+                        <Pressable
+                          onPress={handleSettingsPress}
+                          className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
+                        >
+                          <User size={20} color={colors.foreground} />
+                        </Pressable>
+                      </>
+                    )}
+                  </View>
+                  <View className="flex-row items-center rounded-xl px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-border/10">
+                    <SymbolView
+                      name="magnifyingglass"
+                      size={18}
+                      tintColor="#9CA3AF"
+                    />
+                    <TextInput
+                      value={searchQuery}
+                      onChangeText={setSearchQuery}
+                      placeholder={t('common.search')}
+                      placeholderTextColor="#9CA3AF"
+                      className={cn(
+                        'flex-1 ms-3 text-base text-foreground',
+                        isArabic && 'text-right'
                       )}
-                      <View className="flex-row items-center justify-between mb-3">
-                        {isArabic ? (
-                          <>
-                            {/* Settings icon on the left for Arabic */}
-                            <Pressable
-                              onPress={handleSettingsPress}
-                              className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
-                            >
-                              <User size={20} color={colors.foreground} />
-                            </Pressable>
-                            <Text
-                              variant="title3"
-                              className="font-bold text-foreground"
-                            >
-                              {t('chat.history.title')}
-                            </Text>
-                          </>
-                        ) : (
-                          <>
-                            <Text
-                              variant="title3"
-                              className="font-bold text-foreground"
-                            >
-                              {t('chat.history.title')}
-                            </Text>
-                            <Pressable
-                              onPress={handleSettingsPress}
-                              className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
-                            >
-                              <User size={20} color={colors.foreground} />
-                            </Pressable>
-                          </>
-                        )}
-                      </View>
-                      <View className="flex-row items-center rounded-xl px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-border/10">
+                      autoCapitalize="none"
+                      autoCorrect={false}
+                      // Arabic should type RTL
+                      style={
+                        isArabic
+                          ? { writingDirection: 'rtl', textAlign: 'right' }
+                          : undefined
+                      }
+                    />
+                    {searchQuery.length > 0 && (
+                      <Pressable
+                        onPress={() => setSearchQuery('')}
+                        className="p-1"
+                        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      >
                         <SymbolView
-                          name="magnifyingglass"
-                          size={18}
+                          name="xmark.circle.fill"
+                          size={16}
                           tintColor="#9CA3AF"
                         />
-                        <TextInput
-                          value={searchQuery}
-                          onChangeText={setSearchQuery}
-                          placeholder={t('common.search')}
-                          placeholderTextColor="#9CA3AF"
-                          className={cn(
-                            'flex-1 ms-3 text-base text-foreground',
-                            isArabic && 'text-right'
-                          )}
-                          autoCapitalize="none"
-                          autoCorrect={false}
-                          // Arabic should type RTL
-                          style={
-                            isArabic
-                              ? { writingDirection: 'rtl', textAlign: 'right' }
-                              : undefined
-                          }
-                        />
-                        {searchQuery.length > 0 && (
+                      </Pressable>
+                    )}
+                  </View>
+                </View>
+
+                {/* History Type Toggle */}
+                <ChatHistoryToggle
+                  activeType={activeHistoryType}
+                  onTypeChange={setActiveHistoryType}
+                />
+
+                {/* Sessions List */}
+                <SessionList
+                  data={groupedSessions}
+                  keyExtractor={(item) => `date-${item.label}`}
+                  renderItem={(dateGroup, _index) => {
+                    return (
+                      <View key={`date-${dateGroup.label}-section`}>
+                        {/* Date Section Header */}
+                        <View className="px-4 py-3 mb-2">
+                          <Text
+                            variant="subhead"
+                            className="font-semibold text-foreground/80"
+                          >
+                            {dateGroup.label}
+                          </Text>
+                        </View>
+
+                        {/* Sessions for this date group */}
+                        {dateGroup.sessions.map((session) => {
+                          const sessionId = session.sessionId;
+                          const isActive = currentSessionId === sessionId;
+
+                          return (
+                            <SessionItem
+                              key={session._id}
+                              session={session}
+                              chatType={activeHistoryType}
+                              isActive={isActive}
+                              onPress={() => {
+                                if (sessionId) handleSessionSelect(sessionId);
+                              }}
+                              onDelete={() => {
+                                if (sessionId)
+                                  handleSessionDelete(
+                                    sessionId,
+                                    activeHistoryType
+                                  );
+                              }}
+                            />
+                          );
+                        })}
+                      </View>
+                    );
+                  }}
+                  emptyComponent={() => {
+                    const hasSearchQuery = searchQuery.trim().length > 0;
+                    let emptyMessage: string;
+
+                    if (hasSearchQuery) {
+                      emptyMessage = t('chat.history.noSearchResults');
+                    } else if (activeHistoryType === 'coach') {
+                      emptyMessage = t('chat.history.noCoachSessions');
+                    } else if (activeHistoryType === 'companion') {
+                      emptyMessage = t('chat.history.noCompanionSessions');
+                    } else {
+                      emptyMessage = t('chat.history.noMainSessions');
+                    }
+
+                    const iconName = hasSearchQuery
+                      ? 'magnifyingglass'
+                      : getChatTypeIcon(activeHistoryType);
+
+                    return (
+                      <View className="flex-1 items-center justify-center py-12">
+                        <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/[0.05] dark:bg-white/[0.06]">
+                          <SymbolView
+                            name={iconName as any}
+                            size={24}
+                            tintColor={
+                              hasSearchQuery
+                                ? '#9CA3AF'
+                                : getChatTypeColor(activeHistoryType)
+                            }
+                          />
+                        </View>
+                        <Text
+                          variant="subhead"
+                          className="text-muted-foreground text-center px-6"
+                        >
+                          {emptyMessage}
+                        </Text>
+                        {hasSearchQuery && (
                           <Pressable
                             onPress={() => setSearchQuery('')}
-                            className="p-1"
-                            hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                            className="mt-4 px-4 py-2 rounded-full bg-black/[0.05] dark:bg-white/[0.06]"
                           >
-                            <SymbolView
-                              name="xmark.circle.fill"
-                              size={16}
-                              tintColor="#9CA3AF"
-                            />
+                            <Text
+                              variant="caption1"
+                              className="text-muted-foreground"
+                            >
+                              {t('chat.history.clearSearch')}
+                            </Text>
                           </Pressable>
                         )}
                       </View>
-                    </View>
-
-                    {/* History Type Toggle */}
-                    <ChatHistoryToggle
-                      activeType={activeHistoryType}
-                      onTypeChange={setActiveHistoryType}
-                    />
-
-                    {/* Sessions List */}
-                    <SessionList
-                      data={groupedSessions}
-                      keyExtractor={(item) => `date-${item.label}`}
-                      renderItem={(dateGroup, _index) => {
-                        return (
-                          <View key={`date-${dateGroup.label}-section`}>
-                            {/* Date Section Header */}
-                            <View className="px-4 py-3 mb-2">
-                              <Text
-                                variant="subhead"
-                                className="font-semibold text-foreground/80"
-                              >
-                                {dateGroup.label}
-                              </Text>
-                            </View>
-
-                            {/* Sessions for this date group */}
-                            {dateGroup.sessions.map((session) => {
-                              const sessionId = session.sessionId;
-                              const isActive = currentSessionId === sessionId;
-
-                              return (
-                                <SessionItem
-                                  key={session._id}
-                                  session={session}
-                                  chatType={activeHistoryType}
-                                  isActive={isActive}
-                                  onPress={() => {
-                                    if (sessionId)
-                                      handleSessionSelect(sessionId);
-                                  }}
-                                  onDelete={() => {
-                                    if (sessionId)
-                                      handleSessionDelete(
-                                        sessionId,
-                                        activeHistoryType
-                                      );
-                                  }}
-                                />
-                              );
-                            })}
-                          </View>
-                        );
-                      }}
-                      emptyComponent={() => {
-                        const hasSearchQuery = searchQuery.trim().length > 0;
-                        let emptyMessage: string;
-
-                        if (hasSearchQuery) {
-                          emptyMessage = t('chat.history.noSearchResults');
-                        } else if (activeHistoryType === 'coach') {
-                          emptyMessage = t('chat.history.noCoachSessions');
-                        } else if (activeHistoryType === 'companion') {
-                          emptyMessage = t('chat.history.noCompanionSessions');
-                        } else {
-                          emptyMessage = t('chat.history.noMainSessions');
-                        }
-
-                        const iconName = hasSearchQuery
-                          ? 'magnifyingglass'
-                          : getChatTypeIcon(activeHistoryType);
-
-                        return (
-                          <View className="flex-1 items-center justify-center py-12">
-                            <View className="w-16 h-16 rounded-full items-center justify-center mb-4 bg-black/[0.05] dark:bg-white/[0.06]">
-                              <SymbolView
-                                name={iconName as any}
-                                size={24}
-                                tintColor={
-                                  hasSearchQuery
-                                    ? '#9CA3AF'
-                                    : getChatTypeColor(activeHistoryType)
-                                }
-                              />
-                            </View>
-                            <Text
-                              variant="subhead"
-                              className="text-muted-foreground text-center px-6"
-                            >
-                              {emptyMessage}
-                            </Text>
-                            {hasSearchQuery && (
-                              <Pressable
-                                onPress={() => setSearchQuery('')}
-                                className="mt-4 px-4 py-2 rounded-full bg-black/[0.05] dark:bg-white/[0.06]"
-                              >
-                                <Text
-                                  variant="caption1"
-                                  className="text-muted-foreground"
-                                >
-                                  {t('chat.history.clearSearch')}
-                                </Text>
-                              </Pressable>
-                            )}
-                          </View>
-                        );
-                      }}
-                    />
-                  </View>
-                </SidebarComponent>
-              );
-            })()}
+                    );
+                  }}
+                />
+              </View>
+            </Animated.View>
           </>
         )}
       </View>

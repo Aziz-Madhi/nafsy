@@ -59,18 +59,31 @@ interface ServerProgress {
 // Simple event emitter to refresh subscribers when local data changes
 type Listener = () => void;
 const listeners = new Set<Listener>();
+let notifyTimeout: ReturnType<typeof setTimeout> | null = null;
+
 export function subscribeLocalFirst(listener: Listener) {
   listeners.add(listener);
   return () => listeners.delete(listener);
 }
+
+// Debounced notify to batch rapid changes
 function notify() {
-  listeners.forEach((l) => {
-    try {
-      l();
-    } catch (e) {
-      logger.warn('Local-first listener failed', 'SQLite', e);
-    }
-  });
+  // Clear existing timeout
+  if (notifyTimeout) {
+    clearTimeout(notifyTimeout);
+  }
+
+  // Debounce notifications by 150ms to batch rapid changes
+  notifyTimeout = setTimeout(() => {
+    listeners.forEach((l) => {
+      try {
+        l();
+      } catch (e) {
+        logger.warn('Local-first listener failed', 'SQLite', e);
+      }
+    });
+    notifyTimeout = null;
+  }, 150);
 }
 
 // Per-user DB cache and active user binding
@@ -537,11 +550,47 @@ export async function ackMoodSynced(params: {
   notify();
 }
 
-export async function importMoodsFromServer(serverMoods: ServerMood[]) {
+export async function importMoodsFromServer(
+  serverMoods: ServerMood[],
+  fullSync: boolean = false,
+  userId?: string
+) {
   const db = await getDB();
   try {
-    // Avoid starting a transaction here to prevent nested/parallel
-    // transaction conflicts when multiple imports run concurrently.
+    // If doing a full sync, handle deletions
+    if (fullSync) {
+      const effectiveUserId =
+        userId || (serverMoods.length > 0 ? serverMoods[0].userId : null);
+
+      if (effectiveUserId) {
+        if (serverMoods.length > 0) {
+          // Mark local moods as deleted if they're not in the server list
+          const serverIds = serverMoods.map((m) => String(m._id));
+          const placeholders = serverIds.map(() => '?').join(',');
+          await db.runAsync(
+            `UPDATE mood_entries 
+             SET deleted = 1, updated_at = ? 
+             WHERE user_id = ? 
+             AND server_id IS NOT NULL 
+             AND server_id NOT IN (${placeholders})
+             AND deleted = 0`,
+            [now(), effectiveUserId, ...serverIds]
+          );
+        } else {
+          // No moods on server - mark all local moods as deleted
+          await db.runAsync(
+            `UPDATE mood_entries 
+             SET deleted = 1, updated_at = ? 
+             WHERE user_id = ? 
+             AND server_id IS NOT NULL 
+             AND deleted = 0`,
+            [now(), effectiveUserId]
+          );
+        }
+      }
+    }
+
+    // Import/update moods from server
     for (const m of serverMoods) {
       const serverId = String(m._id);
       const updated =

@@ -83,15 +83,15 @@ export function useSyncStatus() {
   const [syncStatus, setSyncStatus] = useState(syncManager.getSyncStatus());
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setSyncStatus(syncManager.getSyncStatus());
-    }, 1000);
-
-    return () => clearInterval(interval);
+    // Get initial status on mount
+    setSyncStatus(syncManager.getSyncStatus());
   }, []);
 
   const triggerSync = useCallback(async () => {
+    // Update status immediately to show syncing state
+    setSyncStatus(syncManager.getSyncStatus());
     const result = await syncManager.syncAll();
+    // Update status after sync completes
     setSyncStatus(syncManager.getSyncStatus());
     return result;
   }, []);
@@ -206,12 +206,20 @@ export function useOfflineMoodData(limit: number = 365) {
   }, [limit, currentUser?._id]);
 
   // Sync server data to local store when available
+  // Convex subscriptions already handle real-time updates
   useEffect(() => {
-    if (serverMoods && serverMoods.length > 0) {
-      // Debounce the import to avoid rapid successive calls
+    // Import even if empty array (to handle deletions)
+    if (serverMoods !== undefined) {
+      // Import server data for offline access
+      // Increased debounce to reduce frequency
       const timeoutId = setTimeout(async () => {
         try {
-          await importMoodsFromServer(serverMoods);
+          // Use full sync to handle deletions, pass userId for empty array case
+          await importMoodsFromServer(
+            serverMoods,
+            true,
+            currentUser?._id as string
+          );
         } catch (e) {
           // Log the error but don't let it bubble up
           logger.warn(
@@ -220,7 +228,7 @@ export function useOfflineMoodData(limit: number = 365) {
             e
           );
         }
-      }, 100);
+      }, 500); // Increased from 100ms to 500ms
 
       return () => clearTimeout(timeoutId);
     }
@@ -325,9 +333,10 @@ export function useOfflineTodayMood() {
   }, [currentUser?._id]);
 
   // Sync server data to local store when available
+  // Convex subscriptions already handle real-time updates
   useEffect(() => {
     if (serverMood) {
-      // Debounce the import to avoid rapid successive calls
+      // Import server data for offline access
       const timeoutId = setTimeout(async () => {
         try {
           await importMoodsFromServer([serverMood]);
@@ -339,7 +348,7 @@ export function useOfflineTodayMood() {
             e
           );
         }
-      }, 100);
+      }, 500); // Increased from 100ms to 500ms
 
       return () => clearTimeout(timeoutId);
     }
@@ -444,7 +453,8 @@ export function useOfflineCreateMood() {
         try {
           const serverId = await serverMutation(moodData);
           await ackMoodSynced({ localId, serverId: String(serverId) });
-
+          // Trigger action-based sync for this mood
+          await syncManager.syncAfterAction('moods');
           logger.info('Mood created and synced', 'OfflineData');
         } catch (error) {
           logger.error('Failed to sync mood to server', 'OfflineData', error);
@@ -629,7 +639,8 @@ export function useOfflineRecordProgress() {
         try {
           const serverId = await serverMutation(progressData);
           await ackProgressSynced({ localId, serverId: String(serverId) });
-
+          // Trigger action-based sync for this progress
+          await syncManager.syncAfterAction('userProgress');
           logger.info('Progress recorded and synced', 'OfflineData');
         } catch (error) {
           logger.error(
@@ -717,6 +728,7 @@ export function useOfflineChatMessages(
   }, [sessionId, chatType, currentUser?._id]);
 
   // Sync server data to local store when available
+  // Convex subscriptions already handle real-time updates
   useEffect(() => {
     if (serverMessages && serverMessages.length > 0) {
       const timeoutId = setTimeout(async () => {
@@ -729,7 +741,7 @@ export function useOfflineChatMessages(
             e
           );
         }
-      }, 100);
+      }, 500); // Increased from 100ms to 500ms
 
       return () => clearTimeout(timeoutId);
     }
@@ -798,6 +810,7 @@ export function useOfflineChatSessions(chatType: ChatType) {
   }, [chatType, currentUser?._id]);
 
   // Sync server data to local store when available
+  // Convex subscriptions already handle real-time updates
   useEffect(() => {
     if (serverSessions && serverSessions.length > 0) {
       const timeoutId = setTimeout(async () => {
@@ -810,7 +823,7 @@ export function useOfflineChatSessions(chatType: ChatType) {
             e
           );
         }
-      }, 100);
+      }, 500); // Increased from 100ms to 500ms
 
       return () => clearTimeout(timeoutId);
     }

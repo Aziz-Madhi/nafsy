@@ -18,6 +18,7 @@ import { getChatStyles } from '~/lib/chatStyles';
 import * as Clipboard from 'expo-clipboard';
 import { Copy } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
+import { getTextAlignmentForContent } from '~/lib/rtl-utils';
 // Removed useIsRTL - UI layout always stays LTR
 
 // =====================
@@ -123,12 +124,11 @@ export const ChatBubble = React.memo(function ChatBubble({
           <View className="relative">
             <Text
               variant="callout"
-              // Force assistant text to be left-aligned even in Arabic.
-              // We disable auto alignment (which mirrors to RTL for ar)
-              // and explicitly set text-left for consistent layout.
-              autoAlign={isUser}
+              // Per-message alignment from content to support mixed-language threads.
+              autoAlign={false}
+              style={{ textAlign: getTextAlignmentForContent(message) }}
               className={cn(
-                isUser ? 'text-primary-foreground' : 'text-foreground text-left'
+                isUser ? 'text-primary-foreground' : 'text-foreground'
               )}
             >
               {message}
