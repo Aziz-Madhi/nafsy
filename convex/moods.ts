@@ -27,23 +27,30 @@ export const createMood = mutation({
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
-    
+
     // Apply rate limiting (100 mood entries per minute per user)
     await checkRateLimitDb(ctx, `moods:create:${user._id}`, 100, 60000);
-    
+
     // Validate rating bounds
     if (args.rating !== undefined && (args.rating < 1 || args.rating > 10)) {
-      throw createValidationError('Rating must be between 1 and 10', { rating: args.rating });
+      throw createValidationError('Rating must be between 1 and 10', {
+        rating: args.rating,
+      });
     }
-    
+
     // Validate timeOfDay values
     if (args.timeOfDay && !['morning', 'evening'].includes(args.timeOfDay)) {
-      throw createValidationError('Time of day must be either "morning" or "evening"', { timeOfDay: args.timeOfDay });
+      throw createValidationError(
+        'Time of day must be either "morning" or "evening"',
+        { timeOfDay: args.timeOfDay }
+      );
     }
-    
+
     // Validate tags length
     if (args.tags && args.tags.length > 20) {
-      throw createValidationError('Maximum 20 tags allowed', { tagsCount: args.tags.length });
+      throw createValidationError('Maximum 20 tags allowed', {
+        tagsCount: args.tags.length,
+      });
     }
 
     // Derive mood category from rating when provided

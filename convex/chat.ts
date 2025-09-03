@@ -5,7 +5,11 @@ import { getAuthenticatedUser } from './authUtils';
 import { paginationOptsValidator } from 'convex/server';
 
 // Chat type enum for unified functions
-const ChatType = v.union(v.literal('main'), v.literal('vent'), v.literal('companion'));
+const ChatType = v.union(
+  v.literal('main'),
+  v.literal('vent'),
+  v.literal('companion')
+);
 
 /**
  * Unified chat message sending for both main and vent chats
@@ -485,10 +489,13 @@ export const createChatSession = mutation({
     } else {
       const title =
         args.title ||
-        `Check-in ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString([], {
-          hour: '2-digit',
-          minute: '2-digit',
-        })}`;
+        `Check-in ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString(
+          [],
+          {
+            hour: '2-digit',
+            minute: '2-digit',
+          }
+        )}`;
       await ctx.db.insert('companionChatSessions', {
         userId: user._id,
         sessionId,

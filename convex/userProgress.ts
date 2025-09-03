@@ -13,24 +13,32 @@ export const recordCompletion = mutation({
   handler: async (ctx, args) => {
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
-    
+
     // Apply rate limiting (50 exercise completions per minute per user)
     await checkRateLimitDb(ctx, `progress:record:${user._id}`, 50, 60000);
-    
+
     // Validate duration (must be positive, max 600 minutes / 10 hours)
     if (args.duration <= 0 || args.duration > 600) {
-      throw createValidationError('Duration must be between 1 and 600 minutes', { duration: args.duration });
+      throw createValidationError(
+        'Duration must be between 1 and 600 minutes',
+        { duration: args.duration }
+      );
     }
-    
+
     // Validate feedback length
     if (args.feedback && args.feedback.length > 1000) {
-      throw createValidationError('Feedback must be less than 1000 characters', { feedbackLength: args.feedback.length });
+      throw createValidationError(
+        'Feedback must be less than 1000 characters',
+        { feedbackLength: args.feedback.length }
+      );
     }
-    
+
     // Verify exercise exists
     const exercise = await ctx.db.get(args.exerciseId);
     if (!exercise) {
-      throw createValidationError('Exercise not found', { exerciseId: args.exerciseId });
+      throw createValidationError('Exercise not found', {
+        exerciseId: args.exerciseId,
+      });
     }
 
     const progressId = await ctx.db.insert('userProgress', {

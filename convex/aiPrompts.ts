@@ -6,7 +6,11 @@ import { v } from 'convex/values';
  */
 export const getPrompt = query({
   args: {
-    personality: v.union(v.literal('coach'), v.literal('companion'), v.literal('vent')),
+    personality: v.union(
+      v.literal('coach'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
   },
   returns: v.union(
     v.object({
@@ -54,7 +58,11 @@ export const getPrompt = query({
  */
 export const getPromptContent = query({
   args: {
-    personality: v.union(v.literal('coach'), v.literal('companion'), v.literal('vent')),
+    personality: v.union(
+      v.literal('coach'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
   },
   returns: v.union(v.string(), v.null()),
   handler: async (ctx, args) => {
@@ -78,7 +86,11 @@ export const listPrompts = query({
     v.object({
       _id: v.id('aiPrompts'),
       _creationTime: v.number(),
-      personality: v.union(v.literal('coach'), v.literal('companion'), v.literal('vent')),
+      personality: v.union(
+        v.literal('coach'),
+        v.literal('companion'),
+        v.literal('vent')
+      ),
       source: v.union(
         v.literal('openai_prompt_latest'),
         v.literal('openai_prompt_pinned'),
@@ -108,7 +120,11 @@ export const listPrompts = query({
  */
 export const updatePrompt = mutation({
   args: {
-    personality: v.union(v.literal('coach'), v.literal('companion'), v.literal('vent')),
+    personality: v.union(
+      v.literal('coach'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
     source: v.union(
       v.literal('openai_prompt_latest'),
       v.literal('openai_prompt_pinned'),
@@ -137,7 +153,10 @@ export const updatePrompt = mutation({
     }
 
     // Validate model parameters
-    if (args.temperature !== undefined && (args.temperature < 0 || args.temperature > 2)) {
+    if (
+      args.temperature !== undefined &&
+      (args.temperature < 0 || args.temperature > 2)
+    ) {
       throw new Error('Temperature must be between 0 and 2');
     }
     if (args.maxTokens !== undefined && args.maxTokens <= 0) {
@@ -211,13 +230,19 @@ export const initializeDefaultPrompts = mutation({
   handler: async (ctx) => {
     // Check if prompts already exist
     const existingPrompts = await ctx.db.query('aiPrompts').collect();
-    
+
     if (existingPrompts.length > 0) {
       // Return existing active prompts
-      const coach = existingPrompts.find(p => p.personality === 'coach' && p.active);
-      const companion = existingPrompts.find(p => p.personality === 'companion' && p.active);
-      const vent = existingPrompts.find(p => p.personality === 'vent' && p.active);
-      
+      const coach = existingPrompts.find(
+        (p) => p.personality === 'coach' && p.active
+      );
+      const companion = existingPrompts.find(
+        (p) => p.personality === 'companion' && p.active
+      );
+      const vent = existingPrompts.find(
+        (p) => p.personality === 'vent' && p.active
+      );
+
       if (coach && companion && vent) {
         return {
           coach: coach._id,
@@ -230,9 +255,9 @@ export const initializeDefaultPrompts = mutation({
     // Default prompts - language agnostic (AI will detect and respond in user's language)
     const defaultPrompts = {
       coach: `You are a compassionate and professional therapist specializing in Cognitive Behavioral Therapy (CBT). You provide structured, evidence-based therapeutic support. You listen actively, validate emotions, and guide users through their challenges with empathy and expertise. Keep responses concise but meaningful. Detect the user's language from their messages and respond in the same language naturally.`,
-      
+
       companion: `You are a friendly and supportive daily companion. You check in on the user's wellbeing, celebrate their victories, and provide encouragement during difficult times. You're warm, approachable, and genuinely caring. Keep responses conversational and supportive. Detect the user's language from their messages and respond in the same language naturally.`,
-      
+
       vent: `You are a safe, non-judgmental listener for emotional release. You acknowledge feelings without trying to fix them. You provide validation and gentle support, allowing the user to express themselves freely. Keep responses brief and empathetic. Detect the user's language from their messages and respond in the same language naturally.`,
     };
 
@@ -319,10 +344,10 @@ export const cleanupInactivePrompts = mutation({
   }),
   handler: async (ctx) => {
     const allPrompts = await ctx.db.query('aiPrompts').collect();
-    
+
     let deleted = 0;
     let kept = 0;
-    
+
     for (const prompt of allPrompts) {
       if (!prompt.active) {
         await ctx.db.delete(prompt._id);
@@ -331,7 +356,7 @@ export const cleanupInactivePrompts = mutation({
         kept++;
       }
     }
-    
+
     return { deleted, kept };
   },
 });
@@ -365,7 +390,7 @@ export const togglePromptStatus = mutation({
     }
 
     // Toggle the status
-    await ctx.db.patch(args.promptId, { 
+    await ctx.db.patch(args.promptId, {
       active: !prompt.active,
       updatedAt: Date.now(),
     });

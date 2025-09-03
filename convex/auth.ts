@@ -174,7 +174,7 @@ export const getUserByClerkId = query({
       .query('users')
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))
       .first();
-    
+
     return user;
   },
 });

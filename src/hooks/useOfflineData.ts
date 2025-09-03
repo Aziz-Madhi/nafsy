@@ -660,7 +660,8 @@ export function useOfflineChatMessages(
   const [messages, setMessages] = useState<ChatMessageRow[]>([]);
 
   // Map UI chatType to unified Convex chat type
-  const unifiedType = chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
+  const unifiedType =
+    chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
 
   // Get data from Convex when online via unified endpoint
   const serverMessages = useQuery(
@@ -754,7 +755,8 @@ export function useOfflineChatSessions(chatType: ChatType) {
   const [sessions, setSessions] = useState<ChatSessionRow[]>([]);
 
   // Get data from Convex when online via unified endpoint
-  const unifiedType = chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
+  const unifiedType =
+    chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
   const serverSessions = useQuery(
     api.chat.getChatSessions,
     isSignedIn && isOnline ? { type: unifiedType as any } : 'skip'
@@ -831,7 +833,8 @@ export function useOfflineSendMessage(chatType: ChatType) {
   const { isOnline } = useNetworkStatus();
   const currentUser = useCurrentUser();
 
-  const unifiedType = chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
+  const unifiedType =
+    chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
   const serverMutation = useMutation(api.chat.sendChatMessage);
 
   return useCallback(

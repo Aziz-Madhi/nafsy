@@ -18,7 +18,7 @@ interface OpenAIResponsesRequest {
     version?: string;
   };
   instructions?: string;
-  input: Array<{ role: 'user' | 'assistant'; content: string }>;
+  input: { role: 'user' | 'assistant' | 'system'; content: string }[];
   stream?: boolean;
 }
 
@@ -28,7 +28,8 @@ interface OpenAIResponsesRequest {
 export async function buildResponsesPayload(
   ctx: any,
   personality: 'coach' | 'companion' | 'vent',
-  messages: Array<{ role: 'user' | 'assistant'; content?: string; parts?: any[] }>
+  messages: { role: 'user' | 'assistant'; content?: string; parts?: any[] }[],
+  user: { _id: string; name?: string; language: string }
 ): Promise<{
   payload: OpenAIResponsesRequest;
   modelConfig?: { temperature?: number; maxTokens?: number; topP?: number };
@@ -42,21 +43,59 @@ export async function buildResponsesPayload(
     promptConfig = cached.data;
   } else {
     promptConfig = await ctx.runQuery(api.aiPrompts.getPrompt, { personality });
-    promptCache.set(cacheKey, { data: promptConfig, expires: now + PROMPT_CACHE_TTL_MS });
+    promptCache.set(cacheKey, {
+      data: promptConfig,
+      expires: now + PROMPT_CACHE_TTL_MS,
+    });
   }
   if (isDevEnv) {
     console.debug('Loaded prompt config for', personality);
   }
 
+  // Get user context for personalization
+  let userContext: { text: string; level: string } | null = null;
+  try {
+    userContext = await ctx.runQuery(api.personalization.buildUserContext, {
+      user,
+      personality,
+      messages,
+    });
+    if (isDevEnv && userContext) {
+      console.debug(
+        `Built user context (${userContext.level}):`,
+        userContext.text.length,
+        'chars'
+      );
+      // Log first 200 chars to verify content
+      console.debug(
+        'User context preview:',
+        userContext.text.substring(0, 200)
+      );
+    }
+  } catch (error) {
+    console.error('Failed to build user context:', error);
+  }
+
   // Convert messages to required format, handling parts if present
-  const formattedMessages = messages.map(msg => ({
+  const formattedMessages = messages.map((msg) => ({
     role: msg.role,
-    content: msg.content || 
-      (msg.parts ? msg.parts.map((p: any) => p.text || '').join('') : '')
+    content:
+      msg.content ||
+      (msg.parts ? msg.parts.map((p: any) => p.text || '').join('') : ''),
   }));
 
-  // Use model from database config with fallback to default
-  const model = promptConfig?.model || 'gpt-4o-mini';
+  // Do NOT inject user context into the user's message.
+  // We keep it system-level via `instructions` so the model
+  // treats it as background memory, not conversational content.
+
+  // Require model from database config (no fallback)
+  if (!promptConfig) {
+    throw new Error(`Prompt config not found for personality: ${personality}`);
+  }
+  if (!promptConfig.model) {
+    throw new Error(`Prompt model missing for personality: ${personality}`);
+  }
+  const model = String(promptConfig.model);
 
   const payload: OpenAIResponsesRequest = {
     model: model,
@@ -64,31 +103,45 @@ export async function buildResponsesPayload(
     stream: true,
   };
 
-  if (!promptConfig) {
-    if (isDevEnv) console.warn('No prompt config found, using default');
-    // Fallback to default inline prompt
-    payload.instructions = getDefaultPrompt(personality);
-    return { payload, modelConfig: undefined };
-  }
-
   // Use OpenAI Prompt ID if configured
-  if (promptConfig.source.startsWith('openai_prompt') && promptConfig.openaiPromptId) {
+  if (
+    promptConfig.source.startsWith('openai_prompt') &&
+    promptConfig.openaiPromptId
+  ) {
     if (isDevEnv) console.debug('Using OpenAI Prompt ID');
     payload.prompt = { id: promptConfig.openaiPromptId };
-    
+
     // Add version for pinned prompts
-    if (promptConfig.source === 'openai_prompt_pinned' && promptConfig.openaiPromptVersion) {
+    if (
+      promptConfig.source === 'openai_prompt_pinned' &&
+      promptConfig.openaiPromptVersion
+    ) {
       payload.prompt.version = String(promptConfig.openaiPromptVersion);
-      if (isDevEnv) console.debug('Pinned prompt version:', payload.prompt.version);
+      if (isDevEnv)
+        console.debug('Pinned prompt version:', payload.prompt.version);
+    }
+    // For Prompt IDs, prefer a system message carrying context on first turn
+    const isNewSession = !messages.some((m) => m.role === 'assistant');
+    if (isNewSession && userContext?.text) {
+      payload.input = [
+        { role: 'system', content: userContext.text },
+        ...payload.input,
+      ];
     }
   } else if (promptConfig.source === 'inline' && promptConfig.prompt) {
     if (isDevEnv) console.debug('Using inline prompt');
-    // Use inline prompt content
+    // Use inline prompt content with user context
     payload.instructions = promptConfig.prompt;
+    // Also include user context as a system message on first turn for clarity
+    const isNewSession = !messages.some((m) => m.role === 'assistant');
+    if (isNewSession && userContext?.text) {
+      payload.input = [
+        { role: 'system', content: userContext.text },
+        ...payload.input,
+      ];
+    }
   } else {
-    if (isDevEnv) console.warn('Fallback to default prompt');
-    // Final fallback
-    payload.instructions = getDefaultPrompt(personality);
+    throw new Error('Invalid or incomplete prompt configuration');
   }
 
   // Extract model configuration
@@ -116,7 +169,7 @@ export async function streamFromResponsesAPI(
   if (isDevEnv) {
     console.debug('Calling OpenAI Responses API');
   }
-  
+
   // Use the /v1/responses endpoint with proper payload structure
   const responsesPayload: any = {
     model: payload.model,
@@ -128,12 +181,12 @@ export async function streamFromResponsesAPI(
     responsesPayload.temperature = modelConfig.temperature;
   }
   if (modelConfig?.maxTokens !== undefined) {
-    responsesPayload.max_tokens = modelConfig.maxTokens;
+    responsesPayload.max_output_tokens = modelConfig.maxTokens;
   }
   if (modelConfig?.topP !== undefined) {
     responsesPayload.top_p = modelConfig.topP;
   }
-  
+
   // Add prompt configuration if available
   if (payload.prompt) {
     responsesPayload.prompt = payload.prompt;
@@ -141,18 +194,18 @@ export async function streamFromResponsesAPI(
     // Fallback to instructions if no prompt ID
     responsesPayload.instructions = payload.instructions;
   }
-  
+
   // Format input messages properly for responses API
   responsesPayload.input = payload.input;
-  
+
   if (isDevEnv) {
     console.debug('Dispatching to /v1/responses');
   }
-  
+
   const response = await fetch('https://api.openai.com/v1/responses', {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
+      Authorization: `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(responsesPayload),
@@ -161,41 +214,13 @@ export async function streamFromResponsesAPI(
   if (!response.ok) {
     const error = await response.text();
     console.error('OpenAI Responses API error:', response.status);
-    
-    // If responses API fails, try fallback to chat completions
-    if (response.status === 404 || response.status === 400) {
-      if (isDevEnv) console.warn('Falling back to chat completions API');
-      const chatPayload = {
-        model: payload.model,
-        messages: [
-          ...(payload.instructions ? [{ role: 'system', content: payload.instructions }] : []),
-          ...payload.input.map((msg) => ({ role: msg.role, content: msg.content }))
-        ],
-        stream: payload.stream,
-      };
-      
-      const chatResponse = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(chatPayload),
-      });
-      
-      if (!chatResponse.ok) {
-        const chatError = await chatResponse.text();
-        throw new Error(`OpenAI API error: ${chatResponse.status} - ${chatError}`);
-      }
-      
-      return chatResponse;
-    }
-    
-    throw new Error(`OpenAI Responses API error: ${response.status} - ${error}`);
+    throw new Error(
+      `OpenAI Responses API error: ${response.status} - ${error}`
+    );
   }
 
-      if (isDevEnv) console.debug('OpenAI Responses API call successful');
-      return response;
+  if (isDevEnv) console.debug('OpenAI Responses API call successful');
+  return response;
 }
 
 /**
@@ -225,24 +250,26 @@ export async function* transformResponsesStream(
             yield `data: [DONE]\n\n`;
             continue;
           }
-          
+
           try {
             const parsed = JSON.parse(data);
-            
-            
+
             // OpenAI Responses API returns in this format:
             // { "id": "...", "object": "chat.completion.chunk", "choices": [...] }
             // OR for responses API specifically:
             // { "response": { "content": "..." } }
-            
+
             let content = '';
-            
+
             // Check for various possible formats
             // The Responses API sends content in the delta field directly
             if (parsed.type === 'response.output_text.delta' && parsed.delta) {
               // This is the actual content streaming format from Responses API
               content = parsed.delta;
-            } else if (parsed.type === 'response.output_text.done' && parsed.text) {
+            } else if (
+              parsed.type === 'response.output_text.done' &&
+              parsed.text
+            ) {
               // Final complete text (we can skip this as we already have the deltas)
               // content = parsed.text;
             } else if (parsed.response?.content) {
@@ -261,7 +288,7 @@ export async function* transformResponsesStream(
               // Direct content
               content = parsed.content;
             }
-            
+
             if (content) {
               const uiChunk = {
                 type: 'text-delta',
@@ -275,7 +302,7 @@ export async function* transformResponsesStream(
         }
       }
     }
-    
+
     // Ensure we send a final DONE message
     yield `data: [DONE]\n\n`;
   } finally {
@@ -292,7 +319,7 @@ function getDefaultPrompt(personality: 'coach' | 'companion' | 'vent'): string {
     companion: `You are a friendly and supportive daily companion. You check in on the user's wellbeing, celebrate their victories, and provide encouragement during difficult times. You're warm, approachable, and genuinely caring. Keep responses conversational and supportive. Detect the user's language from their messages and respond in the same language naturally.`,
     vent: `You are a safe, non-judgmental listener for emotional release. Acknowledge feelings without trying to fix them. Provide validation and gentle support, allowing the user to express themselves freely. Keep responses brief and empathetic. Detect the user's language from their messages and respond in the same language naturally.`,
   };
-  
+
   return prompts[personality];
 }
 
@@ -301,6 +328,6 @@ function getDefaultPrompt(personality: 'coach' | 'companion' | 'vent'): string {
  * Can be used for gradual rollout
  */
 export function isResponsesAPIEnabled(): boolean {
-  // Feature flag - can be controlled via environment variable
-  return process.env.USE_OPENAI_RESPONSES_API === 'true';
+  // Enforce Responses API only
+  return true;
 }

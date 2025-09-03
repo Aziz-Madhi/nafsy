@@ -379,7 +379,10 @@ export default function ChatTab() {
         // Ensure a vent session exists
         let sessionId = currentVentSessionId;
         if (!sessionId) {
-          sessionId = await createChatSession({ type: 'vent', title: 'Quick Vent Session' });
+          sessionId = await createChatSession({
+            type: 'vent',
+            title: 'Quick Vent Session',
+          });
           setCurrentVentSessionId(sessionId);
         }
         // Update overlay with user message instantly

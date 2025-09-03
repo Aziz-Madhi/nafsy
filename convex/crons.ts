@@ -34,4 +34,12 @@ crons.interval(
   { maxAgeMs: 24 * 60 * 60 * 1000 }
 );
 
+// Generate weekly user summaries every Sunday at 11 PM UTC (action-based)
+crons.cron(
+  'generate user summaries',
+  '0 23 * * 0', // Every Sunday at 11 PM UTC
+  internal.personalization.generateWeeklySummariesAction,
+  {}
+);
+
 export default crons;

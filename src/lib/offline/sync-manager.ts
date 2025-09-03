@@ -656,7 +656,12 @@ class SimplifiedSyncManager {
       let pulled = 0;
 
       // Unified type mapping for Convex
-      const unifiedType = chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
+      const unifiedType =
+        chatType === 'coach'
+          ? 'main'
+          : chatType === 'event'
+            ? 'vent'
+            : 'companion';
 
       // Note: For now, we only pull chat data (read-only when offline)
       // We don't push user messages as they require AI response
@@ -677,11 +682,14 @@ class SimplifiedSyncManager {
             // For each session, get recent messages
             for (const session of sessions.slice(0, 3)) {
               // Limit to 3 most recent sessions
-              const messages = await convexClient.query(api.chat.getChatMessages, {
-                type: unifiedType as any,
-                sessionId: session.sessionId,
-                limit: 50,
-              });
+              const messages = await convexClient.query(
+                api.chat.getChatMessages,
+                {
+                  type: unifiedType as any,
+                  sessionId: session.sessionId,
+                  limit: 50,
+                }
+              );
 
               if (messages && messages.length > 0) {
                 // Filter out messages without sessionId for event chat

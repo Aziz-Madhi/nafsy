@@ -8,7 +8,11 @@ export const insertAssistantMessage = internalMutation({
   args: {
     sessionId: v.string(),
     userId: v.id('users'),
-    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
     content: v.string(),
     requestId: v.optional(v.string()),
   },
@@ -134,7 +138,11 @@ export const recordAITelemetry = internalMutation({
   args: {
     userId: v.id('users'),
     sessionId: v.string(),
-    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
     provider: v.string(),
     model: v.string(),
     requestId: v.optional(v.string()),
@@ -161,5 +169,79 @@ export const recordAITelemetry = internalMutation({
       createdAt: Date.now(),
     });
     return id;
+  },
+});
+
+// Ensure a session exists for the given chat type and sessionId
+export const ensureSessionExists = internalMutation({
+  args: {
+    userId: v.id('users'),
+    sessionId: v.string(),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
+    title: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    if (args.chatType === 'main') {
+      const existing = await ctx.db
+        .query('chatSessions')
+        .withIndex('by_session_id', (q: any) =>
+          q.eq('sessionId', args.sessionId)
+        )
+        .first();
+      if (!existing) {
+        await ctx.db.insert('chatSessions', {
+          userId: args.userId,
+          sessionId: args.sessionId,
+          title: args.title || 'Chat Session',
+          startedAt: now,
+          lastMessageAt: now,
+          messageCount: 0,
+        });
+      }
+      return null;
+    }
+
+    if (args.chatType === 'companion') {
+      const existing = await ctx.db
+        .query('companionChatSessions')
+        .withIndex('by_session_id', (q: any) =>
+          q.eq('sessionId', args.sessionId)
+        )
+        .first();
+      if (!existing) {
+        await ctx.db.insert('companionChatSessions', {
+          userId: args.userId,
+          sessionId: args.sessionId,
+          title: args.title || 'Check-in',
+          startedAt: now,
+          lastMessageAt: now,
+          messageCount: 0,
+        });
+      }
+      return null;
+    }
+
+    // vent
+    const existing = await ctx.db
+      .query('ventChatSessions')
+      .withIndex('by_session_id', (q: any) => q.eq('sessionId', args.sessionId))
+      .first();
+    if (!existing) {
+      await ctx.db.insert('ventChatSessions', {
+        userId: args.userId,
+        sessionId: args.sessionId,
+        title: args.title || 'Quick Vent Session',
+        startedAt: now,
+        lastMessageAt: now,
+        messageCount: 0,
+      });
+    }
+    return null;
   },
 });

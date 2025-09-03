@@ -12,7 +12,8 @@ export default defineSchema({
     lastActive: v.number(),
   })
     .index('by_clerk_id', ['clerkId'])
-    .index('by_email', ['email']),
+    .index('by_email', ['email'])
+    .index('by_last_active', ['lastActive']),
 
   // Legacy messages table (can be removed after migration)
   messages: defineTable({
@@ -99,37 +100,81 @@ export default defineSchema({
 
   // AI System Prompts (editable in cloud, supports OpenAI Prompt IDs)
   aiPrompts: defineTable({
-    personality: v.union(v.literal('coach'), v.literal('companion'), v.literal('vent')),
-    
+    personality: v.union(
+      v.literal('coach'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
+
     // Source of the prompt
     source: v.union(
-      v.literal('openai_prompt_latest'),  // Use latest published version
-      v.literal('openai_prompt_pinned'),  // Use specific pinned version
-      v.literal('inline')                 // Use inline content
+      v.literal('openai_prompt_latest'), // Use latest published version
+      v.literal('openai_prompt_pinned'), // Use specific pinned version
+      v.literal('inline') // Use inline content
     ),
-    
+
     // OpenAI Prompt ID (e.g., "pmpt_...")
     openaiPromptId: v.optional(v.string()),
-    
+
     // Version number for pinned prompts
     openaiPromptVersion: v.optional(v.number()),
-    
+
     // Inline prompt content (fallback or when source is 'inline')
     prompt: v.optional(v.string()),
-    
+
     // Model configuration
     model: v.optional(v.string()), // e.g., "gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"
     temperature: v.optional(v.number()), // 0.0 to 2.0
     maxTokens: v.optional(v.number()), // Optional token limit
     topP: v.optional(v.number()), // Optional top-p parameter (0.0 to 1.0)
-    
+
     // Metadata
     active: v.boolean(),
     version: v.number(),
     updatedAt: v.number(),
     updatedBy: v.optional(v.string()),
+  }).index('by_personality', ['personality', 'active']),
+
+  // Summarization Configuration (configurable model settings for weekly summaries)
+  summarizationConfig: defineTable({
+    // Source of the prompt (same as aiPrompts)
+    source: v.union(
+      v.literal('openai_prompt_latest'), // Use latest published version
+      v.literal('openai_prompt_pinned'), // Use specific pinned version
+      v.literal('inline') // Use inline content
+    ),
+
+    // OpenAI Prompt ID (e.g., "pmpt_...")
+    openaiPromptId: v.optional(v.string()),
+
+    // Version number for pinned prompts
+    openaiPromptVersion: v.optional(v.number()),
+
+    // Inline prompt content (fallback or when source is 'inline')
+    prompt: v.optional(v.string()),
+
+    // Model configuration
+    model: v.string(), // e.g., "gpt-4o-mini", "gpt-4o", "gpt-3.5-turbo"
+    temperature: v.number(), // 0.0 to 2.0
+    maxTokens: v.number(), // Token limit
+    topP: v.optional(v.number()), // Optional top-p parameter (0.0 to 1.0)
+
+    // Response format settings
+    responseFormat: v.optional(
+      v.object({
+        type: v.union(v.literal('text'), v.literal('json_object')),
+      })
+    ),
+
+    // Metadata
+    active: v.boolean(),
+    version: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.string()),
   })
-    .index('by_personality', ['personality', 'active']),
+    .index('by_active', ['active'])
+    .index('by_version', ['version']),
 
   exercises: defineTable({
     title: v.string(),
@@ -200,7 +245,11 @@ export default defineSchema({
   aiTelemetry: defineTable({
     userId: v.id('users'),
     sessionId: v.string(),
-    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
     provider: v.string(), // e.g., 'openai'
     model: v.string(),
     requestId: v.optional(v.string()),
@@ -213,4 +262,17 @@ export default defineSchema({
   })
     .index('by_user_time', ['userId', 'startedAt'])
     .index('by_session', ['sessionId']),
+
+  // User weekly summaries for personalization
+  userSummaries: defineTable({
+    userId: v.id('users'),
+    weekStartDate: v.number(), // Sunday 00:00 UTC epoch timestamp
+    conversationSummary: v.string(), // AI-generated summary of conversations
+    moodSummary: v.string(), // Summary of mood patterns
+    exerciseSummary: v.string(), // Summary of exercise habits
+    summaryText: v.optional(v.string()), // Combined weekly summary paragraph
+    createdAt: v.number(),
+  })
+    .index('by_user_week', ['userId', 'weekStartDate'])
+    .index('by_user_created', ['userId', 'createdAt']),
 });
