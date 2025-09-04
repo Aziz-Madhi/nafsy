@@ -168,17 +168,7 @@ export default function ChatTab() {
 
   // Auth is handled by root gate - no early returns needed
 
-  // Create user if doesn't exist
-  useEffect(() => {
-    if (user && isLoaded && currentUser === null && user.id) {
-      upsertUser({
-        clerkId: user.id,
-        email: user.emailAddresses?.[0]?.emailAddress || '',
-        name: user.fullName || user.firstName || undefined,
-        avatarUrl: user.imageUrl || undefined,
-      });
-    }
-  }, [user, isLoaded, currentUser, upsertUser]);
+  // Removed duplicate upsert here; centralized in (app)/_layout
 
   // Don't auto-send welcome messages - let users start conversations naturally
 

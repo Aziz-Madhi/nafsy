@@ -57,11 +57,8 @@ export default function SignUpScreen() {
       }
     >
       {!pendingVerification ? (
-        <View className="mt-6">
-          {/* Social Auth Buttons */}
-          <SocialAuthButtons />
-
-          {/* Email/Password Form */}
+        <View className="mt-3">
+          {/* Email/Password Form (moved up) */}
           <Animated.View style={shakeStyle} className="gap-4">
             <FormField
               label={t('auth.name')}
@@ -115,6 +112,18 @@ export default function SignUpScreen() {
               </Text>
             </Button>
           </Animated.View>
+
+          {/* Divider between email and social */}
+          <View className="flex-row items-center gap-4 my-4">
+            <View className="flex-1 h-px bg-border opacity-50" />
+            <Text className="text-muted-foreground text-sm font-normal">
+              {t('auth.orContinueWith')}
+            </Text>
+            <View className="flex-1 h-px bg-border opacity-50" />
+          </View>
+
+          {/* Social Auth Buttons (moved down) */}
+          <SocialAuthButtons showDivider={false} />
         </View>
       ) : (
         <Animated.View style={shakeStyle} className="gap-4 mt-6">

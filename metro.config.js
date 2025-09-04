@@ -7,6 +7,19 @@ const config = getDefaultConfig(__dirname);
 // Add support for WASM files (required for Skia web support)
 config.resolver.assetExts.push('wasm');
 
+// Support importing SVGs as React components via react-native-svg-transformer
+config.transformer = {
+  ...config.transformer,
+  babelTransformerPath: require.resolve('react-native-svg-transformer'),
+};
+config.resolver.assetExts = config.resolver.assetExts.filter(
+  (ext) => ext !== 'svg'
+);
+config.resolver.sourceExts = [
+  ...config.resolver.sourceExts,
+  'svg',
+];
+
 // Add support for TypeScript
 config.resolver.sourceExts.push('ts', 'tsx');
 

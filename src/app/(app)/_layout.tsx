@@ -13,6 +13,7 @@ import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Text } from '~/components/ui/text';
+import { useRef } from 'react';
 
 export default function AppLayout() {
   const colors = useColors();
@@ -21,6 +22,9 @@ export default function AppLayout() {
   const { user: clerkUser } = useUserSafe();
   const upsertUser = useMutation(api.auth.upsertUser);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
+  const [creationGraceEnded, setCreationGraceEnded] = useState(false);
+  const lastUpsertClerkIdRef = useRef<string | null>(null);
+  const lastUpsertAtRef = useRef<number>(0);
 
   // Initialize offline data system
   useEffect(() => {
@@ -39,8 +43,18 @@ export default function AppLayout() {
     if (!isSignedIn || !isLoaded) return;
 
     // Create/update user if doesn't exist or needs update
-    const createOrUpdateUser = async () => {
+    const createOrUpdateUser = async (): Promise<boolean> => {
       if (clerkUser?.id && !isCreatingUser) {
+        // Debounce duplicate attempts for the same user id
+        const now = Date.now();
+        if (
+          lastUpsertClerkIdRef.current === clerkUser.id &&
+          now - lastUpsertAtRef.current < 15000 // 15s window
+        ) {
+          return false;
+        }
+        lastUpsertClerkIdRef.current = clerkUser.id;
+        lastUpsertAtRef.current = now;
         setIsCreatingUser(true);
         try {
           await upsertUser({
@@ -54,12 +68,22 @@ export default function AppLayout() {
         } finally {
           setIsCreatingUser(false);
         }
+        return true;
       }
+      return false;
     };
 
     // If current user is null (not found in Convex), create it
     if (currentUser === null) {
-      createOrUpdateUser();
+      // Kick off creation and start a short grace timer only if we attempted upsert
+      (async () => {
+        const attempted = await createOrUpdateUser();
+        if (attempted) {
+          setCreationGraceEnded(false);
+          const id = setTimeout(() => setCreationGraceEnded(true), 2500);
+          return () => clearTimeout(id);
+        }
+      })();
     }
     // Also update if Clerk user data has changed
     else if (currentUser && clerkUser?.id) {
@@ -99,8 +123,8 @@ export default function AppLayout() {
   }
 
   // Show loading while creating user in database
-  // This should rarely happen now since OAuth callback handles user creation
-  if (isCreatingUser || (isSignedIn && currentUser === null && clerkUser?.id)) {
+  // Keep a short grace period if currentUser is still null, but do not block indefinitely
+  if (isCreatingUser || (isSignedIn && currentUser === null && clerkUser?.id && !creationGraceEnded)) {
     return (
       <View
         style={{
