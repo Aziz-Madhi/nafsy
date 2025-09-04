@@ -19,11 +19,15 @@ Yes, you can—and should—put system prompts for your AI on the server side in
       model: 'gpt-4o-mini',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: 'Generate a random question about Convex and answer it.' },
+        {
+          role: 'user',
+          content: 'Generate a random question about Convex and answer it.',
+        },
       ],
     }),
   });
   ```
+
   This approach keeps the prompt secure and only accessible on the server, not exposed to the client.  
   [See example](https://stack.convex.dev/how-to-schedule-ai-content-creation-using-convex#step-3-implementing-a-convex-action)
 
@@ -32,16 +36,18 @@ Yes, you can—and should—put system prompts for your AI on the server side in
 
   ```js
   const supportAgent = new Agent(components.agent, {
-    name: "Support Agent",
-    chat: openai.chat("gpt-4o-mini"),
-    instructions: "You are a helpful assistant.",
+    name: 'Support Agent',
+    chat: openai.chat('gpt-4o-mini'),
+    instructions: 'You are a helpful assistant.',
     tools: { accountLookup, fileTicket, sendEmail },
   });
   ```
+
   This ensures the prompt is always included in LLM calls and remains server-side only  
   [See example](https://docs.convex.dev/agents)
 
 **Why server-side?**
+
 - Keeps prompts secure and prevents tampering.
 - Centralizes prompt management for easier updates.
 - Ensures all LLM calls use the correct prompt.
@@ -54,12 +60,12 @@ When using HTTP actions for streaming in Convex, you do **not** need to handle s
 For example, when streaming a response from OpenAI via an HTTP action, you can include the system prompt as part of the messages array sent to the OpenAI API:
 
 ```js
-const systemPrompt = "You are a helpful assistant.";
+const systemPrompt = 'You are a helpful assistant.';
 const stream = await openai.chat.completions.create({
-  model: "gpt-4o-mini",
+  model: 'gpt-4o-mini',
   stream: true,
   messages: [
-    { role: "system", content: systemPrompt },
+    { role: 'system', content: systemPrompt },
     // ...user and assistant messages
   ],
 });

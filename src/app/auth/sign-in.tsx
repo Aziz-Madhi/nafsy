@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link } from 'expo-router';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { AuthLayout } from '~/components/auth/AuthLayout';
+import { SocialAuthButtons } from '~/components/auth/SocialAuthButtons';
 import { FormField } from '~/components/ui/FormField';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
@@ -43,39 +44,52 @@ export default function SignInScreen() {
         </>
       }
     >
-      <Animated.View style={shakeStyle} className="gap-4 mt-6">
-        <FormField
-          label={t('auth.email')}
-          placeholder={t('auth.placeholders.enterEmail')}
-          value={form.email}
-          onChangeText={(text) => updateForm('email', text)}
-          autoCapitalize="none"
-          autoComplete="email"
-          keyboardType="email-address"
-          error={errors.email}
-        />
+      <View className="mt-6">
+        {/* Social Auth Buttons */}
+        <SocialAuthButtons />
 
-        <FormField
-          label={t('auth.password')}
-          placeholder={t('auth.placeholders.enterPassword')}
-          value={form.password}
-          onChangeText={(text) => updateForm('password', text)}
-          secureTextEntry
-          autoComplete="password"
-          error={errors.password}
-        />
+        {/* Email/Password Form */}
+        <Animated.View style={shakeStyle} className="gap-4">
+          <FormField
+            label={t('auth.email')}
+            placeholder={t('auth.placeholders.enterEmail')}
+            value={form.email}
+            onChangeText={(text) => updateForm('email', text)}
+            autoCapitalize="none"
+            autoComplete="email"
+            keyboardType="email-address"
+            error={errors.email}
+          />
 
-        <Button
-          onPress={handleSubmit}
-          disabled={loading || !validation.isValid}
-          size="lg"
-          className="mt-2"
-        >
-          <Text className="text-primary-foreground text-base font-semibold">
-            {loading ? t('auth.buttons.signingIn') : t('common.signIn')}
-          </Text>
-        </Button>
-      </Animated.View>
+          <FormField
+            label={t('auth.password')}
+            placeholder={t('auth.placeholders.enterPassword')}
+            value={form.password}
+            onChangeText={(text) => updateForm('password', text)}
+            secureTextEntry
+            autoComplete="password"
+            error={errors.password}
+          />
+
+          <Button
+            onPress={handleSubmit}
+            disabled={loading || !validation.isValid}
+            size="lg"
+            className="mt-4 rounded-xl"
+            style={{
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 4,
+              elevation: 3,
+            }}
+          >
+            <Text className="text-primary-foreground text-base font-semibold">
+              {loading ? t('auth.buttons.signingIn') : t('common.signIn')}
+            </Text>
+          </Button>
+        </Animated.View>
+      </View>
     </AuthLayout>
   );
 }

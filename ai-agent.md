@@ -10,7 +10,6 @@ Agent Component
 
 The Agent component is a core building block for building AI agents. It manages threads and messages, around which your Agents can cooperate in static or dynamic workflows.
 
-
 Agent Component YouTube Video
 
 Core Concepts
@@ -36,39 +35,37 @@ Sample code:
 
 import { Agent } from "@convex-dev/agents";
 import { openai } from "@ai-sdk/openai";
-import { components } from "./_generated/api";
-import { action } from "./_generated/server";
+import { components } from "./\_generated/api";
+import { action } from "./\_generated/server";
 
 // Define an agent
 const supportAgent = new Agent(components.agent, {
-  name: "Support Agent",
-  chat: openai.chat("gpt-4o-mini"),
-  instructions: "You are a helpful assistant.",
-  tools: { accountLookup, fileTicket, sendEmail },
+name: "Support Agent",
+chat: openai.chat("gpt-4o-mini"),
+instructions: "You are a helpful assistant.",
+tools: { accountLookup, fileTicket, sendEmail },
 });
 
 // Use the agent from within a normal action:
 export const createThread = action({
-  args: { prompt: v.string() },
-  handler: async (ctx, { prompt }) => {
-    const { threadId, thread } = await supportAgent.createThread(ctx);
-    const result = await thread.generateText({ prompt });
-    return { threadId, text: result.text };
-  },
+args: { prompt: v.string() },
+handler: async (ctx, { prompt }) => {
+const { threadId, thread } = await supportAgent.createThread(ctx);
+const result = await thread.generateText({ prompt });
+return { threadId, text: result.text };
+},
 });
 
 // Pick up where you left off, with the same or a different agent:
 export const continueThread = action({
-  args: { prompt: v.string(), threadId: v.string() },
-  handler: async (ctx, { prompt, threadId }) => {
-    // This includes previous message history from the thread automatically.
-    const { thread } = await anotherAgent.continueThread(ctx, { threadId });
-    const result = await thread.generateText({ prompt });
-    return result.text;
-  },
+args: { prompt: v.string(), threadId: v.string() },
+handler: async (ctx, { prompt, threadId }) => {
+// This includes previous message history from the thread automatically.
+const { thread } = await anotherAgent.continueThread(ctx, { threadId });
+const result = await thread.generateText({ prompt });
+return result.text;
+},
 });
-
-
 
 Getting Started with Agent
 
@@ -97,29 +94,28 @@ Then run npx convex dev to generate code for the component. This needs to succes
 
 Defining your first Agent
 
-import { components } from "./_generated/api";
+import { components } from "./\_generated/api";
 import { Agent } from "@convex-dev/agent";
 import { openai } from "@ai-sdk/openai";
 
 const agent = new Agent(components.agent, {
-  name: "My Agent",
-  languageModel: openai.chat("gpt-4o-mini"),
+name: "My Agent",
+languageModel: openai.chat("gpt-4o-mini"),
 });
 
 Using it:
 
-import { action } from "./_generated/server";
+import { action } from "./\_generated/server";
 import { v } from "convex/values";
 
 export const helloWorld = action({
-  args: { prompt: v.string() },
-  handler: async (ctx, { prompt }) => {
-    const threadId = await createThread(ctx, components.agent);
-    const result = await agent.generateText(ctx, { threadId }, { prompt });
-    return result.text;
-  },
+args: { prompt: v.string() },
+handler: async (ctx, { prompt }) => {
+const threadId = await createThread(ctx, components.agent);
+const result = await agent.generateText(ctx, { threadId }, { prompt });
+return result.text;
+},
 });
-
 
 If you get type errors about components.agent, ensure you've run npx convex dev to generate code for the component.
 
@@ -133,53 +129,53 @@ import { tool, stepCountIs } from "ai";
 import { openai } from "@ai-sdk/openai";
 import { z } from "zod/v3";
 import { Agent, createTool, type Config } from "@convex-dev/agent";
-import { components } from "./_generated/api";
+import { components } from "./\_generated/api";
 
 const sharedDefaults = {
-  // The chat completions model to use for the agent.
-  languageModel: openai.chat("gpt-4o-mini"),
-  // Embedding model to power vector search of message history (RAG).
-  textEmbeddingModel: openai.embedding("text-embedding-3-small"),
-  // Used for fetching context messages. See https://docs.convex.dev/agents/context
-  contextOptions,
-  // Used for storing messages. See https://docs.convex.dev/agents/messages
-  storageOptions,
-  // Used for tracking token usage. See https://docs.convex.dev/agents/usage-tracking
-  usageHandler: async (ctx, args) => {
-    const { usage, model, provider, agentName, threadId, userId } = args;
-    // ... log, save usage to your database, etc.
-  },
-  // Useful if you want to log or record every request and response.
-  rawResponseHandler: async (ctx, args) => {
-    const { request, response, agentName, threadId, userId } = args;
-    // ... log, save request/response to your database, etc.
-  },
-  // Used for limiting the number of retries when a tool call fails. Default: 3.
-  callSettings: { maxRetries: 3, temperature: 1.0 },
-  // Used for setting default provider-specific options to the LLM calls.
-  providerOptions: { openai: { cacheControl: { type: "ephemeral" } } },
+// The chat completions model to use for the agent.
+languageModel: openai.chat("gpt-4o-mini"),
+// Embedding model to power vector search of message history (RAG).
+textEmbeddingModel: openai.embedding("text-embedding-3-small"),
+// Used for fetching context messages. See https://docs.convex.dev/agents/context
+contextOptions,
+// Used for storing messages. See https://docs.convex.dev/agents/messages
+storageOptions,
+// Used for tracking token usage. See https://docs.convex.dev/agents/usage-tracking
+usageHandler: async (ctx, args) => {
+const { usage, model, provider, agentName, threadId, userId } = args;
+// ... log, save usage to your database, etc.
+},
+// Useful if you want to log or record every request and response.
+rawResponseHandler: async (ctx, args) => {
+const { request, response, agentName, threadId, userId } = args;
+// ... log, save request/response to your database, etc.
+},
+// Used for limiting the number of retries when a tool call fails. Default: 3.
+callSettings: { maxRetries: 3, temperature: 1.0 },
+// Used for setting default provider-specific options to the LLM calls.
+providerOptions: { openai: { cacheControl: { type: "ephemeral" } } },
 } satisfies Config;
 
 // Define an agent similarly to the AI SDK
 const supportAgent = new Agent(components.agent, {
-  // The default system prompt if not over-ridden.
-  instructions: "You are a helpful assistant.",
-  tools: {
-    // Convex tool
-    myConvexTool: createTool({
-      description: "My Convex tool",
-      args: z.object({...}),
-      // Note: annotate the return type of the handler to avoid type cycles.
-      handler: async (ctx, args): Promise<string> => {
-        return "Hello, world!";
-      },
-    }),
-    // Standard AI SDK tool
-    myTool: tool({ description, parameters, execute: () => {}}),
-  },
-  // Used for limiting the number of steps when tool calls are involved.
-  // NOTE: if you want tool calls to happen automatically with a single call,
-  // you need to set this to something greater than 1 (the default).
-  stopWhen: stepCountIs(5),
-  ...sharedDefaults,
+// The default system prompt if not over-ridden.
+instructions: "You are a helpful assistant.",
+tools: {
+// Convex tool
+myConvexTool: createTool({
+description: "My Convex tool",
+args: z.object({...}),
+// Note: annotate the return type of the handler to avoid type cycles.
+handler: async (ctx, args): Promise<string> => {
+return "Hello, world!";
+},
+}),
+// Standard AI SDK tool
+myTool: tool({ description, parameters, execute: () => {}}),
+},
+// Used for limiting the number of steps when tool calls are involved.
+// NOTE: if you want tool calls to happen automatically with a single call,
+// you need to set this to something greater than 1 (the default).
+stopWhen: stepCountIs(5),
+...sharedDefaults,
 });

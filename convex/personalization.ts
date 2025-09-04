@@ -321,17 +321,22 @@ export const generateWeeklySummariesAction = internalAction({
           );
         }
         const result = await response.json();
-        console.log('Weekly summaries API result:', JSON.stringify(result, null, 2));
+        console.log(
+          'Weekly summaries API result:',
+          JSON.stringify(result, null, 2)
+        );
         let summaryText = '';
-        
+
         // Check for the new Responses API structure
         if (Array.isArray(result.output)) {
-          const messageOutput = result.output.find((o: any) => o.type === 'message');
+          const messageOutput = result.output.find(
+            (o: any) => o.type === 'message'
+          );
           if (messageOutput?.content?.[0]?.text) {
             summaryText = messageOutput.content[0].text;
           }
         }
-        
+
         // Fallback to other formats
         if (!summaryText) {
           if (typeof result.output_text === 'string')
@@ -564,7 +569,8 @@ export const ensureCurrentSummaryAction = internalAction({
     }
     if (config.temperature !== undefined)
       payload.temperature = config.temperature;
-    if (config.maxTokens !== undefined) payload.max_output_tokens = config.maxTokens;
+    if (config.maxTokens !== undefined)
+      payload.max_output_tokens = config.maxTokens;
     if (config.topP !== undefined) payload.top_p = config.topP;
 
     // Call OpenAI from within this action
@@ -583,20 +589,25 @@ export const ensureCurrentSummaryAction = internalAction({
       throw new Error(`OpenAI Responses API error ${response.status}: ${err}`);
     }
     const result = await response.json();
-    console.log('OpenAI Responses API result structure:', JSON.stringify(result, null, 2));
+    console.log(
+      'OpenAI Responses API result structure:',
+      JSON.stringify(result, null, 2)
+    );
     let summaryText = '';
-    
+
     // Check for the new Responses API structure (output array with message objects)
     if (Array.isArray(result.output)) {
       // Look for a message type in the output array
-      const messageOutput = result.output.find((o: any) => o.type === 'message');
+      const messageOutput = result.output.find(
+        (o: any) => o.type === 'message'
+      );
       if (messageOutput?.content?.[0]?.text) {
         summaryText = messageOutput.content[0].text;
       } else if (messageOutput?.content?.[0]?.type === 'output_text') {
         summaryText = messageOutput.content[0].text || '';
       }
     }
-    
+
     // Fallback to other possible formats
     if (!summaryText) {
       if (typeof result.output_text === 'string')
@@ -605,12 +616,12 @@ export const ensureCurrentSummaryAction = internalAction({
         summaryText = result.response.output_text;
       else if (result.choices?.[0]?.message?.content)
         summaryText = result.choices[0].message.content;
-      else if (typeof result.content === 'string')
-        summaryText = result.content;
+      else if (typeof result.content === 'string') summaryText = result.content;
       else if (result.response?.content) {
-        summaryText = typeof result.response.content === 'string' 
-          ? result.response.content 
-          : result.response.content?.text || '';
+        summaryText =
+          typeof result.response.content === 'string'
+            ? result.response.content
+            : result.response.content?.text || '';
       }
     }
     const finalSummary = (summaryText || '').trim();
@@ -829,10 +840,9 @@ function formatUserContext(params: FormatContextParams): string {
     mood: isArabic ? 'المزاج' : 'Mood',
     exercises: isArabic ? 'التمارين' : 'Exercises',
     lastWeek: isArabic ? 'الأسبوع الماضي' : 'Last 7 days',
-    guidance:
-      isArabic
-        ? 'إرشاد: استخدم الذاكرة التالية لتخصيص الردود، ولا تذكرها أو تلخصها ما لم يطلب المستخدم ذلك أو كان ذلك ذا صلة بوضوح.'
-        : 'Guidance: Use the background memory below to personalize; do not mention or summarize it unless the user asks or it is clearly relevant.',
+    guidance: isArabic
+      ? 'إرشاد: استخدم الذاكرة التالية لتخصيص الردود، ولا تذكرها أو تلخصها ما لم يطلب المستخدم ذلك أو كان ذلك ذا صلة بوضوح.'
+      : 'Guidance: Use the background memory below to personalize; do not mention or summarize it unless the user asks or it is clearly relevant.',
     noMood: isArabic ? 'لم يتم تسجيل المزاج' : 'No mood logged',
     noExercises: isArabic ? 'لا توجد تمارين' : 'No exercises',
   };
@@ -1260,15 +1270,17 @@ export const summarizeWithOpenAI = internalAction({
     const result = await response.json();
     console.log('Summarize API result:', JSON.stringify(result, null, 2));
     let summaryText = '';
-    
+
     // Check for the new Responses API structure
     if (Array.isArray(result.output)) {
-      const messageOutput = result.output.find((o: any) => o.type === 'message');
+      const messageOutput = result.output.find(
+        (o: any) => o.type === 'message'
+      );
       if (messageOutput?.content?.[0]?.text) {
         summaryText = messageOutput.content[0].text;
       }
     }
-    
+
     // Fallback to other formats
     if (!summaryText) {
       if (typeof result.output_text === 'string') {

@@ -7,6 +7,7 @@ This report documents the comprehensive optimization of the sync mechanism betwe
 ## Problems Identified
 
 ### 1. Performance Issues
+
 - **Aggressive Polling**: `useSyncStatus` hook was polling every 1 second, causing constant re-renders
 - **Auto-sync Intervals**: SyncManager ran automatic sync every 60 seconds regardless of need
 - **Cascading Re-renders**: SQLite event subscriptions triggered immediate notifications causing UI thrashing
@@ -14,6 +15,7 @@ This report documents the comprehensive optimization of the sync mechanism betwe
 - **Sidebar Performance**: Opening the sidebar took several seconds due to competing background processes
 
 ### 2. Data Consistency Issues
+
 - **Deletion Sync Failure**: Deleted moods from Convex weren't being removed from SQLite
 - **Stale UI Data**: Week view dots and calendar pixels showed deleted moods
 - **Cache Invalidation**: No mechanism to handle server-side deletions in local cache
@@ -25,6 +27,7 @@ This report documents the comprehensive optimization of the sync mechanism betwe
 #### Changes to `sync-manager.ts`
 
 **Before:**
+
 ```typescript
 // Auto-sync configuration
 const defaultConfig: SyncConfig = {
@@ -45,6 +48,7 @@ private startAutoSync() {
 ```
 
 **After:**
+
 ```typescript
 // Simplified configuration - no auto-sync
 const defaultConfig: SyncConfig = {
@@ -58,21 +62,22 @@ async syncAfterAction(entityType?: string) {
     logger.debug('Offline - queuing operation for later sync', 'SyncManager');
     return;
   }
-  
+
   if (this.state.isSyncing) {
     logger.debug('Sync already in progress, skipping', 'SyncManager');
     return;
   }
-  
+
   if (entityType) {
     logger.info(`Syncing ${entityType} after user action`, 'SyncManager');
   }
-  
+
   await this.syncAll();
 }
 ```
 
 **Key Changes:**
+
 - Removed `autoSync` and `syncInterval` configuration options
 - Removed `startAutoSync()` and `stopAutoSync()` methods
 - Added `syncAfterAction()` for on-demand syncing
@@ -86,12 +91,13 @@ async syncAfterAction(entityType?: string) {
 #### Changes to `useOfflineData.ts`
 
 **Before:**
+
 ```typescript
 export function useSyncStatus() {
   const [syncStatus, setSyncStatus] = useState(syncManager.getSyncStatus());
 
   useEffect(() => {
-    // Polling every second! 
+    // Polling every second!
     const interval = setInterval(() => {
       setSyncStatus(syncManager.getSyncStatus());
     }, 1000);
@@ -101,6 +107,7 @@ export function useSyncStatus() {
 ```
 
 **After:**
+
 ```typescript
 export function useSyncStatus() {
   const [syncStatus, setSyncStatus] = useState(syncManager.getSyncStatus());
@@ -119,6 +126,7 @@ export function useSyncStatus() {
 ```
 
 **Impact:**
+
 - Eliminated 60 re-renders per minute per component using this hook
 - Reduced constant CPU usage from polling
 - Status only updates when actually needed
@@ -128,6 +136,7 @@ export function useSyncStatus() {
 #### Changes to `sqlite.ts`
 
 **Before:**
+
 ```typescript
 function notify() {
   listeners.forEach((l) => {
@@ -141,6 +150,7 @@ function notify() {
 ```
 
 **After:**
+
 ```typescript
 let notifyTimeout: ReturnType<typeof setTimeout> | null = null;
 
@@ -148,7 +158,7 @@ function notify() {
   if (notifyTimeout) {
     clearTimeout(notifyTimeout);
   }
-  
+
   // Debounce notifications by 150ms to batch rapid changes
   notifyTimeout = setTimeout(() => {
     listeners.forEach((l) => {
@@ -164,6 +174,7 @@ function notify() {
 ```
 
 **Benefits:**
+
 - Batches multiple rapid database changes into single notification
 - Reduces cascading re-renders across components
 - Prevents UI thrashing during bulk operations
@@ -173,6 +184,7 @@ function notify() {
 #### Enhanced `importMoodsFromServer` in `sqlite.ts`
 
 **Before:**
+
 ```typescript
 export async function importMoodsFromServer(serverMoods: ServerMood[]) {
   // Only added/updated moods, never removed deleted ones
@@ -183,22 +195,24 @@ export async function importMoodsFromServer(serverMoods: ServerMood[]) {
 ```
 
 **After:**
+
 ```typescript
 export async function importMoodsFromServer(
-  serverMoods: ServerMood[], 
-  fullSync: boolean = false, 
+  serverMoods: ServerMood[],
+  fullSync: boolean = false,
   userId?: string
 ) {
   const db = await getDB();
-  
+
   // Handle deletions during full sync
   if (fullSync) {
-    const effectiveUserId = userId || (serverMoods.length > 0 ? serverMoods[0].userId : null);
-    
+    const effectiveUserId =
+      userId || (serverMoods.length > 0 ? serverMoods[0].userId : null);
+
     if (effectiveUserId) {
       if (serverMoods.length > 0) {
         // Mark local moods as deleted if not in server list
-        const serverIds = serverMoods.map(m => String(m._id));
+        const serverIds = serverMoods.map((m) => String(m._id));
         const placeholders = serverIds.map(() => '?').join(',');
         await db.runAsync(
           `UPDATE mood_entries 
@@ -222,7 +236,7 @@ export async function importMoodsFromServer(
       }
     }
   }
-  
+
   // Import/update existing moods
   for (const m of serverMoods) {
     // ... existing import logic
@@ -231,6 +245,7 @@ export async function importMoodsFromServer(
 ```
 
 **Key Features:**
+
 - Compares local and server moods during full sync
 - Marks moods as deleted (`deleted = 1`) if they don't exist on server
 - Handles edge case of all moods being deleted (empty array)
@@ -241,16 +256,25 @@ export async function importMoodsFromServer(
 ```typescript
 // In useOfflineMoodData hook
 useEffect(() => {
-  if (serverMoods !== undefined) { // Even if empty array
+  if (serverMoods !== undefined) {
+    // Even if empty array
     const timeoutId = setTimeout(async () => {
       try {
         // Full sync with deletion handling
-        await importMoodsFromServer(serverMoods, true, currentUser?._id as string);
+        await importMoodsFromServer(
+          serverMoods,
+          true,
+          currentUser?._id as string
+        );
       } catch (e) {
-        logger.warn('Failed importing server moods to SQLite', 'OfflineData', e);
+        logger.warn(
+          'Failed importing server moods to SQLite',
+          'OfflineData',
+          e
+        );
       }
     }, 500); // Increased debounce from 100ms to 500ms
-    
+
     return () => clearTimeout(timeoutId);
   }
 }, [serverMoods]);
@@ -271,14 +295,14 @@ Instead of polling for updates, the app now relies on Convex's built-in real-tim
 
 ### Metrics
 
-| Metric | Before | After | Improvement |
-|--------|--------|-------|-------------|
-| Sync Status Polling | Every 1 second | On-demand only | 100% reduction |
-| Auto-sync Frequency | Every 60 seconds | Never (action-based) | 100% reduction |
-| SQLite Notifications | Immediate | Debounced 150ms | ~90% reduction in re-renders |
-| Sidebar Open Time | 3-5 seconds | < 500ms | 85% faster |
-| CPU Usage (idle) | 15-20% | < 2% | 90% reduction |
-| Memory Stability | Gradual increase | Stable | No memory leaks |
+| Metric               | Before           | After                | Improvement                  |
+| -------------------- | ---------------- | -------------------- | ---------------------------- |
+| Sync Status Polling  | Every 1 second   | On-demand only       | 100% reduction               |
+| Auto-sync Frequency  | Every 60 seconds | Never (action-based) | 100% reduction               |
+| SQLite Notifications | Immediate        | Debounced 150ms      | ~90% reduction in re-renders |
+| Sidebar Open Time    | 3-5 seconds      | < 500ms              | 85% faster                   |
+| CPU Usage (idle)     | 15-20%           | < 2%                 | 90% reduction                |
+| Memory Stability     | Gradual increase | Stable               | No memory leaks              |
 
 ### User Experience Improvements
 
@@ -292,21 +316,25 @@ Instead of polling for updates, the app now relies on Convex's built-in real-tim
 ## Architecture Benefits
 
 ### 1. Simplified Mental Model
+
 - Convex handles real-time sync automatically
 - SQLite is purely for offline support
 - No complex sync orchestration needed
 
 ### 2. Reduced Complexity
+
 - Removed ~100 lines of auto-sync code
 - Eliminated timing-based logic
 - Clearer separation of concerns
 
 ### 3. Better Scalability
+
 - Performance doesn't degrade with more data
 - No accumulating background tasks
 - Predictable resource usage
 
 ### 4. Improved Reliability
+
 - No race conditions from concurrent syncs
 - Proper deletion handling
 - Consistent data state

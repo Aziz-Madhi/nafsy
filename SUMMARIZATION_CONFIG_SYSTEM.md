@@ -100,7 +100,7 @@ summarizationConfig: defineTable({
   updatedBy: v.optional(v.string()),
 })
   .index('by_active', ['active'])
-  .index('by_version', ['version'])
+  .index('by_version', ['version']);
 ```
 
 ### Index Strategy
@@ -136,11 +136,13 @@ interface SummarizationConfig {
 Creates a new configuration version and automatically deactivates the previous active configuration. Includes comprehensive validation:
 
 **Source Validation**:
+
 - `openai_prompt_latest` or `openai_prompt_pinned`: Requires `openaiPromptId`
 - `openai_prompt_pinned`: Additionally requires `openaiPromptVersion`
 - `inline`: Requires `prompt` content
 
 **Model Validation**:
+
 - Model format: Must start with `gpt-` or `o#` (supports GPT and O-series models)
 - Temperature: 0.0 to 2.0 range validation
 - Max tokens: Must be positive integer
@@ -151,6 +153,7 @@ Creates a new configuration version and automatically deactivates the previous a
 Sets up the initial configuration if none exists, using the same defaults as the previous hardcoded implementation.
 
 **Default Configuration**:
+
 ```typescript
 {
   source: 'inline',
@@ -198,7 +201,10 @@ if (cached && cached.expires > now) {
       expires: now + CONFIG_CACHE_TTL_MS,
     });
   } catch (error) {
-    console.error('Failed to fetch summarization config, using defaults:', error);
+    console.error(
+      'Failed to fetch summarization config, using defaults:',
+      error
+    );
   }
 }
 ```
@@ -216,7 +222,9 @@ if (!activeConfig.source || activeConfig.source === 'inline') {
 } else {
   // For OpenAI Prompt IDs, we fall back to default prompt
   // Note: Full OpenAI Prompt ID resolution would require the OpenAI Responses API
-  console.warn('OpenAI Prompt IDs not supported in summarization context, using fallback');
+  console.warn(
+    'OpenAI Prompt IDs not supported in summarization context, using fallback'
+  );
   systemPrompt = defaultConfig.prompt;
 }
 ```
@@ -257,6 +265,7 @@ const configCache = new Map<string, { data: any; expires: number }>();
 ```
 
 **Cache Benefits**:
+
 - Reduces database queries during weekly summarization batches
 - Maintains consistency across multiple user summaries in a single cron run
 - Balances performance with configuration update responsiveness
@@ -267,12 +276,12 @@ const configCache = new Map<string, { data: any; expires: number }>();
 
 ```typescript
 await ctx.runMutation(api.summarizationConfig.updateSummarizationConfig, {
-  source: "openai_prompt_latest",
-  openaiPromptId: "pmpt_abc123def456",
-  model: "gpt-4o",
+  source: 'openai_prompt_latest',
+  openaiPromptId: 'pmpt_abc123def456',
+  model: 'gpt-4o',
   temperature: 0.5,
   maxTokens: 1024,
-  updatedBy: "admin@company.com"
+  updatedBy: 'admin@company.com',
 });
 ```
 
@@ -280,14 +289,14 @@ await ctx.runMutation(api.summarizationConfig.updateSummarizationConfig, {
 
 ```typescript
 await ctx.runMutation(api.summarizationConfig.updateSummarizationConfig, {
-  source: "openai_prompt_pinned",
-  openaiPromptId: "pmpt_abc123def456",
+  source: 'openai_prompt_pinned',
+  openaiPromptId: 'pmpt_abc123def456',
   openaiPromptVersion: 3,
-  model: "gpt-4o-mini",
+  model: 'gpt-4o-mini',
   temperature: 0.3,
   maxTokens: 512,
-  responseFormat: { type: "json_object" },
-  updatedBy: "admin@company.com"
+  responseFormat: { type: 'json_object' },
+  updatedBy: 'admin@company.com',
 });
 ```
 
@@ -295,18 +304,18 @@ await ctx.runMutation(api.summarizationConfig.updateSummarizationConfig, {
 
 ```typescript
 await ctx.runMutation(api.summarizationConfig.updateSummarizationConfig, {
-  source: "inline",
+  source: 'inline',
   prompt: `You are an expert mental health AI analyst. Analyze the user's weekly data and provide a structured JSON summary with these exact keys: "mood", "conversation", "exercise". 
 
 Focus on patterns, trends, and significant developments. Keep each section under 150 characters for mobile display.
 
 Respond ONLY with valid JSON, no explanations.`,
-  model: "gpt-4o",
+  model: 'gpt-4o',
   temperature: 0.4,
   maxTokens: 800,
   topP: 0.9,
-  responseFormat: { type: "json_object" },
-  updatedBy: "admin@company.com"
+  responseFormat: { type: 'json_object' },
+  updatedBy: 'admin@company.com',
 });
 ```
 
@@ -321,7 +330,7 @@ if (config) {
   console.log(`Active model: ${config.model}`);
   console.log(`Source: ${config.source}`);
   console.log(`Version: ${config.version}`);
-  
+
   if (config.source === 'openai_prompt_latest' && config.openaiPromptId) {
     console.log(`OpenAI Prompt ID: ${config.openaiPromptId}`);
   }
@@ -336,7 +345,7 @@ const allConfigs = await ctx.runQuery(
 );
 
 // Find all GPT-4o configurations
-const gpt4oConfigs = allConfigs.filter(c => c.model === 'gpt-4o');
+const gpt4oConfigs = allConfigs.filter((c) => c.model === 'gpt-4o');
 
 // Find configuration history
 const sortedByVersion = allConfigs.sort((a, b) => b.version - a.version);
@@ -347,15 +356,18 @@ const sortedByVersion = allConfigs.sort((a, b) => b.version - a.version);
 The implementation included a careful migration strategy to transition from the original hardcoded configuration to the new flexible system:
 
 ### Phase 1: Schema Evolution
+
 1. **Old Schema**: Simple `systemPrompt: v.string()` field
 2. **New Schema**: Full `aiPrompts`-compatible structure with source types
 
 ### Phase 2: Data Migration
+
 1. **Temporary Migration Function**: Created to clean old incompatible records
 2. **Clean Slate Approach**: Removed old configurations and initialized fresh defaults
 3. **Backward Compatibility**: Maintained same functional behavior during transition
 
 ### Phase 3: Validation
+
 1. **Configuration Testing**: Verified new default configuration matches original behavior
 2. **API Compatibility**: Ensured existing weekly summarization continues working
 3. **Error Handling**: Confirmed graceful fallbacks work as expected
@@ -364,20 +376,20 @@ The implementation included a careful migration strategy to transition from the 
 
 ### Summarization Config vs. AI Prompts
 
-| Feature | AI Prompts | Summarization Config | Status |
-|---------|------------|---------------------|---------|
-| OpenAI Prompt ID Support | ✅ | ✅ | **Identical** |
-| Version Pinning | ✅ | ✅ | **Identical** |
-| Inline Prompts | ✅ | ✅ | **Identical** |
-| Model Configuration | ✅ | ✅ | **Identical** |
-| Temperature Control | ✅ | ✅ | **Identical** |
-| Token Limits | ✅ | ✅ | **Identical** |
-| Top-P Parameter | ✅ | ✅ | **Identical** |
-| Response Format Control | ❌ | ✅ | **Enhanced** |
-| Version History | ✅ | ✅ | **Identical** |
-| Validation Logic | ✅ | ✅ | **Identical** |
-| Active Status Management | ✅ | ✅ | **Identical** |
-| Caching Strategy | ✅ (30s TTL) | ✅ (30s TTL) | **Identical** |
+| Feature                  | AI Prompts   | Summarization Config | Status        |
+| ------------------------ | ------------ | -------------------- | ------------- |
+| OpenAI Prompt ID Support | ✅           | ✅                   | **Identical** |
+| Version Pinning          | ✅           | ✅                   | **Identical** |
+| Inline Prompts           | ✅           | ✅                   | **Identical** |
+| Model Configuration      | ✅           | ✅                   | **Identical** |
+| Temperature Control      | ✅           | ✅                   | **Identical** |
+| Token Limits             | ✅           | ✅                   | **Identical** |
+| Top-P Parameter          | ✅           | ✅                   | **Identical** |
+| Response Format Control  | ❌           | ✅                   | **Enhanced**  |
+| Version History          | ✅           | ✅                   | **Identical** |
+| Validation Logic         | ✅           | ✅                   | **Identical** |
+| Active Status Management | ✅           | ✅                   | **Identical** |
+| Caching Strategy         | ✅ (30s TTL) | ✅ (30s TTL)         | **Identical** |
 
 ### Response Format Enhancement
 
@@ -388,7 +400,7 @@ responseFormat: v.optional(
   v.object({
     type: v.union(v.literal('text'), v.literal('json_object')),
   })
-)
+);
 ```
 
 This enables enforcement of JSON responses for reliable parsing, crucial for weekly summary generation.
@@ -398,11 +410,13 @@ This enables enforcement of JSON responses for reliable parsing, crucial for wee
 ### Queries
 
 #### `getActiveSummarizationConfig()`
+
 Returns the currently active configuration or `null` if none exists.
 
 **Returns**: `SummarizationConfig | null`
 
 #### `listSummarizationConfigs()`
+
 Returns all configuration records with complete metadata.
 
 **Returns**: `SummarizationConfig[]`
@@ -410,9 +424,11 @@ Returns all configuration records with complete metadata.
 ### Mutations
 
 #### `updateSummarizationConfig(args)`
+
 Creates a new configuration version and sets it as active.
 
 **Parameters**:
+
 - `source`: `'openai_prompt_latest' | 'openai_prompt_pinned' | 'inline'`
 - `openaiPromptId?`: `string` (required for OpenAI sources)
 - `openaiPromptVersion?`: `number` (required for pinned sources)
@@ -427,22 +443,27 @@ Creates a new configuration version and sets it as active.
 **Returns**: `Id<'summarizationConfig'>`
 
 #### `initializeDefaultSummarizationConfig()`
+
 Creates the initial configuration if none exists.
 
 **Returns**: `Id<'summarizationConfig'> | null`
 
 #### `toggleConfigStatus(configId)`
+
 Toggles the active status of a configuration.
 
 **Parameters**:
+
 - `configId`: `Id<'summarizationConfig'>`
 
 **Returns**: `boolean` (new active status)
 
 #### `deleteSummarizationConfig(configId)`
+
 Deletes a configuration (only if not active).
 
 **Parameters**:
+
 - `configId`: `Id<'summarizationConfig'>`
 
 **Returns**: `boolean`
@@ -453,7 +474,9 @@ Deletes a configuration (only if not active).
 
 ```typescript
 try {
-  config = await ctx.runQuery(api.summarizationConfig.getActiveSummarizationConfig);
+  config = await ctx.runQuery(
+    api.summarizationConfig.getActiveSummarizationConfig
+  );
 } catch (error) {
   console.error('Failed to fetch summarization config, using defaults:', error);
   // System gracefully falls back to hardcoded defaults
@@ -473,7 +496,9 @@ if (args.source.startsWith('openai_prompt') && !args.openaiPromptId) {
 // Model format validation
 const isValidModel = /^(gpt-|o\d)/i.test(model);
 if (!isValidModel) {
-  throw new Error(`Invalid model specified: ${args.model}. Must start with 'gpt-' or 'o#'.`);
+  throw new Error(
+    `Invalid model specified: ${args.model}. Must start with 'gpt-' or 'o#'.`
+  );
 }
 
 // Parameter range validation
@@ -568,7 +593,7 @@ The summarization configuration system successfully provides enterprise-grade fl
 ### Business Impact
 
 - **Operational Flexibility**: Hot-swappable models without code deployment
-- **Cost Optimization**: Configurable model selection for budget management  
+- **Cost Optimization**: Configurable model selection for budget management
 - **Quality Control**: Version management with rollback capabilities
 - **Scalability**: Centralized configuration management as user base grows
 - **Maintainability**: Consistent patterns with existing `aiPrompts` system
@@ -577,12 +602,14 @@ The system is now production-ready and will automatically enhance the weekly sum
 
 ---
 
-**Next Steps**: 
+**Next Steps**:
+
 1. Monitor weekly cron execution for configuration load performance
 2. Evaluate OpenAI Prompt ID integration for Phase 2 enhancement
 3. Consider expanding system for other AI operations (mood analysis, exercise recommendations)
 
-**Maintenance Schedule**: 
+**Maintenance Schedule**:
+
 - Weekly configuration performance review
-- Monthly cost analysis per model configuration  
+- Monthly cost analysis per model configuration
 - Quarterly evaluation of new OpenAI model compatibility

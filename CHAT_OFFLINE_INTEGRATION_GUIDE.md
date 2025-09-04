@@ -1,6 +1,7 @@
 # Chat Offline Integration Guide
 
 ## Overview
+
 This guide shows how to integrate the new offline chat hooks into your chat UI components.
 
 ## Key Changes Required
@@ -15,11 +16,11 @@ import { useQuery, useMutation } from 'convex/react';
 const messages = useQuery(api.mainChat.getMainChatMessages, { sessionId });
 
 // NEW - Offline-aware hooks
-import { 
-  useOfflineChatMessages, 
+import {
+  useOfflineChatMessages,
   useOfflineChatSessions,
   useOfflineSendMessage,
-  useNetworkStatus 
+  useNetworkStatus,
 } from '~/hooks/useOfflineData';
 ```
 
@@ -32,12 +33,12 @@ Here's an example of updating the main chat screen:
 
 export function ChatScreen({ chatType, sessionId }) {
   const { isOnline } = useNetworkStatus();
-  
+
   // Use offline-aware hooks
   const messages = useOfflineChatMessages(sessionId, chatType);
   const sessions = useOfflineChatSessions(chatType);
   const sendMessage = useOfflineSendMessage(chatType);
-  
+
   // Handle sending messages
   const handleSend = async (content: string) => {
     if (!isOnline) {
@@ -49,7 +50,7 @@ export function ChatScreen({ chatType, sessionId }) {
       );
       return;
     }
-    
+
     try {
       await sendMessage(content, sessionId);
     } catch (error) {
@@ -57,7 +58,7 @@ export function ChatScreen({ chatType, sessionId }) {
       console.error('Failed to send message:', error);
     }
   };
-  
+
   return (
     <View>
       {/* Show offline indicator */}
@@ -66,7 +67,7 @@ export function ChatScreen({ chatType, sessionId }) {
           <Text>You're offline - Chat history only</Text>
         </View>
       )}
-      
+
       {/* Message list */}
       <FlatList
         data={messages}
@@ -74,7 +75,7 @@ export function ChatScreen({ chatType, sessionId }) {
           <MessageBubble message={item} />
         )}
       />
-      
+
       {/* Input area - disabled when offline */}
       <ChatInput
         onSend={handleSend}
@@ -89,23 +90,23 @@ export function ChatScreen({ chatType, sessionId }) {
 ### 3. Update Tab Screen (src/app/(app)/tabs/chat.tsx)
 
 ```typescript
-import { 
-  useOfflineChatMessages, 
+import {
+  useOfflineChatMessages,
   useOfflineChatSessions,
   useOfflineSendMessage,
-  useNetworkStatus 
+  useNetworkStatus,
 } from '~/hooks/useOfflineData';
 
 export default function ChatTab() {
   const { isOnline } = useNetworkStatus();
   const activeChatType = useActiveChatType();
   const activeSessionId = getActiveSessionId();
-  
+
   // Replace useQuery with offline hooks
   const messages = useOfflineChatMessages(activeSessionId, activeChatType);
   const sessions = useOfflineChatSessions(activeChatType);
   const sendMessage = useOfflineSendMessage(activeChatType);
-  
+
   // ... rest of your component
 }
 ```
@@ -134,12 +135,14 @@ const sendCompanionMessage = useOfflineSendMessage('companion');
 ## Offline Behavior
 
 ### What Works Offline:
+
 ✅ View all chat history
 ✅ Browse chat sessions
 ✅ Switch between conversations
 ✅ View mood and exercise data
 
 ### What Requires Online:
+
 ❌ Sending new messages
 ❌ Getting AI responses
 ❌ Creating new sessions

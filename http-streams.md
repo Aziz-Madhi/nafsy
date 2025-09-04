@@ -5,36 +5,40 @@ Certainly! Here’s a step-by-step guide to setting up HTTP streaming to the act
 ## 1. **Backend: Convex HTTP Streaming Action**
 
 You’ll create a Convex HTTP action that:
+
 - Streams the LLM (e.g., OpenAI) response to the requesting client.
 - Periodically writes the accumulated content to the database for other clients.
 
 **Example (TypeScript, in `convex/http.ts`):**
+
 ```ts
-import { httpAction } from "./_generated/server";
-import { httpRouter } from "convex/server";
-import { internal } from "./_generated/api";
+import { httpAction } from './_generated/server';
+import { httpRouter } from 'convex/server';
+import { internal } from './_generated/api';
 
 const http = httpRouter();
 
 http.route({
-  path: "/chat",
-  method: "POST",
+  path: '/chat',
+  method: 'POST',
   handler: httpAction(async (ctx, request) => {
     let { readable, writable } = new TransformStream();
     let writer = writable.getWriter();
     const textEncoder = new TextEncoder();
 
     const streamData = async () => {
-      let content = "";
+      let content = '';
       const openai = new OpenAI();
       const stream = await openai.chat.completions.create({
-        model: "gpt-3.5-turbo",
-        messages: [/* ... */],
+        model: 'gpt-3.5-turbo',
+        messages: [
+          /* ... */
+        ],
         stream: true,
       });
 
       for await (const part of stream) {
-        const text = part.choices[0]?.delta?.content || "";
+        const text = part.choices[0]?.delta?.content || '';
         content += text;
         await writer.write(textEncoder.encode(text));
         // Periodically update the DB (e.g., at sentence boundaries)
@@ -58,15 +62,17 @@ http.route({
     void streamData();
     // Set CORS headers for Expo/React Native
     const response = new Response(readable);
-    response.headers.set("Access-Control-Allow-Origin", "*");
-    response.headers.set("Vary", "Origin");
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Vary', 'Origin');
     return response;
   }),
 });
 
 export default http;
 ```
+
 **Key points:**
+
 - The HTTP action streams data to the client and periodically updates the DB.
 - CORS headers are set for cross-origin requests from Expo/React Native.
 - The client receives a character-by-character stream, while other users see batched updates via DB reactivity.
@@ -80,16 +86,17 @@ export default http;
 On the client, use the Streams API with `fetch` to POST to the `/chat` endpoint and read the streaming response.
 
 **Example (adapted for React Native/Expo):**
+
 ```js
 async function handleGptResponse(onUpdate, requestBody) {
   const convexSiteUrl = process.env.EXPO_PUBLIC_CONVEX_URL.replace(
     /\.cloud$/,
-    ".site"
+    '.site'
   );
   const response = await fetch(`${convexSiteUrl}/chat`, {
-    method: "POST",
+    method: 'POST',
     body: JSON.stringify(requestBody),
-    headers: { "Content-Type": "application/json" },
+    headers: { 'Content-Type': 'application/json' },
   });
   const reader = response.body.getReader();
   while (true) {
@@ -102,6 +109,7 @@ async function handleGptResponse(onUpdate, requestBody) {
   }
 }
 ```
+
 - `onUpdate` is a callback to update your UI as new text arrives.
 - After the stream completes, rely on your Convex `useQuery` to show the final message from the DB.
 

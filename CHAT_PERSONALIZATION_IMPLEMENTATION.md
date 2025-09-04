@@ -34,7 +34,7 @@ graph TD
     G --> H
     H --> I[Inject into AI Prompt]
     I --> J[OpenAI Response]
-    
+
     K[Weekly Cron] --> L[Process Active Users]
     L --> M[Generate Summaries]
     M --> N[Store in userSummaries]
@@ -88,7 +88,11 @@ Central module handling context building and weekly summarization.
 interface UserContextInput {
   user: { _id: Id<'users'>; name?: string; language: string };
   personality: 'coach' | 'companion' | 'vent';
-  messages: Array<{ role: 'user' | 'assistant'; content?: string; parts?: any[] }>;
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content?: string;
+    parts?: any[];
+  }>;
 }
 
 interface UserContextResult {
@@ -99,6 +103,7 @@ interface UserContextResult {
 
 **Purpose**: Assembles personalized context for AI responses
 **Context Levels**:
+
 - **Full**: Profile + Today's data + Weekly summary (new sessions)
 - **Light**: Today's mood and exercises only (ongoing conversations)
 - **None**: Minimal fallback on errors
@@ -108,6 +113,7 @@ interface UserContextResult {
 **Purpose**: Processes all active users for weekly summarization
 **Triggered**: Every Sunday at 23:00 UTC via cron job
 **Processing**:
+
 1. Identifies active users (last active within 30 days)
 2. Aggregates past week's data per user
 3. Calls OpenAI for AI summarization
@@ -125,15 +131,20 @@ Enhanced `buildResponsesPayload` function to include user context:
 export async function buildResponsesPayload(
   ctx: any,
   personality: 'coach' | 'companion' | 'vent',
-  messages: Array<{ role: 'user' | 'assistant'; content?: string; parts?: any[] }>,
+  messages: Array<{
+    role: 'user' | 'assistant';
+    content?: string;
+    parts?: any[];
+  }>,
   user: { _id: string; name?: string; language: string }
 ): Promise<{
   payload: OpenAIResponsesRequest;
   modelConfig?: { temperature?: number; maxTokens?: number; topP?: number };
-}>
+}>;
 ```
 
 **Integration Points**:
+
 - **Prompt IDs**: Context added as `payload.instructions`
 - **Inline Prompts**: Context prepended to prompt content
 - **Fallback Prompts**: Context prepended to default prompts
@@ -141,6 +152,7 @@ export async function buildResponsesPayload(
 ##### `convex/http.ts`
 
 Updated HTTP streaming handlers to pass user information and handle context in both API paths:
+
 - **OpenAI Responses API**: Uses enhanced `buildResponsesPayload`
 - **Legacy Chat Completions**: Direct context integration in system prompt
 
@@ -256,7 +268,9 @@ Respond with JSON: {"mood": "mood patterns", "conversation": "key topics", "exer
 ```typescript
 try {
   userContext = await ctx.runQuery(api.personalization.buildUserContext, {
-    user, personality, messages,
+    user,
+    personality,
+    messages,
   });
 } catch (error) {
   if (isDevEnv) console.warn('Failed to build user context:', error);
@@ -405,6 +419,7 @@ curl -X GET /api/userSummaries?userId=USER_ID
 The chat personalization system provides a robust, scalable solution for enhancing AI conversations in the Nafsy mental health application. The implementation balances personalization effectiveness with cost optimization and performance requirements.
 
 Key success metrics:
+
 - ✅ Context integration in both API paths
 - ✅ Bilingual support (Arabic/English)
 - ✅ Cost-effective weekly summarization

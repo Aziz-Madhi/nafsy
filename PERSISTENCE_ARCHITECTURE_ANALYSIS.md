@@ -55,13 +55,14 @@ graph TD
 
 2. **Data Duplication Matrix**
 
-   | Entity | SQLite | MMKV Store | Convex | Problem |
-   |--------|--------|------------|--------|---------|
-   | Moods | ✅ Primary | ✅ Duplicate | ✅ Source | Triple redundancy |
-   | Exercises | ✅ Cache | ✅ Store | ✅ Source | Unnecessary MMKV layer |
-   | User Progress | ✅ Primary | ✅ Store | ✅ Source | Complex sync logic |
+   | Entity        | SQLite     | MMKV Store   | Convex    | Problem                |
+   | ------------- | ---------- | ------------ | --------- | ---------------------- |
+   | Moods         | ✅ Primary | ✅ Duplicate | ✅ Source | Triple redundancy      |
+   | Exercises     | ✅ Cache   | ✅ Store     | ✅ Source | Unnecessary MMKV layer |
+   | User Progress | ✅ Primary | ✅ Store     | ✅ Source | Complex sync logic     |
 
 3. **Code Issues**
+
    ```typescript
    // Missing function reference in useOfflineData.ts:295
    const stats = getMoodStore().getMoodStats(days); // ❌ getMoodStore doesn't exist
@@ -92,6 +93,7 @@ The current architecture appears to have evolved through incremental additions r
 ### The Core Problem
 
 **Data exists in 3 places simultaneously for every entity:**
+
 ```
 User creates mood → SQLite (outbox) → MMKV (offline store) → Convex (sync)
                      ↓                    ↓                      ↓
@@ -99,6 +101,7 @@ User creates mood → SQLite (outbox) → MMKV (offline store) → Convex (sync)
 ```
 
 This creates:
+
 - Synchronization complexity
 - Data consistency challenges
 - Performance overhead
@@ -118,6 +121,7 @@ graph TD
 ```
 
 **Key Principles:**
+
 1. **SQLite as Single Local Truth** - All structured data in SQLite
 2. **MMKV for Config Only** - App settings, themes, small caches
 3. **Direct SQLite ↔ Convex Sync** - Eliminate intermediate layer
@@ -126,9 +130,11 @@ graph TD
 ## Implementation Roadmap
 
 ### Phase 1: Immediate Fixes (1-2 days)
+
 **Risk: Low | Impact: High**
 
 1. **Fix Missing References**
+
    ```typescript
    // Replace getMoodStore() with direct SQLite queries
    const stats = await dbGetMoodStats(days);
@@ -144,18 +150,21 @@ graph TD
    - Add retry UI components
 
 ### Phase 2: Architecture Simplification (1 week)
+
 **Risk: Medium | Impact: Very High**
 
 1. **Eliminate MMKV Offline Stores**
+
    ```typescript
    // Before: Triple storage
    SQLite → MMKV Store → Convex
-   
+
    // After: Direct sync
    SQLite ↔ Convex
    ```
 
 2. **Unify Data Access Pattern**
+
    ```typescript
    // Single hook pattern for all data
    export function useOfflineData<T>(
@@ -163,15 +172,15 @@ graph TD
      options?: QueryOptions
    ) {
      const [data, setData] = useState<T[]>([]);
-     
+
      // 1. Load from SQLite
      useEffect(() => {
        loadFromSQLite(collection).then(setData);
      }, []);
-     
+
      // 2. Sync with Convex if online
      useConvexSync(collection, data);
-     
+
      return data;
    }
    ```
@@ -186,9 +195,11 @@ graph TD
    ```
 
 ### Phase 3: Performance Optimization (2 weeks)
+
 **Risk: Low | Impact: High**
 
 1. **Implement Incremental Sync**
+
    ```typescript
    // Track sync cursors per entity
    interface SyncCursor {
@@ -196,7 +207,7 @@ graph TD
      lastSyncTime: number;
      serverCursor?: string;
    }
-   
+
    // Only sync changed data
    async function incrementalSync(cursor: SyncCursor) {
      const changes = await convex.getChangesSince(cursor);
@@ -206,10 +217,11 @@ graph TD
    ```
 
 2. **Add Background Sync**
+
    ```typescript
    // iOS Background Task
    import * as BackgroundFetch from 'expo-background-fetch';
-   
+
    BackgroundFetch.registerTaskAsync(SYNC_TASK, {
      minimumInterval: 15 * 60, // 15 minutes
      stopOnTerminate: false,
@@ -218,12 +230,13 @@ graph TD
    ```
 
 3. **Optimize Memory Usage**
+
    ```typescript
    // Implement LRU cache for frequently accessed data
    class LRUCache<T> {
      private cache = new Map<string, T>();
      private maxSize: number;
-     
+
      get(key: string): T | undefined {
        const item = this.cache.get(key);
        if (item) {
@@ -237,9 +250,11 @@ graph TD
    ```
 
 ### Phase 4: Advanced Features (Optional)
+
 **Risk: Low | Impact: Medium**
 
 1. **Smart Conflict Resolution UI**
+
    ```typescript
    // Show conflicts to user
    interface ConflictUI {
@@ -250,6 +265,7 @@ graph TD
    ```
 
 2. **Selective Sync**
+
    ```typescript
    // Let users choose what to sync
    interface SyncPreferences {
@@ -275,6 +291,7 @@ graph TD
 ### Safe Migration Path
 
 1. **Create Migration Branch**
+
    ```bash
    git checkout -b persistence-optimization
    ```
@@ -285,26 +302,28 @@ graph TD
    - Add feature flag to toggle between them
 
 3. **Gradual Rollout**
+
    ```typescript
    const USE_NEW_PERSISTENCE = __DEV__ || isFeatureEnabled('new-persistence');
-   
-   export const useMoodData = USE_NEW_PERSISTENCE 
-     ? useSimplifiedMoodData 
+
+   export const useMoodData = USE_NEW_PERSISTENCE
+     ? useSimplifiedMoodData
      : useLegacyMoodData;
    ```
 
 4. **Data Migration Script**
+
    ```typescript
    async function migrateLegacyData() {
      // 1. Export from MMKV stores
      const mmkvData = await exportMMKVStores();
-     
+
      // 2. Merge with SQLite data
      await mergeIntoSQLite(mmkvData);
-     
+
      // 3. Verify integrity
      await verifyDataIntegrity();
-     
+
      // 4. Clean up old stores
      await cleanupLegacyStores();
    }
@@ -314,13 +333,13 @@ graph TD
 
 ### Expected Improvements
 
-| Metric | Current | Optimized | Improvement |
-|--------|---------|-----------|-------------|
-| Memory Usage | ~150MB | ~80MB | 47% reduction |
-| Sync Time (1000 records) | 8.5s | 2.1s | 75% faster |
-| Battery Impact | High | Low | 60% reduction |
-| Code Complexity | High | Medium | 40% simpler |
-| Data Consistency | 85% | 99% | Near perfect |
+| Metric                   | Current | Optimized | Improvement   |
+| ------------------------ | ------- | --------- | ------------- |
+| Memory Usage             | ~150MB  | ~80MB     | 47% reduction |
+| Sync Time (1000 records) | 8.5s    | 2.1s      | 75% faster    |
+| Battery Impact           | High    | Low       | 60% reduction |
+| Code Complexity          | High    | Medium    | 40% simpler   |
+| Data Consistency         | 85%     | 99%       | Near perfect  |
 
 ## Code Examples
 
@@ -331,34 +350,34 @@ graph TD
 export function useOfflineMoods() {
   const [moods, setMoods] = useState<Mood[]>([]);
   const [syncing, setSyncing] = useState(false);
-  
+
   // Single source: SQLite
   useEffect(() => {
     const loadMoods = async () => {
       const localMoods = await sqlite.getMoods();
       setMoods(localMoods);
     };
-    
+
     loadMoods();
-    
+
     // Subscribe to SQLite changes
     return sqlite.subscribe('moods', loadMoods);
   }, []);
-  
+
   // Sync with Convex
   const syncWithServer = useCallback(async () => {
     if (syncing) return;
     setSyncing(true);
-    
+
     try {
       // Push local changes
       const pending = await sqlite.getPendingChanges('moods');
       await convex.pushChanges(pending);
-      
+
       // Pull remote changes
       const remote = await convex.pullChanges('moods', lastSyncTime);
       await sqlite.applyRemoteChanges(remote);
-      
+
       // Update UI
       const updated = await sqlite.getMoods();
       setMoods(updated);
@@ -366,7 +385,7 @@ export function useOfflineMoods() {
       setSyncing(false);
     }
   }, [syncing]);
-  
+
   return { moods, syncing, syncWithServer };
 }
 ```
@@ -377,32 +396,32 @@ export function useOfflineMoods() {
 class OptimizedSyncManager {
   private syncQueue = new PriorityQueue<SyncTask>();
   private syncing = false;
-  
+
   async sync(collection: string, priority: Priority = 'normal') {
     // Add to priority queue
     this.syncQueue.add({
       collection,
       priority,
-      timestamp: Date.now()
+      timestamp: Date.now(),
     });
-    
+
     // Process queue if not already syncing
     if (!this.syncing) {
       await this.processQueue();
     }
   }
-  
+
   private async processQueue() {
     this.syncing = true;
-    
+
     while (!this.syncQueue.isEmpty()) {
       const task = this.syncQueue.pop();
-      
+
       try {
         // Incremental sync only
         const cursor = await this.getCursor(task.collection);
         const changes = await convex.getChangesSince(cursor);
-        
+
         if (changes.length > 0) {
           await sqlite.applyChanges(task.collection, changes);
           await this.updateCursor(task.collection, changes.cursor);
@@ -411,13 +430,16 @@ class OptimizedSyncManager {
         // Re-queue with exponential backoff
         task.retryCount = (task.retryCount || 0) + 1;
         task.priority = 'low';
-        
-        setTimeout(() => {
-          this.syncQueue.add(task);
-        }, Math.pow(2, task.retryCount) * 1000);
+
+        setTimeout(
+          () => {
+            this.syncQueue.add(task);
+          },
+          Math.pow(2, task.retryCount) * 1000
+        );
       }
     }
-    
+
     this.syncing = false;
   }
 }
@@ -427,12 +449,12 @@ class OptimizedSyncManager {
 
 ### Migration Risks & Mitigations
 
-| Risk | Likelihood | Impact | Mitigation |
-|------|------------|--------|------------|
-| Data Loss | Low | High | Comprehensive backups, parallel systems |
-| Sync Failures | Medium | Medium | Retry logic, error recovery |
-| Performance Regression | Low | Low | Benchmarking, gradual rollout |
-| User Disruption | Low | Medium | Feature flags, A/B testing |
+| Risk                   | Likelihood | Impact | Mitigation                              |
+| ---------------------- | ---------- | ------ | --------------------------------------- |
+| Data Loss              | Low        | High   | Comprehensive backups, parallel systems |
+| Sync Failures          | Medium     | Medium | Retry logic, error recovery             |
+| Performance Regression | Low        | Low    | Benchmarking, gradual rollout           |
+| User Disruption        | Low        | Medium | Feature flags, A/B testing              |
 
 ## Success Metrics
 
@@ -473,6 +495,7 @@ The recommended migration path provides a safe, incremental approach to optimiza
 ## Appendix
 
 ### A. Current File Structure
+
 ```
 src/
 ├── lib/
@@ -493,6 +516,7 @@ src/
 ```
 
 ### B. Recommended File Structure
+
 ```
 src/
 ├── lib/
@@ -552,5 +576,5 @@ CREATE TABLE sync_metadata (
 
 ---
 
-*Report generated on: 2025-08-29*
-*Analysis performed using: Code analysis, architecture review, and best practices research*
+_Report generated on: 2025-08-29_
+_Analysis performed using: Code analysis, architecture review, and best practices research_

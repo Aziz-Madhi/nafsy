@@ -1,6 +1,5 @@
 # Expo Quickstart
 
-
 If you are unfamiliar with the concepts of [Prompt Engineering](/docs/advanced/prompt-engineering) and [HTTP Streaming](/docs/advanced/why-streaming), you can optionally read these documents first.
 
 ## Prerequisites

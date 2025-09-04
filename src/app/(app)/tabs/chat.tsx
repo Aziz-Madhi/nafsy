@@ -85,7 +85,7 @@ export default function ChatTab() {
   // Get server session IDs for coach and companion
   const serverMainSessionId = useQuery(
     api.chat.getCurrentSessionId,
-    isLoaded && user ? { type: 'main' } : 'skip'
+    isLoaded && user && currentUser ? { type: 'main' } : 'skip'
   );
 
   // Determine active session based on chat type

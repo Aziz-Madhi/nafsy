@@ -18,15 +18,17 @@ async function upsertUserHelper(
     language?: string;
   }
 ) {
-  let clerkId = args.clerkId;
+  // Always require authenticated identity and bind operations to that identity.
+  const identity = await ctx.auth.getUserIdentity();
+  if (!identity) {
+    throw createAuthError('Authentication required');
+  }
+  const clerkId = identity.subject;
+  const identityEmail: string | undefined = (identity as any)?.email ?? undefined;
 
-  // If no clerkId provided, this is an update operation - get from auth
-  if (!clerkId) {
-    const identity = await ctx.auth.getUserIdentity();
-    if (!identity) {
-      throw createAuthError('Authentication required');
-    }
-    clerkId = identity.subject;
+  // Prevent mismatched clerkId impersonation if provided by client
+  if (args.clerkId && args.clerkId !== clerkId) {
+    throw createAuthError('Invalid clerkId for this session');
   }
 
   // Apply per-user rate limit for upsert operations
@@ -52,14 +54,12 @@ async function upsertUserHelper(
     await ctx.db.patch(existingUser._id, updateData);
     return existingUser._id;
   } else {
-    // Create new user
-    if (!args.email) {
-      throw new Error('Email is required for new user creation');
-    }
+    // Create new user (be tolerant of missing email for some OAuth providers)
+    const email = args.email ?? identityEmail ?? '';
 
     return await ctx.db.insert('users', {
       clerkId,
-      email: args.email,
+      email,
       name: args.name,
       avatarUrl: args.avatarUrl,
       language: args.language || 'en',
@@ -170,6 +170,12 @@ export const getUserByClerkId = query({
     v.null()
   ),
   handler: async (ctx, args) => {
+    // Only allow a user to fetch their own record by clerkId
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity || identity.subject !== args.clerkId) {
+      return null;
+    }
+
     const user = await ctx.db
       .query('users')
       .withIndex('by_clerk_id', (q) => q.eq('clerkId', args.clerkId))

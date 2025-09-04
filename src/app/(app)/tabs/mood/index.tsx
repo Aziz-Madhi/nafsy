@@ -640,7 +640,10 @@ export default function MoodIndex() {
   const todayMood = useOfflineTodayMood();
   const currentUser = useCurrentUser();
   const createMood = useOfflineCreateMood();
-  const getTodayMoods = useQuery(api.moods.getTodayMoods);
+  const getTodayMoods = useQuery(
+    api.moods.getTodayMoods,
+    currentUser ? {} : 'skip'
+  );
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
   const isDarkMode = colors.background === '#0A1514';

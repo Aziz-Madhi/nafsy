@@ -1,12 +1,16 @@
 import React from 'react';
-import { Stack, Redirect } from 'expo-router';
+import { Stack, Redirect, usePathname } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 
 export default function AuthLayout() {
   const { isLoaded, isSignedIn } = useAuth();
+  const pathname = usePathname();
+  const isOAuthCallback = pathname?.startsWith('/auth/oauth-callback');
 
   if (!isLoaded) return null;
-  if (isSignedIn) {
+  // Allow the OAuth callback screen to render even when signed in,
+  // so it can finish Convex user creation reliably.
+  if (isSignedIn && !isOAuthCallback) {
     return <Redirect href="/(app)" />;
   }
 
@@ -21,6 +25,7 @@ export default function AuthLayout() {
     >
       <Stack.Screen name="sign-in" />
       <Stack.Screen name="sign-up" />
+      <Stack.Screen name="oauth-callback" />
     </Stack>
   );
 }

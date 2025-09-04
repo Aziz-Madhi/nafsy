@@ -69,8 +69,12 @@
     "errors": {
       "signInFailed": "Failed to sign in. Please try again.",
       "signUpFailed": "Failed to sign up. Please try again.",
-      "verificationFailed": "Failed to verify email. Please try again."
-    }
+      "verificationFailed": "Failed to verify email. Please try again.",
+      "socialAuthFailed": "Failed to authenticate with social provider. Please try again."
+    },
+    "continueWithGoogle": "Continue with Google",
+    "continueWithApple": "Continue with Apple",
+    "orContinueWith": "or continue with email"
   },
   "tabs": {
     "chat": "Chat",

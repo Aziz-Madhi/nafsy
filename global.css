@@ -127,6 +127,13 @@
   --overlay-light: 255 255 255;
   --overlay-dark: 0 0 0;
   --backdrop: 0 0 0;
+
+  /* Auth Screen Specific Colors */
+  --auth-input-bg: 250 250 250;
+  --auth-input-border: 229 231 235;
+  --auth-button-shadow: 0 0 0;
+  --auth-card-bg: 255 255 255;
+  --auth-divider: 203 213 225;
 }
 
 /* Dark Mode Colors */
@@ -232,6 +239,13 @@
     --chat-companion-primary: 123 160 91; /* Friendly green */
     --chat-companion-bubble: 123 160 91;
     --chat-companion-accent: 98 128 73;
+
+    /* Auth Screen Specific Colors - Dark Mode */
+    --auth-input-bg: 30 41 59;
+    --auth-input-border: 51 65 85;
+    --auth-button-shadow: 255 255 255;
+    --auth-card-bg: 15 23 42;
+    --auth-divider: 51 65 85;
   }
 }
 

@@ -1,6 +1,7 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack, Redirect } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
+import { View, ActivityIndicator } from 'react-native';
 import { useColors } from '~/hooks/useColors';
 import { OfflineIndicator } from '~/components/ui/OfflineIndicator';
 import {
@@ -11,6 +12,7 @@ import { useCurrentUser } from '~/hooks/useSharedData';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
+import { Text } from '~/components/ui/text';
 
 export default function AppLayout() {
   const colors = useColors();
@@ -18,6 +20,7 @@ export default function AppLayout() {
   const currentUser = useCurrentUser();
   const { user: clerkUser } = useUserSafe();
   const upsertUser = useMutation(api.auth.upsertUser);
+  const [isCreatingUser, setIsCreatingUser] = useState(false);
 
   // Initialize offline data system
   useEffect(() => {
@@ -34,16 +37,56 @@ export default function AppLayout() {
   // Ensure Convex user doc exists once signed in
   useEffect(() => {
     if (!isSignedIn || !isLoaded) return;
-    // If query returned null, create/update user once
-    if (currentUser === null && clerkUser?.id) {
-      upsertUser({
-        clerkId: clerkUser.id,
-        email: clerkUser.emailAddresses?.[0]?.emailAddress || '',
-        name: clerkUser.fullName || clerkUser.firstName || undefined,
-        avatarUrl: clerkUser.imageUrl || undefined,
-      }).catch(() => {});
+
+    // Create/update user if doesn't exist or needs update
+    const createOrUpdateUser = async () => {
+      if (clerkUser?.id && !isCreatingUser) {
+        setIsCreatingUser(true);
+        try {
+          await upsertUser({
+            clerkId: clerkUser.id,
+            email: clerkUser.emailAddresses?.[0]?.emailAddress || '',
+            name: clerkUser.fullName || clerkUser.firstName || undefined,
+            avatarUrl: clerkUser.imageUrl || undefined,
+          });
+        } catch (error) {
+          console.error('Failed to upsert user:', error);
+        } finally {
+          setIsCreatingUser(false);
+        }
+      }
+    };
+
+    // If current user is null (not found in Convex), create it
+    if (currentUser === null) {
+      createOrUpdateUser();
     }
-  }, [isSignedIn, isLoaded, currentUser, clerkUser?.id]);
+    // Also update if Clerk user data has changed
+    else if (currentUser && clerkUser?.id) {
+      const clerkEmail = clerkUser.emailAddresses?.[0]?.emailAddress || '';
+      const clerkName = clerkUser.fullName || clerkUser.firstName || '';
+      const clerkAvatar = clerkUser.imageUrl || '';
+
+      // Check if any data has changed
+      if (
+        currentUser.email !== clerkEmail ||
+        currentUser.name !== clerkName ||
+        currentUser.avatarUrl !== clerkAvatar
+      ) {
+        createOrUpdateUser();
+      }
+    }
+  }, [
+    isSignedIn,
+    isLoaded,
+    currentUser,
+    clerkUser?.id,
+    clerkUser?.emailAddresses,
+    clerkUser?.fullName,
+    clerkUser?.firstName,
+    clerkUser?.imageUrl,
+    upsertUser,
+  ]);
 
   // Show loading while auth is being determined
   if (!isLoaded) {
@@ -53,6 +96,26 @@ export default function AppLayout() {
   // Redirect to auth if not signed in (extra security layer)
   if (!isSignedIn) {
     return <Redirect href="/auth/sign-in" />;
+  }
+
+  // Show loading while creating user in database
+  // This should rarely happen now since OAuth callback handles user creation
+  if (isCreatingUser || (isSignedIn && currentUser === null && clerkUser?.id)) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text className="text-muted-foreground mt-4">
+          Setting up your account...
+        </Text>
+      </View>
+    );
   }
 
   return (

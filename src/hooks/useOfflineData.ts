@@ -133,7 +133,7 @@ export function useOfflineMoodData(limit: number = 365) {
   // Get data from Convex when online
   const serverMoods = useQuery(
     api.moods.getMoods,
-    isSignedIn && isOnline ? { limit } : 'skip'
+    isSignedIn && isOnline && !!currentUser?._id ? { limit } : 'skip'
   );
 
   // Load local data (SQLite) and subscribe to changes
@@ -262,7 +262,7 @@ export function useOfflineTodayMood() {
   // Get data from Convex when online
   const serverMood = useQuery(
     api.moods.getTodayMood,
-    isSignedIn && isOnline ? {} : 'skip'
+    isSignedIn && isOnline && !!currentUser?._id ? {} : 'skip'
   );
 
   // Load local data (SQLite) + subscribe
@@ -386,7 +386,7 @@ export function useOfflineMoodStats(days: number = 30) {
   // Get data from Convex when online
   const serverStats = useQuery(
     api.moods.getMoodStats,
-    isSignedIn && isOnline ? { days } : 'skip'
+    isSignedIn && isOnline && !!currentUser?._id ? { days } : 'skip'
   );
 
   // Load stats from SQLite
@@ -493,7 +493,7 @@ export function useOfflineExercisesWithProgress(
   // Get data from Convex when online
   const serverExercises = useQuery(
     api.exercises.getExercisesWithProgress,
-    isSignedIn && isOnline ? { category, limit } : 'skip'
+    isSignedIn && isOnline && !!currentUser?._id ? { category, limit } : 'skip'
   );
 
   // Load local data (SQLite)
@@ -572,7 +572,7 @@ export function useOfflineUserStats(days?: number) {
   // Get data from Convex when online
   const serverStats = useQuery(
     api.userProgress.getUserStats,
-    isSignedIn && isOnline ? { days } : 'skip'
+    isSignedIn && isOnline && !!currentUser?._id ? { days } : 'skip'
   );
 
   // Update local stats (SQLite) with event-driven updates
@@ -677,7 +677,7 @@ export function useOfflineChatMessages(
   // Get data from Convex when online via unified endpoint
   const serverMessages = useQuery(
     api.chat.getChatMessages,
-    isSignedIn && isOnline && sessionId
+    isSignedIn && isOnline && !!currentUser?._id && !!sessionId
       ? { type: unifiedType as any, sessionId, limit: 50 }
       : 'skip'
   );
@@ -771,7 +771,9 @@ export function useOfflineChatSessions(chatType: ChatType) {
     chatType === 'coach' ? 'main' : chatType === 'event' ? 'vent' : 'companion';
   const serverSessions = useQuery(
     api.chat.getChatSessions,
-    isSignedIn && isOnline ? { type: unifiedType as any } : 'skip'
+    isSignedIn && isOnline && !!currentUser?._id
+      ? { type: unifiedType as any }
+      : 'skip'
   );
 
   // Load local data (SQLite) and subscribe to changes

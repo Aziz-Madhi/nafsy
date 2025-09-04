@@ -37,8 +37,12 @@ export function useUserData() {
  */
 export function useMoodData(limit: number = 365) {
   const { isSignedIn } = useAuth();
+  const currentUser = useCurrentUser();
 
-  return useQuery(api.moods.getMoods, isSignedIn ? { limit } : 'skip');
+  return useQuery(
+    api.moods.getMoods,
+    isSignedIn && !!currentUser ? { limit } : 'skip'
+  );
 }
 
 /**
@@ -46,8 +50,12 @@ export function useMoodData(limit: number = 365) {
  */
 export function useMoodStats(days: number = 30) {
   const { isSignedIn } = useAuth();
+  const currentUser = useCurrentUser();
 
-  return useQuery(api.moods.getMoodStats, isSignedIn ? { days } : 'skip');
+  return useQuery(
+    api.moods.getMoodStats,
+    isSignedIn && !!currentUser ? { days } : 'skip'
+  );
 }
 
 /**
@@ -55,8 +63,12 @@ export function useMoodStats(days: number = 30) {
  */
 export function useTodayMood() {
   const { isSignedIn } = useAuth();
+  const currentUser = useCurrentUser();
 
-  return useQuery(api.moods.getTodayMood, isSignedIn ? {} : 'skip');
+  return useQuery(
+    api.moods.getTodayMood,
+    isSignedIn && !!currentUser ? {} : 'skip'
+  );
 }
 
 /**
@@ -64,10 +76,11 @@ export function useTodayMood() {
  */
 export function useExercisesWithProgress(category?: string, limit?: number) {
   const { isSignedIn } = useAuth();
+  const currentUser = useCurrentUser();
 
   return useQuery(
     api.exercises.getExercisesWithProgress,
-    isSignedIn ? { category, limit } : 'skip'
+    isSignedIn && !!currentUser ? { category, limit } : 'skip'
   );
 }
 
@@ -76,9 +89,10 @@ export function useExercisesWithProgress(category?: string, limit?: number) {
  */
 export function useUserStats(days?: number) {
   const { isSignedIn } = useAuth();
+  const currentUser = useCurrentUser();
 
   return useQuery(
     api.userProgress.getUserStats,
-    isSignedIn ? { days } : 'skip'
+    isSignedIn && !!currentUser ? { days } : 'skip'
   );
 }

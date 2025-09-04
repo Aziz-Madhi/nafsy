@@ -227,14 +227,14 @@ module.exports = {
         'averia-light': ['AveriaSerif-Light', 'System'],
         'averia-regular': ['AveriaSerif-Regular', 'System'],
         'averia-bold': ['AveriaSerif-Bold', 'System'],
-        
+
         // Inter compatibility layer (now using AveriaSerif fonts)
         inter: ['AveriaSerif-Regular', 'System'],
         'inter-text': ['AveriaSerif-Regular', 'System'],
         'inter-display': ['AveriaSerif-Bold', 'System'],
         'inter-medium': ['AveriaSerif-Regular', 'System'], // No medium variant, use regular
         'inter-bold': ['AveriaSerif-Bold', 'System'],
-        
+
         // Arabic font support - RubikArabic family
         'rubik-arabic': ['RubikArabic-Regular', 'System'],
         'rubik-arabic-light': ['RubikArabic-Light', 'System'],
@@ -242,7 +242,7 @@ module.exports = {
         'rubik-arabic-medium': ['RubikArabic-Medium', 'System'],
         'rubik-arabic-semibold': ['RubikArabic-SemiBold', 'System'],
         'rubik-arabic-bold': ['RubikArabic-Bold', 'System'],
-        
+
         // SF Pro compatibility layer (now using AveriaSerif fonts)
         'sf-pro': ['AveriaSerif-Regular', 'System'],
         'sf-pro-text': ['AveriaSerif-Regular', 'System'],
