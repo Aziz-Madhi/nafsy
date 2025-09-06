@@ -28,7 +28,7 @@ export default function SignInScreen() {
   return (
     <AuthLayout
       title={t('auth.welcomeBack')}
-      subtitle={t('auth.signInSubtitle')}
+      subtitle={''}
       footerContent={
         <>
           <Text className="text-muted-foreground">

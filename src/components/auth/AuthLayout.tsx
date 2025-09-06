@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, TouchableWithoutFeedback, Keyboard } from 'react-native';
+import { View, TouchableWithoutFeedback, Keyboard, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view';
 import { Text } from '~/components/ui/text';
-import { AppLogo } from './AppLogo';
+import { useColors } from '~/hooks/useColors';
 
 interface AuthLayoutProps {
   title: string;
@@ -18,6 +18,7 @@ export function AuthLayout({
   children,
   footerContent,
 }: AuthLayoutProps) {
+  const colors = useColors();
   return (
     <SafeAreaView className="flex-1 bg-background">
       <KeyboardAwareScrollView
@@ -26,18 +27,36 @@ export function AuthLayout({
         showsVerticalScrollIndicator={false}
       >
         <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
-          <View className="flex-1 px-6 py-5 justify-center">
-            {/* Logo Section */}
-            <View className="items-center mb-4">
-              <AppLogo size="large" />
+          <View className="flex-1 px-6 py-5">
+            {/* Illustration - match Welcome screen */}
+            <View className="w-full mb-2 items-center">
+              <Image
+                // Reuse the same illustration from the Welcome screen
+                source={require('../../../assets/welcome Illustration..png')}
+                style={{ width: '100%', height: 200, resizeMode: 'contain' }}
+              />
             </View>
 
             {/* Title Section */}
-            <View className="gap-1 items-center mb-6">
-              <Text className="text-3xl font-bold text-foreground text-center">
+            <View className="items-center mb-6">
+              <Text
+                style={{
+                  // Unify with subtitle font for Arabic consistency
+                  fontFamily: 'System',
+                  fontWeight: '700',
+                  fontSize: 28,
+                  lineHeight: 34,
+                  color: colors.foreground,
+                  textAlign: 'center',
+                  marginBottom: 12,
+                }}
+              >
                 {title}
               </Text>
-              <Text className="text-muted-foreground text-center text-base leading-relaxed px-4">
+              <Text
+                className="text-muted-foreground text-center"
+                style={{ fontSize: 16, lineHeight: 22, paddingHorizontal: 4 }}
+              >
                 {subtitle}
               </Text>
             </View>

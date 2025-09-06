@@ -18,6 +18,7 @@ import { useCurrentTheme } from '~/store/useAppStore';
 import { useColors } from '~/hooks/useColors';
 import { Text } from '~/components/ui/text';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useCurrentUser } from '~/hooks/useSharedData';
 
 // Keep the splash screen visible while we fetch resources
 SplashScreen.preventAutoHideAsync();
@@ -53,6 +54,7 @@ function Splash() {
 function AuthAwareNavigation({ fontsReady }: { fontsReady: boolean }) {
   const { isLoaded, isSignedIn } = useAuth();
   const currentTheme = useCurrentTheme();
+  const currentUser = useCurrentUser();
 
   // Show splash while auth or fonts are loading
   if (!isLoaded || !fontsReady) {
@@ -64,6 +66,11 @@ function AuthAwareNavigation({ fontsReady }: { fontsReady: boolean }) {
     console.log('🔐 Auth state:', { isLoaded, isSignedIn });
   }
 
+  // If signed in but user doc not resolved yet, keep splash to avoid route flicker
+  if (isSignedIn && currentUser === undefined) {
+    return <Splash />;
+  }
+
   return (
     <SafeErrorBoundary>
       <StatusBar style={currentTheme === 'dark' ? 'light' : 'dark'} />
@@ -71,7 +78,13 @@ function AuthAwareNavigation({ fontsReady }: { fontsReady: boolean }) {
       {/* Use a stable Stack and pick initial route based on auth */}
       <Stack
         screenOptions={{ headerShown: false }}
-        initialRouteName={isSignedIn ? '(app)' : 'welcome'}
+        initialRouteName={
+          isSignedIn
+            ? currentUser && (currentUser as any).onboardingCompleted === false
+              ? 'onboarding'
+              : '(app)'
+            : 'welcome'
+        }
       >
         <Stack.Screen name="welcome" />
         <Stack.Screen name="auth" options={{ gestureEnabled: false }} />

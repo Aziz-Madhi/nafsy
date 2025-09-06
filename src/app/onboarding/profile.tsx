@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Pressable, Platform, Image, Keyboard } from 'react-native';
-import { MotiView } from 'moti';
+import { AnimatePresence, MotiView } from 'moti';
 import { MotiPressable } from 'moti/interactions';
 import { MenuView } from '@react-native-menu/menu';
 import { Picker } from '@react-native-picker/picker';
@@ -132,34 +132,53 @@ export default function ProfileStep() {
           />
         </View>
 
-        <View className="w-full">
-          <Text
-            style={{
-              fontFamily: 'AveriaSerif-Bold',
-              fontSize: 28,
-              lineHeight: 32,
-              color: colors.foreground,
-              textAlign: 'center',
-            }}
+        <AnimatePresence exitBeforeEnter initial={false}>
+          <MotiView
+            key={`hdr-${step}`}
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ type: 'timing', duration: 140 }}
+            className="w-full"
           >
-            {step === 'profile'
-              ? t('onboarding.profile.title')
-              : step === 'mood'
-              ? t('onboarding.mood.title')
-              : step === 'notes'
-              ? t('onboarding.notes.title', 'Anything else to share?')
-              : t('onboarding.preferences.title')}
-          </Text>
-          <Text className="text-muted-foreground mt-2 text-center" style={{ textAlign: 'center' }}>
-            {step === 'profile'
-              ? t('onboarding.profile.subtitle')
-              : step === 'mood'
-              ? t('onboarding.mood.subtitle')
-              : step === 'notes'
-              ? t('onboarding.notes.subtitle', 'Add any extra context you want us to consider.')
-              : t('onboarding.preferences.subtitle')}
-          </Text>
-        </View>
+            <Text
+              style={{
+                fontFamily: 'System',
+                fontWeight: '700',
+                fontSize: 28,
+                lineHeight: 32,
+                color: colors.foreground,
+                textAlign: 'center',
+              }}
+            >
+              {step === 'profile'
+                ? t('onboarding.profile.title')
+                : step === 'mood'
+                ? t('onboarding.mood.title')
+                : step === 'notes'
+                ? t('onboarding.notes.title', 'Anything else to share?')
+                : t('onboarding.preferences.title')}
+            </Text>
+            <Text className="text-muted-foreground mt-2 text-center" style={{ textAlign: 'center' }}>
+              {step === 'profile'
+                ? t('onboarding.profile.subtitle')
+                : step === 'mood'
+                ? t('onboarding.mood.subtitle')
+                : step === 'notes'
+                ? t('onboarding.notes.subtitle', 'Add any extra context you want us to consider.')
+                : t('onboarding.preferences.subtitle')}
+            </Text>
+          </MotiView>
+        </AnimatePresence>
+        <AnimatePresence exitBeforeEnter initial={false}>
+          <MotiView
+            key={`cnt-${step}`}
+            from={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ type: 'timing', duration: 160 }}
+            style={{ width: '100%' }}
+          >
         {step === 'profile' ? (
           <View className="mt-6 gap-4 w-full">
             <FormField
@@ -343,7 +362,7 @@ export default function ProfileStep() {
                     return (
                       <Chip
                         key={k}
-                        label={formatHelpLabel(k, t(key, HELP_AREA_LABELS[k]))}
+                        label={formatHelpLabel(k, t(key))}
                         icon={HELP_AREA_ICONS[k]}
                         active={active}
                         onPress={() => toggle('helpAreas', k)}
@@ -359,7 +378,7 @@ export default function ProfileStep() {
                     return (
                       <Chip
                         key={k}
-                        label={formatHelpLabel(k, t(key, HELP_AREA_LABELS[k]))}
+                        label={formatHelpLabel(k, t(key))}
                         icon={HELP_AREA_ICONS[k]}
                         active={active}
                         onPress={() => toggle('helpAreas', k)}
@@ -428,6 +447,8 @@ export default function ProfileStep() {
             />
           </Pressable>
         ) : null}
+          </MotiView>
+        </AnimatePresence>
       </View>
 
       <View className="mt-auto pb-8 px-5 gap-4">
@@ -704,10 +725,9 @@ const STRUGGLE_ICONS: Record<(typeof STRUGGLE_KEYS)[number], LucideIcon> = {
 
 // Compact label formatter to allow manual line breaks for some long labels
 function formatHelpLabel(key: (typeof HELP_AREA_KEYS)[number], text: string) {
-  if (key === 'breathingGuidance') return 'Breathing\nGuidance';
-  if (key === 'journalingPrompts') return 'Journaling\nPrompts';
-  if (key === 'mindfulnessPractice') return 'Mindfulness\nPractice';
-  if (key === 'talkToSomeone') return 'Talk to\nSomeone';
+  // Preserve translated text as-is. The previous implementation forced
+  // English labels with manual line breaks, which broke Arabic.
+  // If we need manual breaks in the future, handle it per-locale.
   return text;
 }
 
@@ -855,4 +875,3 @@ function buildMenuActions(items: PickerItem[]) {
 
   return items.map((it) => ({ id: String(it.value), title: it.label }));
 }
-

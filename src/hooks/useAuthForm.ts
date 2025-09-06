@@ -13,6 +13,8 @@ import { useTranslation } from './useTranslation';
 interface UseAuthFormProps {
   mode: 'signin' | 'signup';
   onSuccess?: () => void;
+  // When creating account, allow opting out of collecting name
+  requireName?: boolean;
 }
 
 interface AuthFormData {
@@ -28,7 +30,7 @@ interface AuthFormErrors {
   general?: string;
 }
 
-export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
+export function useAuthForm({ mode, onSuccess, requireName }: UseAuthFormProps) {
   const { t } = useTranslation();
   const {
     signIn,
@@ -45,7 +47,8 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
   const [form, setForm] = useState<AuthFormData>({
     email: '',
     password: '',
-    name: mode === 'signup' ? '' : undefined,
+    name:
+      mode === 'signup' && (requireName ?? true) ? '' : undefined,
   });
 
   const [errors, setErrors] = useState<AuthFormErrors>({});
@@ -90,8 +93,8 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
             const hasSpecial = /[^A-Za-z0-9]/.test(pwd);
             return lengthOk && hasUpper && hasLower && hasNumber && hasSpecial;
           })();
-    const isNameValid =
-      mode === 'signin' || (form.name && form.name.trim().length > 0);
+    const nameRequired = mode === 'signup' && (requireName ?? true);
+    const isNameValid = !nameRequired || (form.name && form.name.trim().length > 0);
 
     return {
       email: isEmailValid,
@@ -99,7 +102,7 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
       name: isNameValid,
       isValid: isEmailValid && isPasswordValid && isNameValid,
     };
-  }, [form, mode]);
+  }, [form, mode, requireName]);
 
   // Update form field
   const updateForm = useCallback(
@@ -132,13 +135,14 @@ export function useAuthForm({ mode, onSuccess }: UseAuthFormProps) {
         }
       }
     }
-    if (mode === 'signup' && !validation.name) {
+    const nameRequired = mode === 'signup' && (requireName ?? true);
+    if (nameRequired && !validation.name) {
       newErrors.name = t('auth.validation.nameRequired');
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
-  }, [validation, mode]);
+  }, [validation, mode, requireName]);
 
   // Handle sign in
   const handleSignIn = useCallback(async () => {

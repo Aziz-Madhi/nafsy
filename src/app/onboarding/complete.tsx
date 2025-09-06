@@ -81,7 +81,14 @@ export default function OnboardingCompleteScreen() {
 
         <View className="w-full">
           <Text
-            style={{ fontFamily: 'AveriaSerif-Bold', fontSize: 28, lineHeight: 32, color: colors.foreground, textAlign: 'center' }}
+            style={{
+              fontFamily: 'System',
+              fontWeight: '700',
+              fontSize: 28,
+              lineHeight: 32,
+              color: colors.foreground,
+              textAlign: 'center',
+            }}
           >
             {t('onboarding.complete.title', "You're all set")}
           </Text>
@@ -201,21 +208,31 @@ function InfoCard({
   iconColor?: string;
 }) {
   const colors = useColors();
+  const { isRTL } = useTranslation();
   return (
     <View className="rounded-xl p-4 border border-transparent bg-black/[0.03] dark:bg-white/[0.03]" style={{ height: 152 }}>
       <View className="gap-2.5">
-        <View className="flex-row items-center gap-2">
+        <View
+          className="items-center gap-2"
+          style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}
+        >
           <Icon size={16} color={iconColor ?? colors.foreground} strokeWidth={2} />
-          <Text className="text-foreground font-semibold text-[15px]" numberOfLines={2}>
+          <Text
+            className="text-foreground font-semibold text-[15px]"
+            numberOfLines={2}
+            style={{ textAlign: isRTL ? 'right' : 'left' }}
+          >
             {title}
           </Text>
         </View>
-        <Text className="text-muted-foreground text-[13px] leading-[18px]" numberOfLines={4}>
+        <Text
+          className="text-muted-foreground text-[13px] leading-[18px]"
+          numberOfLines={4}
+          style={{ textAlign: isRTL ? 'right' : 'left' }}
+        >
           {description}
         </Text>
       </View>
     </View>
   );
 }
-
-

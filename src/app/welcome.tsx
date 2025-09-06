@@ -39,12 +39,14 @@ export default function WelcomeScreen() {
           {/* Welcome Content - More Compact */}
           <Text
             style={{
-              fontFamily: 'AveriaSerif-Bold',
+              // Use the same font as subtext to unify Arabic typography
+              fontFamily: 'System',
               fontSize: 28,
               lineHeight: 34,
               color: colors.foreground,
               textAlign: 'center',
               marginBottom: 12,
+              fontWeight: '700',
             }}
           >
             {t('onboarding.welcome.title')}
@@ -146,7 +148,9 @@ function FeatureCard({
         <Text
           className="text-lg font-bold mb-1 text-foreground"
           style={{
-            fontFamily: 'AveriaSerif-Bold',
+            // Match subtitle font for consistency in Arabic
+            fontFamily: 'System',
+            fontWeight: '700',
           }}
         >
           {title}

@@ -29,6 +29,7 @@ export default function SignUpScreen() {
     shakeStyle,
   } = useAuthForm({
     mode: 'signup',
+    requireName: false,
     onSuccess: () => {
       if (form.name) setOnboardingField('name', form.name);
       // Route new users to onboarding
@@ -54,7 +55,7 @@ export default function SignUpScreen() {
       }
       subtitle={
         !pendingVerification
-          ? t('auth.signUpSubtitle')
+          ? '' // remove subtitle to save vertical space
           : t('auth.verificationSubtitle', { email: form.email })
       }
       footerContent={
@@ -78,15 +79,6 @@ export default function SignUpScreen() {
         <View className="mt-2">
           {/* Email/Password Form (moved up) */}
           <Animated.View style={shakeStyle} className="gap-3">
-            <FormField
-              label={t('auth.name')}
-              placeholder={t('auth.placeholders.enterName')}
-              value={form.name || ''}
-              onChangeText={(text) => updateForm('name', text)}
-              autoComplete="name"
-              error={errors.name}
-            />
-
             <FormField
               label={t('auth.email')}
               placeholder={t('auth.placeholders.enterEmail')}

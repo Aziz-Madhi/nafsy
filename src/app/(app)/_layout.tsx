@@ -22,7 +22,6 @@ export default function AppLayout() {
   const { user: clerkUser } = useUserSafe();
   const upsertUser = useMutation(api.auth.upsertUser);
   const [isCreatingUser, setIsCreatingUser] = useState(false);
-  const [creationGraceEnded, setCreationGraceEnded] = useState(false);
   const lastUpsertClerkIdRef = useRef<string | null>(null);
   const lastUpsertAtRef = useRef<number>(0);
 
@@ -78,16 +77,9 @@ export default function AppLayout() {
 
     // If current user is null (not found in Convex), create it
     if (currentUser === null) {
-      // Kick off creation and start a short grace timer only if we attempted upsert
+      // Kick off creation; keep UI blocked until user doc exists
       (async () => {
-        const attempted = await createOrUpdateUser({
-          markOnboardingPending: true,
-        });
-        if (attempted) {
-          setCreationGraceEnded(false);
-          const id = setTimeout(() => setCreationGraceEnded(true), 2500);
-          return () => clearTimeout(id);
-        }
+        await createOrUpdateUser({ markOnboardingPending: true });
       })();
     }
     // Also update if Clerk user data has changed
@@ -122,6 +114,24 @@ export default function AppLayout() {
     return null;
   }
 
+  // While currentUser is undefined, the Convex query is still loading.
+  // Do NOT render the app content yet to avoid flashing protected screens.
+  if (isSignedIn && currentUser === undefined) {
+    return (
+      <View
+        style={{
+          flex: 1,
+          justifyContent: 'center',
+          alignItems: 'center',
+          backgroundColor: colors.background,
+        }}
+      >
+        <ActivityIndicator size="large" color={colors.primary} />
+        <Text className="text-muted-foreground mt-4">Loading your account…</Text>
+      </View>
+    );
+  }
+
   // Redirect to auth if not signed in (extra security layer)
   if (!isSignedIn) {
     return <Redirect href="/welcome" />;
@@ -132,9 +142,9 @@ export default function AppLayout() {
     return <Redirect href="/onboarding/profile" />;
   }
 
-  // Show loading while creating user in database
-  // Keep a short grace period if currentUser is still null, but do not block indefinitely
-  if (isCreatingUser || (isSignedIn && currentUser === null && clerkUser?.id && !creationGraceEnded)) {
+  // Show loading while creating user in database or while user doc is absent
+  // Security: Do not render app content if the Convex user record doesn't exist yet
+  if (isCreatingUser || (isSignedIn && currentUser === null && clerkUser?.id)) {
     return (
       <View
         style={{

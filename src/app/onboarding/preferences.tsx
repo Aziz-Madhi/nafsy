@@ -145,7 +145,8 @@ export default function PreferencesStep() {
       <View className="px-5">
         <Text
           style={{
-            fontFamily: 'AveriaSerif-Bold',
+            fontFamily: 'System',
+            fontWeight: '700',
             fontSize: 28,
             lineHeight: 32,
             color: colors.foreground,
@@ -213,7 +214,7 @@ export default function PreferencesStep() {
               return (
                 <Chip
                   key={k}
-                  label={t(key, HELP_AREA_LABELS[k])}
+                  label={t(key)}
                   icon={HELP_AREA_ICONS[k]}
                   active={active}
                   onPress={() => toggle('helpAreas', k)}

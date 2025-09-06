@@ -25,7 +25,8 @@
     "signUp": "إنشاء حساب",
     "signOut": "تسجيل الخروج",
     "pleaseSignIn": "يرجى تسجيل الدخول للمتابعة",
-    "minutes": "دقيقة"
+    "minutes": "دقيقة",
+    "select": "اختر"
   },
   "auth": {
     "welcome": "مرحباً بك في نفسي",
@@ -104,29 +105,52 @@
       "subtitle": "يساعدنا هذا على تخصيص تجربتك.",
       "name": "الاسم",
       "age": "العمر",
-      "gender": "النوع",
+      "gender": "الجنس",
       "genders": { "male": "ذكر", "female": "أنثى", "other": "آخر" },
       "namePlaceholder": "اكتب اسمك",
       "agePlaceholder": "اختياري",
-      "validation": { "nameRequired": "الاسم مطلوب" }
+      "validation": { "nameRequired": "الاسم مطلوب" },
+      "strugglesTitle": "تحديات يومية",
+      "struggles": {
+        "sleepIssues": "مشاكل في النوم",
+        "anxiety": "قلق",
+        "stress": "توتر",
+        "lowMotivation": "دافعية منخفضة"
+      }
     },
     "mood": {
       "title": "كيف تشعر اليوم؟",
-      "subtitle": "قيّم مزاجك من 1 إلى 10"
+      "subtitle": "قيّم مزاجك من 1 إلى 10",
+      "lastMonth": {
+        "title": "كيف كان مزاجك خلال الشهر الماضي؟",
+        "options": {
+          "low": "منخفض",
+          "average": "متوسط",
+          "good": "جيد",
+          "very_good": "سعيد"
+        }
+      }
     },
     "preferences": {
-      "title": "ما الذي تبحث عنه في نفسي؟",
-      "subtitle": "اختر بعض الخيارات لنساعدك بشكل أفضل.",
+      "title": "ما الذي جاء بك إلى نفسي؟",
+      "subtitle": "اختر بعض الخيارات لمساعدتنا على دعمك.",
       "goalsTitle": "أهدافك",
-      "selfImageTitle": "غالبًا ما تشعر بـ",
+      "helpAreasTitle": "مجالات المساعدة",
+      "selfImageTitle": "غالبًا ما تشعر بأنك",
       "goals": {
         "reduceAnxiety": "تقليل القلق",
         "improveSleep": "تحسين النوم",
-        "buildMindfulness": "اليقظة",
+        "buildMindfulness": "يقظة ذهنية",
         "increaseFocus": "زيادة التركيز",
         "emotionalRegulation": "تنظيم المشاعر",
         "ventFeelings": "مساحة آمنة للتنفيس"
       },
+    "helpAreas": {
+      "talkToSomeone": "التحدث مع شخص",
+      "mindfulnessPractice": "ممارسة اليقظة",
+      "breathingGuidance": "إرشادات التنفس",
+      "journalingPrompts": "محفزات للكتابة"
+    },
       "selfImage": {
         "stressed": "متوتر",
         "overwhelmed": "مثقل",
@@ -134,13 +158,40 @@
         "motivated": "متحفز",
         "exhausted": "مرهق",
         "hopeful": "متفائل"
+      },
+      "fearsTitle": "مخاوف",
+      "fears": {
+        "timeCommitment": "يتطلب وقتاً",
+        "privacy": "الخصوصية",
+        "stigma": "الوصمة"
       }
+    },
+    "notes": {
+      "title": "هل لديك ما تود مشاركته؟",
+      "subtitle": "أضف أي سياق إضافي تود أن نأخذه بعين الاعتبار.",
+      "placeholder": "شارك أي شيء آخر تود أن نعرفه..."
     },
     "complete": {
       "title": "كل شيء جاهز",
       "subtitle": "سنخصص تجربتك بناءً على إجاباتك.",
       "finish": "إنهاء",
-      "saving": "جارٍ الحفظ..."
+      "saving": "جارٍ الحفظ...",
+      "privacy": {
+        "title": "الخصوصية أولاً",
+        "description": "بياناتك مُشفرة ولا تتم مشاركتها أبداً."
+      },
+      "companion": {
+        "title": "رفيق يومي",
+        "description": "دعم للعافية. ليس بديلاً عن الرعاية المتخصصة."
+      },
+      "learning": {
+        "title": "يتعلم معك",
+        "description": "يتكيف نفسي مع سجلات مزاجك ومحادثاتك."
+      },
+      "progress": {
+        "title": "تقدم أسبوعي",
+        "description": "الاستمرارية تمنحك دعماً أذكى كل أسبوع."
+      }
     },
     "validation": { "nameRequired": "الاسم مطلوب" }
   },

@@ -108,7 +108,14 @@
       "genders": { "male": "Male", "female": "Female", "other": "Other" },
       "namePlaceholder": "Enter your name",
       "agePlaceholder": "Optional",
-      "validation": { "nameRequired": "Please enter your name" }
+      "validation": { "nameRequired": "Please enter your name" },
+      "strugglesTitle": "Day-to-day struggles",
+      "struggles": {
+        "sleepIssues": "Sleep issues",
+        "anxiety": "Anxiety",
+        "stress": "Stress",
+        "lowMotivation": "Low motivation"
+      }
     },
     "mood": {
       "title": "How are you feeling today?",
@@ -127,6 +134,7 @@
       "title": "What brings you to Nafsy?",
       "subtitle": "Choose a few to help us support you.",
       "goalsTitle": "Your goals",
+      "helpAreasTitle": "Help areas",
       "selfImageTitle": "You often feel",
       "goals": {
         "reduceAnxiety": "Reduce anxiety",
@@ -135,6 +143,12 @@
         "increaseFocus": "Increase focus",
         "emotionalRegulation": "Emotional regulation",
         "ventFeelings": "A safe space to vent"
+      },
+      "helpAreas": {
+        "talkToSomeone": "Talk to someone",
+        "mindfulnessPractice": "Mindfulness practice",
+        "breathingGuidance": "Breathing guidance",
+        "journalingPrompts": "Journaling prompts"
       },
       "selfImage": {
         "stressed": "Stressed",
@@ -145,11 +159,32 @@
         "hopeful": "Hopeful"
       }
     },
+    "notes": {
+      "title": "Anything else to share?",
+      "subtitle": "Add any extra context you want us to consider.",
+      "placeholder": "Share anything else you want us to know..."
+    },
     "complete": {
       "title": "You're all set",
       "subtitle": "We’ll tailor your experience based on your answers.",
       "finish": "Finish",
-      "saving": "Saving..."
+      "saving": "Saving...",
+      "privacy": {
+        "title": "Privacy First",
+        "description": "Your data is encrypted and never shared."
+      },
+      "companion": {
+        "title": "Daily Companion",
+        "description": "Support for wellness. Not a replacement for professional care."
+      },
+      "learning": {
+        "title": "Learns With You",
+        "description": "Nafsy adapts with your mood logs and chats."
+      },
+      "progress": {
+        "title": "Weekly Progress",
+        "description": "Stay consistent to see smarter support each week."
+      }
     },
     "validation": { "nameRequired": "Name is required" }
   },
