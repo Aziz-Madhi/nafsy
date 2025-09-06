@@ -24,11 +24,11 @@ function PremiumCategoryGridComponent({
         icon: '🧘‍♀️',
       },
       {
-        id: 'breathing' as const,
-        name: t('exercises.categories.breathing'),
-        color: '#4ECDC4',
-        description: t('exercises.descriptions.breathing'),
-        icon: '🌬️',
+        id: 'relaxation' as const,
+        name: t('exercises.categories.relaxation'),
+        color: '#FFEAA7',
+        description: t('exercises.descriptions.relaxation'),
+        icon: '🛀',
       },
       {
         id: 'movement' as const,
@@ -45,11 +45,11 @@ function PremiumCategoryGridComponent({
         icon: '✍️',
       },
       {
-        id: 'relaxation' as const,
-        name: t('exercises.categories.relaxation'),
-        color: '#FFEAA7',
-        description: t('exercises.descriptions.relaxation'),
-        icon: '🛀',
+        id: 'breathing' as const,
+        name: t('exercises.categories.breathing'),
+        color: '#4ECDC4',
+        description: t('exercises.descriptions.breathing'),
+        icon: '🌬️',
       },
       {
         id: 'reminders' as const,

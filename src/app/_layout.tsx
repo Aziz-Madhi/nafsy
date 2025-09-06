@@ -71,9 +71,11 @@ function AuthAwareNavigation({ fontsReady }: { fontsReady: boolean }) {
       {/* Use a stable Stack and pick initial route based on auth */}
       <Stack
         screenOptions={{ headerShown: false }}
-        initialRouteName={isSignedIn ? '(app)' : 'auth'}
+        initialRouteName={isSignedIn ? '(app)' : 'welcome'}
       >
+        <Stack.Screen name="welcome" />
         <Stack.Screen name="auth" options={{ gestureEnabled: false }} />
+        <Stack.Screen name="onboarding" />
         <Stack.Screen name="(app)" />
       </Stack>
     </SafeErrorBoundary>

@@ -305,6 +305,9 @@ const SettingsScreen = React.memo(function SettingsScreen() {
 
       // Add if using WebSockets:
       // ws?.close();
+
+      // Navigate to welcome after sign-out
+      router.replace('/welcome');
     } catch (error) {
       console.error('Error during sign out:', error);
       setIsSigningOut(false);

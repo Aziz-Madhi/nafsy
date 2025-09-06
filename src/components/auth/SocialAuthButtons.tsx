@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, ActivityIndicator, Platform } from 'react-native';
+import { View, Platform } from 'react-native';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { useTranslation } from '~/hooks/useTranslation';
@@ -26,7 +26,7 @@ export function SocialAuthButtons({ showDivider = true }: SocialAuthButtonsProps
           size="lg"
           onPress={() => handleSocialAuth('oauth_google')}
           disabled={loading}
-          className="h-12 rounded-2xl overflow-hidden self-center w-9/12 p-0 bg-white web:bg-white"
+          className="h-12 rounded-2xl overflow-hidden self-center w-9/12 p-0 bg-white web:bg-white active:bg-white"
           accessibilityLabel={t('auth.continueWithGoogle')}
           style={{
             shadowColor: '#000',
@@ -39,11 +39,7 @@ export function SocialAuthButtons({ showDivider = true }: SocialAuthButtonsProps
         >
           <View className="w-full h-full flex-row items-center justify-center px-5">
             <View className="absolute left-4">
-              {loading ? (
-                <ActivityIndicator size="small" />
-              ) : (
-                <GoogleIcon size={22} />
-              )}
+              <GoogleIcon size={22} />
             </View>
             <Text className="text-foreground text-base font-semibold">
               {t('auth.continueWithGoogle')}
@@ -58,7 +54,7 @@ export function SocialAuthButtons({ showDivider = true }: SocialAuthButtonsProps
             size="lg"
             onPress={() => handleSocialAuth('oauth_apple')}
             disabled={loading}
-            className="h-12 rounded-2xl overflow-hidden self-center w-9/12 p-0 bg-black web:bg-black"
+            className="h-12 rounded-2xl overflow-hidden self-center w-9/12 p-0 bg-black web:bg-black active:bg-black"
             accessibilityLabel={t('auth.continueWithApple')}
             style={{
               shadowColor: '#000',
@@ -71,17 +67,13 @@ export function SocialAuthButtons({ showDivider = true }: SocialAuthButtonsProps
           >
             <View className="w-full h-full flex-row items-center justify-center px-5">
               <View className="absolute left-4">
-                {loading ? (
-                  <ActivityIndicator size="small" color="#fff" />
-                ) : (
-                  <SymbolView
-                    name="apple.logo"
-                    width={22}
-                    height={22}
-                    tintColor="#fff"
-                    resizeMode="scaleAspectFit"
-                  />
-                )}
+                <SymbolView
+                  name="apple.logo"
+                  width={22}
+                  height={22}
+                  tintColor="#fff"
+                  resizeMode="scaleAspectFit"
+                />
               </View>
               <Text className="text-white text-base font-semibold">
                 {t('auth.continueWithApple')}

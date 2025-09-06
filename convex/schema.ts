@@ -8,6 +8,16 @@ export default defineSchema({
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
     language: v.string(), // 'en' or 'ar'
+    age: v.optional(v.number()),
+    gender: v.optional(v.string()),
+    onboardingCompleted: v.optional(v.boolean()),
+    moodLastMonth: v.optional(v.string()),
+    goals: v.optional(v.array(v.string())),
+    selfImage: v.optional(v.array(v.string())),
+    helpAreas: v.optional(v.array(v.string())),
+    fears: v.optional(v.array(v.string())),
+    struggles: v.optional(v.array(v.string())),
+    additionalNotes: v.optional(v.string()),
     createdAt: v.number(),
     lastActive: v.number(),
   })

@@ -16,6 +16,16 @@ async function upsertUserHelper(
     name?: string;
     avatarUrl?: string;
     language?: string;
+    age?: number;
+    gender?: string;
+    onboardingCompleted?: boolean;
+    moodLastMonth?: string;
+    goals?: string[];
+    selfImage?: string[];
+    helpAreas?: string[];
+    fears?: string[];
+    struggles?: string[];
+    additionalNotes?: string;
   }
 ) {
   // Always require authenticated identity and bind operations to that identity.
@@ -49,7 +59,18 @@ async function upsertUserHelper(
     if (args.name !== undefined) updateData.name = args.name;
     if (args.avatarUrl !== undefined) updateData.avatarUrl = args.avatarUrl;
     if (args.language !== undefined) updateData.language = args.language;
+    if (args.age !== undefined) updateData.age = args.age;
+    if (args.gender !== undefined) updateData.gender = args.gender;
+    if (args.onboardingCompleted !== undefined)
+      updateData.onboardingCompleted = args.onboardingCompleted;
+    if (args.moodLastMonth !== undefined) updateData.moodLastMonth = args.moodLastMonth;
+    if (args.goals !== undefined) updateData.goals = args.goals;
+    if (args.selfImage !== undefined) updateData.selfImage = args.selfImage;
+    if (args.helpAreas !== undefined) updateData.helpAreas = args.helpAreas;
+    if (args.fears !== undefined) updateData.fears = args.fears;
+    if (args.struggles !== undefined) updateData.struggles = args.struggles;
     if (args.email !== undefined) updateData.email = args.email;
+    if (args.additionalNotes !== undefined) updateData.additionalNotes = args.additionalNotes;
 
     await ctx.db.patch(existingUser._id, updateData);
     return existingUser._id;
@@ -63,6 +84,16 @@ async function upsertUserHelper(
       name: args.name,
       avatarUrl: args.avatarUrl,
       language: args.language || 'en',
+      age: args.age,
+      gender: args.gender,
+      onboardingCompleted: args.onboardingCompleted,
+      moodLastMonth: args.moodLastMonth,
+      goals: args.goals,
+      selfImage: args.selfImage,
+      helpAreas: args.helpAreas,
+      fears: args.fears,
+      struggles: args.struggles,
+      additionalNotes: args.additionalNotes,
       createdAt: Date.now(),
       lastActive: Date.now(),
     });
@@ -110,6 +141,16 @@ export const upsertUser = mutation({
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
     language: v.optional(v.string()),
+    age: v.optional(v.number()),
+    gender: v.optional(v.string()),
+    onboardingCompleted: v.optional(v.boolean()),
+    moodLastMonth: v.optional(v.string()),
+    goals: v.optional(v.array(v.string())),
+    selfImage: v.optional(v.array(v.string())),
+    helpAreas: v.optional(v.array(v.string())),
+    fears: v.optional(v.array(v.string())),
+    struggles: v.optional(v.array(v.string())),
+    additionalNotes: v.optional(v.string()),
   },
   returns: v.id('users'),
   handler: async (ctx, args) => {
@@ -132,6 +173,16 @@ export const getCurrentUser = query({
       name: v.optional(v.string()),
       avatarUrl: v.optional(v.string()),
       language: v.string(),
+      age: v.optional(v.number()),
+      gender: v.optional(v.string()),
+      onboardingCompleted: v.optional(v.boolean()),
+      moodLastMonth: v.optional(v.string()),
+      goals: v.optional(v.array(v.string())),
+      selfImage: v.optional(v.array(v.string())),
+      helpAreas: v.optional(v.array(v.string())),
+      fears: v.optional(v.array(v.string())),
+      struggles: v.optional(v.array(v.string())),
+      additionalNotes: v.optional(v.string()),
       createdAt: v.number(),
       lastActive: v.number(),
     }),
@@ -164,6 +215,16 @@ export const getUserByClerkId = query({
       name: v.optional(v.string()),
       avatarUrl: v.optional(v.string()),
       language: v.string(),
+      age: v.optional(v.number()),
+      gender: v.optional(v.string()),
+      onboardingCompleted: v.optional(v.boolean()),
+      moodLastMonth: v.optional(v.string()),
+      goals: v.optional(v.array(v.string())),
+      selfImage: v.optional(v.array(v.string())),
+      helpAreas: v.optional(v.array(v.string())),
+      fears: v.optional(v.array(v.string())),
+      struggles: v.optional(v.array(v.string())),
+      additionalNotes: v.optional(v.string()),
       createdAt: v.number(),
       lastActive: v.number(),
     }),
@@ -209,6 +270,16 @@ export const updateUser = mutation({
     name: v.optional(v.string()),
     avatarUrl: v.optional(v.string()),
     language: v.optional(v.string()),
+    age: v.optional(v.number()),
+    gender: v.optional(v.string()),
+    onboardingCompleted: v.optional(v.boolean()),
+    moodLastMonth: v.optional(v.string()),
+    goals: v.optional(v.array(v.string())),
+    selfImage: v.optional(v.array(v.string())),
+    helpAreas: v.optional(v.array(v.string())),
+    fears: v.optional(v.array(v.string())),
+    struggles: v.optional(v.array(v.string())),
+    additionalNotes: v.optional(v.string()),
   },
   returns: v.id('users'),
   handler: async (ctx, args) => {

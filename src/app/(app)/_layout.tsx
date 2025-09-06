@@ -43,7 +43,9 @@ export default function AppLayout() {
     if (!isSignedIn || !isLoaded) return;
 
     // Create/update user if doesn't exist or needs update
-    const createOrUpdateUser = async (): Promise<boolean> => {
+    const createOrUpdateUser = async (
+      opts?: { markOnboardingPending?: boolean }
+    ): Promise<boolean> => {
       if (clerkUser?.id && !isCreatingUser) {
         // Debounce duplicate attempts for the same user id
         const now = Date.now();
@@ -62,7 +64,8 @@ export default function AppLayout() {
             email: clerkUser.emailAddresses?.[0]?.emailAddress || '',
             name: clerkUser.fullName || clerkUser.firstName || undefined,
             avatarUrl: clerkUser.imageUrl || undefined,
-          });
+            ...(opts?.markOnboardingPending ? { onboardingCompleted: false } : {}),
+          } as any);
         } catch (error) {
           console.error('Failed to upsert user:', error);
         } finally {
@@ -77,7 +80,9 @@ export default function AppLayout() {
     if (currentUser === null) {
       // Kick off creation and start a short grace timer only if we attempted upsert
       (async () => {
-        const attempted = await createOrUpdateUser();
+        const attempted = await createOrUpdateUser({
+          markOnboardingPending: true,
+        });
         if (attempted) {
           setCreationGraceEnded(false);
           const id = setTimeout(() => setCreationGraceEnded(true), 2500);
@@ -119,7 +124,12 @@ export default function AppLayout() {
 
   // Redirect to auth if not signed in (extra security layer)
   if (!isSignedIn) {
-    return <Redirect href="/auth/sign-in" />;
+    return <Redirect href="/welcome" />;
+  }
+
+  // If user exists but hasn't completed onboarding, send to onboarding flow
+  if (currentUser && (currentUser as any).onboardingCompleted === false) {
+    return <Redirect href="/onboarding/profile" />;
   }
 
   // Show loading while creating user in database

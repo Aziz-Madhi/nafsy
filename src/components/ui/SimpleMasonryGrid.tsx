@@ -18,8 +18,8 @@ const SIDE_PADDING = 0; // No side padding for edge-to-edge design
 const CARD_GAP = 24; // 24px wide gap between columns for clear separation
 const VERTICAL_GAP = 16; // 16px following design system
 
-// Height patterns with slightly more space for movement and reminders cards
-const HEIGHT_PATTERNS = [220, 280, 240, 240, 260, 260];
+// Use a single uniform height so all cards match Relaxation's visual balance
+const HEIGHT_PATTERNS = [280, 280, 280, 280, 280, 280];
 
 function SimpleMasonryGridComponent({
   data,

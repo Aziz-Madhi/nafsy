@@ -5,6 +5,7 @@
  * For 90% of components, use Tailwind classes instead!
  */
 
+import React from 'react';
 import { useAppStore } from '~/store/useAppStore';
 
 const nativeColors = {
@@ -216,7 +217,10 @@ const nativeColors = {
  */
 export function useColors() {
   const currentTheme = useAppStore((state) => state.currentTheme);
-  return nativeColors[currentTheme === 'dark' ? 'dark' : 'light'];
+  const themeKey = currentTheme === 'dark' ? 'dark' : 'light';
+  // Memoize to guarantee a stable reference per theme in React 19
+  const value = React.useMemo(() => nativeColors[themeKey], [themeKey]);
+  return value;
 }
 
 /**

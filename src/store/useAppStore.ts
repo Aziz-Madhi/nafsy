@@ -44,6 +44,10 @@ interface AppStoreState {
   // Settings
   settings: AppSettings;
 
+  // Onboarding/Intro flags
+  hasSeenIntro: boolean; // pre-auth welcome intro seen
+  hasCompletedOnboarding: boolean; // post-auth onboarding completed
+
   // Actions
   setActiveTab: (tab: string) => void;
   setLoading: (loading: boolean) => void;
@@ -54,6 +58,8 @@ interface AppStoreState {
   toggleLanguage: () => void;
   applySystemTheme: () => void;
   // Removed applySystemLanguage
+  setHasSeenIntro: (seen: boolean) => void;
+  setHasCompletedOnboarding: (done: boolean) => void;
   reset: () => void;
 }
 
@@ -73,6 +79,10 @@ export const useAppStore = createPersistedStore<AppStoreState>(
     error: null,
 
     settings: defaultSettings,
+
+    // Onboarding/Intro defaults
+    hasSeenIntro: false,
+    hasCompletedOnboarding: false,
 
     // Actions
     setActiveTab: (tab: string) => set({ activeTab: tab }),
@@ -159,6 +169,10 @@ export const useAppStore = createPersistedStore<AppStoreState>(
 
     // Removed applySystemLanguage - language changes now handled by toggleLanguage()
 
+    setHasSeenIntro: (seen: boolean) => set({ hasSeenIntro: seen }),
+    setHasCompletedOnboarding: (done: boolean) =>
+      set({ hasCompletedOnboarding: done }),
+
     reset: () => {
       const resetLanguage = resolveLanguage(defaultSettings.language);
 
@@ -171,6 +185,8 @@ export const useAppStore = createPersistedStore<AppStoreState>(
         isLoading: false,
         error: null,
         settings: defaultSettings,
+        hasSeenIntro: false,
+        hasCompletedOnboarding: false,
       });
 
       // Apply language change
@@ -201,18 +217,29 @@ export const useToggleLanguage = () =>
   useAppStore((state) => state.toggleLanguage);
 export const useNotificationsEnabled = () =>
   useAppStore((state) => state.settings.notificationsEnabled);
+export const useHasSeenIntro = () =>
+  useAppStore((state) => state.hasSeenIntro);
+export const useHasCompletedOnboarding = () =>
+  useAppStore((state) => state.hasCompletedOnboarding);
 
 // Action selectors - simplified to only include current functions
+import { shallow } from 'zustand/shallow';
+
 export const useAppActions = () =>
-  useAppStore((state) => ({
-    setActiveTab: state.setActiveTab,
-    updateSettings: state.updateSettings,
-    setTheme: state.setTheme,
-    toggleTheme: state.toggleTheme,
-    toggleLanguage: state.toggleLanguage,
-    applySystemTheme: state.applySystemTheme,
-    // Removed applySystemLanguage
-    setLoading: state.setLoading,
-    setError: state.setError,
-    reset: state.reset,
-  }));
+  useAppStore(
+    (state) => ({
+      setActiveTab: state.setActiveTab,
+      updateSettings: state.updateSettings,
+      setTheme: state.setTheme,
+      toggleTheme: state.toggleTheme,
+      toggleLanguage: state.toggleLanguage,
+      applySystemTheme: state.applySystemTheme,
+      // Removed applySystemLanguage
+      setLoading: state.setLoading,
+      setError: state.setError,
+      setHasSeenIntro: state.setHasSeenIntro,
+      setHasCompletedOnboarding: state.setHasCompletedOnboarding,
+      reset: state.reset,
+    }),
+    shallow
+  );

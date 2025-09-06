@@ -40,12 +40,12 @@ const DIFFICULTY_COLORS = {
 
 // Background image mapping moved to data layer
 const CATEGORY_BACKGROUNDS: Record<string, ImageSourcePropType> = {
-  Mindfulness: require('../../../assets/mindfulness-card.png'),
-  Movement: require('../../../assets/movement-card.png'),
-  Breathing: require('../../../assets/breathing-card.jpg'),
-  Journaling: require('../../../assets/journaling-card.png'),
-  Relaxation: require('../../../assets/relaxation-card.png'),
-  Reminders: require('../../../assets/reminders-card.png'),
+  Mindfulness: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_36AM.jpeg'), // brain
+  Breathing: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_36AM-2.jpeg'), // lungs
+  Movement: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_37AM.jpeg'), // dancer
+  Journaling: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_38AM.jpeg'), // book
+  Relaxation: require('../../../assets/Cards/breathing card.jpg.jpeg'), // calm face
+  Reminders: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_37AM-2.jpeg'), // clock
 };
 
 // Animation handled by StaggeredListItem

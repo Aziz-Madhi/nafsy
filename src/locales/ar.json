@@ -76,6 +76,74 @@
     "continueWithApple": "المتابعة مع Apple",
     "orContinueWith": "أو المتابعة بالبريد الإلكتروني"
   },
+  "onboarding": {
+    "welcome": {
+      "title": "تعرف على نفسي، رفيق العافية الذكي",
+      "subtitle": "دعم خاص ومتعدد اللغات للمزاج والتمارين واليقظة.",
+      "features": {
+        "ai": {
+          "title": "علاج وتدريب وتنفس مع الذكاء الاصطناعي",
+          "desc": "تحدث مع ذكاء متعاطف يستمع ويدعم ويوجهك."
+        },
+        "mood": {
+          "title": "تتبع مزاجك (1–10)",
+          "desc": "ابنِ وعيك عبر تسجيلات يومية بسيطة ورؤى."
+        },
+        "exercises": {
+          "title": "تمارين ذهنية",
+          "desc": "تنفس، يقظة، كتابة، حركة، واسترخاء."
+        }
+      }
+    },
+    "actions": {
+      "getStarted": "ابدأ الآن",
+      "signIn": "لديّ حساب مسبقًا"
+    },
+    "profile": {
+      "title": "أخبرنا عنك",
+      "subtitle": "يساعدنا هذا على تخصيص تجربتك.",
+      "name": "الاسم",
+      "age": "العمر",
+      "gender": "النوع",
+      "genders": { "male": "ذكر", "female": "أنثى", "other": "آخر" },
+      "namePlaceholder": "اكتب اسمك",
+      "agePlaceholder": "اختياري",
+      "validation": { "nameRequired": "الاسم مطلوب" }
+    },
+    "mood": {
+      "title": "كيف تشعر اليوم؟",
+      "subtitle": "قيّم مزاجك من 1 إلى 10"
+    },
+    "preferences": {
+      "title": "ما الذي تبحث عنه في نفسي؟",
+      "subtitle": "اختر بعض الخيارات لنساعدك بشكل أفضل.",
+      "goalsTitle": "أهدافك",
+      "selfImageTitle": "غالبًا ما تشعر بـ",
+      "goals": {
+        "reduceAnxiety": "تقليل القلق",
+        "improveSleep": "تحسين النوم",
+        "buildMindfulness": "اليقظة",
+        "increaseFocus": "زيادة التركيز",
+        "emotionalRegulation": "تنظيم المشاعر",
+        "ventFeelings": "مساحة آمنة للتنفيس"
+      },
+      "selfImage": {
+        "stressed": "متوتر",
+        "overwhelmed": "مثقل",
+        "curious": "فضولي",
+        "motivated": "متحفز",
+        "exhausted": "مرهق",
+        "hopeful": "متفائل"
+      }
+    },
+    "complete": {
+      "title": "كل شيء جاهز",
+      "subtitle": "سنخصص تجربتك بناءً على إجاباتك.",
+      "finish": "إنهاء",
+      "saving": "جارٍ الحفظ..."
+    },
+    "validation": { "nameRequired": "الاسم مطلوب" }
+  },
   "tabs": {
     "chat": "محادثة",
     "mood": "المزاج",

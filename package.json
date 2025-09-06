@@ -26,6 +26,8 @@
     "@clerk/clerk-expo": "2.14.2",
     "@convex-dev/persistent-text-streaming": "^0.2.3",
     "@react-native-community/netinfo": "^11.4.1",
+    "@react-native-menu/menu": "^1.2.4",
+    "@react-native-picker/picker": "2.11.1",
     "@react-navigation/native": "^7.1.14",
     "@rn-primitives/avatar": "^1.2.0",
     "@rn-primitives/progress": "^1.2.0",

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { TouchableOpacity, View } from 'react-native';
 import Animated from 'react-native-reanimated';
 import { AuthLayout } from '~/components/auth/AuthLayout';
@@ -8,10 +8,12 @@ import { FormField } from '~/components/ui/FormField';
 import { Button } from '~/components/ui/button';
 import { Text } from '~/components/ui/text';
 import { useAuthForm } from '~/hooks/useAuthForm';
+import { useOnboardingStore } from '~/store/useOnboardingStore';
 import { useTranslation } from '~/hooks/useTranslation';
 
 export default function SignUpScreen() {
   const { t } = useTranslation();
+  const setOnboardingField = useOnboardingStore((s) => s.setField);
   const {
     form,
     errors,
@@ -25,7 +27,23 @@ export default function SignUpScreen() {
     handleVerification,
     validation,
     shakeStyle,
-  } = useAuthForm({ mode: 'signup' });
+  } = useAuthForm({
+    mode: 'signup',
+    onSuccess: () => {
+      if (form.name) setOnboardingField('name', form.name);
+      // Route new users to onboarding
+      // Existing users will land in tabs via (app) layout
+      try {
+        // Small delay to allow Clerk state to settle
+        setTimeout(() => {
+          // Start onboarding flow
+          // Use replace to avoid back navigation to auth
+          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+          (router as any)?.replace?.('/onboarding/profile');
+        }, 50);
+      } catch {}
+    },
+  });
 
   if (!isLoaded) return null;
 
@@ -57,9 +75,9 @@ export default function SignUpScreen() {
       }
     >
       {!pendingVerification ? (
-        <View className="mt-3">
+        <View className="mt-2">
           {/* Email/Password Form (moved up) */}
-          <Animated.View style={shakeStyle} className="gap-4">
+          <Animated.View style={shakeStyle} className="gap-3">
             <FormField
               label={t('auth.name')}
               placeholder={t('auth.placeholders.enterName')}
@@ -96,7 +114,7 @@ export default function SignUpScreen() {
               onPress={handleSubmit}
               disabled={loading || !validation.isValid}
               size="lg"
-              className="mt-4 rounded-xl"
+              className="mt-3 rounded-xl"
               style={{
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 2 },
@@ -114,7 +132,7 @@ export default function SignUpScreen() {
           </Animated.View>
 
           {/* Divider between email and social */}
-          <View className="flex-row items-center gap-4 my-4">
+          <View className="flex-row items-center gap-3 my-3">
             <View className="flex-1 h-px bg-border opacity-50" />
             <Text className="text-muted-foreground text-sm font-normal">
               {t('auth.orContinueWith')}
@@ -126,7 +144,7 @@ export default function SignUpScreen() {
           <SocialAuthButtons showDivider={false} />
         </View>
       ) : (
-        <Animated.View style={shakeStyle} className="gap-4 mt-6">
+        <Animated.View style={shakeStyle} className="gap-3 mt-4">
           <FormField
             label={t('auth.verificationCode')}
             placeholder={t('auth.placeholders.enterCode')}
@@ -141,7 +159,7 @@ export default function SignUpScreen() {
             onPress={handleVerification}
             disabled={loading || !verificationCode}
             size="lg"
-            className="mt-4 rounded-xl"
+            className="mt-3 rounded-xl"
             style={{
               shadowColor: '#000',
               shadowOffset: { width: 0, height: 2 },

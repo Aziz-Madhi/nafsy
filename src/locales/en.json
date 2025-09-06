@@ -76,6 +76,83 @@
     "continueWithApple": "Continue with Apple",
     "orContinueWith": "or continue with email"
   },
+  "onboarding": {
+    "welcome": {
+      "title": "Meet Nafsy, your AI wellness companion",
+      "subtitle": "Private, multilingual support for mood, exercises, and mindful living.",
+      "features": {
+        "ai": {
+          "title": "AI therapy, coach, and vent",
+          "desc": "Talk to a compassionate AI that listens, supports, and guides you."
+        },
+        "mood": {
+          "title": "Track your mood (1–10)",
+          "desc": "Build awareness with simple daily mood logs and insights."
+        },
+        "exercises": {
+          "title": "Mindful exercises",
+          "desc": "Breathing, mindfulness, journaling, movement, and relaxation."
+        }
+      }
+    },
+    "actions": {
+      "getStarted": "Get Started",
+      "signIn": "I already have an account"
+    },
+    "profile": {
+      "title": "Tell us about you",
+      "subtitle": "This helps personalize your experience.",
+      "name": "Name",
+      "age": "Age",
+      "gender": "Gender",
+      "genders": { "male": "Male", "female": "Female", "other": "Other" },
+      "namePlaceholder": "Enter your name",
+      "agePlaceholder": "Optional",
+      "validation": { "nameRequired": "Please enter your name" }
+    },
+    "mood": {
+      "title": "How are you feeling today?",
+      "subtitle": "Rate your mood from 1 to 10",
+      "lastMonth": {
+        "title": "How was your mood in the past month?",
+        "options": {
+          "low": "Low",
+          "average": "Average",
+          "good": "Good",
+          "very_good": "Happy"
+        }
+      }
+    },
+    "preferences": {
+      "title": "What brings you to Nafsy?",
+      "subtitle": "Choose a few to help us support you.",
+      "goalsTitle": "Your goals",
+      "selfImageTitle": "You often feel",
+      "goals": {
+        "reduceAnxiety": "Reduce anxiety",
+        "improveSleep": "Improve sleep",
+        "buildMindfulness": "Mindfulness",
+        "increaseFocus": "Increase focus",
+        "emotionalRegulation": "Emotional regulation",
+        "ventFeelings": "A safe space to vent"
+      },
+      "selfImage": {
+        "stressed": "Stressed",
+        "overwhelmed": "Overwhelmed",
+        "curious": "Curious",
+        "motivated": "Motivated",
+        "exhausted": "Exhausted",
+        "hopeful": "Hopeful"
+      }
+    },
+    "complete": {
+      "title": "You're all set",
+      "subtitle": "We’ll tailor your experience based on your answers.",
+      "finish": "Finish",
+      "saving": "Saving..."
+    },
+    "validation": { "nameRequired": "Name is required" }
+  },
   "tabs": {
     "chat": "Chat",
     "mood": "Mood",
