@@ -158,7 +158,8 @@ export function useAuthForm({ mode, onSuccess, requireName }: UseAuthFormProps) 
       });
 
       await setSignInActive({ session: completeSignIn.createdSessionId });
-      onSuccess?.() || router.replace('/tabs/chat');
+      // Do not navigate here; Auth layout redirects to /(app) which lands on /tabs/chat
+      onSuccess?.();
     } catch (err: any) {
       if (__DEV__) {
         console.error('Sign in error:', err);
@@ -210,7 +211,8 @@ export function useAuthForm({ mode, onSuccess, requireName }: UseAuthFormProps) 
       });
 
       await setSignUpActive({ session: completeSignUp.createdSessionId });
-      onSuccess?.() || router.replace('/tabs/chat');
+      // Do not navigate here; Auth layout redirects to /(app) which lands on /tabs/chat
+      onSuccess?.();
     } catch (err: any) {
       if (__DEV__) {
         console.error('Verification error:', err);

@@ -159,7 +159,10 @@ async function handleChatStreaming(
 
   // For new sessions, ensure a current summary exists before building prompts
   const isNewSession = !messages.some((m) => m.role === 'assistant');
-  if (isNewSession) {
+  // First-week users: skip creating weekly summaries (use onboarding context instead)
+  const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+  const isFirstWeekUser = Date.now() - (user.createdAt || Date.now()) < ONE_WEEK_MS;
+  if (isNewSession && !isFirstWeekUser) {
     try {
       await ctx.runAction(internal.personalization.ensureCurrentSummaryAction, {
         userId: user._id as Id<'users'>,
@@ -356,6 +359,171 @@ http.route({
   method: 'POST',
   handler: httpAction(async (ctx, request) => {
     return handleChatStreaming(ctx, request, 'vent');
+  }),
+});
+
+// Summarize session title after >=3 messages using Responses API
+http.route({
+  path: '/chat/summarize-title',
+  method: 'POST',
+  handler: httpAction(async (ctx, request) => {
+    const origin = request.headers.get('origin');
+    const cors = buildCorsHeaders(origin);
+
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      return jsonError(401, 'AUTH', 'Unauthorized', cors);
+    }
+
+    const user = await ctx.runQuery(api.auth.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+    if (!user) {
+      return jsonError(404, 'USER_NOT_FOUND', 'User not found', cors);
+    }
+
+    let parsed: any;
+    try {
+      parsed = await request.json();
+    } catch {
+      return jsonError(400, 'BAD_REQUEST', 'Invalid JSON body', cors);
+    }
+
+    const { sessionId, chatType, messages } = (parsed || {}) as {
+      sessionId: string;
+      chatType: 'main' | 'companion' | 'vent';
+      messages?: { role: 'user' | 'assistant'; content: string }[];
+    };
+    if (!sessionId || !chatType) {
+      return jsonError(400, 'VALIDATION', 'Missing sessionId or chatType', cors);
+    }
+
+    // Basic per-session rate limit to avoid concurrent updates
+    try {
+      await ctx.runMutation(internal.chatStreaming.applyRateLimit, {
+        key: `title:summarize:${user._id}:${sessionId}`,
+        limit: 1,
+        windowMs: 10_000,
+      });
+    } catch {
+      return jsonError(429, 'RATE_LIMIT', 'Title summarization in progress', cors);
+    }
+
+    // Fetch active title summarization config
+    const config = await ctx.runQuery(
+      api.titleSummarizationConfig.getActiveTitleSummarizationConfig,
+      {}
+    );
+    if (!config) {
+      return jsonError(500, 'CONFIG', 'No active title summarization config', cors);
+    }
+
+    // Ensure we have 3 messages (use provided or gather from server)
+    let firstThree: { role: 'user' | 'assistant'; content: string }[] = [];
+    if (Array.isArray(messages) && messages.length >= 3) {
+      firstThree = messages.slice(0, 3);
+    } else {
+      // Pull up to 50, then take earliest 3
+      const unified = chatType;
+      const serverMessages = await ctx.runQuery(api.chat.getChatMessages, {
+        type: unified as any,
+        sessionId,
+        limit: 50,
+      });
+      const asc = [...serverMessages].sort((a, b) => a.createdAt - b.createdAt);
+      firstThree = asc.slice(0, 3).map((m) => ({
+        role: m.role,
+        content: m.content || '',
+      }));
+    }
+
+    if (firstThree.length < 3) {
+      return jsonError(412, 'PRECONDITION', 'Not enough messages', cors);
+    }
+
+    // Build Responses payload
+    const inputText = firstThree
+      .map((m, i) => `${i + 1}. ${m.role.toUpperCase()}: ${m.content}`)
+      .join('\n');
+    const payload: any = {
+      model: config.model,
+      stream: false,
+      input: [{ role: 'user', content: inputText }],
+      prompt: { id: config.openaiPromptId },
+    };
+    if (config.source === 'openai_prompt_pinned' && config.openaiPromptVersion) {
+      payload.prompt.version = String(config.openaiPromptVersion);
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) {
+      return jsonError(500, 'CONFIG', 'OpenAI API key not configured', cors);
+    }
+
+    let title = '';
+    try {
+      const response = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      if (!response.ok) {
+        const err = await response.text();
+        return jsonError(502, 'AI_ERROR', `OpenAI error ${response.status}: ${err}`, cors);
+      }
+      const result = await response.json();
+      if (Array.isArray(result.output)) {
+        const msg = result.output.find((o: any) => o.type === 'message');
+        if (msg?.content?.[0]?.text) title = msg.content[0].text;
+      }
+      if (!title) {
+        if (typeof result.output_text === 'string') title = result.output_text;
+        else if (typeof result.response?.output_text === 'string')
+          title = result.response.output_text;
+        else if (result.choices?.[0]?.message?.content)
+          title = result.choices[0].message.content;
+        else if (typeof result.content === 'string') title = result.content;
+      }
+      title = (title || '').trim();
+      if (!title) return jsonError(500, 'AI_EMPTY', 'Empty title from OpenAI', cors);
+      if (title.length > 80) title = title.slice(0, 80).trim();
+    } catch (e) {
+      return jsonError(500, 'AI_ERROR', 'Failed to generate title', cors);
+    }
+
+    // Apply title (best-effort)
+    try {
+      await ctx.runMutation(internal.titleSummarization._applySessionTitle, {
+        userId: user._id,
+        sessionId,
+        chatType,
+        title,
+      });
+    } catch (e) {
+      // If concurrent mutation conflict occurs, respond success anyway —
+      // another attempt likely applied the title.
+      if (process.env.NODE_ENV !== 'production') {
+        console.warn('Title patch conflict (ignored):', e);
+      }
+    }
+
+    return new Response(JSON.stringify({ title }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json', ...cors },
+    });
+  }),
+});
+
+// CORS preflight for summarize-title
+http.route({
+  path: '/chat/summarize-title',
+  method: 'OPTIONS',
+  handler: httpAction(async (_ctx, request) => {
+    const cors = buildCorsHeaders(request.headers.get('origin'));
+    return new Response(null, { status: 204, headers: cors });
   }),
 });
 

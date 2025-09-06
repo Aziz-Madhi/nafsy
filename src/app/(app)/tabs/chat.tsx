@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect } from 'react';
+import React, { useCallback, useEffect, useRef } from 'react';
 import { sendMessageRef } from './_layout';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Alert } from 'react-native';
@@ -26,6 +26,8 @@ import {
   ChatType,
 } from '~/store';
 import { ChatScreen } from '~/components/chat';
+import { useAuth } from '@clerk/clerk-expo';
+import { generateConvexUrl } from '~/lib/ai/streaming';
 // Auth is handled by root _layout.tsx - all screens here are protected
 
 interface Message {
@@ -153,6 +155,9 @@ export default function ChatTab() {
   const coachStreaming = useStreamingChat('coach');
   const companionStreaming = useStreamingChat('companion');
   const ventStreaming = useStreamingChat('vent');
+  const { getToken } = useAuth();
+  const summarizedSessionsRef = useRef(new Set<string>());
+  const summarizingInFlightRef = useRef(new Set<string>());
 
   // Keep mutations for session creation and user upsert
   const upsertUser = useMutation(api.auth.upsertUser);
@@ -180,6 +185,56 @@ export default function ChatTab() {
       role: msg.role,
       _creationTime: msg._creationTime,
     })) || [];
+
+  // HTTP-driven title summarization after 3 messages
+  useEffect(() => {
+    const sessionId = activeSessionId;
+    if (!sessionId) return;
+    if (!isOnline) return;
+    if (!messages || messages.length < 3) return;
+    if (summarizedSessionsRef.current.has(sessionId)) return;
+    if (summarizingInFlightRef.current.has(sessionId)) return;
+
+    const chatTypeKey =
+      activeChatType === 'coach'
+        ? 'main'
+        : activeChatType === 'event'
+          ? 'vent'
+          : 'companion';
+
+    const firstThree = messages.slice(0, 3).map((m) => ({
+      role: m.role,
+      content: m.content,
+    }));
+
+    (async () => {
+      try {
+        summarizingInFlightRef.current.add(sessionId);
+        const token = await getToken({ template: 'convex' });
+        if (!token) return;
+        const url = generateConvexUrl('/chat/summarize-title');
+        const res = await fetch(url, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            sessionId,
+            chatType: chatTypeKey,
+            messages: firstThree,
+          }),
+        });
+        if (res.ok) summarizedSessionsRef.current.add(sessionId);
+      } catch (e) {
+        // best-effort; do not block UI
+        console.warn('summarize-title failed', e);
+      }
+      finally {
+        summarizingInFlightRef.current.delete(sessionId);
+      }
+    })();
+  }, [activeSessionId, activeChatType, messages.length, isOnline, getToken]);
 
   // Simple sidebar handlers
   const handleOpenSidebar = () => {

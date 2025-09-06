@@ -1,6 +1,7 @@
 import { v } from 'convex/values';
 import { internalMutation } from './_generated/server';
 import { Id } from './_generated/dataModel';
+import { internal } from './_generated/api';
 import { checkRateLimitDb } from './errorUtils';
 
 // Insert assistant message once streaming completes (single write)
@@ -83,6 +84,8 @@ export const insertAssistantMessage = internalMutation({
       lastMessageAt: now,
       messageCount: (session.messageCount || 0) + 1,
     });
+
+    // Title summarization is handled client-side via HTTP endpoint
 
     // Deduplicate any identical assistant messages created very close together
     try {

@@ -22,6 +22,7 @@ export default function OnboardingCompleteScreen() {
   const name = useOnboardingStore((s) => s.name);
   const age = useOnboardingStore((s) => s.age);
   const gender = useOnboardingStore((s) => s.gender);
+  const moodRating = useOnboardingStore((s) => s.moodRating);
   const moodMonth = useOnboardingStore((s) => s.moodMonth);
   const goals = useOnboardingStore((s) => s.goals);
   const selfImage = useOnboardingStore((s) => s.selfImage);
@@ -32,6 +33,7 @@ export default function OnboardingCompleteScreen() {
 
   const updateUser = useMutation(api.auth.updateUser);
   const upsertUser = useMutation(api.auth.upsertUser);
+  const createMood = useMutation(api.moods.createMood);
   const [saving, setSaving] = useState(false);
 
   async function onFinish() {
@@ -52,6 +54,15 @@ export default function OnboardingCompleteScreen() {
         await updateUser(payload);
       } catch {
         await upsertUser(payload);
+      }
+
+      // Record onboarding mood as today's mood entry so the app reflects it immediately
+      if (typeof moodRating === 'number' && moodRating >= 1 && moodRating <= 10) {
+        try {
+          await createMood({ rating: Math.round(moodRating) });
+        } catch (err) {
+          console.error('Failed to record onboarding mood:', err);
+        }
       }
     } catch (e) {
       console.error('Failed to save onboarding:', e);

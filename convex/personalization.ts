@@ -77,6 +77,13 @@ export const buildUserContext = query({
     const level = isNewSession ? 'full' : 'light';
 
     try {
+      // Load full user for createdAt & onboarding fields
+      const fullUser = await ctx.db.get(user._id);
+      const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+      const isFirstWeek = fullUser
+        ? Date.now() - (fullUser.createdAt || Date.now()) < ONE_WEEK_MS
+        : false;
+
       // Get today's context data in parallel
       const [todayMoods, todayExercises, latestSummary] = await Promise.all([
         // Fetch today's mood
@@ -86,9 +93,14 @@ export const buildUserContext = query({
           startDate: Date.now() - 24 * 60 * 60 * 1000,
           limit: 50,
         }),
-        // Always load latest weekly summary for background memory
-        getLatestWeeklySummary(ctx, user._id),
+        // For first-week users, skip weekly summary (we'll use onboarding context)
+        isFirstWeek ? Promise.resolve(null) : getLatestWeeklySummary(ctx, user._id),
       ]);
+
+      // Build onboarding profile context for first-week users (no summarization)
+      const onboardingText = isFirstWeek
+        ? formatOnboardingProfileText(fullUser, user.language)
+        : null;
 
       const contextText = formatUserContext({
         user,
@@ -96,6 +108,7 @@ export const buildUserContext = query({
         todayMoods,
         todayExercises,
         weeklySummary: latestSummary,
+        onboardingText,
       });
 
       return {
@@ -106,7 +119,7 @@ export const buildUserContext = query({
       console.error('Error building user context:', error);
       // Return minimal context on error
       return {
-        text: `--- BEGIN_USER_CONTEXT ---\nProfile: ${user.name || 'User'}, Language: ${user.language}\n--- END_USER_CONTEXT ---`,
+        text: `--- BEGIN_USER_CONTEXT ---\nName: ${user.name || 'User'}, Language: ${user.language}\n--- END_USER_CONTEXT ---`,
         level: 'none',
       };
     }
@@ -826,42 +839,60 @@ interface FormatContextParams {
   todayMoods: any;
   todayExercises: any[];
   weeklySummary: Doc<'userSummaries'> | null;
+  onboardingText?: string | null;
 }
 
 function formatUserContext(params: FormatContextParams): string {
-  const { user, level, todayMoods, todayExercises, weeklySummary } = params;
+  const { user, level, todayMoods, todayExercises, weeklySummary, onboardingText } = params;
   const isArabic = user.language === 'ar';
 
   // Language-aware labels
   const labels = {
-    profile: isArabic ? 'الملف الشخصي' : 'Profile',
+    nameLabel: isArabic ? 'الاسم' : 'Name',
     language: isArabic ? 'اللغة' : 'Language',
     today: isArabic ? 'اليوم' : 'Today',
     mood: isArabic ? 'المزاج' : 'Mood',
     exercises: isArabic ? 'التمارين' : 'Exercises',
     lastWeek: isArabic ? 'الأسبوع الماضي' : 'Last 7 days',
+    onboarding: isArabic ? 'بيانات التعريف (الانضمام)' : 'Onboarding Profile',
     guidance: isArabic
-      ? 'إرشاد: استخدم الذاكرة التالية لتخصيص الردود، ولا تذكرها أو تلخصها ما لم يطلب المستخدم ذلك أو كان ذلك ذا صلة بوضوح.'
-      : 'Guidance: Use the background memory below to personalize; do not mention or summarize it unless the user asks or it is clearly relevant.',
+      ? 'إرشاد: استخدم الذاكرة التالية لتخصيص الردود. ابدأ كل رد بمناداة المستخدم باسمه. لا تُشِرْ مباشرةً إلى تفاصيل الخلفية أو تشرحها إلا إذا طلب المستخدم ذلك. تجنّب البدء بالحديث عن مزاجه أو تحدياته؛ شجّعه على المشاركة وتفاعل بلطف وفقًا لما يقوله.'
+      : "Guidance: Use the background memory below to personalize. Begin every response by addressing the user by their name. Do not directly reference or explain the user's background details unless they ask. Avoid opening with statements about their mood or struggles; invite them to share and respond gently based on what they say.",
     noMood: isArabic ? 'لم يتم تسجيل المزاج' : 'No mood logged',
     noExercises: isArabic ? 'لا توجد تمارين' : 'No exercises',
   };
 
-  let contextParts = [
-    '--- BEGIN_USER_CONTEXT ---',
-    `${labels.profile}: ${user.name || 'User'}, ${labels.language}: ${user.language}`,
-  ];
+  let contextParts = ['--- BEGIN_USER_CONTEXT ---'];
 
-  // Add explicit guidance so the model treats the memory as background context
+  // Put guidance first so the model treats subsequent memory properly
   contextParts.push(labels.guidance);
+
+  // Then add the user's name and language line
+  contextParts.push(
+    `${labels.nameLabel}: ${user.name || (isArabic ? 'المستخدم' : 'User')}, ${labels.language}: ${user.language}`
+  );
 
   // Today's context (both full and light levels)
   const todayMoodText = formatTodayMood(todayMoods, labels);
   const todayExerciseText = formatTodayExercises(todayExercises, labels);
   contextParts.push(`${labels.today}: ${todayMoodText}, ${todayExerciseText}`);
 
-  // Weekly summary as background memory available across the session
-  if (weeklySummary) {
+  // Weekly/onboarding memory as background context across the session
+  if (onboardingText && onboardingText.trim().length > 0) {
+    const full = onboardingText.trim();
+    const lines = full.split('\n').filter(Boolean);
+    // First line under the "Onboarding Profile" label (age/gender/last month mood)
+    const first = lines.shift();
+    if (first) {
+      const firstTrimmed = truncateToSentenceBoundary(first, WEEKLY_SUMMARY_MAX_CHARS);
+      contextParts.push(`${labels.onboarding}: ${firstTrimmed}`);
+    }
+    // Then add remaining onboarding lines as their own labeled rows (Goals, Help areas, etc.)
+    for (const ln of lines) {
+      const lineTrimmed = truncateToSentenceBoundary(ln, WEEKLY_SUMMARY_MAX_CHARS);
+      contextParts.push(lineTrimmed);
+    }
+  } else if (weeklySummary) {
     const weeklyText = formatWeeklySummary(weeklySummary, labels);
     if (weeklyText) {
       contextParts.push(`${labels.lastWeek}: ${weeklyText}`);
@@ -918,6 +949,54 @@ function formatTodayExercises(exercises: any[], labels: any): string {
   )[0]?.[0];
 
   return `${labels.exercises}: ${count}${topCategory ? ` (${topCategory})` : ''}`;
+}
+
+// Build a concise onboarding profile paragraph using stored answers
+function formatOnboardingProfileText(userDoc: any, language: string): string {
+  if (!userDoc) return '';
+  const isArabic = language === 'ar';
+  const L = {
+    age: isArabic ? 'العمر' : 'Age',
+    gender: isArabic ? 'الجنس' : 'Gender',
+    lastMonthMood: isArabic ? 'مزاج الشهر الماضي' : 'Last month mood',
+    goals: isArabic ? 'الأهداف' : 'Goals',
+    help: isArabic ? 'نقاط المساعدة' : 'Help areas',
+    fears: isArabic ? 'المخاوف' : 'Fears',
+    struggles: isArabic ? 'التحديات' : 'Struggles',
+    self: isArabic ? 'الصورة الذاتية' : 'Self image',
+    notes: isArabic ? 'ملاحظات' : 'Notes',
+    none: isArabic ? 'لا شيء' : 'None',
+  } as const;
+
+  const parts: string[] = [];
+
+  // Basic demographics and last-month mood
+  const demoBits: string[] = [];
+  if (userDoc.age) demoBits.push(`${L.age}: ${userDoc.age}`);
+  if (userDoc.gender) demoBits.push(`${L.gender}: ${userDoc.gender}`);
+  if (userDoc.moodLastMonth)
+    demoBits.push(`${L.lastMonthMood}: ${userDoc.moodLastMonth}`);
+  if (demoBits.length) parts.push(demoBits.join(' · '));
+
+  // Arrays
+  const joinOrNone = (arr?: string[]) =>
+    Array.isArray(arr) && arr.length ? arr.join(', ') : L.none;
+  if (userDoc.goals) parts.push(`${L.goals}: ${joinOrNone(userDoc.goals)}`);
+  if (userDoc.helpAreas)
+    parts.push(`${L.help}: ${joinOrNone(userDoc.helpAreas)}`);
+  if (userDoc.fears) parts.push(`${L.fears}: ${joinOrNone(userDoc.fears)}`);
+  if (userDoc.struggles)
+    parts.push(`${L.struggles}: ${joinOrNone(userDoc.struggles)}`);
+  if (userDoc.selfImage)
+    parts.push(`${L.self}: ${joinOrNone(userDoc.selfImage)}`);
+
+  // Notes
+  if (typeof userDoc.additionalNotes === 'string' && userDoc.additionalNotes.trim()) {
+    const note = userDoc.additionalNotes.trim();
+    parts.push(`${L.notes}: ${truncateToSentenceBoundary(note, 600)}`);
+  }
+
+  return parts.join('\n');
 }
 
 function formatWeeklySummary(

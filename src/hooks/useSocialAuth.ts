@@ -1,6 +1,5 @@
 import { useEffect, useCallback, useState } from 'react';
 import { useSSO } from '@clerk/clerk-expo';
-import { useRouter } from 'expo-router';
 import { Alert } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as AuthSession from 'expo-auth-session';
@@ -32,7 +31,6 @@ interface UseSocialAuthReturn {
 export function useSocialAuth(): UseSocialAuthReturn {
   const { t } = useTranslation();
   const { startSSOFlow } = useSSO();
-  const router = useRouter();
   const [loading, setLoading] = useState(false);
 
   const handleSocialAuth = useCallback(
@@ -52,8 +50,7 @@ export function useSocialAuth(): UseSocialAuthReturn {
           await result.setActive?.({ session: result.createdSessionId });
           optimizedHaptic.success();
 
-          // Navigate directly into the app; (app) layout handles Convex upsert
-          router.replace('/tabs/chat');
+          // Do not navigate here; Auth layout will redirect to /(app)
         } else if (result?.signUp) {
           // Handle sign up case if needed
           if (
@@ -64,8 +61,7 @@ export function useSocialAuth(): UseSocialAuthReturn {
             });
             optimizedHaptic.success();
 
-            // Navigate directly into the app; (app) layout handles Convex upsert
-            router.replace('/tabs/chat');
+            // Do not navigate here; Auth layout will redirect to /(app)
           }
         }
       } catch (error: any) {
@@ -94,7 +90,7 @@ export function useSocialAuth(): UseSocialAuthReturn {
         setLoading(false);
       }
     },
-    [loading, startSSOFlow, router, t]
+    [loading, startSSOFlow, t]
   );
 
   return {

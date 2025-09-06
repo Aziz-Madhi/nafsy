@@ -61,7 +61,7 @@ export default function AppLayout() {
           await upsertUser({
             clerkId: clerkUser.id,
             email: clerkUser.emailAddresses?.[0]?.emailAddress || '',
-            name: clerkUser.fullName || clerkUser.firstName || undefined,
+            // Do not set name from OAuth providers; wait for onboarding name
             avatarUrl: clerkUser.imageUrl || undefined,
             ...(opts?.markOnboardingPending ? { onboardingCompleted: false } : {}),
           } as any);
@@ -85,13 +85,11 @@ export default function AppLayout() {
     // Also update if Clerk user data has changed
     else if (currentUser && clerkUser?.id) {
       const clerkEmail = clerkUser.emailAddresses?.[0]?.emailAddress || '';
-      const clerkName = clerkUser.fullName || clerkUser.firstName || '';
       const clerkAvatar = clerkUser.imageUrl || '';
 
       // Check if any data has changed
       if (
         currentUser.email !== clerkEmail ||
-        currentUser.name !== clerkName ||
         currentUser.avatarUrl !== clerkAvatar
       ) {
         createOrUpdateUser();

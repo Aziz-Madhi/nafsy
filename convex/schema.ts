@@ -186,6 +186,28 @@ export default defineSchema({
     .index('by_active', ['active'])
     .index('by_version', ['version']),
 
+  // Chat Title Summarization Configuration (model + OpenAI Prompt only)
+  titleSummarizationConfig: defineTable({
+    // Only support OpenAI Prompt sources; no inline fallback by design
+    source: v.union(
+      v.literal('openai_prompt_latest'),
+      v.literal('openai_prompt_pinned')
+    ),
+    // Required OpenAI Prompt ID (pmpt_...)
+    openaiPromptId: v.string(),
+    // Optional pinned version
+    openaiPromptVersion: v.optional(v.number()),
+    // Required model (e.g., gpt-4o-mini)
+    model: v.string(),
+
+    // Metadata
+    active: v.boolean(),
+    version: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.string()),
+  }).index('by_active', ['active']),
+
   exercises: defineTable({
     title: v.string(),
     titleAr: v.string(),
