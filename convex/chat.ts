@@ -1,8 +1,11 @@
 import { v } from 'convex/values';
-import { mutation, query } from './_generated/server';
+import { mutation, query, internalAction, internalQuery } from './_generated/server';
 import { updateChatSession } from './chatUtils';
 import { getAuthenticatedUser } from './authUtils';
 import { paginationOptsValidator } from 'convex/server';
+import { internal, api } from './_generated/api';
+import { Id } from './_generated/dataModel';
+import { buildResponsesPayload } from './openaiResponses';
 
 // Chat type enum for unified functions
 const ChatType = v.union(
@@ -113,6 +116,25 @@ export const sendChatMessage = mutation({
           lastMessageAt: Date.now(),
           messageCount: session.messageCount + 1,
         });
+      }
+    }
+
+    // Schedule AI assistant reply only for user messages
+    if (args.role === 'user') {
+      try {
+        await ctx.scheduler.runAfter(
+          0,
+          internal.chat.generateAssistantReply,
+          {
+            userId: user._id,
+            sessionId,
+            chatType: args.type,
+            requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          }
+        );
+      } catch (e) {
+        // Best-effort scheduling; don't block user message
+        console.warn('Failed to schedule assistant reply', e);
       }
     }
 
@@ -621,6 +643,283 @@ export const updateChatSessionTitle = mutation({
         title: args.title,
       });
       return session._id;
+    }
+
+    return null;
+  },
+});
+
+/**
+ * Internal query: fetch messages for a specific user/session without auth context
+ */
+export const _getMessagesForSession = internalQuery({
+  args: {
+    userId: v.id('users'),
+    type: ChatType,
+    sessionId: v.optional(v.string()),
+    limit: v.optional(v.number()),
+  },
+  returns: v.array(
+    v.object({
+      _id: v.union(
+        v.id('mainChatMessages'),
+        v.id('ventChatMessages'),
+        v.id('companionChatMessages')
+      ),
+      _creationTime: v.number(),
+      userId: v.id('users'),
+      content: v.string(),
+      role: v.union(v.literal('user'), v.literal('assistant')),
+      sessionId: v.optional(v.string()),
+      createdAt: v.number(),
+      requestId: v.optional(v.string()),
+    })
+  ),
+  handler: async (ctx, args) => {
+    const limit = args.limit || 50;
+    if (args.type === 'main') {
+      const base = ctx.db.query('mainChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', args.userId).eq('sessionId', args.sessionId!)
+          )
+        : base.withIndex('by_user', (qi) => qi.eq('userId', args.userId));
+      return await indexed.order('asc').take(limit);
+    } else if (args.type === 'vent') {
+      const base = ctx.db.query('ventChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', args.userId).eq('sessionId', args.sessionId!)
+          )
+        : base.withIndex('by_user', (qi) => qi.eq('userId', args.userId));
+      const messages = await indexed.order('asc').take(limit);
+      if (!args.sessionId && messages.length === 0) {
+        const latestSession = await ctx.db
+          .query('ventChatSessions')
+          .withIndex('by_user', (q) => q.eq('userId', args.userId))
+          .order('desc')
+          .first();
+        if (latestSession) {
+          return await ctx.db
+            .query('ventChatMessages')
+            .withIndex('by_user_session', (q) =>
+              q.eq('userId', args.userId).eq('sessionId', latestSession.sessionId)
+            )
+            .order('asc')
+            .take(limit);
+        }
+      }
+      return messages;
+    } else {
+      const base = ctx.db.query('companionChatMessages');
+      const indexed = args.sessionId
+        ? base.withIndex('by_user_session', (qi) =>
+            qi.eq('userId', args.userId).eq('sessionId', args.sessionId!)
+          )
+        : base.withIndex('by_user', (qi) => qi.eq('userId', args.userId));
+      const messages = await indexed.order('asc').take(limit);
+      if (!args.sessionId && messages.length === 0) {
+        const latestSession = await ctx.db
+          .query('companionChatSessions')
+          .withIndex('by_user', (q) => q.eq('userId', args.userId))
+          .order('desc')
+          .first();
+        if (latestSession) {
+          return await ctx.db
+            .query('companionChatMessages')
+            .withIndex('by_user_session', (q) =>
+              q
+                .eq('userId', args.userId)
+                .eq('sessionId', latestSession.sessionId)
+            )
+            .order('asc')
+            .take(limit);
+        }
+      }
+      return messages;
+    }
+  },
+});
+
+/**
+ * Internal action: Generate assistant reply via OpenAI Responses API
+ * Uses DB-configured prompt + model. Writes final assistant message to DB.
+ */
+export const generateAssistantReply = internalAction({
+  args: {
+    userId: v.id('users'),
+    sessionId: v.string(),
+    chatType: ChatType,
+    requestId: v.optional(v.string()),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { userId, sessionId, chatType, requestId } = args;
+
+    // Ensure session exists (no-op if present)
+    await ctx.runMutation(internal.chatStreaming.ensureSessionExists, {
+      userId: userId as Id<'users'>,
+      sessionId,
+      chatType: chatType as any,
+    });
+
+    // Build conversation context (last 50 messages) for this session
+    const messages = await ctx.runQuery(internal.chat._getMessagesForSession, {
+      userId: userId as Id<'users'>,
+      type: chatType as any,
+      sessionId,
+      limit: 50,
+    });
+    // Convert to minimal shape for payload builder (already ASC order)
+    const formatted = messages.map((m: any) => ({
+      role: m.role,
+      content: m.content || '',
+    }));
+
+    // Load minimal user info
+    const user = await ctx.runQuery(api.personalization._getUserById, {
+      userId: userId as Id<'users'>,
+    });
+    if (!user) return null;
+
+    // Map chatType to personality
+    const personality =
+      chatType === 'main' ? 'coach' : chatType === 'companion' ? 'companion' : 'vent';
+
+    // For new sessions, try to ensure a current weekly summary exists (best-effort)
+    try {
+      const isNewSession = !formatted.some((m) => m.role === 'assistant');
+      if (isNewSession) {
+        await ctx.runAction(internal.personalization.ensureCurrentSummaryAction, {
+          userId: userId as Id<'users'>,
+        });
+      }
+    } catch (e) {
+      // ignore
+    }
+
+    // Build OpenAI payload (Responses API)
+    const { payload, modelConfig } = await buildResponsesPayload(
+      ctx,
+      personality as any,
+      formatted,
+      { _id: user._id, name: user.name, language: user.language }
+    );
+    // Non-streaming for simplicity; write final response when complete
+    (payload as any).stream = false;
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error('OpenAI API key not configured');
+
+    const startedAt = Date.now();
+    let text = '';
+    let modelUsed = (payload as any).model || 'unknown';
+    try {
+      const responsesPayload: any = {
+        model: (payload as any).model,
+        stream: false,
+        input: (payload as any).input,
+      };
+      if ((payload as any).prompt) responsesPayload.prompt = (payload as any).prompt;
+      if ((payload as any).instructions)
+        responsesPayload.instructions = (payload as any).instructions;
+      if (modelConfig?.temperature !== undefined)
+        responsesPayload.temperature = modelConfig.temperature;
+      if (modelConfig?.maxTokens !== undefined)
+        responsesPayload.max_output_tokens = modelConfig.maxTokens;
+      if (modelConfig?.topP !== undefined) responsesPayload.top_p = modelConfig.topP;
+
+      const res = await fetch('https://api.openai.com/v1/responses', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(responsesPayload),
+      });
+      if (!res.ok) {
+        const err = await res.text();
+        throw new Error(`OpenAI error ${res.status}: ${err}`);
+      }
+      const result = await res.json();
+      // Extract common fields from Responses API
+      if (Array.isArray(result.output)) {
+        const msg = result.output.find((o: any) => o.type === 'message');
+        if (msg?.content?.[0]?.text) text = msg.content[0].text;
+      }
+      if (!text) {
+        if (typeof result.output_text === 'string') text = result.output_text;
+        else if (typeof result.response?.output_text === 'string')
+          text = result.response.output_text;
+        else if (result.choices?.[0]?.message?.content)
+          text = result.choices[0].message.content;
+        else if (typeof result.content === 'string') text = result.content;
+      }
+      text = (text || '').trim();
+      if (!text) throw new Error('Empty response from OpenAI');
+
+      // Persist assistant message
+      await ctx.runMutation(internal.chatStreaming.insertAssistantMessage, {
+        sessionId,
+        userId: userId as Id<'users'>,
+        chatType: chatType as any,
+        content: text,
+        requestId,
+      });
+
+      // Schedule title summarization once we have at least 3 messages
+      try {
+        // Soft rate limit to avoid noisy logs on expected denials
+        const rl = await ctx.runMutation(internal.chatStreaming.tryRateLimit, {
+          key: `title:summarize:${userId}:${sessionId}`,
+          limit: 1,
+          windowMs: 10_000,
+        });
+        if (rl?.allowed) {
+          await ctx.scheduler.runAfter(
+            0,
+            internal.titleSummarization.generateAndApplyTitle,
+            {
+              userId: userId as Id<'users'>,
+              sessionId,
+              chatType: chatType as any,
+            }
+          );
+        }
+      } catch {}
+
+      const finishedAt = Date.now();
+      await ctx.runMutation(internal.chatStreaming.recordAITelemetry, {
+        userId: userId as Id<'users'>,
+        sessionId,
+        chatType: chatType as any,
+        provider: 'openai',
+        model: modelUsed,
+        requestId,
+        startedAt,
+        finishedAt,
+        durationMs: finishedAt - startedAt,
+        contentLength: text.length,
+        success: true,
+      });
+    } catch (e) {
+      const finishedAt = Date.now();
+      try {
+        await ctx.runMutation(internal.chatStreaming.recordAITelemetry, {
+          userId: userId as Id<'users'>,
+          sessionId,
+          chatType: chatType as any,
+          provider: 'openai',
+          model: modelUsed,
+          requestId,
+          startedAt,
+          finishedAt,
+          durationMs: finishedAt - startedAt,
+          contentLength: text.length || 0,
+          success: false,
+        });
+      } catch {}
+      console.error('generateAssistantReply failed:', e);
     }
 
     return null;

@@ -65,6 +65,7 @@ android/build/
 android/.gradle/
 android/app/release/
 android/app/debug/
+android/app/debug.keystore
 android/gradle/
 android/gradlew
 android/gradlew.bat

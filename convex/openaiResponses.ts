@@ -1,5 +1,4 @@
-import { httpAction } from './_generated/server';
-import { api } from './_generated/api';
+import { api, internal } from './_generated/api';
 
 // Simple in-memory prompt cache (best-effort on warm instances)
 const promptCache = new Map<string, { data: any; expires: number }>();
@@ -55,7 +54,7 @@ export async function buildResponsesPayload(
   // Get user context for personalization
   let userContext: { text: string; level: string } | null = null;
   try {
-    userContext = await ctx.runQuery(api.personalization.buildUserContext, {
+    userContext = await ctx.runQuery(internal.personalization.buildUserContext, {
       user,
       personality,
       messages,

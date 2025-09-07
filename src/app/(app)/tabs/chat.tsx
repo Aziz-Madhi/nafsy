@@ -1,16 +1,11 @@
-import React, { useCallback, useEffect, useRef } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { sendMessageRef } from './_layout';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Alert } from 'react-native';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
-import {
-  useOfflineChatMessages,
-  useOfflineSendMessage,
-  useNetworkStatus,
-} from '~/hooks/useOfflineData';
-import { useStreamingChat } from '~/hooks/useStreamingChat';
+import { useOfflineChatMessages, useNetworkStatus } from '~/hooks/useOfflineData';
 import {
   useHistorySidebarVisible,
   useCurrentMainSessionId,
@@ -27,7 +22,8 @@ import {
 } from '~/store';
 import { ChatScreen } from '~/components/chat';
 import { useAuth } from '@clerk/clerk-expo';
-import { generateConvexUrl } from '~/lib/ai/streaming';
+import { config } from '~/config/env';
+// HTTP streaming utilities removed in favor of Convex internal actions
 // Auth is handled by root _layout.tsx - all screens here are protected
 
 interface Message {
@@ -146,22 +142,247 @@ export default function ChatTab() {
 
   console.log('📨 Messages count:', mainChatMessages?.length || 0);
 
-  // Use offline-aware send message hooks
-  const sendCoachMessage = useOfflineSendMessage('coach');
-  const sendCompanionMessage = useOfflineSendMessage('companion');
-  const sendVentMessage = useOfflineSendMessage('event');
+  // Streaming state for assistant output
+  const [streamingContent, setStreamingContent] = useState('');
+  const [isStreaming, setIsStreaming] = useState(false);
 
-  // Add streaming hooks for AI responses
-  const coachStreaming = useStreamingChat('coach');
-  const companionStreaming = useStreamingChat('companion');
-  const ventStreaming = useStreamingChat('vent');
+  // Auth for HTTP streaming call
   const { getToken } = useAuth();
-  const summarizedSessionsRef = useRef(new Set<string>());
-  const summarizingInFlightRef = useRef(new Set<string>());
+  const ENABLE_STREAMING =
+    ((process.env.EXPO_PUBLIC_CHAT_STREAMING as string | undefined) || 'on') !==
+    'off';
+
+  // Helper: map UI chat types to backend chat types
+  const mapToServerType = useCallback((t: ChatType): 'main' | 'vent' | 'companion' => {
+    return t === 'coach' ? 'main' : t === 'event' ? 'vent' : 'companion';
+  }, []);
+
+  // Track current stream and smoothing queue for cleanup
+  const currentStreamRef = useRef<XMLHttpRequest | null>(null);
+  const deliveryTimerRef = useRef<any>(null);
+  const wordQueueRef = useRef<string[]>([]);
+  const partialBufferRef = useRef<string>('');
+  const streamDoneRef = useRef(false);
+  // Word pacing; can be overridden via env
+  const WORD_DELAY_MS = Number(
+    (process.env.EXPO_PUBLIC_STREAM_WORD_DELAY_MS as string | undefined) ||
+      (process.env.EXPO_PUBLIC_STREAM_CHAR_DELAY_MS as string | undefined) ||
+      110
+  );
+  // Speed multiplier: 0.8 = 20% faster than base delay
+  const SPEED_MULTIPLIER = Number(
+    (process.env.EXPO_PUBLIC_STREAM_SPEED_FACTOR as string | undefined) || 0.8
+  );
+
+  const resetSmoothing = useCallback(() => {
+    try {
+      if (deliveryTimerRef.current) clearTimeout(deliveryTimerRef.current);
+    } catch {}
+    deliveryTimerRef.current = null;
+    wordQueueRef.current = [];
+    partialBufferRef.current = '';
+    streamDoneRef.current = false;
+  }, []);
+
+  function clamp(n: number, lo: number, hi: number) {
+    return Math.max(lo, Math.min(hi, n));
+  }
+
+  function computeDelayForWord(word: string) {
+    const len = Math.max(1, word.trim().length);
+    const lengthFactor = clamp(len / 6, 0.8, 1.3);
+    const jitter = 0.9 + Math.random() * 0.2; // 0.9–1.1
+    const base = WORD_DELAY_MS * SPEED_MULTIPLIER;
+    return Math.max(20, Math.round(base * lengthFactor * jitter));
+  }
+
+  const startDelivery = useCallback(() => {
+    if (deliveryTimerRef.current) return;
+    const tick = () => {
+      const q = wordQueueRef.current;
+      if (q.length > 0) {
+        const next = q.shift() as string;
+        setStreamingContent((prev) => prev + next);
+        deliveryTimerRef.current = setTimeout(tick, computeDelayForWord(next));
+        return;
+      }
+      if (streamDoneRef.current) {
+        if (partialBufferRef.current.length > 0) {
+          const tail = partialBufferRef.current;
+          partialBufferRef.current = '';
+          setStreamingContent((prev) => prev + tail);
+          deliveryTimerRef.current = setTimeout(
+            tick,
+            computeDelayForWord(tail)
+          );
+          return;
+        }
+        deliveryTimerRef.current = null;
+        setIsStreaming(false);
+        return;
+      }
+      // Waiting for more tokens; short poll
+      deliveryTimerRef.current = setTimeout(
+        tick,
+        Math.max(20, Math.round((WORD_DELAY_MS * SPEED_MULTIPLIER) / 2))
+      );
+    };
+    deliveryTimerRef.current = setTimeout(
+      tick,
+      Math.max(10, Math.round(WORD_DELAY_MS * SPEED_MULTIPLIER))
+    );
+  }, [WORD_DELAY_MS, SPEED_MULTIPLIER]);
+
+  const enqueueDelta = useCallback(
+    (delta: string) => {
+      if (!delta) return;
+      // Accumulate and extract complete words (word + trailing space)
+      partialBufferRef.current += delta;
+      const pending = partialBufferRef.current;
+      const regex = /(\S+\s+)/g;
+      let match: RegExpExecArray | null;
+      let lastIndex = 0;
+      while ((match = regex.exec(pending)) !== null) {
+        wordQueueRef.current.push(match[0]);
+        lastIndex = regex.lastIndex;
+      }
+      if (lastIndex > 0) {
+        partialBufferRef.current = pending.slice(lastIndex);
+      }
+      startDelivery();
+    },
+    [startDelivery]
+  );
+
+  // Reliable RN SSE via XMLHttpRequest onprogress
+  const streamAssistant = useCallback(
+    async (opts: { text: string; sessionId: string; chatType: ChatType }) => {
+      const { text, sessionId, chatType } = opts;
+      const baseUrl = (config.convex.url || '').replace(/\/$/, '');
+      const siteOverride =
+        (process.env.EXPO_PUBLIC_CONVEX_SITE_URL as string | undefined) || '';
+      const convexSiteUrl = (siteOverride || baseUrl).replace(
+        /\.convex\.cloud(\/|$)/,
+        '.convex.site$1'
+      );
+      const url = `${convexSiteUrl}/chat-stream`;
+      const token = (await getToken({ template: 'convex' }).catch(() => null)) ||
+        (await getToken().catch(() => null));
+
+      // Abort previous stream if any
+      try {
+        currentStreamRef.current?.abort();
+      } catch {}
+      resetSmoothing();
+
+      setIsStreaming(true);
+      setStreamingContent('');
+
+      const xhr = new XMLHttpRequest();
+      currentStreamRef.current = xhr;
+      let sseBuffer = '';
+      let lastIndex = 0;
+
+      const closeStream = () => {
+        // Mark as done and let the delivery loop drain remaining tokens
+        streamDoneRef.current = true;
+        try {
+          xhr.abort();
+        } catch {}
+        if (currentStreamRef.current === xhr) currentStreamRef.current = null;
+        startDelivery();
+      };
+
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState === xhr.DONE) {
+          closeStream();
+        }
+      };
+
+      xhr.onprogress = () => {
+        try {
+          const textResp = xhr.responseText || '';
+          if (textResp.length <= lastIndex) return;
+          const chunk = textResp.substring(lastIndex);
+          lastIndex = textResp.length;
+
+          sseBuffer += chunk;
+          let idx;
+          while ((idx = sseBuffer.indexOf('\n\n')) !== -1) {
+            const eventBlock = sseBuffer.slice(0, idx);
+            sseBuffer = sseBuffer.slice(idx + 2);
+            const dataLines = eventBlock
+              .split('\n')
+              .filter((l) => l.startsWith('data: '))
+              .map((l) => l.slice(6).trim());
+            if (dataLines.length === 0) continue;
+            const data = dataLines.join('\n');
+            if (data === '[DONE]') {
+              streamDoneRef.current = true;
+              // Flush any leftover fragment as a final token
+              if (partialBufferRef.current.length > 0) {
+                wordQueueRef.current.push(partialBufferRef.current);
+                partialBufferRef.current = '';
+              }
+              startDelivery();
+              continue;
+            }
+            try {
+              const evt = JSON.parse(data);
+              if (
+                evt?.type === 'text-delta' &&
+                typeof evt.textDelta === 'string'
+              ) {
+                enqueueDelta(evt.textDelta);
+              }
+            } catch {}
+          }
+        } catch (e) {
+          console.warn('SSE onprogress error', e);
+        }
+      };
+
+      xhr.onerror = () => {
+        console.error('SSE stream error');
+        closeStream();
+      };
+
+      try {
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/json');
+        xhr.setRequestHeader('Accept', 'text/event-stream');
+        if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+        xhr.send(
+          JSON.stringify({
+            chatType: mapToServerType(chatType),
+            sessionId,
+            message: text,
+            requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          })
+        );
+      } catch (e) {
+        console.error('Streaming failed', e);
+        closeStream();
+      }
+    },
+    [getToken, mapToServerType]
+  );
+
+  // Cleanup streaming connection on unmount
+  useEffect(() => {
+    return () => {
+      try {
+        currentStreamRef.current?.abort();
+      } catch {}
+      resetSmoothing();
+      currentStreamRef.current = null;
+    };
+  }, [resetSmoothing]);
 
   // Keep mutations for session creation and user upsert
   const upsertUser = useMutation(api.auth.upsertUser);
   const createChatSession = useMutation(api.chat.createChatSession);
+  const sendChatMessage = useMutation(api.chat.sendChatMessage);
 
   // Initialize with empty chat on app start (no auto-loading of previous sessions)
   useEffect(() => {
@@ -186,55 +407,7 @@ export default function ChatTab() {
       _creationTime: msg._creationTime,
     })) || [];
 
-  // HTTP-driven title summarization after 3 messages
-  useEffect(() => {
-    const sessionId = activeSessionId;
-    if (!sessionId) return;
-    if (!isOnline) return;
-    if (!messages || messages.length < 3) return;
-    if (summarizedSessionsRef.current.has(sessionId)) return;
-    if (summarizingInFlightRef.current.has(sessionId)) return;
-
-    const chatTypeKey =
-      activeChatType === 'coach'
-        ? 'main'
-        : activeChatType === 'event'
-          ? 'vent'
-          : 'companion';
-
-    const firstThree = messages.slice(0, 3).map((m) => ({
-      role: m.role,
-      content: m.content,
-    }));
-
-    (async () => {
-      try {
-        summarizingInFlightRef.current.add(sessionId);
-        const token = await getToken({ template: 'convex' });
-        if (!token) return;
-        const url = generateConvexUrl('/chat/summarize-title');
-        const res = await fetch(url, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            sessionId,
-            chatType: chatTypeKey,
-            messages: firstThree,
-          }),
-        });
-        if (res.ok) summarizedSessionsRef.current.add(sessionId);
-      } catch (e) {
-        // best-effort; do not block UI
-        console.warn('summarize-title failed', e);
-      }
-      finally {
-        summarizingInFlightRef.current.delete(sessionId);
-      }
-    })();
-  }, [activeSessionId, activeChatType, messages.length, isOnline, getToken]);
+  // Title summarization is scheduled server-side after assistant replies
 
   // Simple sidebar handlers
   const handleOpenSidebar = () => {
@@ -277,7 +450,7 @@ export default function ChatTab() {
     ]
   );
 
-  // Optimized message sending with offline check
+  // Optimized message sending with streaming
   const handleSendMessage = useCallback(
     async (text: string) => {
       // Allow sending once auth is ready, even if user doc hasn't hydrated yet
@@ -291,7 +464,7 @@ export default function ChatTab() {
         return;
       }
 
-      // Send message immediately without blocking UI
+      // Send message with HTTP streaming; avoid non-streaming scheduler
       (async () => {
         try {
           let sessionId = activeSessionId;
@@ -327,51 +500,21 @@ export default function ChatTab() {
             }
           }
 
-          // Send user message based on chat type using offline-aware hooks
-          switch (activeChatType) {
-            case 'coach':
-              const userMsgIdCoach = await sendCoachMessage(text, sessionId);
-              // Trigger streaming for AI response
-              const coachMessages =
-                mainChatMessages?.map((msg) => ({
-                  role: msg.role,
-                  content: msg.content,
-                })) || [];
-              await coachStreaming.sendStreamingMessage(
-                text,
-                sessionId,
-                coachMessages
-              );
-              break;
-
-            case 'event':
-              const userMsgIdVent = await sendVentMessage(text, sessionId);
-              const eventMessages =
-                mainChatMessages?.map((msg) => ({
-                  role: msg.role,
-                  content: msg.content,
-                })) || [];
-              await ventStreaming.sendStreamingMessage(
-                text,
-                sessionId,
-                eventMessages
-              );
-              break;
-
-            case 'companion':
-              const userMsgIdComp = await sendCompanionMessage(text, sessionId);
-              // Trigger streaming for AI response
-              const companionMessages =
-                mainChatMessages?.map((msg) => ({
-                  role: msg.role,
-                  content: msg.content,
-                })) || [];
-              await companionStreaming.sendStreamingMessage(
-                text,
-                sessionId,
-                companionMessages
-              );
-              break;
+          if (ENABLE_STREAMING) {
+            // Start streaming from Convex HTTP endpoint (also persists the user message)
+            await streamAssistant({
+              text,
+              sessionId: sessionId!,
+              chatType: activeChatType,
+            });
+          } else {
+            // Non-streaming path: write user msg and let backend action persist assistant
+            await sendChatMessage({
+              content: text,
+              role: 'user',
+              type: mapToServerType(activeChatType),
+              sessionId: sessionId!,
+            });
           }
         } catch (error) {
           console.error('Failed to send message:', error);
@@ -391,15 +534,16 @@ export default function ChatTab() {
       currentUser,
       isLoaded,
       isOnline,
-      sendCoachMessage,
-      sendCompanionMessage,
-      sendVentMessage,
+      streamAssistant,
       activeSessionId,
       activeChatType,
       createChatSession,
       setCurrentVentSessionId,
       switchToMainSession,
       switchToCompanionSession,
+      ENABLE_STREAMING,
+      sendChatMessage,
+      mapToServerType,
     ]
   );
 
@@ -432,10 +576,17 @@ export default function ChatTab() {
         }
         // Update overlay with user message instantly
         setCurrentVentMessage(`user:${text}`);
-        // Persist user message (unified send)
-        await sendVentMessage(text, sessionId);
-        // Start streaming AI response (no prior context needed for vent)
-        await ventStreaming.sendStreamingMessage(text, sessionId, []);
+        if (ENABLE_STREAMING) {
+          // Stream assistant reply (server persists messages)
+          await streamAssistant({ text, sessionId, chatType: 'event' });
+        } else {
+          await sendChatMessage({
+            content: text,
+            role: 'user',
+            type: 'vent',
+            sessionId,
+          });
+        }
       } catch (e) {
         console.error('Vent message failed:', e);
       } finally {
@@ -450,8 +601,9 @@ export default function ChatTab() {
       setCurrentVentSessionId,
       setCurrentVentMessage,
       setVentChatLoading,
-      sendVentMessage,
-      ventStreaming,
+      streamAssistant,
+      ENABLE_STREAMING,
+      sendChatMessage,
     ]
   );
 
@@ -465,18 +617,7 @@ export default function ChatTab() {
     [switchChatType, activeChatType]
   );
 
-  // Keep overlay UI in sync with vent streaming
-  useEffect(() => {
-    if (showVentChat && ventStreaming.streamingContent) {
-      setCurrentVentMessage(`ai:${ventStreaming.streamingContent}`);
-    }
-  }, [showVentChat, ventStreaming.streamingContent, setCurrentVentMessage]);
-
-  useEffect(() => {
-    if (showVentChat) {
-      setVentChatLoading(ventStreaming.isStreaming);
-    }
-  }, [showVentChat, ventStreaming.isStreaming, setVentChatLoading]);
+  // Vent overlay now updates when assistant message appears in DB
 
   // Set the message handler ref for the floating tab bar
   useEffect(() => {
@@ -490,19 +631,7 @@ export default function ChatTab() {
     };
   }, [handleSendMessage]);
 
-  // Get streaming content based on active chat type
-  const streamingContent =
-    activeChatType === 'companion'
-      ? companionStreaming.streamingContent
-      : activeChatType === 'event'
-        ? ventStreaming.streamingContent
-        : coachStreaming.streamingContent;
-  const isStreaming =
-    activeChatType === 'companion'
-      ? companionStreaming.isStreaming
-      : activeChatType === 'event'
-        ? ventStreaming.isStreaming
-        : coachStreaming.isStreaming;
+  // streamingContent and isStreaming are stateful above
 
   return (
     <ChatScreen

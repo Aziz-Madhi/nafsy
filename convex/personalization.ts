@@ -1,5 +1,5 @@
 import { v } from 'convex/values';
-import { query, internalMutation, internalAction } from './_generated/server';
+import { query, internalMutation, internalAction, internalQuery } from './_generated/server';
 import { api, internal } from './_generated/api';
 import { Doc, Id } from './_generated/dataModel';
 // Responses API usage is enforced; no fallbacks.
@@ -44,7 +44,7 @@ interface AISummaryResult {
  * Build personalized context for AI responses
  * Fetches today's mood, exercises, and weekly summary
  */
-export const buildUserContext = query({
+export const buildUserContext = internalQuery({
   args: {
     user: v.object({
       _id: v.id('users'),
@@ -84,15 +84,52 @@ export const buildUserContext = query({
         ? Date.now() - (fullUser.createdAt || Date.now()) < ONE_WEEK_MS
         : false;
 
-      // Get today's context data in parallel
+      // Get today's context data in parallel (internal reads; no auth required)
       const [todayMoods, todayExercises, latestSummary] = await Promise.all([
-        // Fetch today's mood
-        ctx.runQuery(api.moods.getTodayMoods),
-        // Fetch today's exercises (last 24 hours)
-        ctx.runQuery(api.userProgress.getUserProgress, {
-          startDate: Date.now() - 24 * 60 * 60 * 1000,
-          limit: 50,
-        }),
+        (async () => {
+          const dayStart = new Date();
+          dayStart.setHours(0, 0, 0, 0);
+          const dayEnd = new Date();
+          dayEnd.setHours(23, 59, 59, 999);
+
+          const moods = await ctx.db
+            .query('moods')
+            .withIndex('by_user_date', (q: any) => q.eq('userId', user._id))
+            .filter((q: any) =>
+              q.and(
+                q.gte(q.field('createdAt'), dayStart.getTime()),
+                q.lte(q.field('createdAt'), dayEnd.getTime())
+              )
+            )
+            .order('asc')
+            .collect();
+
+          const morning =
+            moods.find((m: any) => m.timeOfDay === 'morning') ||
+            moods.find((m: any) => new Date(m.createdAt).getHours() < 12) ||
+            null;
+          const evening =
+            moods.find((m: any) => m.timeOfDay === 'evening') ||
+            moods.find(
+              (m: any) => new Date(m.createdAt).getHours() >= 12 && m !== morning
+            ) || null;
+
+          return { morning, evening, all: moods };
+        })(),
+        (async () => {
+          const since = Date.now() - 24 * 60 * 60 * 1000;
+          const progress = await ctx.db
+            .query('userProgress')
+            .withIndex('by_user', (q: any) => q.eq('userId', user._id))
+            .filter((q: any) => q.gte(q.field('completedAt'), since))
+            .order('desc')
+            .take(50);
+
+          const exerciseIds = [...new Set(progress.map((p: any) => p.exerciseId))];
+          const exercises = await Promise.all(exerciseIds.map((id) => ctx.db.get(id)));
+          const map = new Map(exercises.filter(Boolean).map((e: any) => [e._id, e]));
+          return progress.map((p: any) => ({ ...p, exercise: map.get(p.exerciseId) }));
+        })(),
         // For first-week users, skip weekly summary (we'll use onboarding context)
         isFirstWeek ? Promise.resolve(null) : getLatestWeeklySummary(ctx, user._id),
       ]);

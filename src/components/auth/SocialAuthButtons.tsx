@@ -41,7 +41,8 @@ export function SocialAuthButtons({ showDivider = true }: SocialAuthButtonsProps
             <View className="absolute left-4">
               <GoogleIcon size={22} />
             </View>
-            <Text className="text-foreground text-base font-semibold">
+            {/* Force Google brand dark text on white surface in dark mode */}
+            <Text className="text-base font-semibold" style={{ color: '#202124' }}>
               {t('auth.continueWithGoogle')}
             </Text>
           </View>

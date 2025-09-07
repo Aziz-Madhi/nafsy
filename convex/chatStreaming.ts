@@ -4,6 +4,68 @@ import { Id } from './_generated/dataModel';
 import { internal } from './_generated/api';
 import { checkRateLimitDb } from './errorUtils';
 
+// Insert user message (no scheduling side effects). Intended for HTTP streaming path.
+export const insertUserMessage = internalMutation({
+  args: {
+    sessionId: v.string(),
+    userId: v.id('users'),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
+    content: v.string(),
+    requestId: v.optional(v.string()),
+  },
+  returns: v.union(
+    v.id('mainChatMessages'),
+    v.id('companionChatMessages'),
+    v.id('ventChatMessages')
+  ),
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const table =
+      args.chatType === 'companion'
+        ? 'companionChatMessages'
+        : args.chatType === 'vent'
+          ? 'ventChatMessages'
+          : 'mainChatMessages';
+
+    const sessionType =
+      args.chatType === 'companion'
+        ? 'companionChatSessions'
+        : args.chatType === 'vent'
+          ? 'ventChatSessions'
+          : 'chatSessions';
+
+    const session = await ctx.db
+      .query(sessionType as any)
+      .withIndex('by_session_id', (q: any) => q.eq('sessionId', args.sessionId))
+      .first();
+    if (!session || session.userId !== args.userId) {
+      throw new Error('Invalid or unauthorized sessionId');
+    }
+
+    const doc: any = {
+      userId: args.userId,
+      content: args.content,
+      role: 'user' as const,
+      sessionId: args.sessionId,
+      createdAt: now,
+    };
+    if (args.requestId) doc.requestId = args.requestId;
+
+    const messageId = await ctx.db.insert(table as any, doc);
+
+    await ctx.db.patch(session._id, {
+      lastMessageAt: now,
+      messageCount: (session.messageCount || 0) + 1,
+    });
+
+    return messageId as any;
+  },
+});
+
 // Insert assistant message once streaming completes (single write)
 export const insertAssistantMessage = internalMutation({
   args: {
@@ -133,6 +195,26 @@ export const applyRateLimit = internalMutation({
     const windowMs = args.windowMs ?? 60_000; // 1 minute
     await checkRateLimitDb(ctx, args.key, limit, windowMs);
     return null;
+  },
+});
+
+// Non-throwing variant: returns whether the operation is allowed.
+export const tryRateLimit = internalMutation({
+  args: {
+    key: v.string(),
+    limit: v.optional(v.number()),
+    windowMs: v.optional(v.number()),
+  },
+  returns: v.object({ allowed: v.boolean() }),
+  handler: async (ctx, args) => {
+    const limit = args.limit ?? 10;
+    const windowMs = args.windowMs ?? 60_000;
+    try {
+      await checkRateLimitDb(ctx, args.key, limit, windowMs);
+      return { allowed: true };
+    } catch {
+      return { allowed: false };
+    }
   },
 });
 
