@@ -4,13 +4,8 @@
  */
 
 import React, { useRef, useCallback, useEffect, memo } from 'react';
-import {
-  View,
-  TouchableWithoutFeedback,
-  Keyboard,
-  NativeSyntheticEvent,
-  NativeScrollEvent,
-} from 'react-native';
+import { View, Keyboard } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FlashList } from '@shopify/flash-list';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
@@ -21,7 +16,7 @@ import { ChatMessageList, Message } from './ChatMessageList';
 import { ChatHistorySidebar } from './ChatHistorySidebar';
 import { ChatBubble } from './ChatComponents';
 import { VentChatOverlay } from './VentChatOverlay';
-import { ChatType, useChatUIStore } from '~/store/useChatUIStore';
+import { ChatType } from '~/store/useChatUIStore';
 import Animated from 'react-native-reanimated';
 import { ChatPersonalityHeader } from './ChatPersonalityHeader';
 import { Text } from '~/components/ui/text';
@@ -86,14 +81,13 @@ export const ChatScreen = memo(function ChatScreen({
 }: ChatScreenProps) {
   const flashListRef = useRef<FlashList<Message>>(null as any);
   const colors = useColors();
+  const insets = useSafeAreaInsets();
+  const [headerHeight, setHeaderHeight] = React.useState(0);
+  const [listHeaderHeight, setListHeaderHeight] = React.useState(0);
+  // No jump-to-latest UI; user controls scrolling entirely
+  // No separate lingering state; we derive visibility from stream state + data
 
-  // Read typing state from shared store to hide intro while composing
-  const coachInput = useChatUIStore((s) => s.coachChatInput || s.mainChatInput);
-  const companionInput = useChatUIStore((s) => s.companionChatInput);
-  const chatInputFocused = useChatUIStore((s) => s.chatInputFocused);
-  const currentDraft =
-    activeChatType === 'companion' ? companionInput : coachInput;
-  const isTyping = !!currentDraft?.trim() || chatInputFocused;
+  // Keep intro visible until the first message exists (no typing-based hiding)
 
   // Double tap gesture to open Vent Chat
   const doubleTapGesture = Gesture.Tap()
@@ -107,116 +101,30 @@ export const ChatScreen = memo(function ChatScreen({
       }
     });
 
-  // Auto-scroll only when already near the bottom to avoid jumpiness
-  const isNearBottomRef = useRef(true);
-  // While streaming, follow the bottom unless the user scrolls away
-  const followStreamRef = useRef(false);
-  // Track active user interaction to temporarily disable auto-follow
-  const userInteractingRef = useRef(false);
-  // Global gate: once user interacts during a stream, disable auto-follow until stream ends
-  const autoFollowEnabledRef = useRef(true);
-  const SCROLL_BOTTOM_THRESHOLD = 120; // px
+  // Single tap anywhere to dismiss keyboard (but give double tap priority)
+  const singleTapDismiss = Gesture.Tap()
+    .maxDuration(250)
+    .runOnJS(true)
+    .onStart(() => Keyboard.dismiss())
+    .requireExternalGestureToFail(doubleTapGesture);
 
-  const handleScroll = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
-      const distanceFromBottom =
-        contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      const nearBottom = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
-      isNearBottomRef.current = nearBottom;
-      // Update follow flag dynamically but respect user interaction and global gate
-      followStreamRef.current =
-        nearBottom &&
-        !userInteractingRef.current &&
-        autoFollowEnabledRef.current
-          ? followStreamRef.current || isStreaming || showStreamRow
-          : false;
-    },
-    [isStreaming, showStreamRow]
-  );
+  // No auto-scrolling or follow behavior; user controls scroll.
 
-  // User scroll interaction handlers to pause auto-follow during manual scrolling
-  const onScrollBeginDrag = useCallback(() => {
-    userInteractingRef.current = true;
-    // Immediately pause following to avoid fighting the gesture
-    followStreamRef.current = false;
-    // Disable auto-follow for the rest of this stream
-    autoFollowEnabledRef.current = false;
-  }, []);
-
-  const onMomentumScrollBegin = useCallback(() => {
-    userInteractingRef.current = true;
-    followStreamRef.current = false;
-    autoFollowEnabledRef.current = false;
-  }, []);
-
-  const onScrollEndDrag = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
-      const distanceFromBottom =
-        contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      const nearBottom = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
-      isNearBottomRef.current = nearBottom;
-      // Do not resume auto-follow mid-stream; let user control
-      userInteractingRef.current = false;
-      followStreamRef.current = false;
-    },
-    [isStreaming, showStreamRow]
-  );
-
-  const onMomentumScrollEnd = useCallback(
-    (e: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, layoutMeasurement, contentSize } = e.nativeEvent;
-      const distanceFromBottom =
-        contentSize.height - (contentOffset.y + layoutMeasurement.height);
-      const nearBottom = distanceFromBottom < SCROLL_BOTTOM_THRESHOLD;
-      isNearBottomRef.current = nearBottom;
-      // Keep auto-follow disabled mid-stream
-      userInteractingRef.current = false;
-      followStreamRef.current = false;
-    },
-    [isStreaming, showStreamRow]
-  );
-
-  const scrollToBottom = useCallback(() => {
-    if (!flashListRef.current || messages.length === 0) return;
-    if (!isNearBottomRef.current) return; // respect user scroll
-    setTimeout(() => {
-      flashListRef.current?.scrollToEnd({ animated: true });
-    }, 50);
-  }, [messages.length]);
-
-  // Force scroll used when the user submits a message, regardless of position
-  const forceScrollToBottom = useCallback(() => {
-    if (!flashListRef.current || messages.length === 0) return;
-    requestAnimationFrame(() => {
-      flashListRef.current?.scrollToEnd({ animated: true });
-      // Second pass after layout settles (prevents mid-list anchoring)
-      setTimeout(() => {
-        flashListRef.current?.scrollToEnd({ animated: true });
-      }, 90);
-    });
-  }, [messages.length]);
-
-  // Do not force-scroll on each streaming tick; allow user to scroll freely
-
-  // No complex offset logic needed with the new simplified approach
-
-  // FlashList render functions
   const renderMessage = useCallback(
     ({ item }: { item: Message }) => {
-      const isStreamRow = item._id === '_streaming';
+      const isSyntheticAssistant = item._id.startsWith('_assistantFor:');
       const hasText = (item.content || '').trim().length > 0;
-      // Stable rule: show copy for any finalized assistant message with text.
-      // Never show for the ephemeral streaming row.
-      const showCopy = !isStreamRow && item.role === 'assistant' && hasText;
+      // Show copy for all assistant messages to keep height stable
+      const showCopy = item.role === 'assistant' && hasText && !isSyntheticAssistant;
+      // Never animate assistant bubbles to avoid end-of-stream glitches
+      const shouldAnimate = item.role === 'user' && !isSyntheticAssistant;
 
       return (
         <ChatBubble
           message={item.content}
           isUser={item.role === 'user'}
           chatType={activeChatType}
-          animated={!isStreamRow}
+          animated={shouldAnimate}
           showCopy={showCopy}
         />
       );
@@ -226,228 +134,153 @@ export const ChatScreen = memo(function ChatScreen({
 
   // Use stable keys. The ephemeral streaming row has its own id.
   const keyExtractor = useCallback((item: Message) => item._id, []);
-  // Give the streaming row a distinct type to avoid measurement collisions
-  const getItemType = useCallback(
-    (item: Message) => (item._id === '_streaming' ? 'streaming' : item.role),
-    []
-  );
+  // Give the synthetic streaming row a distinct type to avoid measurement collisions
+  // and recycler swaps when the final assistant message arrives.
+  const getItemType = useCallback((item: Message) => {
+    if (item._id.startsWith('_assistantFor:')) return 'assistant-stream';
+    return item.role;
+  }, []);
 
-  // Ephemeral in-list streaming row to avoid footer-induced layout shifts
-  const [showStreamRow, setShowStreamRow] = React.useState(false);
-  const streamStartTimeRef = React.useRef<number | null>(null);
-  // Control visibility of the ephemeral streaming row. We keep it mounted while
-  // tokens are still rendering locally, even if SSE has completed and isStreaming
-  // has flipped to false. This prevents the final server message from appearing
-  // before the streamed text visually finishes.
-  useEffect(() => {
-    // When streaming starts, ensure the row is visible and follow enabled
-    if (isStreaming) {
-      if (!showStreamRow) {
-        streamStartTimeRef.current = Date.now();
-        setShowStreamRow(true);
-      }
-      // Re-enable auto-follow at the beginning of a new stream
-      autoFollowEnabledRef.current = true;
-      if (isNearBottomRef.current) followStreamRef.current = true;
-      return;
-    }
+  // Deduplicate optimistic pending user bubbles against server user messages.
+  // If a server user message exists with identical content, prefer it and drop
+  // any local `_local:` user duplicates from the displayed list.
+  const messagesNoDup = React.useMemo(() => {
+    if (!messages || messages.length === 0) return messages;
+    const lastServerUser = [...messages]
+      .reverse()
+      .find((m) => m.role === 'user' && !m._id.startsWith('_local:'));
+    if (!lastServerUser) return messages;
+    const serverText = (lastServerUser.content || '').trim();
+    if (!serverText) return messages;
+    // Filter out any pending local user bubbles with same text
+    return messages.filter(
+      (m) => !(m.role === 'user' && m._id.startsWith('_local:') && (m.content || '').trim() === serverText)
+    );
+  }, [messages]);
 
-    // If not streaming anymore but the row is still showing, decide when to hide.
-    if (showStreamRow) {
-      // Determine length of finalized assistant content (if present)
-      let lastUserIdx = -1;
-      for (let i = messages.length - 1; i >= 0; i--) {
-        if (messages[i].role === 'user') {
-          lastUserIdx = i;
-          break;
-        }
-      }
-      const finalizedAssistant =
-        lastUserIdx >= 0 && messages[lastUserIdx + 1]?.role === 'assistant'
-          ? messages[lastUserIdx + 1]
-          : null;
-      const targetLen = finalizedAssistant?.content?.length ?? 0;
-
-      // If we don't know the target length, fall back to a short grace timer
-      if (!targetLen) {
-        const t = setTimeout(() => {
-          setShowStreamRow(false);
-          streamStartTimeRef.current = null;
-          followStreamRef.current = false;
-          // Stream fully ended; reset auto-follow for next time
-          autoFollowEnabledRef.current = true;
-        }, 800);
-        return () => clearTimeout(t);
-      }
-
-      // Hold the row until the locally rendered text catches up to the
-      // finalized assistant content length (or until timeout for safety)
-      let cancelled = false;
-      const start = Date.now();
-      const check = () => {
-        if (cancelled) return;
-        const currentLen = (streamingContent || '').length;
-        const done = currentLen >= targetLen - 1; // small tolerance
-        const timedOut = Date.now() - start > 2500;
-        if (done || timedOut) {
-          setShowStreamRow(false);
-          streamStartTimeRef.current = null;
-          followStreamRef.current = false;
-          autoFollowEnabledRef.current = true;
-        } else {
-          setTimeout(check, 60);
-        }
-      };
-      const id = setTimeout(check, 60);
-      return () => {
-        cancelled = true;
-        clearTimeout(id);
-      };
-    }
-  }, [isStreaming, showStreamRow, streamingContent, messages]);
-
-  // Scroll on new rows only if near bottom. Do NOT react to streaming text updates
-  // or ephemeral row toggling to avoid layout thrash while streaming.
-  useEffect(() => {
-    scrollToBottom();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [messages.length]);
-
-  // Detect user-sent message appended at the end and force-scroll to bottom
-  const lastIdRef = React.useRef<string | null>(null);
-  useEffect(() => {
-    const last = messages[messages.length - 1];
-    if (!last) return;
-    if (lastIdRef.current !== last._id) {
-      // New tail message detected
-      if (last.role === 'user') {
-        forceScrollToBottom();
-        // When user sends, prepare to follow the upcoming stream
-        followStreamRef.current = true;
-      }
-      lastIdRef.current = last._id;
-    }
-  }, [messages, forceScrollToBottom]);
-
-  // Keep anchored to bottom while the streaming row grows, without jumpy animations
-  useEffect(() => {
-    if (!showStreamRow) return;
-    if (!flashListRef.current) return;
-    if (!streamingContent || streamingContent.length === 0) return;
-    // Do not auto-scroll while the user is actively interacting
-    if (userInteractingRef.current) return;
-    // Respect global auto-follow disabling after user interaction
-    if (!autoFollowEnabledRef.current) return;
-    // Only follow if user is near bottom or follow flag is set
-    if (!isNearBottomRef.current && !followStreamRef.current) return;
-    followStreamRef.current = true;
-    const raf = requestAnimationFrame(() => {
-      try {
-        // Avoid passing params to sidestep platform-specific scrollTo bugs
-        flashListRef.current?.scrollToEnd();
-      } catch {}
-      // Second pass after layout settles
-      setTimeout(() => {
-        try {
-          flashListRef.current?.scrollToEnd();
-        } catch {}
-      }, 50);
-    });
-    return () => cancelAnimationFrame(raf);
-  }, [showStreamRow, streamingContent]);
-  const streamingRow: Message | null =
-    showStreamRow && streamingContent
-      ? {
-          _id: '_streaming',
-          content: streamingContent,
-          role: 'assistant',
-          _creationTime: streamStartTimeRef.current ?? Date.now(),
-        }
-      : null;
-
-  const displayMessages = React.useMemo(() => {
-    if (!streamingRow) return messages;
-    // Hide any assistant messages that appear after the latest user message
-    // while streaming is in progress. This guarantees a single assistant
-    // bubble (the ephemeral streaming row) for the current turn.
+  // Derived signal for whether to show a synthetic streaming row
+  // Keep visible while streaming, and after streaming ends until
+  // the final assistant message appears.
+  const showStreamRow = React.useMemo(() => {
+    const hasStreamText = (streamingContent || '').trim().length > 0;
+    if (!hasStreamText) return false;
+    if (!messagesNoDup || messagesNoDup.length === 0) return true;
     let lastUserIdx = -1;
-    for (let i = messages.length - 1; i >= 0; i--) {
-      if (messages[i].role === 'user') {
+    for (let i = messagesNoDup.length - 1; i >= 0; i--) {
+      if (messagesNoDup[i].role === 'user') {
         lastUserIdx = i;
         break;
       }
     }
-    if (lastUserIdx >= 0) {
-      return [...messages.slice(0, lastUserIdx + 1), streamingRow];
+    if (lastUserIdx === -1) return true;
+    const hasAssistantAfterUser =
+      !!messagesNoDup[lastUserIdx + 1] && messagesNoDup[lastUserIdx + 1].role === 'assistant';
+    return !hasAssistantAfterUser;
+  }, [messagesNoDup, streamingContent]);
+
+  // Build display list in chronological order (oldest -> newest). If streaming
+  // and the last message is from the user, append a synthetic assistant row
+  // to stream beneath it.
+  const displayMessages = React.useMemo(() => {
+    if (!messagesNoDup || messagesNoDup.length === 0) return [] as Message[];
+    const chron = [...messagesNoDup];
+
+    // Find the last user message and the assistant that immediately follows it
+    let lastUserIdx = -1;
+    for (let i = chron.length - 1; i >= 0; i--) {
+      if (chron[i].role === 'user') {
+        lastUserIdx = i;
+        break;
+      }
     }
-    return [streamingRow];
-  }, [messages, streamingRow]);
+
+    if (lastUserIdx === -1) return chron;
+
+    const lastUser = chron[lastUserIdx];
+    const next = chron[lastUserIdx + 1];
+    const hasAssistantAfterUser = next && next.role === 'assistant';
+
+    // Build UI list so that the assistant following the last user uses a stable
+    // synthetic id tied to that user. This prevents key swaps when streaming ends.
+    const before = chron.slice(0, lastUserIdx + 1);
+    const after = chron.slice(lastUserIdx + 1);
+
+    const syntheticAssistant: Message | null = (() => {
+      const id = `_assistantFor:${lastUser._id}`;
+      // Show streaming content while streaming, or after streaming if the
+      // final message hasn't appeared yet.
+      if (showStreamRow) {
+        const text = (streamingContent || '…');
+        return { _id: id, content: text, role: 'assistant', _creationTime: Date.now() };
+      }
+      return null;
+    })();
+
+    if (syntheticAssistant) {
+      return [...before, syntheticAssistant, ...after];
+    }
+    return chron;
+  }, [messagesNoDup, isStreaming, streamingContent, showStreamRow]);
+
+  // No programmatic scrolling: user controls the viewport.
+
+  // No jump-to-latest pill or auto-scroll
+
+  // No lingering timeouts; display is fully derived above.
 
   return (
     <View className="flex-1 bg-background">
-      <GestureDetector gesture={doubleTapGesture}>
+      <GestureDetector gesture={Gesture.Simultaneous(doubleTapGesture, singleTapDismiss)}>
         <View className="flex-1">
-          <TouchableWithoutFeedback onPress={() => Keyboard.dismiss()}>
-            <View
-              className="flex-1"
-              style={{ paddingBottom: navigationBarPadding }}
-            >
-              <ChatHeader
-                onOpenSidebar={onOpenSidebar}
-                activeChatType={activeChatType}
-                onChatTypeChange={onChatTypeChange}
-              />
+          {/* Fixed header overlay (icons stay visible while scrolling) */}
+          <View
+            style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}
+            pointerEvents="box-none"
+            onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
+          >
+            <ChatHeader
+              onOpenSidebar={onOpenSidebar}
+              activeChatType={activeChatType}
+              onChatTypeChange={onChatTypeChange}
+            />
+          </View>
 
-              <SessionStatusDisplay
-                isLoading={sessionSwitchLoading}
-                error={sessionError}
-                onDismissError={onDismissError}
-              />
-
-              {/* Offline Banner */}
-              {!isOnline && (
-                <View
-                  className="mx-4 mb-2 p-3 rounded-xl flex-row items-center gap-3 border border-border/20"
-                  style={{
-                    backgroundColor: colors.card,
-                  }}
-                >
-                  <WifiOff size={20} color={colors.error} />
-                  <Text
-                    className="flex-1 text-sm"
-                    style={{ color: colors.mutedForeground }}
-                  >
-                    You&apos;re offline - Chat history only
-                  </Text>
-                </View>
-              )}
-
-              {messages.length === 0 && !isTyping ? (
-                <View className="flex-1 items-center justify-center px-8">
-                  <View style={{ marginBottom: 185 }}>
-                    <ChatPersonalityHeader chatType={activeChatType} />
-                  </View>
-                </View>
-              ) : (
-                <View className="flex-1">
-                  <ChatMessageList
-                    flashListRef={flashListRef}
-                    messages={displayMessages}
-                    renderMessage={renderMessage}
-                    keyExtractor={keyExtractor}
-                    getItemType={getItemType}
-                    horizontalPadding={20}
-                    onScroll={handleScroll}
-                    onScrollBeginDrag={onScrollBeginDrag}
-                    onScrollEndDrag={onScrollEndDrag}
-                    onMomentumScrollBegin={onMomentumScrollBegin}
-                    onMomentumScrollEnd={onMomentumScrollEnd}
-                    extraData={{ showStreamRow, streamingContent }}
+          <View className="flex-1" style={{ paddingBottom: navigationBarPadding }}>
+            <ChatMessageList
+              flashListRef={flashListRef}
+              messages={displayMessages}
+              renderMessage={renderMessage}
+              keyExtractor={keyExtractor}
+              getItemType={getItemType}
+              horizontalPadding={20}
+              topPadding={headerHeight}
+              header={
+                <View onLayout={(e) => setListHeaderHeight(e.nativeEvent.layout.height)}>
+                  <SessionStatusDisplay
+                    isLoading={sessionSwitchLoading}
+                    error={sessionError}
+                    onDismissError={onDismissError}
                   />
+                  {!isOnline && (
+                    <View
+                      className="mx-4 mb-2 p-3 rounded-xl flex-row items-center gap-3 border border-border/20"
+                      style={{ backgroundColor: colors.card }}
+                    >
+                      <WifiOff size={20} color={colors.error} />
+                      <Text
+                        className="flex-1 text-sm"
+                        style={{ color: colors.mutedForeground }}
+                      >
+                        You&apos;re offline - Chat history only
+                      </Text>
+                    </View>
+                  )}
+                  {/* Removed personality header from list header; now centered overlay below */}
                 </View>
-              )}
-            </View>
-          </TouchableWithoutFeedback>
+              }
+            />
+
+          </View>
         </View>
       </GestureDetector>
 
@@ -468,6 +301,29 @@ export const ChatScreen = memo(function ChatScreen({
           isLoading={ventLoading}
         />
       )}
+
+      {/* Personality Center Overlay (coach/companion) */}
+      {(activeChatType === 'coach' || activeChatType === 'companion') &&
+        messages.length === 0 && (
+          <View
+            pointerEvents="none"
+            style={{
+              position: 'absolute',
+              top: headerHeight,
+              left: 0,
+              right: 0,
+              bottom: 0,
+              justifyContent: 'center',
+              alignItems: 'center',
+              // Nudge further upward to center better above composer
+              transform: [{ translateY: -80 }],
+            }}
+          >
+            <View className="px-8">
+              <ChatPersonalityHeader chatType={activeChatType} />
+            </View>
+          </View>
+        )}
     </View>
   );
 });

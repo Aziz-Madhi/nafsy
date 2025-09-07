@@ -84,12 +84,12 @@ export const ChatBubble = React.memo(function ChatBubble({
         index={index}
         staggerDelay="quick"
         springPreset="gentle"
-        className={cn('flex-row mb-5', justifyContent)}
+        className={cn('flex-row mb-3', justifyContent)}
       >
         {children}
       </StaggeredListItem>
     ) : (
-      <View className={cn('flex-row mb-5', justifyContent)}>{children}</View>
+      <View className={cn('flex-row mb-3', justifyContent)}>{children}</View>
     );
 
   return (

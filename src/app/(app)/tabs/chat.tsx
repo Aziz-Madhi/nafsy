@@ -23,6 +23,7 @@ import {
 import { ChatScreen } from '~/components/chat';
 import { useAuth } from '@clerk/clerk-expo';
 import { config } from '~/config/env';
+import { fetch as expoFetch } from 'expo/fetch';
 // HTTP streaming utilities removed in favor of Convex internal actions
 // Auth is handled by root _layout.tsx - all screens here are protected
 
@@ -145,6 +146,8 @@ export default function ChatTab() {
   // Streaming state for assistant output
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
+  // Optimistic user messages pending per-session (Option A)
+  const [pendingBySession, setPendingBySession] = useState<Record<string, Message[]>>({});
 
   // Auth for HTTP streaming call
   const { getToken } = useAuth();
@@ -157,104 +160,10 @@ export default function ChatTab() {
     return t === 'coach' ? 'main' : t === 'event' ? 'vent' : 'companion';
   }, []);
 
-  // Track current stream and smoothing queue for cleanup
-  const currentStreamRef = useRef<XMLHttpRequest | null>(null);
-  const deliveryTimerRef = useRef<any>(null);
-  const wordQueueRef = useRef<string[]>([]);
-  const partialBufferRef = useRef<string>('');
-  const streamDoneRef = useRef(false);
-  // Word pacing; can be overridden via env
-  const WORD_DELAY_MS = Number(
-    (process.env.EXPO_PUBLIC_STREAM_WORD_DELAY_MS as string | undefined) ||
-      (process.env.EXPO_PUBLIC_STREAM_CHAR_DELAY_MS as string | undefined) ||
-      110
-  );
-  // Speed multiplier: 0.8 = 20% faster than base delay
-  const SPEED_MULTIPLIER = Number(
-    (process.env.EXPO_PUBLIC_STREAM_SPEED_FACTOR as string | undefined) || 0.8
-  );
+  // Track current stream controller for cleanup (fetch-based streaming)
+  const currentAbortRef = useRef<AbortController | null>(null);
 
-  const resetSmoothing = useCallback(() => {
-    try {
-      if (deliveryTimerRef.current) clearTimeout(deliveryTimerRef.current);
-    } catch {}
-    deliveryTimerRef.current = null;
-    wordQueueRef.current = [];
-    partialBufferRef.current = '';
-    streamDoneRef.current = false;
-  }, []);
-
-  function clamp(n: number, lo: number, hi: number) {
-    return Math.max(lo, Math.min(hi, n));
-  }
-
-  function computeDelayForWord(word: string) {
-    const len = Math.max(1, word.trim().length);
-    const lengthFactor = clamp(len / 6, 0.8, 1.3);
-    const jitter = 0.9 + Math.random() * 0.2; // 0.9–1.1
-    const base = WORD_DELAY_MS * SPEED_MULTIPLIER;
-    return Math.max(20, Math.round(base * lengthFactor * jitter));
-  }
-
-  const startDelivery = useCallback(() => {
-    if (deliveryTimerRef.current) return;
-    const tick = () => {
-      const q = wordQueueRef.current;
-      if (q.length > 0) {
-        const next = q.shift() as string;
-        setStreamingContent((prev) => prev + next);
-        deliveryTimerRef.current = setTimeout(tick, computeDelayForWord(next));
-        return;
-      }
-      if (streamDoneRef.current) {
-        if (partialBufferRef.current.length > 0) {
-          const tail = partialBufferRef.current;
-          partialBufferRef.current = '';
-          setStreamingContent((prev) => prev + tail);
-          deliveryTimerRef.current = setTimeout(
-            tick,
-            computeDelayForWord(tail)
-          );
-          return;
-        }
-        deliveryTimerRef.current = null;
-        setIsStreaming(false);
-        return;
-      }
-      // Waiting for more tokens; short poll
-      deliveryTimerRef.current = setTimeout(
-        tick,
-        Math.max(20, Math.round((WORD_DELAY_MS * SPEED_MULTIPLIER) / 2))
-      );
-    };
-    deliveryTimerRef.current = setTimeout(
-      tick,
-      Math.max(10, Math.round(WORD_DELAY_MS * SPEED_MULTIPLIER))
-    );
-  }, [WORD_DELAY_MS, SPEED_MULTIPLIER]);
-
-  const enqueueDelta = useCallback(
-    (delta: string) => {
-      if (!delta) return;
-      // Accumulate and extract complete words (word + trailing space)
-      partialBufferRef.current += delta;
-      const pending = partialBufferRef.current;
-      const regex = /(\S+\s+)/g;
-      let match: RegExpExecArray | null;
-      let lastIndex = 0;
-      while ((match = regex.exec(pending)) !== null) {
-        wordQueueRef.current.push(match[0]);
-        lastIndex = regex.lastIndex;
-      }
-      if (lastIndex > 0) {
-        partialBufferRef.current = pending.slice(lastIndex);
-      }
-      startDelivery();
-    },
-    [startDelivery]
-  );
-
-  // Reliable RN SSE via XMLHttpRequest onprogress
+  // Streaming via fetch (expo/fetch) with incremental parsing
   const streamAssistant = useCallback(
     async (opts: { text: string; sessionId: string; chatType: ChatType }) => {
       const { text, sessionId, chatType } = opts;
@@ -268,49 +177,56 @@ export default function ChatTab() {
       const url = `${convexSiteUrl}/chat-stream`;
       const token = (await getToken({ template: 'convex' }).catch(() => null)) ||
         (await getToken().catch(() => null));
-
-      // Abort previous stream if any
+      // Abort any previous stream
       try {
-        currentStreamRef.current?.abort();
+        currentAbortRef.current?.abort();
       } catch {}
-      resetSmoothing();
+      const controller = new AbortController();
+      currentAbortRef.current = controller;
 
       setIsStreaming(true);
       setStreamingContent('');
 
-      const xhr = new XMLHttpRequest();
-      currentStreamRef.current = xhr;
-      let sseBuffer = '';
-      let lastIndex = 0;
+      try {
+        const res = await (expoFetch as unknown as typeof globalThis.fetch)(
+          url,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Accept: 'text/event-stream',
+              ...(token ? { Authorization: `Bearer ${token}` } : {}),
+            },
+            body: JSON.stringify({
+              chatType: mapToServerType(chatType),
+              sessionId,
+              message: text,
+              requestId: `${Date.now()}-${Math.random()
+                .toString(36)
+                .slice(2)}`,
+            }),
+            signal: controller.signal,
+          }
+        );
 
-      const closeStream = () => {
-        // Mark as done and let the delivery loop drain remaining tokens
-        streamDoneRef.current = true;
-        try {
-          xhr.abort();
-        } catch {}
-        if (currentStreamRef.current === xhr) currentStreamRef.current = null;
-        startDelivery();
-      };
-
-      xhr.onreadystatechange = () => {
-        if (xhr.readyState === xhr.DONE) {
-          closeStream();
+        if (!res.ok || !res.body) {
+          throw new Error(`Stream failed: ${res.status}`);
         }
-      };
 
-      xhr.onprogress = () => {
-        try {
-          const textResp = xhr.responseText || '';
-          if (textResp.length <= lastIndex) return;
-          const chunk = textResp.substring(lastIndex);
-          lastIndex = textResp.length;
+        const reader = res.body.getReader();
+        const decoder = new TextDecoder();
+        let buffer = '';
 
-          sseBuffer += chunk;
-          let idx;
-          while ((idx = sseBuffer.indexOf('\n\n')) !== -1) {
-            const eventBlock = sseBuffer.slice(0, idx);
-            sseBuffer = sseBuffer.slice(idx + 2);
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          buffer += decoder.decode(value, { stream: true });
+
+          let sepIndex: number;
+          while ((sepIndex = buffer.indexOf('\n\n')) !== -1) {
+            const eventBlock = buffer.slice(0, sepIndex);
+            buffer = buffer.slice(sepIndex + 2);
+
             const dataLines = eventBlock
               .split('\n')
               .filter((l) => l.startsWith('data: '))
@@ -318,13 +234,7 @@ export default function ChatTab() {
             if (dataLines.length === 0) continue;
             const data = dataLines.join('\n');
             if (data === '[DONE]') {
-              streamDoneRef.current = true;
-              // Flush any leftover fragment as a final token
-              if (partialBufferRef.current.length > 0) {
-                wordQueueRef.current.push(partialBufferRef.current);
-                partialBufferRef.current = '';
-              }
-              startDelivery();
+              // End-of-stream marker: let the outer finally handler clear streaming state once.
               continue;
             }
             try {
@@ -333,36 +243,18 @@ export default function ChatTab() {
                 evt?.type === 'text-delta' &&
                 typeof evt.textDelta === 'string'
               ) {
-                enqueueDelta(evt.textDelta);
+                setStreamingContent((prev) => prev + (evt.textDelta as string));
               }
             } catch {}
           }
-        } catch (e) {
-          console.warn('SSE onprogress error', e);
         }
-      };
-
-      xhr.onerror = () => {
-        console.error('SSE stream error');
-        closeStream();
-      };
-
-      try {
-        xhr.open('POST', url, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-        xhr.setRequestHeader('Accept', 'text/event-stream');
-        if (token) xhr.setRequestHeader('Authorization', `Bearer ${token}`);
-        xhr.send(
-          JSON.stringify({
-            chatType: mapToServerType(chatType),
-            sessionId,
-            message: text,
-            requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          })
-        );
       } catch (e) {
         console.error('Streaming failed', e);
-        closeStream();
+      } finally {
+        setIsStreaming(false);
+        if (currentAbortRef.current === controller) {
+          currentAbortRef.current = null;
+        }
       }
     },
     [getToken, mapToServerType]
@@ -372,12 +264,11 @@ export default function ChatTab() {
   useEffect(() => {
     return () => {
       try {
-        currentStreamRef.current?.abort();
+        currentAbortRef.current?.abort();
       } catch {}
-      resetSmoothing();
-      currentStreamRef.current = null;
+      currentAbortRef.current = null;
     };
-  }, [resetSmoothing]);
+  }, []);
 
   // Keep mutations for session creation and user upsert
   const upsertUser = useMutation(api.auth.upsertUser);
@@ -406,6 +297,13 @@ export default function ChatTab() {
       role: msg.role,
       _creationTime: msg._creationTime,
     })) || [];
+
+  // Merge optimistic pending user messages for the active session
+  const mergedMessages: Message[] = React.useMemo(() => {
+    const pendings = activeSessionId ? pendingBySession[activeSessionId] || [] : [];
+    if (!pendings.length) return messages;
+    return [...messages, ...pendings];
+  }, [messages, pendingBySession, activeSessionId]);
 
   // Title summarization is scheduled server-side after assistant replies
 
@@ -500,6 +398,21 @@ export default function ChatTab() {
             }
           }
 
+          // Add optimistic user bubble once we know the sessionId
+          const tempId = `_local:${Date.now()}-${Math.random().toString(36).slice(2)}`;
+          const optimistic: Message = {
+            _id: tempId,
+            content: text,
+            role: 'user',
+            _creationTime: Date.now(),
+          };
+          if (sessionId) {
+            setPendingBySession((s) => ({
+              ...s,
+              [sessionId!]: [...(s[sessionId!] || []), optimistic],
+            }));
+          }
+
           if (ENABLE_STREAMING) {
             // Start streaming from Convex HTTP endpoint (also persists the user message)
             await streamAssistant({
@@ -544,6 +457,7 @@ export default function ChatTab() {
       ENABLE_STREAMING,
       sendChatMessage,
       mapToServerType,
+      setPendingBySession,
     ]
   );
 
@@ -633,9 +547,28 @@ export default function ChatTab() {
 
   // streamingContent and isStreaming are stateful above
 
+  // Reconcile: when a real user message arrives at the tail, drop matching pending
+  useEffect(() => {
+    if (!activeSessionId) return;
+    const pendings = pendingBySession[activeSessionId];
+    if (!pendings || pendings.length === 0) return;
+    const last = messages[messages.length - 1];
+    if (!last || last.role !== 'user') return;
+    const idx = pendings.findIndex(
+      (p) => p.role === 'user' && p.content.trim() === (last.content || '').trim()
+    );
+    if (idx !== -1) {
+      setPendingBySession((s) => {
+        const arr = [...(s[activeSessionId] || [])];
+        arr.splice(idx, 1);
+        return { ...s, [activeSessionId]: arr };
+      });
+    }
+  }, [messages, activeSessionId, pendingBySession]);
+
   return (
     <ChatScreen
-      messages={messages}
+      messages={mergedMessages}
       showHistorySidebar={showHistorySidebar}
       sessionSwitchLoading={sessionSwitchLoading}
       sessionError={sessionError}

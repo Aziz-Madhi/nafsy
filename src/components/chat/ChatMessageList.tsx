@@ -3,7 +3,7 @@
  * Handles the main message list with FlashList
  */
 
-import React, { RefObject, memo } from 'react';
+import React, { RefObject, memo, useCallback } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
@@ -21,13 +21,14 @@ interface ChatMessageListProps {
   keyExtractor: (item: Message) => string;
   getItemType: (item: Message) => string;
   horizontalPadding: number;
+  header?: React.ReactNode;
   footer?: React.ReactNode;
+  topPadding?: number;
   onScroll?: (e: any) => void;
   onScrollBeginDrag?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onScrollEndDrag?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollBegin?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
   onMomentumScrollEnd?: (e: NativeSyntheticEvent<NativeScrollEvent>) => void;
-  extraData?: any;
 }
 
 export const ChatMessageList = memo(function ChatMessageList({
@@ -37,20 +38,38 @@ export const ChatMessageList = memo(function ChatMessageList({
   keyExtractor,
   getItemType,
   horizontalPadding,
+  header,
   footer,
+  topPadding = 0,
   onScroll,
   onScrollBeginDrag,
   onScrollEndDrag,
   onMomentumScrollBegin,
   onMomentumScrollEnd,
-  extraData,
 }: ChatMessageListProps) {
   // Content container style with proper bottom padding for floating tab bar with input
   const contentContainerStyle = {
     paddingHorizontal: horizontalPadding,
-    paddingTop: 0,
+    paddingTop: topPadding,
     paddingBottom: 160, // Account for floating tab bar with integrated input
   };
+
+  // Fallback handler: if scrollToIndex runs before measurement is ready,
+  // approximate with offset and retry shortly after.
+  const onScrollToIndexFailed = useCallback(
+    (info: { index: number; averageItemLength: number }) => {
+      const approxOffset = Math.max(0, info.index * (info.averageItemLength || 84));
+      try {
+        flashListRef.current?.scrollToOffset({ offset: approxOffset, animated: false } as any);
+      } catch {}
+      setTimeout(() => {
+        try {
+          flashListRef.current?.scrollToIndex({ index: info.index, animated: false, viewPosition: 0 } as any);
+        } catch {}
+      }, 32);
+    },
+    [flashListRef]
+  );
 
   return (
     <FlashList
@@ -59,12 +78,14 @@ export const ChatMessageList = memo(function ChatMessageList({
       renderItem={renderMessage}
       keyExtractor={keyExtractor}
       getItemType={getItemType}
-      estimatedItemSize={100}
+      estimatedItemSize={84}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={contentContainerStyle}
-      ListHeaderComponent={undefined}
+      ListHeaderComponent={header}
       ListFooterComponent={footer}
-      contentInsetAdjustmentBehavior="automatic"
+      contentInsetAdjustmentBehavior="never"
+      keyboardShouldPersistTaps="handled"
+      onScrollToIndexFailed={onScrollToIndexFailed as any}
       onScroll={onScroll}
       onScrollBeginDrag={onScrollBeginDrag as any}
       onScrollEndDrag={onScrollEndDrag as any}
@@ -72,7 +93,6 @@ export const ChatMessageList = memo(function ChatMessageList({
       onMomentumScrollEnd={onMomentumScrollEnd as any}
       // Ensure onScroll fires consistently for near-bottom detection
       scrollEventThrottle={16}
-      extraData={extraData}
       // Ensure scroll indicator doesn't overlap with floating tab bar
       scrollIndicatorInsets={{ bottom: 160 }}
     />
