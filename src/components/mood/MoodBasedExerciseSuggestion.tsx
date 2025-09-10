@@ -1,13 +1,14 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 import { View, Pressable } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { MotiView } from 'moti';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
 import type { Exercise } from '~/types';
-import ExerciseDetail from '~/components/exercises/ExerciseDetail';
 import { useTranslation } from '~/hooks/useTranslation';
 import { useAudioPlayer } from '~/providers/AudioPlayerProvider';
+import { useConvex } from 'convex/react';
+import { api } from '../../../convex/_generated/api';
 
 interface MoodBasedExerciseSuggestionProps {
   mood: 'happy' | 'sad' | 'anxious' | 'neutral' | 'angry';
@@ -22,8 +23,8 @@ export function MoodBasedExerciseSuggestion({
   const { t, currentLanguage } = useTranslation();
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
-  const [showExerciseDetail, setShowExerciseDetail] = useState(false);
   const { open: openAudio } = useAudioPlayer();
+  const convex = useConvex();
 
   // Get category colors - unified across themes using solid wellness BG tokens
   const getCategoryColors = useMemo(() => {
@@ -58,56 +59,45 @@ export function MoodBasedExerciseSuggestion({
   }, [exercise, colors]);
 
   const handlePress = () => {
-    if (exercise) {
-      impactAsync(ImpactFeedbackStyle.Medium);
-      // Open exercise detail modal directly
-      setShowExerciseDetail(true);
-    }
+    if (!exercise) return;
+    impactAsync(ImpactFeedbackStyle.Medium);
+    // Launch audio player immediately instead of opening detail modal
+    handleStartExercise(exercise);
   };
 
-  const handleCloseDetail = () => {
-    setShowExerciseDetail(false);
-  };
-
-  const handleStartExercise = (selectedExercise: Exercise) => {
-    // Launch audio mini-player (linking for audio source will be added later)
+  const handleStartExercise = async (selectedExercise: Exercise) => {
+    // Launch audio mini-player, resolving the signed audio URL when available
     try {
-      const minutes = parseInt(selectedExercise.duration);
-      openAudio({
-        id: String(selectedExercise.id),
-        title: selectedExercise.title,
-        subtitle: selectedExercise.category,
+      const minutes = parseInt(selectedExercise.duration as any);
+      const exerciseId =
+        (selectedExercise as any).id ?? (selectedExercise as any)._id ?? selectedExercise.id;
+
+      let signedUrl: string | null = null;
+      if ((selectedExercise as any).audioKey || (selectedExercise as any).audioKeyAr) {
+        try {
+          signedUrl = await convex.query(api.r2.getExerciseAudioUrl, {
+            exerciseId: exerciseId as any,
+            lang: (currentLanguage || '').startsWith('ar') ? 'ar' : 'en',
+            expiresIn: 60 * 60 * 6,
+          });
+        } catch {}
+      }
+
+      await openAudio({
+        id: String(exerciseId),
+        title:
+          (currentLanguage || '').startsWith('ar') && (selectedExercise as any).titleAr
+            ? ((selectedExercise as any).titleAr as string)
+            : (selectedExercise as any).title ?? '',
+        subtitle: t(`exercises.categories.${(selectedExercise as any).category}`),
         icon: (selectedExercise as any).icon,
         color: (selectedExercise as any).color,
         durationSeconds: Number.isFinite(minutes) ? minutes * 60 : undefined,
-      }).catch(() => {});
+        sourceUri: signedUrl ?? undefined,
+      });
     } catch {}
-    setShowExerciseDetail(false);
   };
 
-  // Enrich exercise data with missing fields for ExerciseDetail
-  const enrichedExercise = useMemo(() => {
-    if (!exercise) return null;
-
-    // Add missing fields that ExerciseDetail expects
-    const categoryIcons: Record<string, string> = {
-      mindfulness: '🧘',
-      breathing: '🌬️',
-      movement: '🏃',
-      journaling: '📝',
-      relaxation: '😌',
-      reminders: '🔔',
-    };
-
-    return {
-      ...exercise,
-      icon: categoryIcons[exercise.category] || '🧘',
-      color: getCategoryColors.base,
-      // Convert any array fields if they exist
-      benefits: (exercise as any).benefits || [],
-      steps: (exercise as any).instructions || [],
-    };
-  }, [exercise, getCategoryColors]);
 
   if (isLoading || !exercise) {
     // Loading skeleton
@@ -130,6 +120,8 @@ export function MoodBasedExerciseSuggestion({
       </View>
     );
   }
+
+  const isArabic = (currentLanguage || '').startsWith('ar');
 
   return (
     <MotiView
@@ -165,15 +157,18 @@ export function MoodBasedExerciseSuggestion({
             {t('mood.exerciseSuggestion.recommendedForYou')}
           </Text>
 
-          {/* Category display - minimal line design */}
-          <View className="flex-row items-center mb-3">
+          {/* Category display - mirror layout for RTL */}
+          <View
+            className="items-center mb-3"
+            style={{ flexDirection: isArabic ? 'row-reverse' : 'row' }}
+          >
             <View
               style={{
                 height: 1,
                 width: 24,
                 backgroundColor: getCategoryColors.text,
-                marginRight: 10,
                 opacity: 0.3,
+                marginHorizontal: 10,
               }}
             />
             <Text
@@ -182,6 +177,8 @@ export function MoodBasedExerciseSuggestion({
               style={{
                 color: getCategoryColors.text,
                 letterSpacing: 1.5,
+                textAlign: isArabic ? 'right' : 'left',
+                writingDirection: isArabic ? 'rtl' : 'ltr',
               }}
             >
               {t(`exercises.categories.${exercise.category}`)}
@@ -191,8 +188,8 @@ export function MoodBasedExerciseSuggestion({
                 height: 1,
                 width: 24,
                 backgroundColor: getCategoryColors.text,
-                marginLeft: 10,
                 opacity: 0.3,
+                marginHorizontal: 10,
               }}
             />
           </View>
@@ -312,15 +309,7 @@ export function MoodBasedExerciseSuggestion({
         </View>
       </View>
 
-      {/* Exercise Detail Modal */}
-      {enrichedExercise && (
-        <ExerciseDetail
-          exercise={enrichedExercise as Exercise}
-          visible={showExerciseDetail}
-          onClose={handleCloseDetail}
-          onStart={handleStartExercise}
-        />
-      )}
+      {/* No detail modal; pressing the button launches the audio player directly */}
     </MotiView>
   );
 }

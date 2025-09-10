@@ -216,7 +216,22 @@ export const AudioPlayerProvider = ({ children }: { children: React.ReactNode })
 
   // Map exercise category to the same background used on category cards
   const bgSource = useMemo(() => {
-    const key = (track?.subtitle || '').toLowerCase() as WellnessCategory;
+    // subtitle is localized (e.g., "Journaling"/"كتابة اليوميات").
+    // Map using internal keys when possible; otherwise try best-effort to match.
+    const raw = (track?.subtitle || '').toLowerCase();
+    const map: Record<string, WellnessCategory> = {
+      breathing: 'breathing',
+      mindfulness: 'mindfulness',
+      movement: 'movement',
+      journaling: 'journaling',
+      relaxation: 'relaxation',
+      'التنفس': 'breathing',
+      'اليقظة الذهنية': 'mindfulness',
+      'الحركة': 'movement',
+      'كتابة اليوميات': 'journaling',
+      'الاسترخاء': 'relaxation',
+    } as any;
+    const key = (map[raw] || raw) as WellnessCategory;
     return (CATEGORY_BACKGROUNDS as Record<string, any>)[key] || null;
   }, [track?.subtitle]);
 

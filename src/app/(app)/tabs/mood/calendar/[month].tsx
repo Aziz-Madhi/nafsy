@@ -24,6 +24,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { getMoodPixelStyle } from '~/lib/mood-colors';
 import { Frown, Zap, Minus, Smile, Flame } from 'lucide-react-native';
 import { useTranslation } from '~/hooks/useTranslation';
+import { ar, enUS } from 'date-fns/locale';
 
 const renderMoodIcon = (moodId: string, size: number = 32, color?: string) => {
   const iconProps = { size, color: color || '#6B7280', fill: 'none' };
@@ -306,7 +307,9 @@ export default function CalendarModal() {
               </Text>
             </Pressable>
             <Text variant="heading" className="text-[#5A4A3A] font-semibold">
-              {format(currentMonth, 'MMMM yyyy')}
+              {format(currentMonth, 'MMMM yyyy', {
+                locale: (t as any).i18n?.language === 'ar' ? (ar as any) : (enUS as any),
+              })}
             </Text>
             <Pressable
               onPress={handleNextMonth}
@@ -367,7 +370,9 @@ export default function CalendarModal() {
                 variant="subhead"
                 className="text-gray-600 font-semibold mb-3"
               >
-                {format(selectedDate, 'EEEE, MMMM d, yyyy')}
+                {format(selectedDate, 'EEEE, MMMM d, yyyy', {
+                  locale: (t as any).i18n?.language === 'ar' ? (ar as any) : (enUS as any),
+                })}
               </Text>
               {(() => {
                 const selectedMoods = getMoodsForDate(selectedDate);

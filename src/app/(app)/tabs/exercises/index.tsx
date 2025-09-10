@@ -82,7 +82,7 @@ function getBenefitsForCategory(
 }
 
 export default function ExercisesIndex() {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { open: openAudio } = useAudioPlayer();
   const convex = useConvex();
 
@@ -202,6 +202,7 @@ export default function ExercisesIndex() {
         try {
           signedUrl = await convex.query(api.r2.getExerciseAudioUrl, {
             exerciseId: dailyExercise.id as any,
+            lang: (currentLanguage || '').startsWith('ar') ? 'ar' : 'en',
             expiresIn: 60 * 60 * 6,
           });
         } catch {}
@@ -210,8 +211,11 @@ export default function ExercisesIndex() {
       const minutes = parseInt(dailyExercise.duration);
       await openAudio({
         id: String(dailyExercise.id),
-        title: dailyExercise.title,
-        subtitle: dailyExercise.category,
+        title:
+          (currentLanguage || '').startsWith('ar') && dailyExercise.titleAr
+            ? (dailyExercise.titleAr as any)
+            : dailyExercise.title,
+        subtitle: t(`exercises.categories.${dailyExercise.category}`),
         icon: dailyExercise.icon,
         color: dailyExercise.color,
         durationSeconds: Number.isFinite(minutes) ? minutes * 60 : undefined,
@@ -224,7 +228,7 @@ export default function ExercisesIndex() {
         feedback: t('exercises.exerciseCompleted'),
       });
     } catch {}
-  }, [dailyExercise, convex, openAudio, recordCompletion, t]);
+  }, [dailyExercise, convex, openAudio, recordCompletion, t, currentLanguage]);
 
   return (
     <>

@@ -878,11 +878,18 @@ export default function MoodIndex() {
                   {/* Supporting text */}
                   <Text
                     variant="body"
-                    className="text-center px-6"
+                    className={`text-center ${i18n.language === 'ar' ? 'px-3' : 'px-6'}`}
+                    numberOfLines={i18n.language === 'ar' ? 1 : undefined}
+                    adjustsFontSizeToFit={i18n.language === 'ar'}
+                    minimumFontScale={0.96}
                     style={{
                       fontStyle: 'italic',
+                      // In Arabic, give the text a bit more horizontal space
+                      // to avoid unnecessary wrapping of the final word.
+                      paddingHorizontal: i18n.language === 'ar' ? 12 : 24,
+                      // Remove extra character spacing that can cause earlier wraps in AR
+                      letterSpacing: i18n.language === 'ar' ? 0 : undefined,
                       color: '#1F2937',
-                      letterSpacing: 0,
                     }}
                   >
                     {selectedEncouragingMessage.suffix}

@@ -17,6 +17,7 @@ import {
   endOfWeek,
   eachDayOfInterval,
 } from 'date-fns';
+import { ar, enUS } from 'date-fns/locale';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTranslation } from '~/hooks/useTranslation';
 import { mapMoodToRating } from '~/lib/mood-exercise-mapping';
@@ -40,7 +41,7 @@ export function PixelCalendar({
   onPress,
   currentDate = new Date(),
 }: PixelCalendarProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   // Animation for entire calendar
   const opacity = useSharedValue(0);
 
@@ -187,7 +188,9 @@ export function PixelCalendar({
             variant="body"
             className="font-semibold text-foreground text-lg"
           >
-            {format(currentDate, 'MMMM yyyy')}
+            {format(currentDate, 'MMMM yyyy', {
+              locale: i18n.language === 'ar' ? (ar as any) : (enUS as any),
+            })}
           </Text>
           {onPress && (
             <Text variant="caption1" className="text-muted-foreground text-sm">

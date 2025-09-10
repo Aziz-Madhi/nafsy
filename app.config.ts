@@ -3,7 +3,8 @@ import { ExpoConfig, ConfigContext } from 'expo/config';
 export default ({ config }: ConfigContext): ExpoConfig => ({
   ...config,
   name: 'Nafsy',
-  slug: 'nafsy',
+  slug: 'naf',
+  owner: 'azizred',
   scheme: 'nafsy',
   version: '1.0.0',
   orientation: 'portrait',
@@ -72,5 +73,8 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     // Environment variables for production builds
     clerkPublishableKey: process.env.EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY,
     convexUrl: process.env.EXPO_PUBLIC_CONVEX_URL,
+    eas: {
+      projectId: '5d6b098c-1f34-4e04-b6c3-64efd9f9af74',
+    },
   },
 });

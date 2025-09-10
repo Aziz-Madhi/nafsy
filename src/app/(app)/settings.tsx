@@ -338,24 +338,23 @@ const SettingsScreen = React.memo(function SettingsScreen() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
       >
-        {/* User Info - Compact - Avatar temporarily removed to fix infinite loop */}
+        {/* User Info - Highlighted Card */}
         {user && (
-          <Animated.View
-            entering={FadeInDown.springify()}
-            className="px-4 py-4 flex-row items-center border-b border-border/10"
-          >
-            <View className="h-12 w-12 me-3 rounded-full bg-primary/20 items-center justify-center">
-              <Text className="text-primary text-lg font-semibold">
-                {user.fullName?.charAt(0) || user.firstName?.charAt(0) || 'U'}
-              </Text>
-            </View>
-            <View className="flex-1">
-              <Text className="text-[16px] font-semibold text-foreground">
-                {user.fullName || t('profile.settings.anonymousUser')}
-              </Text>
-              <Text className="text-[14px] text-muted-foreground">
-                {user.emailAddresses?.[0]?.emailAddress}
-              </Text>
+          <Animated.View entering={FadeInDown.springify()} className="px-4 mt-4">
+            <View className="rounded-2xl p-4 bg-black/[0.03] dark:bg-white/[0.03] flex-row items-center">
+              <View className="h-12 w-12 me-3 rounded-full items-center justify-center bg-primary/15">
+                <Text className="text-primary text-lg font-semibold">
+                  {user.fullName?.charAt(0) || user.firstName?.charAt(0) || 'U'}
+                </Text>
+              </View>
+              <View className="flex-1">
+                <Text className="text-[16px] font-semibold text-foreground">
+                  {user.fullName || t('profile.settings.anonymousUser')}
+                </Text>
+                <Text className="text-[14px] text-muted-foreground">
+                  {user.emailAddresses?.[0]?.emailAddress}
+                </Text>
+              </View>
             </View>
           </Animated.View>
         )}

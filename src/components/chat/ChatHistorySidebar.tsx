@@ -229,8 +229,18 @@ export function ChatHistorySidebar({
 
   const handleSettingsPress = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
-    router.push('/settings');
-  }, []);
+    // Close the sidebar first to ensure its Modal fully unmounts
+    // before navigating to settings (prevents invisible overlay blocking touches)
+    try {
+      setSkipExitAnimation(false);
+      // If parent provided onClose, invoke it to hide immediately
+      onClose?.();
+    } catch {}
+    // Navigate after the exit animation duration
+    setTimeout(() => {
+      router.push('/settings');
+    }, 220);
+  }, [onClose]);
 
   const [modalVisible, setModalVisible] = React.useState(false);
 
