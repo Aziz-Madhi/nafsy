@@ -250,6 +250,10 @@
       "typing": "AI is typing...",
       "thinking": "AI is thinking..."
     },
+    "limit": {
+      "weeklyReached": "You've reached your weekly message limit. Please check back next week.",
+      "rateLimited": "You're sending messages too fast. Please try again later."
+    },
     "responses": {
       "default": "I'm here to listen. Let it out.",
       "anxiety": "I understand you're feeling anxious. That can be really challenging. Would you like to try a breathing exercise together, or would you prefer to talk about what's making you feel this way?",

@@ -1,7 +1,13 @@
 import React, { useState } from 'react';
 import { View, Pressable, Image } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Shield, Heart, Brain, TrendingUp } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  Shield,
+  Heart,
+  Brain,
+  TrendingUp,
+} from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { useMutation } from 'convex/react';
@@ -16,7 +22,9 @@ import { useOnboardingStore } from '~/store/useOnboardingStore';
 export default function OnboardingCompleteScreen() {
   const colors = useColors();
   const { t } = useTranslation();
-  const setHasCompletedOnboarding = useAppStore((s) => s.setHasCompletedOnboarding);
+  const setHasCompletedOnboarding = useAppStore(
+    (s) => s.setHasCompletedOnboarding
+  );
 
   // Answers
   const name = useOnboardingStore((s) => s.name);
@@ -45,10 +53,14 @@ export default function OnboardingCompleteScreen() {
       payload.onboardingCompleted = true;
       if (moodMonth) payload.moodLastMonth = moodMonth;
       if (Array.isArray(goals) && goals.length) payload.goals = goals;
-      if (Array.isArray(selfImage) && selfImage.length) payload.selfImage = selfImage;
-      if (Array.isArray(helpAreas) && helpAreas.length) payload.helpAreas = helpAreas;
-      if (Array.isArray(struggles) && struggles.length) payload.struggles = struggles;
-      if (additionalNotes && additionalNotes.trim().length > 0) payload.additionalNotes = additionalNotes.trim();
+      if (Array.isArray(selfImage) && selfImage.length)
+        payload.selfImage = selfImage;
+      if (Array.isArray(helpAreas) && helpAreas.length)
+        payload.helpAreas = helpAreas;
+      if (Array.isArray(struggles) && struggles.length)
+        payload.struggles = struggles;
+      if (additionalNotes && additionalNotes.trim().length > 0)
+        payload.additionalNotes = additionalNotes.trim();
 
       try {
         await updateUser(payload);
@@ -57,7 +69,11 @@ export default function OnboardingCompleteScreen() {
       }
 
       // Record onboarding mood as today's mood entry so the app reflects it immediately
-      if (typeof moodRating === 'number' && moodRating >= 1 && moodRating <= 10) {
+      if (
+        typeof moodRating === 'number' &&
+        moodRating >= 1 &&
+        moodRating <= 10
+      ) {
         try {
           await createMood({ rating: Math.round(moodRating) });
         } catch (err) {
@@ -83,10 +99,20 @@ export default function OnboardingCompleteScreen() {
       </View>
 
       <View className="flex-1 px-5 items-center">
-        <View className="w-full" style={{ height: 174, marginBottom: 16, position: 'relative' }}>
+        <View
+          className="w-full"
+          style={{ height: 174, marginBottom: 16, position: 'relative' }}
+        >
           <Image
             source={require('../../../assets/Cards/All set icon..png')}
-            style={{ width: 300, height: 300, resizeMode: 'contain', position: 'absolute', top: -73, alignSelf: 'center' }}
+            style={{
+              width: 300,
+              height: 300,
+              resizeMode: 'contain',
+              position: 'absolute',
+              top: -73,
+              alignSelf: 'center',
+            }}
           />
         </View>
 
@@ -103,8 +129,14 @@ export default function OnboardingCompleteScreen() {
           >
             {t('onboarding.complete.title', "You're all set")}
           </Text>
-          <Text className="text-muted-foreground mt-2 text-center" style={{ textAlign: 'center' }}>
-            {t('onboarding.complete.subtitle', "We'll tailor your experience based on your answers.")}
+          <Text
+            className="text-muted-foreground mt-2 text-center"
+            style={{ textAlign: 'center' }}
+          >
+            {t(
+              'onboarding.complete.subtitle',
+              "We'll tailor your experience based on your answers."
+            )}
           </Text>
         </View>
 
@@ -114,16 +146,28 @@ export default function OnboardingCompleteScreen() {
               <View className="flex-1">
                 <InfoCard
                   icon={Shield}
-                  title={t('onboarding.complete.privacy.title', 'Privacy First')}
-                  description={t('onboarding.complete.privacy.description', 'Your data is encrypted and never shared.')}
+                  title={t(
+                    'onboarding.complete.privacy.title',
+                    'Privacy First'
+                  )}
+                  description={t(
+                    'onboarding.complete.privacy.description',
+                    'Your data is encrypted and never shared.'
+                  )}
                   iconColor="#10B981"
                 />
               </View>
               <View className="flex-1">
                 <InfoCard
                   icon={Heart}
-                  title={t('onboarding.complete.companion.title', 'Daily Companion')}
-                  description={t('onboarding.complete.companion.description', 'Support for wellness. Not a replacement for professional care.')}
+                  title={t(
+                    'onboarding.complete.companion.title',
+                    'Daily Companion'
+                  )}
+                  description={t(
+                    'onboarding.complete.companion.description',
+                    'Support for wellness. Not a replacement for professional care.'
+                  )}
                   iconColor="#EC4899"
                 />
               </View>
@@ -132,16 +176,28 @@ export default function OnboardingCompleteScreen() {
               <View className="flex-1">
                 <InfoCard
                   icon={Brain}
-                  title={t('onboarding.complete.learning.title', 'Learns With You')}
-                  description={t('onboarding.complete.learning.description', 'Nafsy adapts with your mood logs and chats.')}
+                  title={t(
+                    'onboarding.complete.learning.title',
+                    'Learns With You'
+                  )}
+                  description={t(
+                    'onboarding.complete.learning.description',
+                    'Nafsy adapts with your mood logs and chats.'
+                  )}
                   iconColor="#8B5CF6"
                 />
               </View>
               <View className="flex-1">
                 <InfoCard
                   icon={TrendingUp}
-                  title={t('onboarding.complete.progress.title', 'Weekly Progress')}
-                  description={t('onboarding.complete.progress.description', 'Stay consistent to see smarter support each week.')}
+                  title={t(
+                    'onboarding.complete.progress.title',
+                    'Weekly Progress'
+                  )}
+                  description={t(
+                    'onboarding.complete.progress.description',
+                    'Stay consistent to see smarter support each week.'
+                  )}
                   iconColor="#F59E0B"
                 />
               </View>
@@ -163,9 +219,16 @@ export default function OnboardingCompleteScreen() {
           >
             <ChevronLeft size={20} color={colors.foreground} />
           </Button>
-          <Button size="lg" className="rounded-xl bg-brand-dark-blue flex-1" onPress={onFinish} disabled={saving}>
+          <Button
+            size="lg"
+            className="rounded-xl bg-brand-dark-blue flex-1"
+            onPress={onFinish}
+            disabled={saving}
+          >
             <Text className="text-primary-foreground text-base font-semibold">
-              {saving ? t('onboarding.complete.saving', 'Saving...') : t('onboarding.complete.finish', 'Finish')}
+              {saving
+                ? t('onboarding.complete.saving', 'Saving...')
+                : t('onboarding.complete.finish', 'Finish')}
             </Text>
           </Button>
         </View>
@@ -198,7 +261,11 @@ function StepDots({ current, total }: { current: number; total: number }) {
             <View
               key={i}
               className={isActive ? 'bg-brand-dark-blue' : 'bg-card'}
-              style={{ width: isActive ? 18 : 8, height: 8, borderRadius: 9999 }}
+              style={{
+                width: isActive ? 18 : 8,
+                height: 8,
+                borderRadius: 9999,
+              }}
             />
           );
         })}
@@ -221,13 +288,20 @@ function InfoCard({
   const colors = useColors();
   const { isRTL } = useTranslation();
   return (
-    <View className="rounded-xl p-4 border border-transparent bg-black/[0.03] dark:bg-white/[0.03]" style={{ height: 152 }}>
+    <View
+      className="rounded-xl p-4 border border-transparent bg-black/[0.03] dark:bg-white/[0.03]"
+      style={{ height: 152 }}
+    >
       <View className="gap-2.5">
         <View
           className="items-center gap-2"
           style={{ flexDirection: isRTL ? 'row-reverse' : 'row' }}
         >
-          <Icon size={16} color={iconColor ?? colors.foreground} strokeWidth={2} />
+          <Icon
+            size={16}
+            color={iconColor ?? colors.foreground}
+            strokeWidth={2}
+          />
           <Text
             className="text-foreground font-semibold text-[15px]"
             numberOfLines={2}

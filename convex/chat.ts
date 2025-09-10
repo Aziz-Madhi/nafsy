@@ -1,11 +1,17 @@
 import { v } from 'convex/values';
-import { mutation, query, internalAction, internalQuery } from './_generated/server';
+import {
+  mutation,
+  query,
+  internalAction,
+  internalQuery,
+} from './_generated/server';
 import { updateChatSession } from './chatUtils';
 import { getAuthenticatedUser } from './authUtils';
 import { paginationOptsValidator } from 'convex/server';
 import { internal, api } from './_generated/api';
 import { Id } from './_generated/dataModel';
 import { buildResponsesPayload } from './openaiResponses';
+import appRateLimiter, { tryConsumeGlobalTopup } from './rateLimit';
 
 // Chat type enum for unified functions
 const ChatType = v.union(
@@ -32,6 +38,23 @@ export const sendChatMessage = mutation({
   ),
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
+
+    // Enforce per-user daily chat message limit (user messages only)
+    if (args.role === 'user') {
+      const status = await appRateLimiter.limit(ctx, 'chatWeekly', {
+        key: user._id,
+      });
+      if (!status.ok) {
+        const consumed = await tryConsumeGlobalTopup(ctx as any);
+        if (!consumed) {
+          // Re-run with throws to surface 429 consistently
+          await appRateLimiter.limit(ctx, 'chatWeekly', {
+            key: user._id,
+            throws: true,
+          });
+        }
+      }
+    }
 
     // Create session ID if not provided
     const sessionId =
@@ -122,16 +145,12 @@ export const sendChatMessage = mutation({
     // Schedule AI assistant reply only for user messages
     if (args.role === 'user') {
       try {
-        await ctx.scheduler.runAfter(
-          0,
-          internal.chat.generateAssistantReply,
-          {
-            userId: user._id,
-            sessionId,
-            chatType: args.type,
-            requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
-          }
-        );
+        await ctx.scheduler.runAfter(0, internal.chat.generateAssistantReply, {
+          userId: user._id,
+          sessionId,
+          chatType: args.type,
+          requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+        });
       } catch (e) {
         // Best-effort scheduling; don't block user message
         console.warn('Failed to schedule assistant reply', e);
@@ -703,7 +722,9 @@ export const _getMessagesForSession = internalQuery({
           return await ctx.db
             .query('ventChatMessages')
             .withIndex('by_user_session', (q) =>
-              q.eq('userId', args.userId).eq('sessionId', latestSession.sessionId)
+              q
+                .eq('userId', args.userId)
+                .eq('sessionId', latestSession.sessionId)
             )
             .order('asc')
             .take(limit);
@@ -784,17 +805,24 @@ export const generateAssistantReply = internalAction({
 
     // Map chatType to personality
     const personality =
-      chatType === 'main' ? 'coach' : chatType === 'companion' ? 'companion' : 'vent';
+      chatType === 'main'
+        ? 'coach'
+        : chatType === 'companion'
+          ? 'companion'
+          : 'vent';
 
     // For new sessions, try to ensure a current weekly summary exists (best-effort)
     try {
       const isNewSession = !formatted.some((m) => m.role === 'assistant');
       if (isNewSession) {
-        await ctx.runAction(internal.personalization.ensureCurrentSummaryAction, {
-          userId: userId as Id<'users'>,
-        });
+        await ctx.runAction(
+          internal.personalization.ensureCurrentSummaryAction,
+          {
+            userId: userId as Id<'users'>,
+          }
+        );
       }
-    } catch (e) {
+    } catch {
       // ignore
     }
 
@@ -820,14 +848,16 @@ export const generateAssistantReply = internalAction({
         stream: false,
         input: (payload as any).input,
       };
-      if ((payload as any).prompt) responsesPayload.prompt = (payload as any).prompt;
+      if ((payload as any).prompt)
+        responsesPayload.prompt = (payload as any).prompt;
       if ((payload as any).instructions)
         responsesPayload.instructions = (payload as any).instructions;
       if (modelConfig?.temperature !== undefined)
         responsesPayload.temperature = modelConfig.temperature;
       if (modelConfig?.maxTokens !== undefined)
         responsesPayload.max_output_tokens = modelConfig.maxTokens;
-      if (modelConfig?.topP !== undefined) responsesPayload.top_p = modelConfig.topP;
+      if (modelConfig?.topP !== undefined)
+        responsesPayload.top_p = modelConfig.topP;
 
       const res = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
@@ -869,13 +899,10 @@ export const generateAssistantReply = internalAction({
 
       // Schedule title summarization once we have at least 3 messages
       try {
-        // Soft rate limit to avoid noisy logs on expected denials
-        const rl = await ctx.runMutation(internal.chatStreaming.tryRateLimit, {
-          key: `title:summarize:${userId}:${sessionId}`,
-          limit: 1,
-          windowMs: 10_000,
+        const status = await appRateLimiter.limit(ctx, 'titleSummarize', {
+          key: `${userId}:${sessionId}` as any,
         });
-        if (rl?.allowed) {
+        if (status.ok) {
           await ctx.scheduler.runAfter(
             0,
             internal.titleSummarization.generateAndApplyTitle,

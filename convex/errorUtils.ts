@@ -1,4 +1,4 @@
-import { QueryCtx, MutationCtx } from './_generated/server';
+// Note: legacy QueryCtx/MutationCtx imports removed
 
 /**
  * Standard error types for the application
@@ -122,33 +122,12 @@ export function validateInput(
  */
 const rateLimitStore = new Map<string, { count: number; resetTime: number }>();
 
-export function checkRateLimit(
-  key: string,
-  limit: number = 10,
-  windowMs: number = 60000 // 1 minute
-): void {
-  const now = Date.now();
-
-  // Clean up expired entries when rate limit is checked
-  cleanupRateLimit();
-
-  const entry = rateLimitStore.get(key);
-
-  if (!entry || now > entry.resetTime) {
-    rateLimitStore.set(key, { count: 1, resetTime: now + windowMs });
-    return;
-  }
-
-  if (entry.count >= limit) {
-    throw new AppError(
-      ErrorType.RATE_LIMITED,
-      'Rate limit exceeded. Please try again later.',
-      429,
-      { limit, windowMs, resetTime: entry.resetTime }
-    );
-  }
-
-  entry.count++;
+// Deprecated in favor of @convex-dev/rate-limiter component
+export function checkRateLimit(): void {
+  throw new AppError(
+    ErrorType.INTERNAL_ERROR,
+    'checkRateLimit is deprecated. Use appRateLimiter from rateLimit.ts.'
+  );
 }
 
 /**
@@ -172,40 +151,10 @@ export function cleanupRateLimit(): void {
  * - Key format recommendation: `${operation}:${subject}`
  * - Must be called from a mutation context (writes are required).
  */
-export async function checkRateLimitDb(
-  ctx: MutationCtx,
-  key: string,
-  limit: number = 10,
-  windowMs: number = 60000
-): Promise<void> {
-  const now = Date.now();
-  const windowStart = now - (now % windowMs);
-
-  // Find existing counter for this key+window
-  const existing = await ctx.db
-    .query('rateLimits')
-    .withIndex('by_key_window', (q) =>
-      q.eq('key', key).eq('windowStart', windowStart)
-    )
-    .first();
-
-  if (!existing) {
-    await ctx.db.insert('rateLimits', {
-      key,
-      windowStart,
-      count: 1,
-    });
-    return;
-  }
-
-  if (existing.count >= limit) {
-    throw new AppError(
-      ErrorType.RATE_LIMITED,
-      'Rate limit exceeded. Please try again later.',
-      429,
-      { limit, windowMs, resetTime: windowStart + windowMs }
-    );
-  }
-
-  await ctx.db.patch(existing._id, { count: existing.count + 1 });
+// Deprecated in favor of @convex-dev/rate-limiter component
+export async function checkRateLimitDb(): Promise<void> {
+  throw new AppError(
+    ErrorType.INTERNAL_ERROR,
+    'checkRateLimitDb is deprecated. Use appRateLimiter from rateLimit.ts.'
+  );
 }

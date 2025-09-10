@@ -70,10 +70,15 @@ export function MoodBasedExerciseSuggestion({
     try {
       const minutes = parseInt(selectedExercise.duration as any);
       const exerciseId =
-        (selectedExercise as any).id ?? (selectedExercise as any)._id ?? selectedExercise.id;
+        (selectedExercise as any).id ??
+        (selectedExercise as any)._id ??
+        selectedExercise.id;
 
       let signedUrl: string | null = null;
-      if ((selectedExercise as any).audioKey || (selectedExercise as any).audioKeyAr) {
+      if (
+        (selectedExercise as any).audioKey ||
+        (selectedExercise as any).audioKeyAr
+      ) {
         try {
           signedUrl = await convex.query(api.r2.getExerciseAudioUrl, {
             exerciseId: exerciseId as any,
@@ -86,10 +91,13 @@ export function MoodBasedExerciseSuggestion({
       await openAudio({
         id: String(exerciseId),
         title:
-          (currentLanguage || '').startsWith('ar') && (selectedExercise as any).titleAr
+          (currentLanguage || '').startsWith('ar') &&
+          (selectedExercise as any).titleAr
             ? ((selectedExercise as any).titleAr as string)
-            : (selectedExercise as any).title ?? '',
-        subtitle: t(`exercises.categories.${(selectedExercise as any).category}`),
+            : ((selectedExercise as any).title ?? ''),
+        subtitle: t(
+          `exercises.categories.${(selectedExercise as any).category}`
+        ),
         icon: (selectedExercise as any).icon,
         color: (selectedExercise as any).color,
         durationSeconds: Number.isFinite(minutes) ? minutes * 60 : undefined,
@@ -97,7 +105,6 @@ export function MoodBasedExerciseSuggestion({
       });
     } catch {}
   };
-
 
   if (isLoading || !exercise) {
     // Loading skeleton

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Stack, Redirect } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { View, ActivityIndicator } from 'react-native';
@@ -13,7 +13,6 @@ import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { Text } from '~/components/ui/text';
-import { useRef } from 'react';
 
 export default function AppLayout() {
   const colors = useColors();
@@ -42,9 +41,9 @@ export default function AppLayout() {
     if (!isSignedIn || !isLoaded) return;
 
     // Create/update user if doesn't exist or needs update
-    const createOrUpdateUser = async (
-      opts?: { markOnboardingPending?: boolean }
-    ): Promise<boolean> => {
+    const createOrUpdateUser = async (opts?: {
+      markOnboardingPending?: boolean;
+    }): Promise<boolean> => {
       if (clerkUser?.id && !isCreatingUser) {
         // Debounce duplicate attempts for the same user id
         const now = Date.now();
@@ -63,7 +62,9 @@ export default function AppLayout() {
             email: clerkUser.emailAddresses?.[0]?.emailAddress || '',
             // Do not set name from OAuth providers; wait for onboarding name
             avatarUrl: clerkUser.imageUrl || undefined,
-            ...(opts?.markOnboardingPending ? { onboardingCompleted: false } : {}),
+            ...(opts?.markOnboardingPending
+              ? { onboardingCompleted: false }
+              : {}),
           } as any);
         } catch (error) {
           console.error('Failed to upsert user:', error);
@@ -125,7 +126,9 @@ export default function AppLayout() {
         }}
       >
         <ActivityIndicator size="large" color={colors.primary} />
-        <Text className="text-muted-foreground mt-4">Loading your account…</Text>
+        <Text className="text-muted-foreground mt-4">
+          Loading your account…
+        </Text>
       </View>
     );
   }

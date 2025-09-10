@@ -1,5 +1,12 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
-import { View, Pressable, ImageBackground, Dimensions, Image, Animated } from 'react-native';
+import {
+  View,
+  Pressable,
+  ImageBackground,
+  Dimensions,
+  Image,
+  Animated,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VerticalList } from '~/components/ui/GenericList';
 import { Text } from '~/components/ui/text';
@@ -128,7 +135,14 @@ function CategoryExerciseListComponent({
       const heroHeight = Math.max(180, Math.floor(fullHeight * 0.6));
 
       return (
-        <View style={{ paddingTop: 0, marginTop: 0, marginBottom: 16, overflow: 'hidden' }}>
+        <View
+          style={{
+            paddingTop: 0,
+            marginTop: 0,
+            marginBottom: 16,
+            overflow: 'hidden',
+          }}
+        >
           <ImageBackground
             source={source}
             // Fill left-to-right; center-crop vertically inside the reduced
@@ -158,7 +172,11 @@ function CategoryExerciseListComponent({
   const listOpacity = useRef(new Animated.Value(loading ? 0 : 1)).current;
   useEffect(() => {
     if (!loading) {
-      Animated.timing(listOpacity, { toValue: 1, duration: 180, useNativeDriver: true }).start();
+      Animated.timing(listOpacity, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: true,
+      }).start();
     } else {
       listOpacity.setValue(0);
     }
@@ -172,7 +190,9 @@ function CategoryExerciseListComponent({
         style={{
           borderBottomWidth: 1,
           borderBottomColor:
-            colors.background === '#0A1514' ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)',
+            colors.background === '#0A1514'
+              ? 'rgba(255,255,255,0.08)'
+              : 'rgba(0,0,0,0.08)',
         }}
       >
         <View
@@ -193,7 +213,12 @@ function CategoryExerciseListComponent({
       {/* Global back button overlay (fixed to safe area, independent of hero layout) */}
       <Pressable
         onPress={handleBackPress}
-        style={{ position: 'absolute', top: Math.max(insets.top, 8) + 6, left: 12, zIndex: 50 }}
+        style={{
+          position: 'absolute',
+          top: Math.max(insets.top, 8) + 6,
+          left: 12,
+          zIndex: 50,
+        }}
         className="w-10 h-10 rounded-full items-center justify-center"
       >
         <SymbolView name="chevron.left" size={28} tintColor="#FFFFFF" />

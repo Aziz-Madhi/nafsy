@@ -1,11 +1,15 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { sendMessageRef } from './_layout';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Alert } from 'react-native';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
-import { useOfflineChatMessages, useNetworkStatus } from '~/hooks/useOfflineData';
+import {
+  useOfflineChatMessages,
+  useNetworkStatus,
+} from '~/hooks/useOfflineData';
 import {
   useHistorySidebarVisible,
   useCurrentMainSessionId,
@@ -147,18 +151,24 @@ export default function ChatTab() {
   const [streamingContent, setStreamingContent] = useState('');
   const [isStreaming, setIsStreaming] = useState(false);
   // Optimistic user messages pending per-session (Option A)
-  const [pendingBySession, setPendingBySession] = useState<Record<string, Message[]>>({});
+  const [pendingBySession, setPendingBySession] = useState<
+    Record<string, Message[]>
+  >({});
 
   // Auth for HTTP streaming call
   const { getToken } = useAuth();
+  const { t } = useTranslation();
   const ENABLE_STREAMING =
     ((process.env.EXPO_PUBLIC_CHAT_STREAMING as string | undefined) || 'on') !==
     'off';
 
   // Helper: map UI chat types to backend chat types
-  const mapToServerType = useCallback((t: ChatType): 'main' | 'vent' | 'companion' => {
-    return t === 'coach' ? 'main' : t === 'event' ? 'vent' : 'companion';
-  }, []);
+  const mapToServerType = useCallback(
+    (t: ChatType): 'main' | 'vent' | 'companion' => {
+      return t === 'coach' ? 'main' : t === 'event' ? 'vent' : 'companion';
+    },
+    []
+  );
 
   // Track current stream controller for cleanup (fetch-based streaming)
   const currentAbortRef = useRef<AbortController | null>(null);
@@ -175,7 +185,8 @@ export default function ChatTab() {
         '.convex.site$1'
       );
       const url = `${convexSiteUrl}/chat-stream`;
-      const token = (await getToken({ template: 'convex' }).catch(() => null)) ||
+      const token =
+        (await getToken({ template: 'convex' }).catch(() => null)) ||
         (await getToken().catch(() => null));
       // Abort any previous stream
       try {
@@ -201,15 +212,14 @@ export default function ChatTab() {
               chatType: mapToServerType(chatType),
               sessionId,
               message: text,
-              requestId: `${Date.now()}-${Math.random()
-                .toString(36)
-                .slice(2)}`,
+              requestId: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
             }),
             signal: controller.signal,
           }
         );
 
         if (!res.ok || !res.body) {
+          // Bubble error up to caller to handle UI insertion (e.g., rate limit message)
           throw new Error(`Stream failed: ${res.status}`);
         }
 
@@ -250,6 +260,22 @@ export default function ChatTab() {
         }
       } catch (e) {
         console.error('Streaming failed', e);
+        // If daily rate limit hit, inject a friendly assistant message instead of raw error
+        if ((e as Error)?.message?.includes('429')) {
+          const systemNotice: Message = {
+            _id: `sys-rate-${Date.now()}`,
+            content: t(
+              'chat.limit.weeklyReached',
+              "You've reached your weekly message limit. Please check back next week."
+            ),
+            role: 'assistant',
+            _creationTime: Date.now(),
+          };
+          setPendingBySession((s) => {
+            const list = s[sessionId!] || [];
+            return { ...s, [sessionId!]: [...list, systemNotice] };
+          });
+        }
       } finally {
         setIsStreaming(false);
         if (currentAbortRef.current === controller) {
@@ -300,7 +326,9 @@ export default function ChatTab() {
 
   // Merge optimistic pending user messages for the active session
   const mergedMessages: Message[] = React.useMemo(() => {
-    const pendings = activeSessionId ? pendingBySession[activeSessionId] || [] : [];
+    const pendings = activeSessionId
+      ? pendingBySession[activeSessionId] || []
+      : [];
     if (!pendings.length) return messages;
     return [...messages, ...pendings];
   }, [messages, pendingBySession, activeSessionId]);
@@ -555,7 +583,8 @@ export default function ChatTab() {
     const last = messages[messages.length - 1];
     if (!last || last.role !== 'user') return;
     const idx = pendings.findIndex(
-      (p) => p.role === 'user' && p.content.trim() === (last.content || '').trim()
+      (p) =>
+        p.role === 'user' && p.content.trim() === (last.content || '').trim()
     );
     if (idx !== -1) {
       setPendingBySession((s) => {

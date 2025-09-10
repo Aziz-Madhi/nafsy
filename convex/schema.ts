@@ -311,4 +311,10 @@ export default defineSchema({
   })
     .index('by_user_week', ['userId', 'weekStartDate'])
     .index('by_user_created', ['userId', 'createdAt']),
+
+  // Global top-ups for chat messages (applies to all users within the window)
+  globalTopups: defineTable({
+    windowStart: v.number(), // epoch ms for start of current window (weekly)
+    remaining: v.number(),
+  }).index('by_window', ['windowStart']),
 });

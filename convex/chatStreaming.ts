@@ -1,8 +1,8 @@
 import { v } from 'convex/values';
 import { internalMutation } from './_generated/server';
-import { Id } from './_generated/dataModel';
-import { internal } from './_generated/api';
-import { checkRateLimitDb } from './errorUtils';
+// Internal API not needed in this module; remove unused imports
+// Legacy DB-backed rate limiting removed in favor of component
+import appRateLimiter, { tryConsumeGlobalTopup } from './rateLimit';
 
 // Insert user message (no scheduling side effects). Intended for HTTP streaming path.
 export const insertUserMessage = internalMutation({
@@ -23,6 +23,20 @@ export const insertUserMessage = internalMutation({
     v.id('ventChatMessages')
   ),
   handler: async (ctx, args) => {
+    // Per-user weekly chat limit for user messages (streaming path)
+    const status = await appRateLimiter.limit(ctx, 'chatWeekly', {
+      key: args.userId,
+    });
+    if (!status.ok) {
+      const consumed = await tryConsumeGlobalTopup(ctx as any);
+      if (!consumed) {
+        await appRateLimiter.limit(ctx, 'chatWeekly', {
+          key: args.userId,
+          throws: true,
+        });
+      }
+    }
+
     const now = Date.now();
     const table =
       args.chatType === 'companion'
@@ -183,40 +197,7 @@ export const insertAssistantMessage = internalMutation({
 });
 
 // Lightweight, reusable DB-backed rate limit for HTTP actions
-export const applyRateLimit = internalMutation({
-  args: {
-    key: v.string(),
-    limit: v.optional(v.number()),
-    windowMs: v.optional(v.number()),
-  },
-  returns: v.null(),
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 10;
-    const windowMs = args.windowMs ?? 60_000; // 1 minute
-    await checkRateLimitDb(ctx, args.key, limit, windowMs);
-    return null;
-  },
-});
-
-// Non-throwing variant: returns whether the operation is allowed.
-export const tryRateLimit = internalMutation({
-  args: {
-    key: v.string(),
-    limit: v.optional(v.number()),
-    windowMs: v.optional(v.number()),
-  },
-  returns: v.object({ allowed: v.boolean() }),
-  handler: async (ctx, args) => {
-    const limit = args.limit ?? 10;
-    const windowMs = args.windowMs ?? 60_000;
-    try {
-      await checkRateLimitDb(ctx, args.key, limit, windowMs);
-      return { allowed: true };
-    } catch {
-      return { allowed: false };
-    }
-  },
-});
+// Removed legacy internal rate limit helpers in favor of component usage
 
 // Basic telemetry recorder (internal-only)
 export const recordAITelemetry = internalMutation({

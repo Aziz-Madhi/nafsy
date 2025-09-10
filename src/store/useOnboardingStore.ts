@@ -17,7 +17,10 @@ export interface OnboardingAnswers {
 
 interface OnboardingStoreState extends OnboardingAnswers {
   step: number; // current step index for UI control if needed
-  setField: <K extends keyof OnboardingAnswers>(key: K, value: OnboardingAnswers[K]) => void;
+  setField: <K extends keyof OnboardingAnswers>(
+    key: K,
+    value: OnboardingAnswers[K]
+  ) => void;
   toggleArrayValue: (
     key: 'goals' | 'selfImage' | 'helpAreas' | 'fears' | 'struggles',
     value: string
@@ -53,7 +56,8 @@ const defaults: Pick<
   step: 0,
 };
 
-export const useOnboardingStore = createStore<OnboardingStoreState>((set, get) => ({
+export const useOnboardingStore = createStore<OnboardingStoreState>(
+  (set, get) => ({
     ...defaults,
     setField: (key, value) => set({ [key]: value } as any),
     toggleArrayValue: (key, value) => {
@@ -64,7 +68,8 @@ export const useOnboardingStore = createStore<OnboardingStoreState>((set, get) =
       set({ [key]: next } as any);
     },
     reset: () => set({ ...defaults }),
-  }));
+  })
+);
 
 export const useOnboardingAnswers = () =>
   useOnboardingStore(

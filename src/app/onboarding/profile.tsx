@@ -5,7 +5,22 @@ import { MotiPressable } from 'moti/interactions';
 import { MenuView } from '@react-native-menu/menu';
 import { Picker } from '@react-native-picker/picker';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Cloud, CloudDrizzle, CloudSun, Sun, AlertTriangle, Brain, Target, Users, Moon, MessageSquare, Wind, Flower2, BookOpen } from 'lucide-react-native';
+import {
+  ChevronLeft,
+  Cloud,
+  CloudDrizzle,
+  CloudSun,
+  Sun,
+  AlertTriangle,
+  Brain,
+  Target,
+  Users,
+  Moon,
+  MessageSquare,
+  Wind,
+  Flower2,
+  BookOpen,
+} from 'lucide-react-native';
 import type { LucideIcon } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Text } from '~/components/ui/text';
@@ -18,7 +33,13 @@ import RatingSelector from '~/components/mood/RatingSelector';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { cn } from '~/lib/cn';
 
-type LocalStep = 'profile' | 'mood' | 'preferencesA' | 'preferencesB' | 'notes' | 'complete';
+type LocalStep =
+  | 'profile'
+  | 'mood'
+  | 'preferencesA'
+  | 'preferencesB'
+  | 'notes'
+  | 'complete';
 
 export default function ProfileStep() {
   const colors = useColors();
@@ -37,9 +58,7 @@ export default function ProfileStep() {
   const toggle = useOnboardingStore((s) => s.toggleArrayValue);
   const setField = useOnboardingStore((s) => s.setField);
   const [localName, setLocalName] = useState(name ?? '');
-  const [selectedAge, setSelectedAge] = useState<number | null>(
-    age ?? null
-  );
+  const [selectedAge, setSelectedAge] = useState<number | null>(age ?? null);
   const [selectedGender, setSelectedGender] = useState<
     'male' | 'female' | 'other' | null
   >(gender ?? null);
@@ -49,9 +68,13 @@ export default function ProfileStep() {
 
   // Precompute picker items outside conditional rendering to avoid conditional hooks
   const ageItems = useMemo(
-    () => [{ label: t('onboarding.profile.agePlaceholder', 'Optional'), value: null as number | null }].concat(
-      AGE_OPTIONS.map((a) => ({ label: String(a), value: a }))
-    ),
+    () =>
+      [
+        {
+          label: t('onboarding.profile.agePlaceholder', 'Optional'),
+          value: null as number | null,
+        },
+      ].concat(AGE_OPTIONS.map((a) => ({ label: String(a), value: a }))),
     [t]
   );
 
@@ -59,7 +82,10 @@ export default function ProfileStep() {
     () => [
       { label: t('common.select', 'Select'), value: null as any },
       { label: t('onboarding.profile.genders.male', 'Male'), value: 'male' },
-      { label: t('onboarding.profile.genders.female', 'Female'), value: 'female' },
+      {
+        label: t('onboarding.profile.genders.female', 'Female'),
+        value: 'female',
+      },
       { label: t('onboarding.profile.genders.other', 'Other'), value: 'other' },
     ],
     [t]
@@ -117,17 +143,20 @@ export default function ProfileStep() {
       </View>
       <View className="flex-1 px-5 items-center">
         {/** Reserve space for the logo; move the logo independently using absolute top offset */}
-        <View className="w-full" style={{ height: 174, marginBottom: 16, position: 'relative' }}>
+        <View
+          className="w-full"
+          style={{ height: 174, marginBottom: 16, position: 'relative' }}
+        >
           <Image
             key="default-icon"
             source={require('../../../assets/Cards/Subject 3.png')}
-            style={{ 
-              width: 174, 
-              height: 174, 
-              resizeMode: 'contain', 
-              position: 'absolute', 
-              top: -15, 
-              alignSelf: 'center' 
+            style={{
+              width: 174,
+              height: 174,
+              resizeMode: 'contain',
+              position: 'absolute',
+              top: -15,
+              alignSelf: 'center',
             }}
           />
         </View>
@@ -154,19 +183,25 @@ export default function ProfileStep() {
               {step === 'profile'
                 ? t('onboarding.profile.title')
                 : step === 'mood'
-                ? t('onboarding.mood.title')
-                : step === 'notes'
-                ? t('onboarding.notes.title', 'Anything else to share?')
-                : t('onboarding.preferences.title')}
+                  ? t('onboarding.mood.title')
+                  : step === 'notes'
+                    ? t('onboarding.notes.title', 'Anything else to share?')
+                    : t('onboarding.preferences.title')}
             </Text>
-            <Text className="text-muted-foreground mt-2 text-center" style={{ textAlign: 'center' }}>
+            <Text
+              className="text-muted-foreground mt-2 text-center"
+              style={{ textAlign: 'center' }}
+            >
               {step === 'profile'
                 ? t('onboarding.profile.subtitle')
                 : step === 'mood'
-                ? t('onboarding.mood.subtitle')
-                : step === 'notes'
-                ? t('onboarding.notes.subtitle', 'Add any extra context you want us to consider.')
-                : t('onboarding.preferences.subtitle')}
+                  ? t('onboarding.mood.subtitle')
+                  : step === 'notes'
+                    ? t(
+                        'onboarding.notes.subtitle',
+                        'Add any extra context you want us to consider.'
+                      )
+                    : t('onboarding.preferences.subtitle')}
             </Text>
           </MotiView>
         </AnimatePresence>
@@ -179,280 +214,314 @@ export default function ProfileStep() {
             transition={{ type: 'timing', duration: 160 }}
             style={{ width: '100%' }}
           >
-        {step === 'profile' ? (
-          <View className="mt-6 gap-4 w-full">
-            <FormField
-              label={t('onboarding.profile.name')}
-              placeholder={t('onboarding.profile.namePlaceholder')}
-              value={localName}
-              onChangeText={setLocalName}
-              autoComplete="name"
-              error={error || undefined}
-            />
-            {/* Age + Gender in one row */}
-            <View className="flex-row gap-3 items-start">
-              <PickerSelectField
-                containerClassName="flex-1"
-                label={t('onboarding.profile.age')}
-                placeholder={t('onboarding.profile.agePlaceholder', 'Optional')}
-                selectedLabel={selectedAge ? String(selectedAge) : undefined}
-                items={ageItems}
-                value={selectedAge}
-                onChange={(v) => setSelectedAge((v as number | null) ?? null)}
-              />
+            {step === 'profile' ? (
+              <View className="mt-6 gap-4 w-full">
+                <FormField
+                  label={t('onboarding.profile.name')}
+                  placeholder={t('onboarding.profile.namePlaceholder')}
+                  value={localName}
+                  onChangeText={setLocalName}
+                  autoComplete="name"
+                  error={error || undefined}
+                />
+                {/* Age + Gender in one row */}
+                <View className="flex-row gap-3 items-start">
+                  <PickerSelectField
+                    containerClassName="flex-1"
+                    label={t('onboarding.profile.age')}
+                    placeholder={t(
+                      'onboarding.profile.agePlaceholder',
+                      'Optional'
+                    )}
+                    selectedLabel={
+                      selectedAge ? String(selectedAge) : undefined
+                    }
+                    items={ageItems}
+                    value={selectedAge}
+                    onChange={(v) =>
+                      setSelectedAge((v as number | null) ?? null)
+                    }
+                  />
 
-              <PickerSelectField
-                containerClassName="flex-1"
-                label={t('onboarding.profile.gender')}
-                placeholder={t('common.select', 'Select')}
-                selectedLabel={
-                  selectedGender
-                    ? t(`onboarding.profile.genders.${selectedGender}`)
-                    : undefined
-                }
-                items={genderItems}
-                value={selectedGender}
-                onChange={(v) => setSelectedGender((v as any) ?? null)}
-              />
-            </View>
-          </View>
-        ) : step === 'mood' ? (
-          <View className="w-full">
-            <View className="mt-6 items-center px-5">
-              <RatingSelector value={moodValue} onChange={setMoodValue} />
-            </View>
-            <View className="mt-10 px-8">
-              <Text className="text-foreground font-semibold mb-4">
-                {t(
-                  'onboarding.mood.lastMonth.title',
-                  'How was your mood in the past month?'
-                )}
-              </Text>
-              {/* Two-column grid for mood options with odd number handling */}
-              <View className="flex-row gap-4 self-center w-full">
-                <View className="flex-1 gap-3 items-stretch">
-                  {MONTH_MOOD_KEYS.filter((_, i) => i % 2 === 0).map((k) => (
-                    <Choice
-                      key={k}
-                      label={t(
-                        `onboarding.mood.lastMonth.options.${k}`,
-                        MONTH_MOOD_LABELS[k]
+                  <PickerSelectField
+                    containerClassName="flex-1"
+                    label={t('onboarding.profile.gender')}
+                    placeholder={t('common.select', 'Select')}
+                    selectedLabel={
+                      selectedGender
+                        ? t(`onboarding.profile.genders.${selectedGender}`)
+                        : undefined
+                    }
+                    items={genderItems}
+                    value={selectedGender}
+                    onChange={(v) => setSelectedGender((v as any) ?? null)}
+                  />
+                </View>
+              </View>
+            ) : step === 'mood' ? (
+              <View className="w-full">
+                <View className="mt-6 items-center px-5">
+                  <RatingSelector value={moodValue} onChange={setMoodValue} />
+                </View>
+                <View className="mt-10 px-8">
+                  <Text className="text-foreground font-semibold mb-4">
+                    {t(
+                      'onboarding.mood.lastMonth.title',
+                      'How was your mood in the past month?'
+                    )}
+                  </Text>
+                  {/* Two-column grid for mood options with odd number handling */}
+                  <View className="flex-row gap-4 self-center w-full">
+                    <View className="flex-1 gap-3 items-stretch">
+                      {MONTH_MOOD_KEYS.filter((_, i) => i % 2 === 0).map(
+                        (k) => (
+                          <Choice
+                            key={k}
+                            label={t(
+                              `onboarding.mood.lastMonth.options.${k}`,
+                              MONTH_MOOD_LABELS[k]
+                            )}
+                            icon={MONTH_MOOD_ICONS[k]}
+                            active={moodMonth === k}
+                            onPress={() => setField('moodMonth', k)}
+                            className="w-full"
+                          />
+                        )
                       )}
-                      icon={MONTH_MOOD_ICONS[k]}
-                      active={moodMonth === k}
-                      onPress={() => setField('moodMonth', k)}
-                      className="w-full"
-                    />
-                  ))}
-                </View>
-                <View className="flex-1 gap-3 items-stretch">
-                  {MONTH_MOOD_KEYS.filter((_, i) => i % 2 === 1).map((k) => (
-                    <Choice
-                      key={k}
-                      label={t(
-                        `onboarding.mood.lastMonth.options.${k}`,
-                        MONTH_MOOD_LABELS[k]
+                    </View>
+                    <View className="flex-1 gap-3 items-stretch">
+                      {MONTH_MOOD_KEYS.filter((_, i) => i % 2 === 1).map(
+                        (k) => (
+                          <Choice
+                            key={k}
+                            label={t(
+                              `onboarding.mood.lastMonth.options.${k}`,
+                              MONTH_MOOD_LABELS[k]
+                            )}
+                            icon={MONTH_MOOD_ICONS[k]}
+                            active={moodMonth === k}
+                            onPress={() => setField('moodMonth', k)}
+                            className="w-full"
+                          />
+                        )
                       )}
-                      icon={MONTH_MOOD_ICONS[k]}
-                      active={moodMonth === k}
-                      onPress={() => setField('moodMonth', k)}
-                      className="w-full"
-                    />
-                  ))}
+                    </View>
+                  </View>
                 </View>
               </View>
-            </View>
-          </View>
-        ) : step === 'preferencesA' ? (
-          <View className="w-full px-8 mt-6 gap-7">
-            <View>
-              <Text className="text-foreground font-semibold mb-4 px-2">
-                {t('onboarding.preferences.goalsTitle')}
-              </Text>
-              {/* Two-column grid for goals */}
-              <View className="flex-row gap-4 self-center w-full">
-                <View className="flex-1 gap-3 items-stretch">
-                  {GOAL_KEYS.filter((_, i) => i % 2 === 0).map((k) => {
-                    const key = `onboarding.preferences.goals.${k}`;
-                    const active = goals.includes(k);
-                    return (
-                      <Chip
-                        key={k}
-                        label={t(key)}
-                        icon={GOAL_ICONS[k]}
-                        active={active}
-                        onPress={() => toggle('goals', k)}
-                        className="w-full"
-                      />
-                    );
-                  })}
+            ) : step === 'preferencesA' ? (
+              <View className="w-full px-8 mt-6 gap-7">
+                <View>
+                  <Text className="text-foreground font-semibold mb-4 px-2">
+                    {t('onboarding.preferences.goalsTitle')}
+                  </Text>
+                  {/* Two-column grid for goals */}
+                  <View className="flex-row gap-4 self-center w-full">
+                    <View className="flex-1 gap-3 items-stretch">
+                      {GOAL_KEYS.filter((_, i) => i % 2 === 0).map((k) => {
+                        const key = `onboarding.preferences.goals.${k}`;
+                        const active = goals.includes(k);
+                        return (
+                          <Chip
+                            key={k}
+                            label={t(key)}
+                            icon={GOAL_ICONS[k]}
+                            active={active}
+                            onPress={() => toggle('goals', k)}
+                            className="w-full"
+                          />
+                        );
+                      })}
+                    </View>
+                    <View className="flex-1 gap-3 items-stretch">
+                      {GOAL_KEYS.filter((_, i) => i % 2 === 1).map((k) => {
+                        const key = `onboarding.preferences.goals.${k}`;
+                        const active = goals.includes(k);
+                        return (
+                          <Chip
+                            key={k}
+                            label={t(key)}
+                            icon={GOAL_ICONS[k]}
+                            active={active}
+                            onPress={() => toggle('goals', k)}
+                            className="w-full"
+                          />
+                        );
+                      })}
+                    </View>
+                  </View>
                 </View>
-                <View className="flex-1 gap-3 items-stretch">
-                  {GOAL_KEYS.filter((_, i) => i % 2 === 1).map((k) => {
-                    const key = `onboarding.preferences.goals.${k}`;
-                    const active = goals.includes(k);
-                    return (
-                      <Chip
-                        key={k}
-                        label={t(key)}
-                        icon={GOAL_ICONS[k]}
-                        active={active}
-                        onPress={() => toggle('goals', k)}
-                        className="w-full"
-                      />
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
 
-            <View>
-              <Text className="text-foreground font-semibold mb-4 px-2">
-                {t('onboarding.preferences.selfImageTitle')}
-              </Text>
-              {/* Two-column grid for self image */}
-              <View className="flex-row gap-4 self-center w-full">
-                <View className="flex-1 gap-3 items-stretch">
-                  {SELF_IMAGE_KEYS.filter((_, i) => i % 2 === 0).map((k) => {
-                    const key = `onboarding.preferences.selfImage.${k}`;
-                    const active = selfImage.includes(k);
-                    return (
-                      <Chip
-                        key={k}
-                        label={t(key)}
-                        icon={SELF_IMAGE_ICONS[k]}
-                        active={active}
-                        onPress={() => toggle('selfImage', k)}
-                        className="w-full"
-                      />
-                    );
-                  })}
-                </View>
-                <View className="flex-1 gap-3 items-stretch">
-                  {SELF_IMAGE_KEYS.filter((_, i) => i % 2 === 1).map((k) => {
-                    const key = `onboarding.preferences.selfImage.${k}`;
-                    const active = selfImage.includes(k);
-                    return (
-                      <Chip
-                        key={k}
-                        label={t(key)}
-                        icon={SELF_IMAGE_ICONS[k]}
-                        active={active}
-                        onPress={() => toggle('selfImage', k)}
-                        className="w-full"
-                      />
-                    );
-                  })}
-                </View>
-              </View>
-            </View>
-          </View>
-        ) : step === 'preferencesB' ? (
-          <View className="w-full px-8 mt-6 gap-8" style={{ marginBottom: 10 }}>
-            <View>
-              <Text className="text-foreground font-semibold mb-4 px-2">
-                {t('onboarding.preferences.helpAreasTitle', 'Help areas')}
-              </Text>
-              {/* Two-column grid with improved spacing */}
-              <View className="flex-row gap-4 self-center w-full">
-                <View className="flex-1 gap-3 items-stretch">
-                  {HELP_AREA_KEYS.filter((_, i) => i % 2 === 0).map((k) => {
-                    const key = `onboarding.preferences.helpAreas.${k}`;
-                    const active = helpAreas.includes(k);
-                    return (
-                      <Chip
-                        key={k}
-                        label={formatHelpLabel(k, t(key))}
-                        icon={HELP_AREA_ICONS[k]}
-                        active={active}
-                        onPress={() => toggle('helpAreas', k)}
-                        className="w-full min-h-12 px-3 py-2.5"
-                      />
-                    );
-                  })}
-                </View>
-                <View className="flex-1 gap-3 items-stretch">
-                  {HELP_AREA_KEYS.filter((_, i) => i % 2 === 1).map((k) => {
-                    const key = `onboarding.preferences.helpAreas.${k}`;
-                    const active = helpAreas.includes(k);
-                    return (
-                      <Chip
-                        key={k}
-                        label={formatHelpLabel(k, t(key))}
-                        icon={HELP_AREA_ICONS[k]}
-                        active={active}
-                        onPress={() => toggle('helpAreas', k)}
-                        className="w-full min-h-12 px-3 py-2.5"
-                      />
-                    );
-                  })}
+                <View>
+                  <Text className="text-foreground font-semibold mb-4 px-2">
+                    {t('onboarding.preferences.selfImageTitle')}
+                  </Text>
+                  {/* Two-column grid for self image */}
+                  <View className="flex-row gap-4 self-center w-full">
+                    <View className="flex-1 gap-3 items-stretch">
+                      {SELF_IMAGE_KEYS.filter((_, i) => i % 2 === 0).map(
+                        (k) => {
+                          const key = `onboarding.preferences.selfImage.${k}`;
+                          const active = selfImage.includes(k);
+                          return (
+                            <Chip
+                              key={k}
+                              label={t(key)}
+                              icon={SELF_IMAGE_ICONS[k]}
+                              active={active}
+                              onPress={() => toggle('selfImage', k)}
+                              className="w-full"
+                            />
+                          );
+                        }
+                      )}
+                    </View>
+                    <View className="flex-1 gap-3 items-stretch">
+                      {SELF_IMAGE_KEYS.filter((_, i) => i % 2 === 1).map(
+                        (k) => {
+                          const key = `onboarding.preferences.selfImage.${k}`;
+                          const active = selfImage.includes(k);
+                          return (
+                            <Chip
+                              key={k}
+                              label={t(key)}
+                              icon={SELF_IMAGE_ICONS[k]}
+                              active={active}
+                              onPress={() => toggle('selfImage', k)}
+                              className="w-full"
+                            />
+                          );
+                        }
+                      )}
+                    </View>
+                  </View>
                 </View>
               </View>
-            </View>
+            ) : step === 'preferencesB' ? (
+              <View
+                className="w-full px-8 mt-6 gap-8"
+                style={{ marginBottom: 10 }}
+              >
+                <View>
+                  <Text className="text-foreground font-semibold mb-4 px-2">
+                    {t('onboarding.preferences.helpAreasTitle', 'Help areas')}
+                  </Text>
+                  {/* Two-column grid with improved spacing */}
+                  <View className="flex-row gap-4 self-center w-full">
+                    <View className="flex-1 gap-3 items-stretch">
+                      {HELP_AREA_KEYS.filter((_, i) => i % 2 === 0).map((k) => {
+                        const key = `onboarding.preferences.helpAreas.${k}`;
+                        const active = helpAreas.includes(k);
+                        return (
+                          <Chip
+                            key={k}
+                            label={formatHelpLabel(k, t(key))}
+                            icon={HELP_AREA_ICONS[k]}
+                            active={active}
+                            onPress={() => toggle('helpAreas', k)}
+                            className="w-full min-h-12 px-3 py-2.5"
+                          />
+                        );
+                      })}
+                    </View>
+                    <View className="flex-1 gap-3 items-stretch">
+                      {HELP_AREA_KEYS.filter((_, i) => i % 2 === 1).map((k) => {
+                        const key = `onboarding.preferences.helpAreas.${k}`;
+                        const active = helpAreas.includes(k);
+                        return (
+                          <Chip
+                            key={k}
+                            label={formatHelpLabel(k, t(key))}
+                            icon={HELP_AREA_ICONS[k]}
+                            active={active}
+                            onPress={() => toggle('helpAreas', k)}
+                            className="w-full min-h-12 px-3 py-2.5"
+                          />
+                        );
+                      })}
+                    </View>
+                  </View>
+                </View>
 
-            <View style={{ transform: [{ translateY: -10 }] }}>
-              <Text className="text-foreground font-semibold mb-4 px-2">
-                {t('onboarding.profile.strugglesTitle', 'Day-to-day struggles')}
-              </Text>
-              {/* Two-column grid for struggles */}
-              <View className="flex-row gap-4 self-center w-full">
-                <View className="flex-1 gap-3 items-stretch">
-                  {STRUGGLE_KEYS.slice(0, 4).filter((_, i) => i % 2 === 0).map((k) => {
-                    const key = `onboarding.profile.struggles.${k}`;
-                    const active = struggles.includes(k);
-                    return (
-                      <Chip
-                        key={k}
-                        label={t(key, STRUGGLE_LABELS[k])}
-                        icon={STRUGGLE_ICONS[k]}
-                        active={active}
-                        onPress={() => toggle('struggles', k)}
-                        className="w-full"
-                      />
-                    );
-                  })}
-                </View>
-                <View className="flex-1 gap-3 items-stretch">
-                  {STRUGGLE_KEYS.slice(0, 4).filter((_, i) => i % 2 === 1).map((k) => {
-                    const key = `onboarding.profile.struggles.${k}`;
-                    const active = struggles.includes(k);
-                    return (
-                      <Chip
-                        key={k}
-                        label={t(key, STRUGGLE_LABELS[k])}
-                        icon={STRUGGLE_ICONS[k]}
-                        active={active}
-                        onPress={() => toggle('struggles', k)}
-                        className="w-full"
-                      />
-                    );
-                  })}
+                <View style={{ transform: [{ translateY: -10 }] }}>
+                  <Text className="text-foreground font-semibold mb-4 px-2">
+                    {t(
+                      'onboarding.profile.strugglesTitle',
+                      'Day-to-day struggles'
+                    )}
+                  </Text>
+                  {/* Two-column grid for struggles */}
+                  <View className="flex-row gap-4 self-center w-full">
+                    <View className="flex-1 gap-3 items-stretch">
+                      {STRUGGLE_KEYS.slice(0, 4)
+                        .filter((_, i) => i % 2 === 0)
+                        .map((k) => {
+                          const key = `onboarding.profile.struggles.${k}`;
+                          const active = struggles.includes(k);
+                          return (
+                            <Chip
+                              key={k}
+                              label={t(key, STRUGGLE_LABELS[k])}
+                              icon={STRUGGLE_ICONS[k]}
+                              active={active}
+                              onPress={() => toggle('struggles', k)}
+                              className="w-full"
+                            />
+                          );
+                        })}
+                    </View>
+                    <View className="flex-1 gap-3 items-stretch">
+                      {STRUGGLE_KEYS.slice(0, 4)
+                        .filter((_, i) => i % 2 === 1)
+                        .map((k) => {
+                          const key = `onboarding.profile.struggles.${k}`;
+                          const active = struggles.includes(k);
+                          return (
+                            <Chip
+                              key={k}
+                              label={t(key, STRUGGLE_LABELS[k])}
+                              icon={STRUGGLE_ICONS[k]}
+                              active={active}
+                              onPress={() => toggle('struggles', k)}
+                              className="w-full"
+                            />
+                          );
+                        })}
+                    </View>
+                  </View>
                 </View>
               </View>
-            </View>
-          </View>
-        ) : step === 'notes' ? (
-          <Pressable onPress={Keyboard.dismiss} className="flex-1 w-full px-8 mt-6 gap-6">
-            <FormField
-              label={''}
-              labelClassName="h-0"
-              containerClassName="gap-0"
-              placeholder={t('onboarding.notes.placeholder', 'Share anything else you want us to know...')}
-              multiline
-              numberOfLines={6}
-              textAlignVertical="top"
-              value={additionalNotes ?? ''}
-              onChangeText={(v) => setField('additionalNotes', v)}
-              inputClassName="min-h-36"
-            />
-          </Pressable>
-        ) : null}
+            ) : step === 'notes' ? (
+              <Pressable
+                onPress={Keyboard.dismiss}
+                className="flex-1 w-full px-8 mt-6 gap-6"
+              >
+                <FormField
+                  label={''}
+                  labelClassName="h-0"
+                  containerClassName="gap-0"
+                  placeholder={t(
+                    'onboarding.notes.placeholder',
+                    'Share anything else you want us to know...'
+                  )}
+                  multiline
+                  numberOfLines={6}
+                  textAlignVertical="top"
+                  value={additionalNotes ?? ''}
+                  onChangeText={(v) => setField('additionalNotes', v)}
+                  inputClassName="min-h-36"
+                />
+              </Pressable>
+            ) : null}
           </MotiView>
         </AnimatePresence>
       </View>
 
       <View className="mt-auto pb-8 px-5 gap-4">
-        <StepDots current={step === 'profile' ? 1 : step === 'mood' ? 2 : 3} total={4} />
+        <StepDots
+          current={step === 'profile' ? 1 : step === 'mood' ? 2 : 3}
+          total={4}
+        />
         <View className="flex-row gap-3 items-stretch">
           <Button
             variant="outline"
@@ -464,7 +533,10 @@ export default function ProfileStep() {
               if (step === 'preferencesA') return setStep('mood');
               if (step === 'preferencesB') return setStep('preferencesA');
               if (step === 'notes') return setStep('preferencesB');
-              if (typeof (router as any).canGoBack === 'function' && (router as any).canGoBack()) {
+              if (
+                typeof (router as any).canGoBack === 'function' &&
+                (router as any).canGoBack()
+              ) {
                 return router.back();
               }
               return router.replace('/tabs/chat');
@@ -472,7 +544,11 @@ export default function ProfileStep() {
           >
             <ChevronLeft size={20} color={colors.foreground} />
           </Button>
-          <Button size="lg" className="rounded-xl bg-brand-dark-blue flex-1" onPress={onNext}>
+          <Button
+            size="lg"
+            className="rounded-xl bg-brand-dark-blue flex-1"
+            onPress={onNext}
+          >
             <Text className="text-primary-foreground text-base font-semibold">
               {t('common.next')}
             </Text>
@@ -493,7 +569,11 @@ function StepDots({ current, total }: { current: number; total: number }) {
             <MotiView
               key={i}
               from={{ width: 8, opacity: 0.9, scale: 1 }}
-              animate={{ width: isActive ? 18 : 8, opacity: 1, scale: isActive ? 1.05 : 1 }}
+              animate={{
+                width: isActive ? 18 : 8,
+                opacity: 1,
+                scale: isActive ? 1.05 : 1,
+              }}
               transition={{ type: 'timing', duration: 180 }}
               className={isActive ? 'bg-brand-dark-blue' : 'bg-card'}
               style={{ height: 8, borderRadius: 9999 }}
@@ -510,9 +590,14 @@ function StepProgress({ current, total }: { current: number; total: number }) {
   return (
     <View>
       <View className="h-1.5 bg-card rounded-full overflow-hidden">
-        <View className="h-full bg-brand-dark-blue rounded-full" style={{ width: `${pct}%` }} />
+        <View
+          className="h-full bg-brand-dark-blue rounded-full"
+          style={{ width: `${pct}%` }}
+        />
       </View>
-      <Text className="text-muted-foreground text-xs mt-2">{current}/{total}</Text>
+      <Text className="text-muted-foreground text-xs mt-2">
+        {current}/{total}
+      </Text>
     </View>
   );
 }
@@ -557,9 +642,16 @@ function Choice({
       >
         <View className="flex-row items-center gap-2.5 justify-center">
           {Icon ? (
-            <Icon size={16} color={active ? '#FFFFFF' : colors.foreground} strokeWidth={2} />
+            <Icon
+              size={16}
+              color={active ? '#FFFFFF' : colors.foreground}
+              strokeWidth={2}
+            />
           ) : null}
-          <Text className={active ? 'text-primary-foreground' : 'text-foreground'} style={{ fontSize: 14, fontWeight: '500' }}>
+          <Text
+            className={active ? 'text-primary-foreground' : 'text-foreground'}
+            style={{ fontSize: 14, fontWeight: '500' }}
+          >
             {label}
           </Text>
         </View>
@@ -608,10 +700,14 @@ function Chip({
       >
         <View className="flex-row items-center gap-2.5 justify-center">
           {Icon ? (
-            <Icon size={16} color={active ? '#FFFFFF' : colors.foreground} strokeWidth={2} />
+            <Icon
+              size={16}
+              color={active ? '#FFFFFF' : colors.foreground}
+              strokeWidth={2}
+            />
           ) : null}
-          <Text 
-            className={active ? 'text-primary-foreground' : 'text-foreground'} 
+          <Text
+            className={active ? 'text-primary-foreground' : 'text-foreground'}
             style={{ fontSize: 14, fontWeight: '500', textAlign: 'center' }}
             numberOfLines={2}
           >
@@ -623,12 +719,7 @@ function Chip({
   );
 }
 
-const MONTH_MOOD_KEYS = [
-  'low',
-  'average',
-  'good',
-  'very_good',
-] as const;
+const MONTH_MOOD_KEYS = ['low', 'average', 'good', 'very_good'] as const;
 
 const MONTH_MOOD_LABELS: Record<(typeof MONTH_MOOD_KEYS)[number], string> = {
   low: 'Low',
@@ -776,8 +867,13 @@ function PickerSelectField({
   }, [value]);
 
   return (
-    <View className={cn('gap-2', containerClassName)} style={{ position: 'relative' }}>
-      <Text className="text-sm font-medium text-muted-foreground ml-1">{label}</Text>
+    <View
+      className={cn('gap-2', containerClassName)}
+      style={{ position: 'relative' }}
+    >
+      <Text className="text-sm font-medium text-muted-foreground ml-1">
+        {label}
+      </Text>
       {Platform.OS === 'ios' ? (
         <View className="rounded-xl bg-gray-50/50 dark:bg-white/5 border border-gray-200/50 dark:border-white/10 overflow-hidden">
           <Pressable
@@ -786,7 +882,11 @@ function PickerSelectField({
             className="px-4 py-3"
             onLayout={(e) => setTriggerHeight(e.nativeEvent.layout.height)}
           >
-            <Text className={selectedLabel ? 'text-foreground' : 'text-muted-foreground'}>
+            <Text
+              className={
+                selectedLabel ? 'text-foreground' : 'text-muted-foreground'
+              }
+            >
               {selectedLabel ?? placeholder}
             </Text>
           </Pressable>
@@ -799,7 +899,11 @@ function PickerSelectField({
             className="px-4 py-3"
             onLayout={(e) => setTriggerHeight(e.nativeEvent.layout.height)}
           >
-            <Text className={selectedLabel ? 'text-foreground' : 'text-muted-foreground'}>
+            <Text
+              className={
+                selectedLabel ? 'text-foreground' : 'text-muted-foreground'
+              }
+            >
               {selectedLabel ?? placeholder}
             </Text>
           </Pressable>
@@ -833,7 +937,11 @@ function PickerSelectField({
             style={{ height: 216, transform: [{ translateY: -60 }] }}
           >
             {items.map((it) => (
-              <Picker.Item key={`${it.label}-${it.value}`} label={String(it.label)} value={it.value as any} />
+              <Picker.Item
+                key={`${it.label}-${it.value}`}
+                label={String(it.label)}
+                value={it.value as any}
+              />
             ))}
           </Picker>
         </MotiView>
@@ -848,7 +956,10 @@ function flattenItems(items: PickerItem[]): PickerItem[] {
 
 function buildMenuActions(items: PickerItem[]) {
   // Use native submenus to keep the popup compact when many numeric items exist (Age)
-  const numeric = items.filter((it) => typeof it.value === 'number') as Array<{ label: string; value: number }>;
+  const numeric = items.filter((it) => typeof it.value === 'number') as {
+    label: string;
+    value: number;
+  }[];
   const others = items.filter((it) => typeof it.value !== 'number');
 
   if (numeric.length > 12) {

@@ -2,7 +2,8 @@ import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
 import { Doc } from './_generated/dataModel';
 import { getAuthenticatedUser } from './authUtils';
-import { checkRateLimitDb, createValidationError } from './errorUtils';
+import { createValidationError } from './errorUtils';
+import appRateLimiter from './rateLimit';
 
 // Create a new mood entry
 export const createMood = mutation({
@@ -28,8 +29,11 @@ export const createMood = mutation({
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
 
-    // Apply rate limiting (100 mood entries per minute per user)
-    await checkRateLimitDb(ctx, `moods:create:${user._id}`, 100, 60000);
+    // Apply rate limiting via component
+    await appRateLimiter.limit(ctx, 'moodCreate', {
+      key: user._id,
+      throws: true,
+    });
 
     // Validate rating bounds
     if (args.rating !== undefined && (args.rating < 1 || args.rating > 10)) {

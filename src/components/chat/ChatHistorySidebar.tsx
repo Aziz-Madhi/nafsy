@@ -1,5 +1,12 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Pressable, Dimensions, TextInput, Modal, Image } from 'react-native';
+import {
+  View,
+  Pressable,
+  Dimensions,
+  TextInput,
+  Modal,
+  Image,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { SessionList } from '~/components/ui/GenericList';
@@ -167,7 +174,13 @@ export function ChatHistorySidebar({
     } catch (err) {
       console.error('Error creating new chat session', err);
     }
-  }, [activeHistoryType, createChat, switchToCoachSession, switchToCompanionSession, onClose]);
+  }, [
+    activeHistoryType,
+    createChat,
+    switchToCoachSession,
+    switchToCompanionSession,
+    onClose,
+  ]);
 
   const getDateGroup = useCallback(
     (dateString: string) => {
@@ -383,7 +396,12 @@ export function ChatHistorySidebar({
                       </Text>
                     </View>
                   )}
-                  <View className={cn('flex-row items-center justify-between mb-3', isArabic && 'flex-row-reverse')}>
+                  <View
+                    className={cn(
+                      'flex-row items-center justify-between mb-3',
+                      isArabic && 'flex-row-reverse'
+                    )}
+                  >
                     <Text
                       variant="title3"
                       className="font-bold text-foreground"
@@ -548,7 +566,12 @@ export function ChatHistorySidebar({
                 {/* Bottom pinned Account pill (no section header) */}
                 <View
                   pointerEvents="box-none"
-                  style={{ position: 'absolute', left: 0, right: 0, bottom: Math.max(insets.bottom, 12) }}
+                  style={{
+                    position: 'absolute',
+                    left: 0,
+                    right: 0,
+                    bottom: Math.max(insets.bottom, 12),
+                  }}
                   className="px-4"
                 >
                   <Pressable
@@ -570,15 +593,29 @@ export function ChatHistorySidebar({
                         />
                       ) : (
                         <View className="flex-1 items-center justify-center">
-                          <SymbolView name="person.crop.circle" size={28} tintColor={colors.mutedForeground} />
+                          <SymbolView
+                            name="person.crop.circle"
+                            size={28}
+                            tintColor={colors.mutedForeground}
+                          />
                         </View>
                       )}
                     </View>
-                    <View className={cn('flex-1 ms-3', isArabic && 'ms-0 me-3')}>
-                      <Text variant="subhead" className="text-foreground font-semibold" numberOfLines={1}>
+                    <View
+                      className={cn('flex-1 ms-3', isArabic && 'ms-0 me-3')}
+                    >
+                      <Text
+                        variant="subhead"
+                        className="text-foreground font-semibold"
+                        numberOfLines={1}
+                      >
                         {displayName}
                       </Text>
-                      <Text variant="caption1" className="text-muted-foreground" numberOfLines={1}>
+                      <Text
+                        variant="caption1"
+                        className="text-muted-foreground"
+                        numberOfLines={1}
+                      >
                         {t('profile.sections.settings')}
                       </Text>
                     </View>

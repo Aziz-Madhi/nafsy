@@ -1,7 +1,8 @@
 import { v } from 'convex/values';
 import { mutation, query } from './_generated/server';
-import { validateUserAccess, getAuthenticatedUser } from './authUtils';
-import { checkRateLimitDb, createValidationError } from './errorUtils';
+import { getAuthenticatedUser } from './authUtils';
+import { createValidationError } from './errorUtils';
+import appRateLimiter from './rateLimit';
 
 // Record exercise completion
 export const recordCompletion = mutation({
@@ -14,8 +15,11 @@ export const recordCompletion = mutation({
     // Authenticate user and get their ID
     const user = await getAuthenticatedUser(ctx);
 
-    // Apply rate limiting (50 exercise completions per minute per user)
-    await checkRateLimitDb(ctx, `progress:record:${user._id}`, 50, 60000);
+    // Enforce per-user daily exercise playback/completion limit
+    await appRateLimiter.limit(ctx, 'exercisePlaybackDaily', {
+      key: user._id,
+      throws: true,
+    });
 
     // Validate duration (must be positive, max 600 minutes / 10 hours)
     if (args.duration <= 0 || args.duration > 600) {

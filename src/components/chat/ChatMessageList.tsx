@@ -58,13 +58,23 @@ export const ChatMessageList = memo(function ChatMessageList({
   // approximate with offset and retry shortly after.
   const onScrollToIndexFailed = useCallback(
     (info: { index: number; averageItemLength: number }) => {
-      const approxOffset = Math.max(0, info.index * (info.averageItemLength || 84));
+      const approxOffset = Math.max(
+        0,
+        info.index * (info.averageItemLength || 84)
+      );
       try {
-        flashListRef.current?.scrollToOffset({ offset: approxOffset, animated: false } as any);
+        flashListRef.current?.scrollToOffset({
+          offset: approxOffset,
+          animated: false,
+        } as any);
       } catch {}
       setTimeout(() => {
         try {
-          flashListRef.current?.scrollToIndex({ index: info.index, animated: false, viewPosition: 0 } as any);
+          flashListRef.current?.scrollToIndex({
+            index: info.index,
+            animated: false,
+            viewPosition: 0,
+          } as any);
         } catch {}
       }, 32);
     },

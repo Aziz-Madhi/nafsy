@@ -4,8 +4,8 @@ import {
   createAuthError,
   createNotFoundError,
   withErrorHandling,
-  checkRateLimitDb,
 } from './errorUtils';
+import appRateLimiter from './rateLimit';
 
 // Helper function for user upsert logic
 async function upsertUserHelper(
@@ -34,15 +34,16 @@ async function upsertUserHelper(
     throw createAuthError('Authentication required');
   }
   const clerkId = identity.subject;
-  const identityEmail: string | undefined = (identity as any)?.email ?? undefined;
+  const identityEmail: string | undefined =
+    (identity as any)?.email ?? undefined;
 
   // Prevent mismatched clerkId impersonation if provided by client
   if (args.clerkId && args.clerkId !== clerkId) {
     throw createAuthError('Invalid clerkId for this session');
   }
 
-  // Apply per-user rate limit for upsert operations
-  await checkRateLimitDb(ctx, `auth:upsert:${clerkId}`, 30, 60000);
+  // Apply per-user rate limit for upsert operations (component)
+  await appRateLimiter.limit(ctx, 'authUpsert', { key: clerkId, throws: true });
 
   const existingUser = await ctx.db
     .query('users')
@@ -63,14 +64,16 @@ async function upsertUserHelper(
     if (args.gender !== undefined) updateData.gender = args.gender;
     if (args.onboardingCompleted !== undefined)
       updateData.onboardingCompleted = args.onboardingCompleted;
-    if (args.moodLastMonth !== undefined) updateData.moodLastMonth = args.moodLastMonth;
+    if (args.moodLastMonth !== undefined)
+      updateData.moodLastMonth = args.moodLastMonth;
     if (args.goals !== undefined) updateData.goals = args.goals;
     if (args.selfImage !== undefined) updateData.selfImage = args.selfImage;
     if (args.helpAreas !== undefined) updateData.helpAreas = args.helpAreas;
     if (args.fears !== undefined) updateData.fears = args.fears;
     if (args.struggles !== undefined) updateData.struggles = args.struggles;
     if (args.email !== undefined) updateData.email = args.email;
-    if (args.additionalNotes !== undefined) updateData.additionalNotes = args.additionalNotes;
+    if (args.additionalNotes !== undefined)
+      updateData.additionalNotes = args.additionalNotes;
 
     await ctx.db.patch(existingUser._id, updateData);
     return existingUser._id;
@@ -323,7 +326,11 @@ export const validateUserAccess = async (
 export const getAuthenticatedUserWithRateLimit = withErrorHandling(
   async (ctx: MutationCtx, operation: string = 'default') => {
     const user = await getAuthenticatedUser(ctx);
-    await checkRateLimitDb(ctx, `${operation}:${user.clerkId}`, 100, 60000);
+    const name = operation === 'default' ? 'authOpDefault' : 'authOpDefault';
+    await appRateLimiter.limit(ctx, name as any, {
+      key: user.clerkId,
+      throws: true,
+    });
     return user;
   }
 );

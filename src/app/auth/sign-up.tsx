@@ -39,7 +39,7 @@ export default function SignUpScreen() {
         setTimeout(() => {
           // Start onboarding flow
           // Use replace to avoid back navigation to auth
-          // eslint-disable-next-line @typescript-eslint/no-floating-promises
+
           (router as any)?.replace?.('/onboarding/profile');
         }, 50);
       } catch {}

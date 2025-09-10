@@ -25,7 +25,10 @@ interface ModernCategoryCardProps {
 
 // Background image mapping by stable category id (not translated name)
 // Exported for reuse (e.g., AudioPlayer backdrop) so visuals stay consistent
-export const CATEGORY_BACKGROUNDS: Record<WellnessCategory, ImageSourcePropType> = {
+export const CATEGORY_BACKGROUNDS: Record<
+  WellnessCategory,
+  ImageSourcePropType
+> = {
   mindfulness: require('../../../assets/Cards/Cards Enhanced/Mindfulness card.jpg'),
   breathing: require('../../../assets/Cards/Cards Enhanced/Breathing card.jpg'),
   movement: require('../../../assets/Cards/Cards Enhanced/Movement card.jpg'),

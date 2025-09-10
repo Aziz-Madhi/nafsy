@@ -1,230 +1,247 @@
-npm install @convex-dev/rate-limiter
+## Rate Limiting — Design, Implementation, and Operations
 
-This component provides application-level rate limiting.
+This document explains the full rate‑limit setup implemented in the app and Convex backend, the rationale behind design choices, how to operate and tune limits (instantly), and how the client communicates limits to users.
 
-Teaser:
+### Summary
 
-const rateLimiter = new RateLimiter(components.rateLimiter, {
-  freeTrialSignUp: { kind: "fixed window", rate: 100, period: HOUR },
-  sendMessage: { kind: "token bucket", rate: 10, period: MINUTE, capacity: 3 },
+- Base limit: Weekly per‑user message cap for chat, enforced at the server.
+- Global top‑ups: Additive pool for the current week that any user can draw from after exhausting their personal weekly cap.
+- Instant tuning:
+  - Change base cap via environment variable `CHAT_WEEKLY_LIMIT` (requires worker reload).
+  - Grant additional messages to everyone immediately via an internal mutation (`grantGlobalTopup`) — no reload required.
+- Client UX: When a user hits the cap, we insert a localized assistant‑style message (“You’ve reached your weekly message limit…”), not a raw error.
+
+---
+
+## Final Architecture
+
+### Base Weekly Limit (Server)
+
+- Name: `chatWeekly` (fixed single name for clarity and consistency)
+- Type: Fixed window
+- Window length: 7 days (UTC week starting Sunday 00:00 UTC)
+- Default rate: `250` per week per user
+- Config: `CHAT_WEEKLY_LIMIT` (Convex env)
+
+Defined in `convex/rateLimit.ts`:
+
+```ts
+const WEEK = 7 * 24 * 60 * 60 * 1000;
+const CHAT_WEEKLY_LIMIT = Number(process.env.CHAT_WEEKLY_LIMIT || 250);
+
+const appRateLimiter = new RateLimiter(rateLimiterComponent, {
+  chatWeekly: { kind: 'fixed window', rate: CHAT_WEEKLY_LIMIT, period: WEEK },
+  // other limits (e.g., title summarize, moods, auth) remain
 });
+```
 
-// Restrict how fast free users can sign up to deter bots
-const status = await rateLimiter.limit(ctx, "freeTrialSignUp");
+Enforcement points:
 
-// Limit how fast a user can send messages
-const status = await rateLimiter.limit(ctx, "sendMessage", { key: userId });
+- `convex/chat.ts` (mutation `sendChatMessage`): checks for user messages (role === 'user').
+- `convex/chatStreaming.ts` (internal mutation `insertUserMessage` for streaming path): checks before inserting the user message.
+- `convex/http.ts` (HTTP stream pre‑check): returns `429 Weekly chat limit reached` early.
 
-// Use the React hook to check the rate limit
-const { status, check } = useRateLimit(api.example.getRateLimit, { count });
+### Global Top‑Ups (Server)
 
-See below for more details on usage.
+Goal: Increase available messages for all users instantly (without resetting their counters or restarting the backend).
 
-What is rate limiting?
+Data model in `convex/schema.ts`:
 
-Rate limiting is the technique of controlling how often actions can be performed, typically on a server. There are a host of options for achieving this, most of which operate at the network layer.
+```ts
+globalTopups: defineTable({
+  windowStart: v.number(),  // start of the current UTC week
+  remaining: v.number(),    // pool remaining for this week (applies to all users)
+}).index('by_window', ['windowStart'])
+```
 
-What is application-layer rate limiting?
+Server helpers in `convex/rateLimit.ts`:
 
-Application-layer rate limiting happens in your app's code where you are handling authentication, authorization, and other business logic. It allows you to define nuanced rules, and enforce policies more fairly. It is not the first line of defense for a sophisticated DDOS attack (which thankfully are extremely rare), but will serve most real-world use cases.
+- `internal.rateLimit.grantGlobalTopup({ amount })` — Add (or subtract) credits to this week’s global pool. Returns `{ windowStart, remaining }`.
+- `internal.rateLimit.getGlobalTopup()` — Inspect the current pool.
+- `tryConsumeGlobalTopup(ctx)` — Used by chat mutations; consumes 1 top‑up when a user is out of their weekly cap, allowing the message to pass.
 
-What differentiates this approach?
+Enforcement flow in chat:
 
-Type-safe usage: you won't accidentally misspell a rate limit name.
-Configurable for fixed window or token bucket algorithms.
-Efficient storage and compute: storage is not proportional to requests.
-Configurable sharding for scalability.
-Transactional evaluation: all rate limit changes will roll back if your mutation fails.
-Fairness guarantees via credit "reservation": save yourself from exponential backoff.
-Opt-in "rollover" or "burst" allowance via a configurable capacity.
-Fails closed, not open: avoid cascading failure when traffic overwhelms your rate limits.
-See the associated Stack post for more details and background.
+```ts
+// 1) Personal weekly cap
+const status = await appRateLimiter.limit(ctx, 'chatWeekly', { key: userId });
 
-Pre-requisite: Convex#
-You'll need an existing Convex project to use the component. Convex is a hosted backend platform, including a database, serverless functions, and a ton more you can learn about here.
+// 2) If depleted, consume 1 from the global pool
+if (!status.ok) {
+  const consumed = await tryConsumeGlobalTopup(ctx);
+  if (!consumed) {
+    // 3) No top-up available → throw 429
+    await appRateLimiter.limit(ctx, 'chatWeekly', { key: userId, throws: true });
+  }
+}
+```
 
-Run npm create convex or follow any of the quickstarts to set one up.
+### Client UX (App)
 
-Installation#
-Install the component package:
+When the server returns `429`, the client injects a localized assistant‑style message in the chat.
 
-npm install @convex-dev/rate-limiter
+- File: `src/app/(app)/tabs/chat.tsx`
+- Locale keys:
+  - `chat.limit.weeklyReached` — “You’ve reached your weekly message limit. Please check back next week.”
 
-Create a convex.config.ts file in your app's convex/ folder and install the component by calling use:
+```ts
+// On streaming error with status 429:
+const systemNotice: Message = {
+  _id: `sys-rate-${Date.now()}`,
+  content: t('chat.limit.weeklyReached',
+    "You've reached your weekly message limit. Please check back next week."),
+  role: 'assistant',
+  _creationTime: Date.now(),
+};
+// Append to current session’s pending messages so it appears inline
+```
 
-// convex/convex.config.ts
-import { defineApp } from "convex/server";
-import rateLimiter from "@convex-dev/rate-limiter/convex.config";
+Locales updated:
 
-const app = defineApp();
-app.use(rateLimiter);
+- `src/locales/en.json`: `chat.limit.weeklyReached`
+- `src/locales/ar.json`: `chat.limit.weeklyReached`
 
-export default app;
+---
 
-Define your rate limits:#
-import { RateLimiter, MINUTE, HOUR } from "@convex-dev/rate-limiter";
-import { components } from "./_generated/api";
+## Operations
 
-const rateLimiter = new RateLimiter(components.rateLimiter, {
-  // One global / singleton rate limit, using a "fixed window" algorithm.
-  freeTrialSignUp: { kind: "fixed window", rate: 100, period: HOUR },
-  // A per-user limit, allowing one every ~6 seconds.
-  // Allows up to 3 in quick succession if they haven't sent many recently.
-  sendMessage: { kind: "token bucket", rate: 10, period: MINUTE, capacity: 3 },
-  failedLogins: { kind: "token bucket", rate: 10, period: HOUR },
-  // Use sharding to increase throughput without compromising on correctness.
-  llmTokens: { kind: "token bucket", rate: 40000, period: MINUTE, shards: 10 },
-  llmRequests: { kind: "fixed window", rate: 1000, period: MINUTE, shards: 10 },
-});
+### Change the weekly cap (base limit)
 
-You can safely generate multiple instances if you want to define different rates in separate places, provided the keys don't overlap.
-The units for period are milliseconds. MINUTE above is 60000.
-Strategies:#
-The token bucket approach provides guarantees for overall consumption via the rate per period at which tokens are added, while also allowing unused tokens to accumulate (like "rollover" minutes) up to some capacity value. So if you could normally send 10 per minute, with a capacity of 20, then every two minutes you could send 20, or if in the last two minutes you only sent 5, you can send 15 now.
+1) Update Convex env var `CHAT_WEEKLY_LIMIT` (e.g., `250 → 300`).
+2) Restart Convex workers (dev: restart `convex dev`; prod: `bun convex:deploy`).
 
-The fixed window approach differs in that the tokens are granted all at once, every period milliseconds. It similarly allows accumulating "rollover" tokens up to a capacity (defaults to the rate for both rate limit strategies). You can specify a custom start time if e.g. you want the period to reset at a specific time of day. By default it will be random to help space out requests that are retrying.
+Notes:
+- The limiter config is loaded at worker start; a restart is required to pick up new env values.
 
-Usage#
-Using a simple global rate limit:#
-const { ok, retryAfter } = await rateLimiter.limit(ctx, "freeTrialSignUp");
+### Grant additional messages instantly to everyone
 
-ok is whether it successfully consumed the resource
-retryAfter is when it would have succeeded in the future.
-Note: If you have many clients using the retryAfter to decide when to retry, defend against a thundering herd by adding some jitter. Or use the reserve functionality discussed below.
+Run the internal mutation (Convex dashboard / MCP):
 
-Per-user rate limit:#
-Use key to use a rate limit specific to some user / team / session ID / etc.
+```js
+internal.rateLimit.grantGlobalTopup({ amount: 100 });
+```
 
-const status = await rateLimiter.limit(ctx, "sendMessage", { key: userId });
+Effects:
+- Immediately adds `+100` messages to the shared pool for the current week.
+- Users who already hit their weekly cap can continue; each additional send consumes one from the pool.
+- Negative amounts are allowed (pool won’t go below zero) if you need to reduce remaining top‑ups.
 
-Consume a custom count#
-By default, each call to limit counts as one unit. Pass count to customize.
+### Reset a single user (optional)
 
-// Consume multiple in one request to prevent rate limits on an LLM API.
-const status = await rateLimiter.limit(ctx, "llmTokens", { count: tokens });
+```js
+internal.rateLimit.resetChatWeekly({ userId: '<Convex users._id>' });
+```
 
-Throw automatically#
-By default it will return { ok, retryAfter }. To have it throw automatically when the limit is exceeded, use throws. It throws a ConvexError with RateLimitError data (data: {kind, name, retryAfter}) instead of returning when ok is false.
+Use cases:
+- QA flow for a specific tester, or targeted support intervention.
 
-// Automatically throw an error if the rate limit is hit
-await rateLimiter.limit(ctx, "failedLogins", { key: userId, throws: true });
+### Inspect the current top‑up pool
 
-Check a rate limit without consuming it#
-const status = await rateLimiter.check(ctx, "failedLogins", { key: userId });
+```js
+internal.rateLimit.getGlobalTopup();
+// → { windowStart: <epoch>, remaining: <number> }
+```
 
-Reset a rate limit#
-// Reset a rate limit on successful login
-await rateLimiter.reset(ctx, "failedLogins", { key: userId });
+### Weekly window semantics
 
-Define a rate limit inline / dynamically#
-// Use a one-off rate limit config (when not named on initialization)
-const config = { kind: "fixed window", rate: 1, period: SECOND };
-const status = await rateLimiter.limit(ctx, "oneOffName", { config });
+- Window start: Sunday 00:00 UTC.
+- At each new week, the `globalTopups` table naturally rolls to a new row/window.
+- Per‑user rate limiter counters also move to the new weekly window automatically.
 
-Using the React hook#
-You can use the React hook to check the rate limit in your browser code.
+---
 
-First, define the server API to get the rate limit value:
+## Files Changed
 
-// In convex/example.ts
-export const { getRateLimit, getServerTime } = rateLimiter.hookAPI(
-  "sendMessage",
-  // Optionally provide a key function to get the key for the rate limit
-  { key: async (ctx) => getUserId(ctx) }
-);
+Backend (Convex):
 
-Then, use the React hook to check the rate limit:
+- `convex/convex.config.ts`: mounted the rate limiter component earlier.
+- `convex/rateLimit.ts`:
+  - Defined `chatWeekly` with `CHAT_WEEKLY_LIMIT` and `WEEK` period.
+  - Implemented `grantGlobalTopup`, `getGlobalTopup`, `resetChatWeekly`, `tryConsumeGlobalTopup`.
+- `convex/chat.ts` and `convex/chatStreaming.ts`:
+  - Enforced `chatWeekly` for user messages only, then fallback to `tryConsumeGlobalTopup`.
+- `convex/http.ts`:
+  - Pre‑check uses `chatWeekly` and returns `429 Weekly chat limit reached` if exceeded.
+- `convex/schema.ts`:
+  - Added `globalTopups` table with `by_window` index.
 
-function App() {
-  const { status: { ok, retryAt }, check } = useRateLimit(api.example.getRateLimit, {
-    // [recommended] Allows the hook to sync the browser and server clocks
-    getServerTimeMutation: getServerTime,
-    // [optional] The number of tokens to wait on
-    count: 1,
-  });
+Frontend (App):
 
-  // If you want to check at specific times and get the concrete value:
-  const { value, ts, config, ok, retryAt } = check(Date.now(), count);
+- `src/app/(app)/tabs/chat.tsx`:
+  - On `429`, shows a localized assistant‑style message instead of a raw error dialog.
+- Localization:
+  - `src/locales/en.json`, `src/locales/ar.json`: `chat.limit.weeklyReached`.
 
-Fetching the current value directly#
-You can fetch the current value of a rate limit directly, if you want to know the concrete value and timestamp it was last updated.
+---
 
-const { config, value, ts } = await rateLimiter.getValue(ctx, "sendMessage", { key: userId });
+## How To Test
 
-And you can use calculateRateLimit to calculate the value at a given timestamp:
+1) Set a small weekly cap:
+   - Set `CHAT_WEEKLY_LIMIT=3` and restart Convex.
+2) Send 3 messages — 4th should 429.
+3) Grant a top‑up:
+   - `internal.rateLimit.grantGlobalTopup({ amount: 2 })` → next 2 messages should succeed.
+4) Raise the base cap:
+   - Set `CHAT_WEEKLY_LIMIT=5`, restart Convex → base limit now 5 + any remaining top‑ups.
 
-import { calculateRateLimit } from "@convex-dev/rate-limiter";
+---
 
-const { config, value, ts } = calculateRateLimit({ value, ts }, config, Date.now(), count || 0);
+## Troubleshooting
 
-Scaling rate limiting with shards#
-When many requests are happening at once, they can all be trying to modify the same values in the database. Because Convex provides strong transactions, they will never overwrite each other, so you don't have to worry about the rate limiter succeeding more often than it should. However, when there is high contention for these values, it causes optimistic concurrency control conflicts. Convex automatically retries these a number of times with backoff, but it's still best to avoid them.
+- “Raised `CHAT_WEEKLY_LIMIT` but still see old limit”
+  - Ensure you restarted Convex workers; the limiter’s config is read at startup.
+- “Reset doesn’t work when I only set `name` in the component tool”
+  - The chat limiter is keyed per user. Use `internal.rateLimit.resetChatWeekly({ userId })`, or pass both `name` and `key` if using the component API directly.
+- “Need to increase capacity instantly without restart”
+  - Use `grantGlobalTopup({ amount })`. No restart needed; takes effect immediately.
 
-Not to worry! To provide high throughput, we can use a technique called "sharding" where we break up the total capacity into individual buckets, or "shards". When we go to use some of that capacity, we check a random shard.1While sometimes we'll get unlucky and get rate limited when there was capacity elsewhere, we'll never voilate the rate limit's upper bound.
+---
 
-const rateLimiter = new RateLimiter(components.rateLimiter, {
-  // Use sharding to increase throughput without compromising on correctness.
-  llmTokens: { kind: "token bucket", rate: 40000, period: MINUTE, shards: 10 },
-  llmRequests: { kind: "fixed window", rate: 1000, period: MINUTE, shards: 10 },
-});
+## Rationale & Notes
 
-Here we're using 10 shards to handle 1,000 QPM. If you want some rough math to guess at how many shards to add, take the max queries per second you expect and divide by two. It's also useful for each shard to have five (ideally ten) or more capacity. In this case, we have ten (rate / shards) and don't expect normal traffic to exceed ~20 QPS.
+- Weekly vs Daily: Weekly provides flexibility (some days heavier usage) while maintaining a sensible cap.
+- Global Top‑Ups: Operations can increase capacity fleet‑wide instantly without affecting per‑user counters or requiring a deploy.
+- Client Messaging: Present a calm, localized explanation instead of an error to improve UX.
+- Security: Top‑up and resets are `internal` Convex functions and not callable by the client directly.
 
-Tip: If you want a rate like { rate: 100, period: SECOND } and you are flexible in the overall period, then you can shard this by increasing the rate and period proportionally to get enough shards and capacity per shard: { shards: 50, rate: 250, period: 2.5 * SECOND } or even better: { shards: 50, rate: 1000, period: 10 * SECOND }.
+---
 
-Power of two#
-We're actually going one step further and checking two shards and using the one with more capacity, to keep them relatively balanced, based on the power of two technique. We will also combine the capacity of the two shards if neither has enough on their own.
+## API Reference (Internal)
 
-Reserving capacity:#
-You can also allow it to reserve capacity to avoid starvation on larger requests.
+```ts
+// rateLimit.ts
 
-When you reserve capacity ahead of time, the contract is that you can run your operation at the specified time (via the retryAfter field), at which point you don't have to re-check the rate limit. Your capacity has been "ear-marked".
+// Base limiter (loaded at worker start)
+chatWeekly: { kind: 'fixed window', rate: CHAT_WEEKLY_LIMIT, period: WEEK }
 
-With this, you can queue up many operations and they will be run at spaced-out intervals, maximizing the utilization of the rate limit.
+// Mutations / Queries
+grantGlobalTopup({ amount: number }): { windowStart: number, remaining: number }
+getGlobalTopup(): { windowStart: number, remaining: number }
+resetChatWeekly({ userId: Id<'users'> }): null
 
-Details in the Stack post.
+// Utility
+tryConsumeGlobalTopup(ctx): Promise<boolean>
+```
 
-const myAction = internalAction({
-  args: {
-    //...
-    skipCheck: v.optional(v.boolean()),
-  },
-  handler: async (ctx, args) => {
-    if (!args.skipCheck) {
-      // Reserve future capacity instead of just failing now
-      const status = await rateLimiter.limit(ctx, "llmRequests", {
-        reserve: true,
-      });
-      if (status.retryAfter) {
-        return ctx.scheduler.runAfter(
-          status.retryAfter,
-          internal.foo.myAction,
-          {
-            // When we run in the future, we can skip the rate limit check,
-            // since we've just reserved that capacity.
-            skipCheck: true,
-          }
-        );
-      }
-    }
-    // do the operation
-  },
-});
+Example (Convex dashboard / MCP):
 
-Adding jitter#
-When too many users show up at once, it can cause network congestion, database contention, and consume other shared resources at an unnecessarily high rate. Instead we can return a random time within the next period to retry. Hopefully this is infrequent. This technique is referred to as adding "jitter."
+```js
+// Add +100 messages for everyone this week
+await internal.rateLimit.grantGlobalTopup({ amount: 100 });
 
-A simple implementation could look like:
+// Inspect remaining top-ups
+await internal.rateLimit.getGlobalTopup();
 
-const retryAfter = status.retryAfter + Math.random() * period;
+// Reset a single user (Convex users._id)
+await internal.rateLimit.resetChatWeekly({ userId: 'xxxx' });
+```
 
-For the fixed window, we also introduce randomness by picking the start time of the window (from which all subsequent windows are based) randomly if config.start wasn't provided. This helps from all clients flooding requests at midnight and paging you.
+---
 
-More resources#
-Check out a full example here.
+## Migration Notes (What we removed/changed)
 
-See this article for more information on usage and advanced patterns, for example:
+- Removed daily chat limit and any duplicate/legacy DB‑based rate limit checks.
+- Consolidated all chat limiting to `chatWeekly` + global top‑ups.
+- Localized user‑facing rate‑limit messaging.
 
-How the different rate limiting strategies work under the hood.
-Using multiple rate limits in a single transaction.
-Rate limiting anonymous users.
+

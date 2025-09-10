@@ -1,7 +1,11 @@
 import { httpAction } from './_generated/server';
 import { httpRouter } from 'convex/server';
 import { api, internal } from './_generated/api';
-import { buildResponsesPayload, transformResponsesStream } from './openaiResponses';
+import {
+  buildResponsesPayload,
+  transformResponsesStream,
+} from './openaiResponses';
+import appRateLimiter from './rateLimit';
 
 // SSE helpers
 const encoder = new TextEncoder();
@@ -117,6 +121,17 @@ export const streamChat = httpAction(async (ctx, request) => {
       });
     }
 
+    // Pre-check weekly chat limit (non-consuming) to short-circuit early
+    const chatDailyStatus = await appRateLimiter.check(ctx, 'chatWeekly', {
+      key: user._id,
+    });
+    if (!chatDailyStatus.ok) {
+      return new Response('Weekly chat limit reached', {
+        status: 429,
+        headers: makeCorsHeaders(origin),
+      });
+    }
+
     // Ensure or create session
     let sessionId = body.sessionId;
     if (!sessionId) {
@@ -136,19 +151,7 @@ export const streamChat = httpAction(async (ctx, request) => {
     }
     const ensuredSessionId: string = sessionId!;
 
-    // Apply a lightweight rate limit per user/session
-    try {
-      await ctx.runMutation(internal.chatStreaming.applyRateLimit, {
-        key: `http:stream:${user._id}:${ensuredSessionId}`,
-        limit: 5,
-        windowMs: 10_000,
-      });
-    } catch {
-      return new Response('Rate limit exceeded', {
-        status: 429,
-        headers: makeCorsHeaders(origin),
-      });
-    }
+    // No burst limiter — rely solely on daily message limit
 
     // Insert the user message without scheduling background generation
     try {
@@ -160,7 +163,7 @@ export const streamChat = httpAction(async (ctx, request) => {
         content: body.message,
         requestId: body.requestId,
       });
-    } catch (e) {
+    } catch {
       // If insertion fails, bail early
       return new Response('Failed to save user message', {
         status: 500,
@@ -199,28 +202,34 @@ export const streamChat = httpAction(async (ctx, request) => {
     }
 
     // Call OpenAI Responses API with streaming enabled
+    const requestBody: any = {
+      model: (payload as any).model,
+      stream: true,
+      input: (payload as any).input,
+    };
+    if ((payload as any).prompt) {
+      requestBody.prompt = (payload as any).prompt;
+    }
+    if ((payload as any).instructions) {
+      requestBody.instructions = (payload as any).instructions;
+    }
+    if (modelConfig?.temperature !== undefined) {
+      requestBody.temperature = modelConfig.temperature;
+    }
+    if (modelConfig?.maxTokens !== undefined) {
+      requestBody.max_output_tokens = modelConfig.maxTokens;
+    }
+    if (modelConfig?.topP !== undefined) {
+      requestBody.top_p = modelConfig.topP;
+    }
+
     const upstream = await fetch('https://api.openai.com/v1/responses', {
       method: 'POST',
       headers: {
         Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        model: (payload as any).model,
-        stream: true,
-        input: (payload as any).input,
-        ...(payload as any).prompt ? { prompt: (payload as any).prompt } : {},
-        ...(payload as any).instructions
-          ? { instructions: (payload as any).instructions }
-          : {},
-        ...(modelConfig?.temperature !== undefined
-          ? { temperature: modelConfig.temperature }
-          : {}),
-        ...(modelConfig?.maxTokens !== undefined
-          ? { max_output_tokens: modelConfig.maxTokens }
-          : {}),
-        ...(modelConfig?.topP !== undefined ? { top_p: modelConfig.topP } : {}),
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!upstream.ok || !upstream.body) {
@@ -252,27 +261,32 @@ export const streamChat = httpAction(async (ctx, request) => {
           controller.enqueue(encoder.encode(sseLine('[DONE]')));
           // Persist final assistant message and telemetry before closing
           try {
-            await ctx.runMutation(internal.chatStreaming.insertAssistantMessage, {
-              sessionId: ensuredSessionId,
-              userId: user._id,
-              chatType: body.chatType,
-              content: fullText.trim(),
-              requestId,
-            });
+            await ctx.runMutation(
+              internal.chatStreaming.insertAssistantMessage,
+              {
+                sessionId: ensuredSessionId,
+                userId: user._id,
+                chatType: body.chatType,
+                content: fullText.trim(),
+                requestId,
+              }
+            );
           } catch (e) {
             console.error('Failed to persist assistant message:', e);
           }
           try {
-            const rl = await ctx.runMutation(internal.chatStreaming.tryRateLimit, {
-              key: `title:summarize:${user._id}:${ensuredSessionId}`,
-              limit: 1,
-              windowMs: 10_000,
+            const status = await appRateLimiter.limit(ctx, 'titleSummarize', {
+              key: `${user._id}:${ensuredSessionId}`,
             });
-            if (rl?.allowed) {
+            if (status.ok) {
               await ctx.scheduler.runAfter(
                 0,
                 internal.titleSummarization.generateAndApplyTitle,
-                { userId: user._id, sessionId: ensuredSessionId, chatType: body.chatType }
+                {
+                  userId: user._id,
+                  sessionId: ensuredSessionId,
+                  chatType: body.chatType,
+                }
               );
             }
           } catch {}
@@ -304,7 +318,10 @@ export const streamChat = httpAction(async (ctx, request) => {
             if (json && json !== '[DONE]') {
               try {
                 const evt = JSON.parse(json);
-                if (evt?.type === 'text-delta' && typeof evt.textDelta === 'string') {
+                if (
+                  evt?.type === 'text-delta' &&
+                  typeof evt.textDelta === 'string'
+                ) {
                   fullText += evt.textDelta;
                 }
               } catch {}
@@ -319,13 +336,16 @@ export const streamChat = httpAction(async (ctx, request) => {
         // Best-effort: persist any partial content gathered so far
         try {
           if (fullText.trim().length > 0) {
-            await ctx.runMutation(internal.chatStreaming.insertAssistantMessage as any, {
-              sessionId: ensuredSessionId,
-              userId: user._id,
-              chatType: body.chatType,
-              content: fullText.trim(),
-              requestId,
-            });
+            await ctx.runMutation(
+              internal.chatStreaming.insertAssistantMessage as any,
+              {
+                sessionId: ensuredSessionId,
+                userId: user._id,
+                chatType: body.chatType,
+                content: fullText.trim(),
+                requestId,
+              }
+            );
           }
         } catch (e) {
           console.warn('Persist on cancel failed', e);

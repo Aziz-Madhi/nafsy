@@ -11,7 +11,9 @@ interface SocialAuthButtonsProps {
   showDivider?: boolean;
 }
 
-export function SocialAuthButtons({ showDivider = true }: SocialAuthButtonsProps) {
+export function SocialAuthButtons({
+  showDivider = true,
+}: SocialAuthButtonsProps) {
   const { t } = useTranslation();
   useWarmUpBrowser();
   const { handleSocialAuth, loading } = useSocialAuth();
@@ -42,7 +44,10 @@ export function SocialAuthButtons({ showDivider = true }: SocialAuthButtonsProps
               <GoogleIcon size={22} />
             </View>
             {/* Force Google brand dark text on white surface in dark mode */}
-            <Text className="text-base font-semibold" style={{ color: '#202124' }}>
+            <Text
+              className="text-base font-semibold"
+              style={{ color: '#202124' }}
+            >
               {t('auth.continueWithGoogle')}
             </Text>
           </View>

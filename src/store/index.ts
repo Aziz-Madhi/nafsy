@@ -31,4 +31,6 @@ export const initializeStores = () => {
 // TypeScript utility types (simplified)
 export type AppStoreState = ReturnType<typeof useAppStore.getState>;
 export type ChatUIStoreState = ReturnType<typeof useChatUIStore.getState>;
-export type OnboardingStoreState = ReturnType<typeof useOnboardingStore.getState>;
+export type OnboardingStoreState = ReturnType<
+  typeof useOnboardingStore.getState
+>;

@@ -308,7 +308,10 @@ export default function CalendarModal() {
             </Pressable>
             <Text variant="heading" className="text-[#5A4A3A] font-semibold">
               {format(currentMonth, 'MMMM yyyy', {
-                locale: (t as any).i18n?.language === 'ar' ? (ar as any) : (enUS as any),
+                locale:
+                  (t as any).i18n?.language === 'ar'
+                    ? (ar as any)
+                    : (enUS as any),
               })}
             </Text>
             <Pressable
@@ -371,7 +374,10 @@ export default function CalendarModal() {
                 className="text-gray-600 font-semibold mb-3"
               >
                 {format(selectedDate, 'EEEE, MMMM d, yyyy', {
-                  locale: (t as any).i18n?.language === 'ar' ? (ar as any) : (enUS as any),
+                  locale:
+                    (t as any).i18n?.language === 'ar'
+                      ? (ar as any)
+                      : (enUS as any),
                 })}
               </Text>
               {(() => {

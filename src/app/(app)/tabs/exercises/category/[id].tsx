@@ -3,7 +3,10 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { CategoryExerciseList } from '~/components/exercises';
 import { useConvex, useMutation } from 'convex/react';
 import { api } from '../../../../../../convex/_generated/api';
-import { useCurrentUser, useExercisesWithProgress } from '~/hooks/useSharedData';
+import {
+  useCurrentUser,
+  useExercisesWithProgress,
+} from '~/hooks/useSharedData';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import type { Exercise } from '~/types';
 import { useTranslation } from '~/hooks/useTranslation';
@@ -82,7 +85,7 @@ export default function CategoryModal() {
   const currentUser = useCurrentUser();
   const exercisesWithProgress = useExercisesWithProgress(categoryId as string);
   const recordCompletion = useMutation(api.userProgress.recordCompletion);
-  const seedExercises = useMutation(((api as any).seed?.seedExercises) as any);
+  const seedExercises = useMutation((api as any).seed?.seedExercises as any);
 
   // Store stability guard
   const [isStoreStable] = useState(true);
@@ -111,7 +114,7 @@ export default function CategoryModal() {
   const exercises: Exercise[] = useMemo(() => {
     if (!exercisesWithProgress || !isStoreStable) return [];
 
-    return (exercisesWithProgress.map((ex) => ({
+    return exercisesWithProgress.map((ex) => ({
       id: ex._id,
       title: ex.title,
       titleAr: ex.titleAr,
@@ -126,7 +129,7 @@ export default function CategoryModal() {
       steps: ex.instructions,
       stepsAr: ex.instructionsAr,
       benefits: benefitsMap[ex.category] || [],
-    })) as any) as Exercise[];
+    })) as any as Exercise[];
   }, [exercisesWithProgress, benefitsMap, isStoreStable]);
 
   // Filter exercises for this category
@@ -168,7 +171,8 @@ export default function CategoryModal() {
         await openAudio({
           id: String(exercise.id),
           title:
-            (currentLanguage || '').startsWith('ar') && (exercise as any).titleAr
+            (currentLanguage || '').startsWith('ar') &&
+            (exercise as any).titleAr
               ? ((exercise as any).titleAr as string)
               : exercise.title,
           subtitle: t(`exercises.categories.${exercise.category}`),

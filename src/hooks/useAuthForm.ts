@@ -30,7 +30,11 @@ interface AuthFormErrors {
   general?: string;
 }
 
-export function useAuthForm({ mode, onSuccess, requireName }: UseAuthFormProps) {
+export function useAuthForm({
+  mode,
+  onSuccess,
+  requireName,
+}: UseAuthFormProps) {
   const { t } = useTranslation();
   const {
     signIn,
@@ -47,8 +51,7 @@ export function useAuthForm({ mode, onSuccess, requireName }: UseAuthFormProps) 
   const [form, setForm] = useState<AuthFormData>({
     email: '',
     password: '',
-    name:
-      mode === 'signup' && (requireName ?? true) ? '' : undefined,
+    name: mode === 'signup' && (requireName ?? true) ? '' : undefined,
   });
 
   const [errors, setErrors] = useState<AuthFormErrors>({});
@@ -94,7 +97,8 @@ export function useAuthForm({ mode, onSuccess, requireName }: UseAuthFormProps) 
             return lengthOk && hasUpper && hasLower && hasNumber && hasSpecial;
           })();
     const nameRequired = mode === 'signup' && (requireName ?? true);
-    const isNameValid = !nameRequired || (form.name && form.name.trim().length > 0);
+    const isNameValid =
+      !nameRequired || (form.name && form.name.trim().length > 0);
 
     return {
       email: isEmailValid,

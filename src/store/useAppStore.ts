@@ -10,6 +10,9 @@ import { changeLanguage } from '~/lib/i18n';
 import { saveLanguage } from '~/lib/mmkv-storage';
 import { resolveLanguage, type SupportedLanguage } from '~/lib/language-utils';
 
+// Action selectors - simplified to only include current functions
+import { shallow } from 'zustand/shallow';
+
 // Helper function to resolve current theme
 const resolveCurrentTheme = (
   themePreference: 'light' | 'dark' | 'system'
@@ -217,13 +220,9 @@ export const useToggleLanguage = () =>
   useAppStore((state) => state.toggleLanguage);
 export const useNotificationsEnabled = () =>
   useAppStore((state) => state.settings.notificationsEnabled);
-export const useHasSeenIntro = () =>
-  useAppStore((state) => state.hasSeenIntro);
+export const useHasSeenIntro = () => useAppStore((state) => state.hasSeenIntro);
 export const useHasCompletedOnboarding = () =>
   useAppStore((state) => state.hasCompletedOnboarding);
-
-// Action selectors - simplified to only include current functions
-import { shallow } from 'zustand/shallow';
 
 export const useAppActions = () =>
   useAppStore(

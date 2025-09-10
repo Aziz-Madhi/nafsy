@@ -115,7 +115,8 @@ export const ChatScreen = memo(function ChatScreen({
       const isSyntheticAssistant = item._id.startsWith('_assistantFor:');
       const hasText = (item.content || '').trim().length > 0;
       // Show copy for all assistant messages to keep height stable
-      const showCopy = item.role === 'assistant' && hasText && !isSyntheticAssistant;
+      const showCopy =
+        item.role === 'assistant' && hasText && !isSyntheticAssistant;
       // Never animate assistant bubbles to avoid end-of-stream glitches
       const shouldAnimate = item.role === 'user' && !isSyntheticAssistant;
 
@@ -154,7 +155,12 @@ export const ChatScreen = memo(function ChatScreen({
     if (!serverText) return messages;
     // Filter out any pending local user bubbles with same text
     return messages.filter(
-      (m) => !(m.role === 'user' && m._id.startsWith('_local:') && (m.content || '').trim() === serverText)
+      (m) =>
+        !(
+          m.role === 'user' &&
+          m._id.startsWith('_local:') &&
+          (m.content || '').trim() === serverText
+        )
     );
   }, [messages]);
 
@@ -174,7 +180,8 @@ export const ChatScreen = memo(function ChatScreen({
     }
     if (lastUserIdx === -1) return true;
     const hasAssistantAfterUser =
-      !!messagesNoDup[lastUserIdx + 1] && messagesNoDup[lastUserIdx + 1].role === 'assistant';
+      !!messagesNoDup[lastUserIdx + 1] &&
+      messagesNoDup[lastUserIdx + 1].role === 'assistant';
     return !hasAssistantAfterUser;
   }, [messagesNoDup, streamingContent]);
 
@@ -210,8 +217,13 @@ export const ChatScreen = memo(function ChatScreen({
       // Show streaming content while streaming, or after streaming if the
       // final message hasn't appeared yet.
       if (showStreamRow) {
-        const text = (streamingContent || '…');
-        return { _id: id, content: text, role: 'assistant', _creationTime: Date.now() };
+        const text = streamingContent || '…';
+        return {
+          _id: id,
+          content: text,
+          role: 'assistant',
+          _creationTime: Date.now(),
+        };
       }
       return null;
     })();
@@ -230,11 +242,19 @@ export const ChatScreen = memo(function ChatScreen({
 
   return (
     <View className="flex-1 bg-background">
-      <GestureDetector gesture={Gesture.Simultaneous(doubleTapGesture, singleTapDismiss)}>
+      <GestureDetector
+        gesture={Gesture.Simultaneous(doubleTapGesture, singleTapDismiss)}
+      >
         <View className="flex-1">
           {/* Fixed header overlay (icons stay visible while scrolling) */}
           <View
-            style={{ position: 'absolute', top: 0, left: 0, right: 0, zIndex: 10 }}
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 0,
+              right: 0,
+              zIndex: 10,
+            }}
             pointerEvents="box-none"
             onLayout={(e) => setHeaderHeight(e.nativeEvent.layout.height)}
           >
@@ -245,7 +265,10 @@ export const ChatScreen = memo(function ChatScreen({
             />
           </View>
 
-          <View className="flex-1" style={{ paddingBottom: navigationBarPadding }}>
+          <View
+            className="flex-1"
+            style={{ paddingBottom: navigationBarPadding }}
+          >
             <ChatMessageList
               flashListRef={flashListRef}
               messages={displayMessages}
@@ -255,7 +278,11 @@ export const ChatScreen = memo(function ChatScreen({
               horizontalPadding={20}
               topPadding={headerHeight}
               header={
-                <View onLayout={(e) => setListHeaderHeight(e.nativeEvent.layout.height)}>
+                <View
+                  onLayout={(e) =>
+                    setListHeaderHeight(e.nativeEvent.layout.height)
+                  }
+                >
                   <SessionStatusDisplay
                     isLoading={sessionSwitchLoading}
                     error={sessionError}
@@ -279,7 +306,6 @@ export const ChatScreen = memo(function ChatScreen({
                 </View>
               }
             />
-
           </View>
         </View>
       </GestureDetector>

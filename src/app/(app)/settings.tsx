@@ -340,7 +340,10 @@ const SettingsScreen = React.memo(function SettingsScreen() {
       >
         {/* User Info - Highlighted Card */}
         {user && (
-          <Animated.View entering={FadeInDown.springify()} className="px-4 mt-4">
+          <Animated.View
+            entering={FadeInDown.springify()}
+            className="px-4 mt-4"
+          >
             <View className="rounded-2xl p-4 bg-black/[0.03] dark:bg-white/[0.03] flex-row items-center">
               <View className="h-12 w-12 me-3 rounded-full items-center justify-center bg-primary/15">
                 <Text className="text-primary text-lg font-semibold">
