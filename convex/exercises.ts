@@ -18,7 +18,8 @@ export const getAllExercises = query({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -26,6 +27,8 @@ export const getAllExercises = query({
         v.literal('intermediate'),
         v.literal('advanced')
       ),
+      audioKey: v.optional(v.string()),
+      audioKeyAr: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
       instructions: v.array(v.string()),
       instructionsAr: v.array(v.string()),
@@ -45,7 +48,8 @@ export const getExercisesByCategory = query({
       v.literal('mindfulness'),
       v.literal('journaling'),
       v.literal('movement'),
-      v.literal('relaxation')
+      v.literal('relaxation'),
+      v.literal('reminders')
     ),
   },
   returns: v.array(
@@ -61,7 +65,8 @@ export const getExercisesByCategory = query({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -69,6 +74,8 @@ export const getExercisesByCategory = query({
         v.literal('intermediate'),
         v.literal('advanced')
       ),
+      audioKey: v.optional(v.string()),
+      audioKeyAr: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
       instructions: v.array(v.string()),
       instructionsAr: v.array(v.string()),
@@ -101,7 +108,8 @@ export const getExercise = query({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -109,6 +117,8 @@ export const getExercise = query({
         v.literal('intermediate'),
         v.literal('advanced')
       ),
+      audioKey: v.optional(v.string()),
+      audioKeyAr: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
       instructions: v.array(v.string()),
       instructionsAr: v.array(v.string()),
@@ -130,7 +140,8 @@ export const getRandomExerciseByCategories = query({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       )
     ),
   },
@@ -147,7 +158,8 @@ export const getRandomExerciseByCategories = query({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -155,6 +167,8 @@ export const getRandomExerciseByCategories = query({
         v.literal('intermediate'),
         v.literal('advanced')
       ),
+      audioKey: v.optional(v.string()),
+      audioKeyAr: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
       instructions: v.array(v.string()),
       instructionsAr: v.array(v.string()),
@@ -195,7 +209,8 @@ export const createExercise = internalMutation({
       v.literal('mindfulness'),
       v.literal('journaling'),
       v.literal('movement'),
-      v.literal('relaxation')
+      v.literal('relaxation'),
+      v.literal('reminders')
     ),
     duration: v.number(),
     difficulty: v.union(
@@ -228,7 +243,8 @@ export const updateExercise = internalMutation({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       )
     ),
     duration: v.optional(v.number()),
@@ -261,7 +277,8 @@ export const getExercisesWithProgress = query({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       )
     ),
   },
@@ -278,7 +295,8 @@ export const getExercisesWithProgress = query({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -286,6 +304,8 @@ export const getExercisesWithProgress = query({
         v.literal('intermediate'),
         v.literal('advanced')
       ),
+      audioKey: v.optional(v.string()),
+      audioKeyAr: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
       instructions: v.array(v.string()),
       instructionsAr: v.array(v.string()),
@@ -361,7 +381,8 @@ export const getDailyExercise = query({
         v.literal('mindfulness'),
         v.literal('journaling'),
         v.literal('movement'),
-        v.literal('relaxation')
+        v.literal('relaxation'),
+        v.literal('reminders')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -369,6 +390,8 @@ export const getDailyExercise = query({
         v.literal('intermediate'),
         v.literal('advanced')
       ),
+      audioKey: v.optional(v.string()),
+      audioKeyAr: v.optional(v.string()),
       imageUrl: v.optional(v.string()),
       instructions: v.array(v.string()),
       instructionsAr: v.array(v.string()),

@@ -1,5 +1,5 @@
 import React, { useMemo, useState, useCallback } from 'react';
-import { View, Pressable, Dimensions, TextInput, Modal } from 'react-native';
+import { View, Pressable, Dimensions, TextInput, Modal, Image } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { SessionList } from '~/components/ui/GenericList';
@@ -15,11 +15,12 @@ import { useMutation } from 'convex/react';
 import { api } from '../../../convex/_generated/api';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { cn } from '~/lib/cn';
-import { User } from 'lucide-react-native';
+// Removed top-right settings icon; we'll show an account section at the bottom
 import { router } from 'expo-router';
+import { MessageSquarePlus } from 'lucide-react-native';
 import { useColors } from '~/hooks/useColors';
 import { useTranslation } from '~/hooks/useTranslation';
-import { ChatType } from '~/store/useChatUIStore';
+import { ChatType, useChatUIStore } from '~/store/useChatUIStore';
 import { getChatTypeIcon, getChatTypeColor } from './ChatTypeToggle';
 import { getChatStyles } from '~/lib/chatStyles';
 import { ChatHistoryToggle } from './ChatHistoryToggle';
@@ -143,6 +144,30 @@ export function ChatHistorySidebar({
   const [activeHistoryType, setActiveHistoryType] = useState<ChatType>('coach');
   const insets = useSafeAreaInsets();
   const [skipExitAnimation, setSkipExitAnimation] = useState(false);
+  const { user, displayName } = useUserSafe();
+  const createChat = useMutation(api.chat.createChatSession);
+  const switchToCoachSession = useChatUIStore((s) => s.switchToCoachSession);
+  const switchToCompanionSession = useChatUIStore(
+    (s) => s.switchToCompanionSession
+  );
+
+  const handleNewChatPress = useCallback(async () => {
+    try {
+      impactAsync(ImpactFeedbackStyle.Medium);
+      const serverType = activeHistoryType === 'coach' ? 'main' : 'companion';
+      const newId = (await createChat({ type: serverType } as any)) as string;
+      if (newId) {
+        if (activeHistoryType === 'coach') {
+          await switchToCoachSession(newId);
+        } else if (activeHistoryType === 'companion') {
+          await switchToCompanionSession(newId);
+        }
+        onClose();
+      }
+    } catch (err) {
+      console.error('Error creating new chat session', err);
+    }
+  }, [activeHistoryType, createChat, switchToCoachSession, switchToCompanionSession, onClose]);
 
   const getDateGroup = useCallback(
     (dateString: string) => {
@@ -204,11 +229,8 @@ export function ChatHistorySidebar({
 
   const handleSettingsPress = useCallback(() => {
     impactAsync(ImpactFeedbackStyle.Light);
-    // Skip any sidebar exit animation and close immediately when navigating
-    setSkipExitAnimation(true);
     router.push('/settings');
-    onClose();
-  }, [onClose]);
+  }, []);
 
   const [modalVisible, setModalVisible] = React.useState(false);
 
@@ -351,39 +373,22 @@ export function ChatHistorySidebar({
                       </Text>
                     </View>
                   )}
-                  <View className="flex-row items-center justify-between mb-3">
-                    {isArabic ? (
-                      <>
-                        {/* Settings icon on the left for Arabic */}
-                        <Pressable
-                          onPress={handleSettingsPress}
-                          className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
-                        >
-                          <User size={20} color={colors.foreground} />
-                        </Pressable>
-                        <Text
-                          variant="title3"
-                          className="font-bold text-foreground"
-                        >
-                          {t('chat.history.title')}
-                        </Text>
-                      </>
-                    ) : (
-                      <>
-                        <Text
-                          variant="title3"
-                          className="font-bold text-foreground"
-                        >
-                          {t('chat.history.title')}
-                        </Text>
-                        <Pressable
-                          onPress={handleSettingsPress}
-                          className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
-                        >
-                          <User size={20} color={colors.foreground} />
-                        </Pressable>
-                      </>
-                    )}
+                  <View className={cn('flex-row items-center justify-between mb-3', isArabic && 'flex-row-reverse')}>
+                    <Text
+                      variant="title3"
+                      className="font-bold text-foreground"
+                    >
+                      {t('chat.history.title')}
+                    </Text>
+                    <Pressable
+                      onPress={handleNewChatPress}
+                      className="w-10 h-10 items-center justify-center rounded-full bg-black/[0.05] dark:bg-white/[0.05]"
+                      hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                      accessibilityRole="button"
+                      accessibilityLabel={t('chat.history.startChatting')}
+                    >
+                      <MessageSquarePlus size={18} color={colors.foreground} />
+                    </Pressable>
                   </View>
                   <View className="flex-row items-center rounded-xl px-4 py-3 bg-black/[0.03] dark:bg-white/[0.04] border border-border/10">
                     <SymbolView
@@ -435,6 +440,7 @@ export function ChatHistorySidebar({
                 <SessionList
                   data={groupedSessions}
                   keyExtractor={(item) => `date-${item.label}`}
+                  contentContainerStyle={{ paddingBottom: insets.bottom + 120 }}
                   renderItem={(dateGroup, _index) => {
                     return (
                       <View key={`date-${dateGroup.label}-section`}>
@@ -529,6 +535,50 @@ export function ChatHistorySidebar({
                     );
                   }}
                 />
+                {/* Bottom pinned Account pill (no section header) */}
+                <View
+                  pointerEvents="box-none"
+                  style={{ position: 'absolute', left: 0, right: 0, bottom: Math.max(insets.bottom, 12) }}
+                  className="px-4"
+                >
+                  <Pressable
+                    onPress={handleSettingsPress}
+                    className={cn(
+                      'flex-row items-center rounded-2xl p-3 bg-card-elevated border border-border/20 shadow-md',
+                      isArabic && 'flex-row-reverse'
+                    )}
+                    hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+                    accessibilityRole="button"
+                    accessibilityLabel={t('profile.sections.settings')}
+                  >
+                    {/* Avatar */}
+                    <View className="h-10 w-10 rounded-full overflow-hidden bg-black/10">
+                      {user?.imageUrl ? (
+                        <Image
+                          source={{ uri: user.imageUrl }}
+                          style={{ width: '100%', height: '100%' }}
+                        />
+                      ) : (
+                        <View className="flex-1 items-center justify-center">
+                          <SymbolView name="person.crop.circle" size={28} tintColor={colors.mutedForeground} />
+                        </View>
+                      )}
+                    </View>
+                    <View className={cn('flex-1 ms-3', isArabic && 'ms-0 me-3')}>
+                      <Text variant="subhead" className="text-foreground font-semibold" numberOfLines={1}>
+                        {displayName}
+                      </Text>
+                      <Text variant="caption1" className="text-muted-foreground" numberOfLines={1}>
+                        {t('profile.sections.settings')}
+                      </Text>
+                    </View>
+                    <SymbolView
+                      name={isArabic ? 'chevron.left' : 'chevron.right'}
+                      size={16}
+                      tintColor={colors.mutedForeground}
+                    />
+                  </Pressable>
+                </View>
               </View>
             </Animated.View>
           </>

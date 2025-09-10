@@ -57,6 +57,7 @@ export interface Exercise {
     | 'journaling'
     | 'relaxation';
   imageUrl?: string;
+  audioKey?: string;
   icon: string;
   color: string;
   steps?: string[];

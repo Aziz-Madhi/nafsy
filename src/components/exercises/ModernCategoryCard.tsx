@@ -24,13 +24,14 @@ interface ModernCategoryCardProps {
 }
 
 // Background image mapping by stable category id (not translated name)
-const CATEGORY_BACKGROUNDS: Record<WellnessCategory, ImageSourcePropType> = {
-  mindfulness: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_36AM.jpeg'), // brain
-  breathing: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_36AM-2.jpeg'), // lungs
-  movement: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_37AM.jpeg'), // dancer
-  journaling: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_38AM.jpeg'), // book
-  relaxation: require('../../../assets/Cards/breathing card.jpg.jpeg'), // calm face
-  reminders: require('../../../assets/Cards/Generated Image September 05, 2025 - 3_37AM-2.jpeg'), // clock
+// Exported for reuse (e.g., AudioPlayer backdrop) so visuals stay consistent
+export const CATEGORY_BACKGROUNDS: Record<WellnessCategory, ImageSourcePropType> = {
+  mindfulness: require('../../../assets/Cards/Cards Enhanced/Mindfulness card.jpg'),
+  breathing: require('../../../assets/Cards/Cards Enhanced/Breathing card.jpg'),
+  movement: require('../../../assets/Cards/Cards Enhanced/Movement card.jpg'),
+  journaling: require('../../../assets/Cards/Cards Enhanced/Journaling card.jpg'),
+  relaxation: require('../../../assets/Cards/Cards Enhanced/Relaxation Card.jpg'),
+  reminders: require('../../../assets/Cards/Cards Enhanced/Reminders card.jpg'),
 };
 
 function ModernCategoryCardComponent({

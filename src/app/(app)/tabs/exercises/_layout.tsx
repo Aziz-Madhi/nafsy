@@ -6,20 +6,26 @@ export default function ExercisesLayout() {
     <Stack
       screenOptions={{
         headerShown: false,
-        presentation: 'modal',
-        animation: 'slide_from_bottom',
+        // Use standard card transitions to avoid stacking multiple modals
+        presentation: 'card',
+        animation: 'slide_from_right',
         gestureEnabled: true,
       }}
     >
+      {/* Main exercises tab screen */}
       <Stack.Screen name="index" />
+
+      {/* Category list as a normal pushed screen (not modal) */}
       <Stack.Screen
         name="category/[id]"
         options={{
-          presentation: 'modal',
-          animation: 'slide_from_bottom',
+          presentation: 'card',
+          animation: 'slide_from_right',
           gestureEnabled: true,
         }}
       />
+
+      {/* Exercise detail route removed; tap plays audio immediately */}
     </Stack>
   );
 }

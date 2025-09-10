@@ -19,7 +19,7 @@ export function ChatHistoryToggle({
   activeType,
   onTypeChange,
 }: ChatHistoryToggleProps) {
-  const { t } = useTranslation();
+  const { currentLanguage } = useTranslation();
   const colors = useColors();
 
   const handlePress = async (type: ChatType) => {
@@ -30,9 +30,9 @@ export function ChatHistoryToggle({
   };
 
   const getHistoryLabel = (type: ChatType) => {
-    return type === 'coach'
-      ? t('chat.history.coachHistory')
-      : t('chat.history.companionHistory');
+    const isArabic = currentLanguage === 'ar';
+    if (type === 'coach') return isArabic ? 'المدرب' : 'Coach';
+    return isArabic ? 'الرفيق' : 'Companion';
   };
 
   return (

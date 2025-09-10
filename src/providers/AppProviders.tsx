@@ -6,6 +6,7 @@ import { ConvexProvider } from './ConvexProvider';
 import { StoreProvider } from './StoreProvider';
 import { ThemeController } from '~/components/ThemeController';
 import { useColors } from '~/hooks/useColors';
+import { AudioPlayerProvider } from './AudioPlayerProvider';
 
 // Initialize i18n system - must be imported to initialize
 import '~/lib/i18n';
@@ -31,7 +32,9 @@ export const AppProviders = React.memo(function AppProviders({
         <StoreProvider>
           <ThemeController />
           <MemoizedClerkProvider>
-            <MemoizedConvexProvider>{children}</MemoizedConvexProvider>
+            <MemoizedConvexProvider>
+              <AudioPlayerProvider>{children}</AudioPlayerProvider>
+            </MemoizedConvexProvider>
           </MemoizedClerkProvider>
         </StoreProvider>
       </MemoizedSafeAreaProvider>

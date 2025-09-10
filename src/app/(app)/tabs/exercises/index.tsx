@@ -4,8 +4,7 @@ import { DashboardLayout } from '~/components/ui/ScreenLayout';
 import { PremiumCategoryGrid } from '~/components/exercises/PremiumCategoryGrid';
 import { PremiumStatsSection } from '~/components/exercises/PremiumStatsSection';
 import { DailyExerciseCard } from '~/components/exercises/DailyExerciseCard';
-import { ExerciseDetail } from '~/components/exercises';
-import { useQuery, useMutation } from 'convex/react';
+import { useQuery, useMutation, useConvex } from 'convex/react';
 import { api } from '../../../../../convex/_generated/api';
 import { useCurrentUser } from '~/hooks/useSharedData';
 import {
@@ -20,6 +19,7 @@ import {
 } from '~/lib/daily-exercise-utils';
 import type { Exercise } from '~/types';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useAudioPlayer } from '~/providers/AudioPlayerProvider';
 
 // Utility functions from original exercises.tsx
 function getCategoryIcon(category: string): string {
@@ -83,12 +83,10 @@ function getBenefitsForCategory(
 
 export default function ExercisesIndex() {
   const { t } = useTranslation();
+  const { open: openAudio } = useAudioPlayer();
+  const convex = useConvex();
 
-  // State for ExerciseDetail modal (remains global)
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
-    null
-  );
-  const [showDetail, setShowDetail] = useState(false);
+  // No modal here; navigate to detail screen
 
   // Data fetching
   const currentUser = useCurrentUser();
@@ -101,6 +99,8 @@ export default function ExercisesIndex() {
 
   // Store stability guard
   const [isStoreStable] = useState(true);
+
+  // No selected-exercise audio prefetch on this screen anymore
 
   // Cache benefits
   const benefitsMap = useMemo(() => {
@@ -133,6 +133,7 @@ export default function ExercisesIndex() {
       duration: `${dailyExerciseData.duration} min`,
       difficulty: dailyExerciseData.difficulty,
       category: dailyExerciseData.category,
+      audioKey: (dailyExerciseData as any).audioKey,
       icon: getCategoryIcon(dailyExerciseData.category),
       color: getCategoryColor(dailyExerciseData.category),
       steps: dailyExerciseData.instructions,
@@ -149,24 +150,10 @@ export default function ExercisesIndex() {
 
   // Exercise detail handlers
   const handleExercisePress = useCallback((exercise: Exercise) => {
-    setSelectedExercise(exercise);
-    setShowDetail(true);
+    router.push(`/tabs/exercises/exercise/${exercise.id}`);
   }, []);
 
-  const handleStartExercise = useCallback(
-    async (exercise: Exercise) => {
-      setShowDetail(false);
-
-      if (currentUser) {
-        await recordCompletion({
-          exerciseId: exercise.id as any,
-          duration: parseInt(exercise.duration),
-          feedback: t('exercises.exerciseCompleted'),
-        });
-      }
-    },
-    [currentUser, recordCompletion, t]
-  );
+  // Start handled in the detail screen
 
   // Stats values
   const totalCompletions = (userStats as any)?.totalCompletions ?? 0;
@@ -206,12 +193,38 @@ export default function ExercisesIndex() {
   // Memoize content style
   const contentStyle = useMemo(() => ({ paddingHorizontal: 0 }), []);
 
-  // Memoize daily exercise press handler
-  const handleDailyExercisePress = useCallback(() => {
-    if (dailyExercise) {
-      handleExercisePress(dailyExercise);
-    }
-  }, [dailyExercise, handleExercisePress]);
+  // Start daily exercise immediately on press
+  const handleDailyExercisePress = useCallback(async () => {
+    if (!dailyExercise) return;
+    try {
+      let signedUrl: string | null = null;
+      if ((dailyExercise as any).audioKey) {
+        try {
+          signedUrl = await convex.query(api.r2.getExerciseAudioUrl, {
+            exerciseId: dailyExercise.id as any,
+            expiresIn: 60 * 60 * 6,
+          });
+        } catch {}
+      }
+
+      const minutes = parseInt(dailyExercise.duration);
+      await openAudio({
+        id: String(dailyExercise.id),
+        title: dailyExercise.title,
+        subtitle: dailyExercise.category,
+        icon: dailyExercise.icon,
+        color: dailyExercise.color,
+        durationSeconds: Number.isFinite(minutes) ? minutes * 60 : undefined,
+        sourceUri: signedUrl ?? undefined,
+      });
+
+      await recordCompletion({
+        exerciseId: dailyExercise.id as any,
+        duration: Number.isFinite(minutes) ? minutes : 0,
+        feedback: t('exercises.exerciseCompleted'),
+      });
+    } catch {}
+  }, [dailyExercise, convex, openAudio, recordCompletion, t]);
 
   return (
     <>
@@ -234,13 +247,7 @@ export default function ExercisesIndex() {
         <PremiumCategoryGrid onCategorySelect={handleCategorySelect} />
       </DashboardLayout>
 
-      {/* Exercise Detail Modal */}
-      <ExerciseDetail
-        exercise={selectedExercise}
-        visible={showDetail}
-        onClose={() => setShowDetail(false)}
-        onStart={handleStartExercise}
-      />
+      {/* no modal here */}
     </>
   );
 }

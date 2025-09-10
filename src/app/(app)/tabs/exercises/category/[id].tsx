@@ -1,15 +1,14 @@
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
 import { router, useLocalSearchParams } from 'expo-router';
-import { CategoryExerciseList, ExerciseDetail } from '~/components/exercises';
-import { useMutation } from 'convex/react';
+import { CategoryExerciseList } from '~/components/exercises';
+import { useConvex, useMutation } from 'convex/react';
 import { api } from '../../../../../../convex/_generated/api';
-import {
-  useCurrentUser,
-  useExercisesWithProgress,
-} from '~/hooks/useSharedData';
+import { useCurrentUser, useExercisesWithProgress } from '~/hooks/useSharedData';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import type { Exercise } from '~/types';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useAudioPlayer } from '~/providers/AudioPlayerProvider';
+// Play audio directly from the category list (no detail screen)
 
 // Utility functions (copied from main exercises screen)
 function getCategoryIcon(category: string): string {
@@ -72,23 +71,23 @@ function getBenefitsForCategory(
 }
 
 export default function CategoryModal() {
-  const { t } = useTranslation();
+  const { t, currentLanguage } = useTranslation();
   const { id: categoryId } = useLocalSearchParams<{ id: string }>();
+  const convex = useConvex();
+  const { open: openAudio } = useAudioPlayer();
 
-  // State for ExerciseDetail modal
-  const [selectedExercise, setSelectedExercise] = useState<Exercise | null>(
-    null
-  );
-  const [showDetail, setShowDetail] = useState(false);
+  // No local modal; use pushed screen for details
 
   // Data fetching
   const currentUser = useCurrentUser();
-  const exercisesWithProgress = useExercisesWithProgress();
+  const exercisesWithProgress = useExercisesWithProgress(categoryId as string);
   const recordCompletion = useMutation(api.userProgress.recordCompletion);
   const seedExercises = useMutation(api.seed.seedExercises);
 
   // Store stability guard
   const [isStoreStable] = useState(true);
+
+  // No selected exercise state in this screen
 
   // Cache benefits
   const benefitsMap = useMemo(() => {
@@ -121,6 +120,7 @@ export default function CategoryModal() {
       duration: `${ex.duration} min`,
       difficulty: ex.difficulty,
       category: ex.category,
+      audioKey: (ex as any).audioKey,
       icon: getCategoryIcon(ex.category),
       color: getCategoryColor(ex.category),
       steps: ex.instructions,
@@ -132,16 +132,6 @@ export default function CategoryModal() {
   // Filter exercises for this category
   const filteredExercises = useMemo(() => {
     if (!categoryId) return exercises;
-
-    // Handle special case for 'reminders' category
-    if (categoryId === 'reminders') {
-      return exercises.filter(
-        (exercise) =>
-          exercise.category === 'relaxation' ||
-          exercise.category === 'mindfulness'
-      );
-    }
-
     return exercises.filter((exercise) => exercise.category === categoryId);
   }, [categoryId, exercises]);
 
@@ -158,26 +148,45 @@ export default function CategoryModal() {
     router.back();
   }, []);
 
-  // Exercise detail handlers
-  const handleExercisePress = useCallback((exercise: Exercise) => {
-    setSelectedExercise(exercise);
-    setShowDetail(true);
-  }, []);
-
-  const handleStartExercise = useCallback(
+  // Start playback immediately on exercise tap
+  const handleExercisePress = useCallback(
     async (exercise: Exercise) => {
-      setShowDetail(false);
+      try {
+        impactAsync(ImpactFeedbackStyle.Medium);
+        let signedUrl: string | null = null;
+        if ((exercise as any).audioKey || (exercise as any).audioKeyAr) {
+          try {
+            signedUrl = await convex.query(api.r2.getExerciseAudioUrl, {
+              exerciseId: exercise.id as any,
+              lang: currentLanguage?.startsWith('ar') ? 'ar' : 'en',
+              expiresIn: 60 * 60 * 6,
+            });
+          } catch {}
+        }
 
-      if (currentUser) {
+        const minutes = parseInt(exercise.duration);
+        await openAudio({
+          id: String(exercise.id),
+          title: exercise.title,
+          subtitle: exercise.category,
+          icon: exercise.icon,
+          color: exercise.color,
+          durationSeconds: Number.isFinite(minutes) ? minutes * 60 : undefined,
+          sourceUri: signedUrl ?? undefined,
+        });
+
+        // Record a completion immediately (same behavior as old detail screen)
         await recordCompletion({
           exerciseId: exercise.id as any,
-          duration: parseInt(exercise.duration),
+          duration: Number.isFinite(minutes) ? minutes : 0,
           feedback: t('exercises.exerciseCompleted'),
         });
-      }
+      } catch {}
     },
-    [currentUser, recordCompletion, t]
+    [convex, openAudio, recordCompletion, t, currentLanguage]
   );
+
+  // Start handled inside the detail screen
 
   // Ensure categoryId exists
   if (!categoryId) {
@@ -189,16 +198,9 @@ export default function CategoryModal() {
       <CategoryExerciseList
         categoryId={categoryId}
         exercises={filteredExercises}
+        loading={!exercisesWithProgress}
         onExercisePress={handleExercisePress}
         onBackPress={handleBackToCategories}
-      />
-
-      {/* Exercise Detail Modal */}
-      <ExerciseDetail
-        exercise={selectedExercise}
-        visible={showDetail}
-        onClose={() => setShowDetail(false)}
-        onStart={handleStartExercise}
       />
     </>
   );

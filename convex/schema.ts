@@ -218,7 +218,8 @@ export default defineSchema({
       v.literal('mindfulness'),
       v.literal('journaling'),
       v.literal('movement'),
-      v.literal('relaxation')
+      v.literal('relaxation'),
+      v.literal('reminders')
     ),
     duration: v.number(), // in minutes
     difficulty: v.union(
@@ -227,6 +228,9 @@ export default defineSchema({
       v.literal('advanced')
     ),
     imageUrl: v.optional(v.string()),
+    // Keys of the audio objects stored in Cloudflare R2
+    audioKey: v.optional(v.string()), // English (back-compat)
+    audioKeyAr: v.optional(v.string()), // Arabic
     instructions: v.array(v.string()),
     instructionsAr: v.array(v.string()),
   }).index('by_category', ['category']),

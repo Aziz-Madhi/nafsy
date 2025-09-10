@@ -7,6 +7,7 @@ import { useColors, useShadowStyle } from '~/hooks/useColors';
 import type { Exercise } from '~/types';
 import ExerciseDetail from '~/components/exercises/ExerciseDetail';
 import { useTranslation } from '~/hooks/useTranslation';
+import { useAudioPlayer } from '~/providers/AudioPlayerProvider';
 
 interface MoodBasedExerciseSuggestionProps {
   mood: 'happy' | 'sad' | 'anxious' | 'neutral' | 'angry';
@@ -22,6 +23,7 @@ export function MoodBasedExerciseSuggestion({
   const colors = useColors();
   const shadowMedium = useShadowStyle('medium');
   const [showExerciseDetail, setShowExerciseDetail] = useState(false);
+  const { open: openAudio } = useAudioPlayer();
 
   // Get category colors - unified across themes using solid wellness BG tokens
   const getCategoryColors = useMemo(() => {
@@ -68,8 +70,18 @@ export function MoodBasedExerciseSuggestion({
   };
 
   const handleStartExercise = (selectedExercise: Exercise) => {
-    // Handle exercise start logic here if needed
-    console.log('Starting exercise:', selectedExercise.title);
+    // Launch audio mini-player (linking for audio source will be added later)
+    try {
+      const minutes = parseInt(selectedExercise.duration);
+      openAudio({
+        id: String(selectedExercise.id),
+        title: selectedExercise.title,
+        subtitle: selectedExercise.category,
+        icon: (selectedExercise as any).icon,
+        color: (selectedExercise as any).color,
+        durationSeconds: Number.isFinite(minutes) ? minutes * 60 : undefined,
+      }).catch(() => {});
+    } catch {}
     setShowExerciseDetail(false);
   };
 
