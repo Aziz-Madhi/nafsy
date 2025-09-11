@@ -112,6 +112,11 @@ class SimplifiedSyncManager {
     // Opportunistic DLQ purge for hygiene
     await purgeFailedOps();
 
+    // Perform an initial full sync attempt when starting (best-effort)
+    try {
+      await this.syncAll();
+    } catch {}
+
     logger.info('Action-based sync manager initialized', 'SyncManager');
   }
 

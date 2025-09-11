@@ -550,6 +550,52 @@ export async function ackMoodSynced(params: {
   notify();
 }
 
+/**
+ * Update an existing mood locally and enqueue an upsert for sync.
+ */
+export async function updateMoodLocal(params: {
+  localId: string;
+  userId: string;
+  mood?: 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry';
+  rating?: number;
+  moodCategory?: string;
+  note?: string;
+  tags?: string[];
+  timeOfDay?: 'morning' | 'evening';
+  at?: number;
+}) {
+  const updatedAt = now();
+  await upsertMoodLocal(
+    {
+      id: params.localId,
+      user_id: params.userId,
+      mood: params.mood ?? null,
+      rating: params.rating ?? null,
+      mood_category: params.moodCategory ?? null,
+      note: params.note ?? null,
+      tags_json: params.tags ? JSON.stringify(params.tags) : null,
+      time_of_day: params.timeOfDay ?? null,
+      at: params.at ?? updatedAt,
+      updated_at: updatedAt,
+    },
+    true
+  );
+
+  await enqueueOutbox('moods', 'upsert', {
+    userId: params.userId,
+    localId: params.localId,
+    mood: params.mood,
+    rating: params.rating,
+    moodCategory: params.moodCategory,
+    note: params.note,
+    tags: params.tags,
+    timeOfDay: params.timeOfDay,
+    at: params.at ?? updatedAt,
+  });
+
+  notify();
+}
+
 export async function importMoodsFromServer(
   serverMoods: ServerMood[],
   fullSync: boolean = false,

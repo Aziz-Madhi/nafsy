@@ -40,12 +40,12 @@ const DIFFICULTY_COLORS = {
 
 // Background image mapping moved to data layer
 const CATEGORY_BACKGROUNDS: Record<string, ImageSourcePropType> = {
-  Mindfulness: require('../../../assets/Cards/Cards Enhanced/Mindfulness card.jpg'),
-  Breathing: require('../../../assets/Cards/Cards Enhanced/Breathing card.jpg'),
-  Movement: require('../../../assets/Cards/Cards Enhanced/Movement card.jpg'),
-  Journaling: require('../../../assets/Cards/Cards Enhanced/Journaling card.jpg'),
-  Relaxation: require('../../../assets/Cards/Cards Enhanced/Relaxation Card.jpg'),
-  Reminders: require('../../../assets/Cards/Cards Enhanced/Reminders card.jpg'),
+  Mindfulness: require('../../../assets/Cards/New colored cards/Mindfulness new card.jpg'),
+  Breathing: require('../../../assets/Cards/New colored cards/Breathing new card.jpg'),
+  Movement: require('../../../assets/Cards/New colored cards/Movement new card.jpg'),
+  Journaling: require('../../../assets/Cards/New colored cards/Journaling new card.jpg'),
+  Relaxation: require('../../../assets/Cards/New colored cards/Relaxation new card..jpeg'),
+  Reminders: require('../../../assets/Cards/New colored cards/Reminders new card.jpg'),
 };
 
 // Animation handled by StaggeredListItem

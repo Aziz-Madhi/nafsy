@@ -1,11 +1,7 @@
 import React, { memo, useState, useCallback, useMemo } from 'react';
-import {
-  View,
-  Pressable,
-  ImageBackground,
-  ImageSourcePropType,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Pressable, ImageBackground, ImageSourcePropType } from 'react-native';
+import type { ImageStyle } from 'react-native';
+import { BlurView } from 'expo-blur';
 import { Text } from '~/components/ui/text';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
 import type { WellnessCategory } from '~/lib/colors';
@@ -29,12 +25,12 @@ export const CATEGORY_BACKGROUNDS: Record<
   WellnessCategory,
   ImageSourcePropType
 > = {
-  mindfulness: require('../../../assets/Cards/Cards Enhanced/Mindfulness card.jpg'),
-  breathing: require('../../../assets/Cards/Cards Enhanced/Breathing card.jpg'),
-  movement: require('../../../assets/Cards/Cards Enhanced/Movement card.jpg'),
-  journaling: require('../../../assets/Cards/Cards Enhanced/Journaling card.jpg'),
-  relaxation: require('../../../assets/Cards/Cards Enhanced/Relaxation Card.jpg'),
-  reminders: require('../../../assets/Cards/Cards Enhanced/Reminders card.jpg'),
+  mindfulness: require('../../../assets/Cards/New colored cards/Mindfulness new card.jpg'),
+  breathing: require('../../../assets/Cards/New colored cards/Breathing new card.jpg'),
+  movement: require('../../../assets/Cards/New colored cards/Movement new card.jpg'),
+  journaling: require('../../../assets/Cards/New colored cards/Journaling new card.jpg'),
+  relaxation: require('../../../assets/Cards/New colored cards/Relaxation new card..jpeg'),
+  reminders: require('../../../assets/Cards/New colored cards/Reminders new card.jpg'),
 };
 
 function ModernCategoryCardComponent({
@@ -43,9 +39,8 @@ function ModernCategoryCardComponent({
   index,
   height,
 }: ModernCategoryCardProps) {
-  // CRITICAL FIX: Initialize image as loaded to prevent flicker during navigation
-  // Only show loading for genuinely slow-loading images
-  const [imageLoading, setImageLoading] = useState(false);
+  // Track image errors only. Local require() assets load synchronously,
+  // so we avoid showing any loading state that might persist visually.
   const [imageError, setImageError] = useState(false);
 
   // Use the id so images work for all locales (Arabic/English)
@@ -55,117 +50,76 @@ function ModernCategoryCardComponent({
   const colors = useColors();
   const shadowStyle = useShadowStyle('medium');
 
-  // Use actual mood screen colors with light opacity for text readability
-  const getMoodColor = (categoryId: string) => {
-    const exerciseColors: Record<string, string> = {
-      mindfulness: '#EF4444', // From your mood screen
-      breathing: '#06B6D4', // From your mood screen
-      movement: '#3B82F6', // From your mood screen
-      journaling: '#10B981', // From your mood screen
-      relaxation: '#F59E0B', // From your mood screen
-      reminders: '#8B5CF6', // From your mood screen
-    };
-    return exerciseColors[categoryId] || '#FAFAFA';
-  };
-
-  // Use light opacity so text is visible
-  const baseColor = getMoodColor(category.id);
-  const textBackgroundColor = baseColor + '15'; // 15% opacity for readability
-
   const handlePress = useCallback(() => {
     onPress(category.id);
   }, [onPress, category.id]);
 
   // Calculate proportions - 65% image, 35% text - Memoized for performance
-  const { imageHeight, textHeight } = useMemo(
-    () => ({
-      imageHeight: height * 0.65,
-      textHeight: height * 0.35,
-    }),
-    [height]
-  );
+  const { containerHeight, imageHeight, textHeight } = useMemo(() => {
+    const h = Math.round(height * 0.9); // slightly shorter overall
+    const imgH = Math.round(h * 0.62); // dedicated top image area
+    return { containerHeight: h, imageHeight: imgH, textHeight: h - imgH };
+  }, [height]);
 
   return (
     <Pressable
       className="bg-white rounded-3xl overflow-hidden"
-      style={{
-        height: height,
-        ...shadowStyle,
-      }}
+      style={{ height: containerHeight, ...shadowStyle }}
       onPress={handlePress}
     >
-      {/* Image Section - No overlay */}
-      {backgroundImage && !imageError ? (
-        <>
-          {imageLoading && (
-            <View
-              style={{
-                position: 'absolute',
-                top: 0,
+      <View style={{ height: imageHeight, width: '100%' }}>
+        {/** Reposition relaxation artwork: ensure top edge is covered and shift subject down */}
+        {(() => {
+          const isRelax = category.id === 'relaxation';
+          const backgroundStyle = isRelax
+            ? {
+                position: 'absolute' as const,
                 left: 0,
                 right: 0,
-                height: imageHeight,
-                justifyContent: 'center',
-                alignItems: 'center',
-                backgroundColor: textBackgroundColor,
-              }}
-            >
-              <ActivityIndicator size="large" color="#999" />
-            </View>
-          )}
-          <ImageBackground
-            source={backgroundImage}
-            style={{ height: imageHeight, width: '100%' }}
-            resizeMode="cover"
-            onLoadStart={() => setImageLoading(true)}
-            onLoadEnd={() => setImageLoading(false)}
-            onError={() => {
-              setImageError(true);
-              setImageLoading(false);
-            }}
-          />
-        </>
-      ) : (
-        /* Fallback colored section if no image */
-        <View
-          style={{
-            height: imageHeight,
-            backgroundColor: textBackgroundColor,
-            opacity: 0.8,
-          }}
-        />
-      )}
+                top: -2, // tiny overscan to avoid any top gap
+                bottom: -6, // slight overscan at bottom so we can position lower without gaps
+              }
+            : { position: 'absolute' as const, left: 0, right: 0, top: 0, bottom: 0 };
+          return backgroundImage && !imageError ? (
+            <ImageBackground
+              source={backgroundImage}
+              style={backgroundStyle}
+              resizeMode="cover"
+              onError={() => setImageError(true)}
+            />
+          ) : (
+            <View style={{ flex: 1, backgroundColor: '#F2F2EC' }} />
+          );
+        })()}
+      </View>
 
-      {/* Text Section with solid background */}
-      <View
+      <BlurView
+        tint="light"
+        intensity={28}
         style={{
           height: textHeight,
-          backgroundColor: textBackgroundColor,
           paddingHorizontal: 16,
           paddingTop: 8,
           paddingBottom: 16,
           justifyContent: 'space-between',
+          backgroundColor: 'rgba(255,255,255,0.55)',
         }}
       >
         <Text
           className="text-gray-900 text-lg font-semibold"
-          style={{
-            marginBottom: 0,
-          }}
+          style={{ marginBottom: 0 }}
           numberOfLines={1}
         >
           {category.name}
         </Text>
         <Text
           className="text-gray-700 text-sm"
-          style={{
-            lineHeight: 18,
-          }}
+          style={{ lineHeight: 18 }}
           numberOfLines={2}
         >
           {category.description}
         </Text>
-      </View>
+      </BlurView>
     </Pressable>
   );
 }

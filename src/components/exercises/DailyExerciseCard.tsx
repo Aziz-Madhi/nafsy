@@ -19,6 +19,7 @@ function DailyExerciseCardComponent({
   motivationalMessage,
 }: DailyExerciseCardProps) {
   const { t, currentLanguage } = useTranslation();
+  const isArabic = (currentLanguage || '').startsWith('ar');
 
   const handlePress = useCallback(() => {
     if (exercise) {
@@ -50,63 +51,82 @@ function DailyExerciseCardComponent({
           <View className="p-6">
             {exercise ? (
               <>
-                {/* Greeting */}
-                <Text variant="footnote" className="text-muted-foreground mb-2">
-                  {greeting}
-                </Text>
+                {/* Greeting removed; greeting is now shown inside the chip */}
 
-                {/* Today's Exercise title */}
-                <Text variant="heading" className="text-foreground mb-5">
-                  {t('exercises.dailyExercise.title')}
-                </Text>
+                {isArabic ? (
+                  <>
+                    {/* Transparent outlined chip: greeting + Today's Exercise */}
+                    <View className="items-end mb-2">
+                      <View className="px-4 py-1.5 rounded-full bg-transparent border border-foreground/20">
+                        <Text
+                          variant="footnote"
+                          className="text-foreground/70 font-medium"
+                        >
+                          {`${greeting} • ${t('exercises.dailyExercise.title')}`}
+                        </Text>
+                      </View>
+                    </View>
 
-                {/* Category badge centered */}
-                <View className="items-center mb-2">
-                  <View className="px-4 py-1.5 rounded-full bg-white">
+                    {/* Prominent exercise title centered */}
+                    <Text
+                      variant="heading"
+                      className="text-foreground mb-3 text-center"
+                      autoAlign={false}
+                    >
+                      {exercise.titleAr ? exercise.titleAr : exercise.title}
+                    </Text>
+
+                    {/* Subtitle directly under title */}
                     <Text
                       variant="footnote"
-                      className="text-foreground font-medium"
+                      className="text-muted-foreground mb-6 text-center"
+                      autoAlign={false}
+                      numberOfLines={2}
                     >
-                      {t(`exercises.categories.${exercise.category}`)}
+                      {exercise.descriptionAr ? exercise.descriptionAr : exercise.description}
                     </Text>
-                  </View>
-                </View>
+                  </>
+                ) : (
+                  <>
+                    {/* Transparent outlined chip: greeting + Today's Exercise */}
+                    <View className="items-start mb-2">
+                      <View className="px-4 py-1.5 rounded-full bg-transparent border border-foreground/20">
+                        <Text
+                          variant="footnote"
+                          className="text-foreground/70 font-medium"
+                        >
+                          {`${greeting} • ${t('exercises.dailyExercise.title')}`}
+                        </Text>
+                      </View>
+                    </View>
 
-                {/* Duration centered */}
-                <Text
-                  variant="footnote"
-                  className="text-muted-foreground text-center mb-5"
+                    {/* Prominent exercise title centered */}
+                    <Text
+                      variant="heading"
+                      className="text-foreground mb-3 text-center"
+                      autoAlign={false}
+                    >
+                      {exercise.title}
+                    </Text>
+
+                    {/* Subtitle directly under title */}
+                    <Text
+                      variant="footnote"
+                      className="text-muted-foreground mb-6 text-center"
+                      autoAlign={false}
+                      numberOfLines={2}
+                    >
+                      {exercise.description}
+                    </Text>
+                  </>
+                )}
+
+                {/* Action row: Start button on left, meta (duration + category) on right */}
+                <View
+                  className={`flex-row items-center justify-between ${
+                    isArabic ? '' : ''
+                  }`}
                 >
-                  {exercise.duration}
-                </Text>
-
-                {/* Exercise title */}
-                <Text variant="title2" className="text-foreground mb-2">
-                  {currentLanguage === 'ar' && exercise.titleAr
-                    ? exercise.titleAr
-                    : exercise.title}
-                </Text>
-
-                {/* Description */}
-                <Text
-                  variant="footnote"
-                  className="text-muted-foreground mb-6"
-                  numberOfLines={2}
-                >
-                  {currentLanguage === 'ar' && exercise.descriptionAr
-                    ? exercise.descriptionAr
-                    : exercise.description}
-                </Text>
-
-                {/* Motivational message and button */}
-                <View className="flex-row items-center justify-between">
-                  <Text
-                    variant="footnote"
-                    className="text-muted-foreground flex-1 me-3"
-                  >
-                    {motivationalMessage}
-                  </Text>
-
                   <Pressable
                     onPress={handlePress}
                     className="bg-brand-dark-blue rounded-full"
@@ -127,6 +147,46 @@ function DailyExerciseCardComponent({
                       {t('exercises.dailyExercise.startNow')}
                     </Text>
                   </Pressable>
+
+                  {isArabic ? (
+                    <View className="flex-row items-center">
+                      <Text
+                        variant="footnote"
+                        className="text-muted-foreground ms-5 text-right"
+                      >
+                        {exercise?.duration}
+                      </Text>
+                      <View className="px-4 py-1.5 rounded-full bg-white dark:bg-white/10 dark:border dark:border-white/20">
+                        <Text
+                          variant="footnote"
+                          className="text-foreground font-medium"
+                        >
+                          {exercise
+                            ? t(`exercises.categories.${exercise.category}`)
+                            : ''}
+                        </Text>
+                      </View>
+                    </View>
+                  ) : (
+                    <View className="flex-row items-center">
+                      <Text
+                        variant="footnote"
+                        className="text-muted-foreground me-5"
+                      >
+                        {exercise?.duration}
+                      </Text>
+                      <View className="px-4 py-1.5 rounded-full bg-white dark:bg-white/10 dark:border dark:border-white/20">
+                        <Text
+                          variant="footnote"
+                          className="text-foreground font-medium"
+                        >
+                          {exercise
+                            ? t(`exercises.categories.${exercise.category}`)
+                            : ''}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
                 </View>
               </>
             ) : (

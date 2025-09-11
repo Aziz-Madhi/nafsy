@@ -16,6 +16,7 @@ import {
   importMoodsFromServer,
   recordMoodLocal,
   ackMoodSynced,
+  updateMoodLocal,
   subscribeLocalFirst,
 } from '~/lib/local-first/sqlite';
 // Exercises + progress via SQLite
@@ -475,6 +476,47 @@ export function useOfflineCreateMood() {
       } as unknown as OfflineMood;
     },
     [isOnline, serverMutation, currentUser?._id]
+  );
+}
+
+/**
+ * Offline-aware delete mood
+ */
+// Deleting moods is intentionally not supported by product policy
+
+/**
+ * Offline-aware update mood
+ */
+export function useOfflineUpdateMood() {
+  const { isOnline } = useNetworkStatus();
+  const currentUser = useCurrentUser();
+
+  return useCallback(
+    async (
+      localId: string,
+      data: {
+        mood?: 'happy' | 'neutral' | 'sad' | 'anxious' | 'angry';
+        rating?: number;
+        moodCategory?: string;
+        note?: string;
+        tags?: string[];
+        timeOfDay?: 'morning' | 'evening';
+        at?: number;
+      }
+    ) => {
+      if (!currentUser?._id) throw new Error('No current user');
+      await updateMoodLocal({ localId, userId: currentUser._id as any, ...data });
+
+      if (isOnline) {
+        try {
+          // Our server only supports create/update via createMood currently; rely on sync manager for canonical push
+          await syncManager.syncAfterAction('moods');
+        } catch (error) {
+          logger.warn('Failed to sync updated mood, queued', 'OfflineData', error);
+        }
+      }
+    },
+    [isOnline, currentUser?._id]
   );
 }
 
