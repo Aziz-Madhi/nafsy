@@ -18,6 +18,8 @@ interface OpenAIResponsesRequest {
   };
   instructions?: string;
   input: { role: 'user' | 'assistant' | 'system'; content: string }[];
+  // OpenAI Conversations API conversation id (conv_...)
+  conversation?: string;
   stream?: boolean;
 }
 
@@ -28,7 +30,8 @@ export async function buildResponsesPayload(
   ctx: any,
   personality: 'coach' | 'companion' | 'vent',
   messages: { role: 'user' | 'assistant'; content?: string; parts?: any[] }[],
-  user: { _id: string; name?: string; language: string }
+  user: { _id: string; name?: string; language: string },
+  options?: { injectContext?: boolean; conversationId?: string }
 ): Promise<{
   payload: OpenAIResponsesRequest;
   modelConfig?: { temperature?: number; maxTokens?: number; topP?: number };
@@ -51,28 +54,37 @@ export async function buildResponsesPayload(
     console.debug('Loaded prompt config for', personality);
   }
 
-  // Get user context for personalization
+  // Only build user context if we may inject it
+  const defaultIsNew = !messages.some((m) => m.role === 'assistant');
+  const willInjectContext =
+    options?.injectContext !== undefined ? options.injectContext : defaultIsNew;
+
   let userContext: { text: string; level: string } | null = null;
-  try {
-    userContext = await ctx.runQuery(internal.personalization.buildUserContext, {
-      user,
-      personality,
-      messages,
-    });
-    if (isDevEnv && userContext) {
-      console.debug(
-        `Built user context (${userContext.level}):`,
-        userContext.text.length,
-        'chars'
+  if (willInjectContext) {
+    try {
+      userContext = await ctx.runQuery(
+        internal.personalization.buildUserContext,
+        {
+          user,
+          personality,
+          messages,
+        }
       );
-      // Log first 200 chars to verify content
-      console.debug(
-        'User context preview:',
-        userContext.text.substring(0, 200)
-      );
+      if (isDevEnv && userContext) {
+        console.debug(
+          `Built user context (${userContext.level}):`,
+          userContext.text.length,
+          'chars'
+        );
+        // Log first 200 chars to verify content
+        console.debug(
+          'User context preview:',
+          userContext.text.substring(0, 200)
+        );
+      }
+    } catch (error) {
+      console.error('Failed to build user context:', error);
     }
-  } catch (error) {
-    console.error('Failed to build user context:', error);
   }
 
   // Convert messages to required format, handling parts if present
@@ -84,8 +96,8 @@ export async function buildResponsesPayload(
   }));
 
   // Do NOT inject user context into the user's message.
-  // We keep it system-level via `instructions` so the model
-  // treats it as background memory, not conversational content.
+  // We keep it system-level on the first turn only (or as instructed)
+  // so the model treats it as background memory, not conversational content.
 
   // Require model from database config (no fallback)
   if (!promptConfig) {
@@ -101,6 +113,11 @@ export async function buildResponsesPayload(
     input: formattedMessages,
     stream: true,
   };
+
+  // Attach conversation id if provided (OpenAI Conversations API)
+  if (options?.conversationId) {
+    payload.conversation = options.conversationId;
+  }
 
   // Use OpenAI Prompt ID if configured
   if (
@@ -120,8 +137,8 @@ export async function buildResponsesPayload(
         console.debug('Pinned prompt version:', payload.prompt.version);
     }
     // For Prompt IDs, prefer a system message carrying context on first turn
-    const isNewSession = !messages.some((m) => m.role === 'assistant');
-    if (isNewSession && userContext?.text) {
+    const shouldInject = willInjectContext;
+    if (shouldInject && userContext?.text) {
       payload.input = [
         { role: 'system', content: userContext.text },
         ...payload.input,
@@ -132,8 +149,8 @@ export async function buildResponsesPayload(
     // Use inline prompt content with user context
     payload.instructions = promptConfig.prompt;
     // Also include user context as a system message on first turn for clarity
-    const isNewSession = !messages.some((m) => m.role === 'assistant');
-    if (isNewSession && userContext?.text) {
+    const shouldInject = willInjectContext;
+    if (shouldInject && userContext?.text) {
       payload.input = [
         { role: 'system', content: userContext.text },
         ...payload.input,
@@ -192,6 +209,11 @@ export async function streamFromResponsesAPI(
   } else if (payload.instructions) {
     // Fallback to instructions if no prompt ID
     responsesPayload.instructions = payload.instructions;
+  }
+
+  // Attach conversation id if provided
+  if (payload.conversation) {
+    responsesPayload.conversation = payload.conversation;
   }
 
   // Format input messages properly for responses API

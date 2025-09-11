@@ -343,6 +343,7 @@ export const getChatSessions = query({
       startedAt: v.number(),
       lastMessageAt: v.number(),
       messageCount: v.number(),
+      openaiConversationId: v.optional(v.string()),
     })
   ),
   handler: async (ctx, args) => {
@@ -404,6 +405,7 @@ export const getChatSessionsPaginated = query({
         startedAt: v.number(),
         lastMessageAt: v.number(),
         messageCount: v.number(),
+        openaiConversationId: v.optional(v.string()),
       })
     ),
     isDone: v.boolean(),
@@ -784,18 +786,20 @@ export const generateAssistantReply = internalAction({
       chatType: chatType as any,
     });
 
-    // Build conversation context (last 50 messages) for this session
+    // Build conversation context (last messages) for this session
     const messages = await ctx.runQuery(internal.chat._getMessagesForSession, {
       userId: userId as Id<'users'>,
       type: chatType as any,
       sessionId,
       limit: 50,
     });
-    // Convert to minimal shape for payload builder (already ASC order)
-    const formatted = messages.map((m: any) => ({
-      role: m.role,
-      content: m.content || '',
-    }));
+    // Extract only the latest user message for this turn
+    const latestUser = [...messages]
+      .reverse()
+      .find((m: any) => m.role === 'user');
+    const formatted = latestUser
+      ? [{ role: 'user' as const, content: latestUser.content || '' }]
+      : [];
 
     // Load minimal user info
     const user = await ctx.runQuery(api.personalization._getUserById, {
@@ -813,7 +817,9 @@ export const generateAssistantReply = internalAction({
 
     // For new sessions, try to ensure a current weekly summary exists (best-effort)
     try {
-      const isNewSession = !formatted.some((m) => m.role === 'assistant');
+      // We'll also check OpenAI conversation id to determine first-turn
+      // If no assistant exists and no conversation id, it's a first turn
+      const isNewSession = !messages.some((m: any) => m.role === 'assistant');
       if (isNewSession) {
         await ctx.runAction(
           internal.personalization.ensureCurrentSummaryAction,
@@ -826,12 +832,75 @@ export const generateAssistantReply = internalAction({
       // ignore
     }
 
-    // Build OpenAI payload (Responses API)
+    // Ensure an OpenAI Conversation exists for this session (persisted on session)
+    let conversationId: string | undefined;
+    let createdConversation = false;
+    try {
+      const meta = await ctx.runMutation(
+        internal.chatStreaming.getSessionMeta,
+        {
+          userId: userId as Id<'users'>,
+          sessionId,
+          chatType: chatType as any,
+        }
+      );
+      conversationId = (meta as any)?.openaiConversationId;
+      if (!conversationId) {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) throw new Error('OpenAI API key not configured');
+        const res = await fetch('https://api.openai.com/v1/conversations', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            metadata: {
+              app: 'nafsy',
+              chatType,
+              sessionId,
+              userId: String(userId),
+            },
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.id) {
+            conversationId = json.id as string;
+            createdConversation = true;
+            await ctx.runMutation(
+              internal.chatStreaming.setSessionConversationId,
+              {
+                userId: userId as Id<'users'>,
+                sessionId,
+                chatType: chatType as any,
+                openaiConversationId: conversationId,
+              }
+            );
+          }
+        } else {
+          console.warn(
+            'Failed to create OpenAI conversation:',
+            await res.text()
+          );
+        }
+      }
+    } catch (e) {
+      console.warn('OpenAI conversation setup failed:', e);
+    }
+
+    // Build OpenAI payload (Responses API) with conversation and one-time context
     const { payload, modelConfig } = await buildResponsesPayload(
       ctx,
       personality as any,
       formatted,
-      { _id: user._id, name: user.name, language: user.language }
+      { _id: user._id, name: user.name, language: user.language },
+      {
+        conversationId,
+        // Inject when we just created the conversation, or when it's the first turn
+        // (ensure context is delivered once per session)
+        injectContext: createdConversation,
+      }
     );
     // Non-streaming for simplicity; write final response when complete
     (payload as any).stream = false;
@@ -852,6 +921,8 @@ export const generateAssistantReply = internalAction({
         responsesPayload.prompt = (payload as any).prompt;
       if ((payload as any).instructions)
         responsesPayload.instructions = (payload as any).instructions;
+      if ((payload as any).conversation)
+        responsesPayload.conversation = (payload as any).conversation;
       if (modelConfig?.temperature !== undefined)
         responsesPayload.temperature = modelConfig.temperature;
       if (modelConfig?.maxTokens !== undefined)

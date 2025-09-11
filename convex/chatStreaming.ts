@@ -311,3 +311,76 @@ export const ensureSessionExists = internalMutation({
     return null;
   },
 });
+
+// Fetch minimal session metadata (openaiConversationId) by sessionId + type
+export const getSessionMeta = internalMutation({
+  args: {
+    userId: v.id('users'),
+    sessionId: v.string(),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
+  },
+  returns: v.union(
+    v.object({
+      _id: v.union(
+        v.id('chatSessions'),
+        v.id('companionChatSessions'),
+        v.id('ventChatSessions')
+      ),
+      openaiConversationId: v.optional(v.string()),
+    }),
+    v.null()
+  ),
+  handler: async (ctx, args) => {
+    const table =
+      args.chatType === 'main'
+        ? 'chatSessions'
+        : args.chatType === 'companion'
+          ? 'companionChatSessions'
+          : 'ventChatSessions';
+    const session = await ctx.db
+      .query(table as any)
+      .withIndex('by_session_id', (q: any) => q.eq('sessionId', args.sessionId))
+      .first();
+    if (!session || session.userId !== args.userId) return null as any;
+    return {
+      _id: session._id as any,
+      openaiConversationId: (session as any).openaiConversationId,
+    } as any;
+  },
+});
+
+// Set OpenAI conversation id on session (ownership enforced)
+export const setSessionConversationId = internalMutation({
+  args: {
+    userId: v.id('users'),
+    sessionId: v.string(),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
+    openaiConversationId: v.string(),
+  },
+  returns: v.boolean(),
+  handler: async (ctx, args) => {
+    const table =
+      args.chatType === 'main'
+        ? 'chatSessions'
+        : args.chatType === 'companion'
+          ? 'companionChatSessions'
+          : 'ventChatSessions';
+    const session = await ctx.db
+      .query(table as any)
+      .withIndex('by_session_id', (q: any) => q.eq('sessionId', args.sessionId))
+      .first();
+    if (!session || session.userId !== args.userId) return false;
+    await ctx.db.patch(session._id, {
+      openaiConversationId: args.openaiConversationId,
+    } as any);
+    return true;
+  },
+});

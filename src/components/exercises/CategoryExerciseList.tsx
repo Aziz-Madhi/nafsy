@@ -14,8 +14,12 @@ import { SymbolView } from 'expo-symbols';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { useTranslation } from '~/hooks/useTranslation';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
-import { CATEGORY_BACKGROUNDS } from '~/components/exercises/ModernCategoryCard';
+import {
+  CATEGORY_BACKGROUNDS,
+  CATEGORY_BACKGROUNDS_DARK,
+} from '~/components/exercises/ModernCategoryCard';
 import type { WellnessCategory } from '~/lib/colors';
+import { useAppStore } from '~/store/useAppStore';
 
 interface Exercise {
   id: string;
@@ -46,22 +50,27 @@ interface CategoryExerciseListProps {
 
 // Precompute background image aspect ratios once to avoid any
 // first-render fallback that can cause a layout jump.
-const CATEGORY_BG_META: Record<string, { aspect: number }> = (() => {
+const buildMeta = (map: Record<string, any>) => {
   const meta: Record<string, { aspect: number }> = {};
   try {
-    Object.entries(CATEGORY_BACKGROUNDS as Record<string, any>).forEach(
-      ([key, source]) => {
-        try {
-          const asset = Image.resolveAssetSource(source);
-          if (asset?.width && asset?.height) {
-            meta[key] = { aspect: asset.height / asset.width };
-          }
-        } catch {}
-      }
-    );
+    Object.entries(map).forEach(([key, source]) => {
+      try {
+        const asset = Image.resolveAssetSource(source);
+        if (asset?.width && asset?.height) {
+          meta[key] = { aspect: asset.height / asset.width };
+        }
+      } catch {}
+    });
   } catch {}
   return meta;
-})();
+};
+
+const CATEGORY_BG_META = buildMeta(
+  CATEGORY_BACKGROUNDS as unknown as Record<string, any>
+);
+const CATEGORY_BG_META_DARK = buildMeta(
+  CATEGORY_BACKGROUNDS_DARK as unknown as Record<string, any>
+);
 
 const getCategoryName = (
   categoryId: string,
@@ -92,6 +101,7 @@ function CategoryExerciseListComponent({
   const insets = useSafeAreaInsets();
   const colors = useColors();
   const shadow = useShadowStyle('medium');
+  const currentTheme = useAppStore((s) => s.currentTheme);
 
   // Memoize category name computation
   const categoryName = useMemo(
@@ -119,12 +129,15 @@ function CategoryExerciseListComponent({
 
   // Header hero with category image + bottom-left title
   const Header = useMemo(() => {
-    const source = (CATEGORY_BACKGROUNDS as Record<string, any>)[
+    const map =
+      currentTheme === 'dark' ? CATEGORY_BACKGROUNDS_DARK : CATEGORY_BACKGROUNDS;
+    const meta =
+      currentTheme === 'dark' ? CATEGORY_BG_META_DARK : CATEGORY_BG_META;
+    const source = (map as Record<string, any>)[
       (categoryId as WellnessCategory) || 'mindfulness'
     ];
-    const aspect =
-      CATEGORY_BG_META[(categoryId as WellnessCategory) || 'mindfulness']
-        ?.aspect ?? 0.65;
+    const aspect = meta[(categoryId as WellnessCategory) || 'mindfulness']
+      ?.aspect ?? 0.65;
     return function HeaderComponent() {
       const { width } = Dimensions.get('window');
       // Use the original image's native aspect ratio so we show the
@@ -166,7 +179,7 @@ function CategoryExerciseListComponent({
         </View>
       );
     };
-  }, [categoryId, categoryName]);
+  }, [categoryId, categoryName, currentTheme]);
 
   // List fade-in once data is ready
   const listOpacity = useRef(new Animated.Value(loading ? 0 : 1)).current;

@@ -171,25 +171,86 @@ export const streamChat = httpAction(async (ctx, request) => {
       });
     }
 
-    // Build conversation context for OpenAI via internal query (no extra auth)
-    const existing = await ctx.runQuery(internal.chat._getMessagesForSession, {
-      userId: user._id,
-      type: body.chatType as any,
-      sessionId: ensuredSessionId,
-      limit: 50,
-    });
-    // Already chronological (asc); convert to minimal shape
-    const formatted = existing.map((m: any) => ({
-      role: m.role,
-      content: m.content || '',
-    }));
+    // Determine if this is the first assistant turn for the session
+    let isNewSession = false;
+    try {
+      const recent = await ctx.runQuery(internal.chat._getMessagesForSession as any, {
+        userId: user._id,
+        type: body.chatType as any,
+        sessionId: ensuredSessionId,
+        limit: 10,
+      });
+      isNewSession = !recent.some((m: any) => m.role === 'assistant');
+    } catch {}
+
+    // Ensure OpenAI Conversation exists for this session; store on session record
+    let conversationId: string | undefined;
+    let createdConversation = false;
+    try {
+      const meta = await ctx.runMutation(
+        internal.chatStreaming.getSessionMeta as any,
+        {
+          userId: user._id,
+          sessionId: ensuredSessionId,
+          chatType: body.chatType,
+        }
+      );
+      conversationId = (meta as any)?.openaiConversationId;
+      if (!conversationId) {
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) throw new Error('OpenAI API key not configured');
+        const res = await fetch('https://api.openai.com/v1/conversations', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            metadata: {
+              app: 'nafsy',
+              chatType: body.chatType,
+              sessionId: ensuredSessionId,
+              userId: String(user._id),
+            },
+          }),
+        });
+        if (res.ok) {
+          const json = await res.json();
+          if (json?.id) {
+            conversationId = json.id as string;
+            createdConversation = true;
+            await ctx.runMutation(
+              internal.chatStreaming.setSessionConversationId as any,
+              {
+                userId: user._id,
+                sessionId: ensuredSessionId,
+                chatType: body.chatType,
+                openaiConversationId: conversationId,
+              }
+            );
+          }
+        } else {
+          console.warn('Failed to create OpenAI conversation:', await res.text());
+        }
+      }
+    } catch (e) {
+      console.warn('OpenAI conversation setup failed:', e);
+    }
+
+    // Build minimal input: only this turn's user message
+    const formatted = [{ role: 'user' as const, content: body.message }];
 
     const personality = personalityFromChatType(body.chatType);
     const { payload, modelConfig } = await buildResponsesPayload(
       ctx,
       personality as any,
       formatted,
-      { _id: user._id, name: user.name, language: user.language }
+      { _id: user._id, name: user.name, language: user.language },
+      {
+        conversationId,
+        // Inject context only once per session: on creation or first assistant turn
+        injectContext: createdConversation || isNewSession,
+      }
     );
     (payload as any).stream = true;
 
@@ -212,6 +273,9 @@ export const streamChat = httpAction(async (ctx, request) => {
     }
     if ((payload as any).instructions) {
       requestBody.instructions = (payload as any).instructions;
+    }
+    if ((payload as any).conversation) {
+      requestBody.conversation = (payload as any).conversation;
     }
     if (modelConfig?.temperature !== undefined) {
       requestBody.temperature = modelConfig.temperature;

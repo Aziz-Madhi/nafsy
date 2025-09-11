@@ -893,8 +893,8 @@ function formatUserContext(params: FormatContextParams): string {
     lastWeek: isArabic ? 'الأسبوع الماضي' : 'Last 7 days',
     onboarding: isArabic ? 'بيانات التعريف (الانضمام)' : 'Onboarding Profile',
     guidance: isArabic
-      ? 'إرشاد: استخدم الذاكرة التالية لتخصيص الردود. ابدأ كل رد بمناداة المستخدم باسمه. لا تُشِرْ مباشرةً إلى تفاصيل الخلفية أو تشرحها إلا إذا طلب المستخدم ذلك. تجنّب البدء بالحديث عن مزاجه أو تحدياته؛ شجّعه على المشاركة وتفاعل بلطف وفقًا لما يقوله.'
-      : "Guidance: Use the background memory below to personalize. Begin every response by addressing the user by their name. Do not directly reference or explain the user's background details unless they ask. Avoid opening with statements about their mood or struggles; invite them to share and respond gently based on what they say.",
+      ? 'سياق خلفي: آخر ٧ أيام، مزاج اليوم، والتمارين الأخيرة. استخدمه لفهم الشخص بشكل أفضل.'
+      : "Background context: past 7 days, today's mood, and recent exercises. Use to better understand the person.",
     noMood: isArabic ? 'لم يتم تسجيل المزاج' : 'No mood logged',
     noExercises: isArabic ? 'لا توجد تمارين' : 'No exercises',
   };

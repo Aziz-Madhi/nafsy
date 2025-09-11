@@ -68,6 +68,8 @@ export default defineSchema({
     startedAt: v.number(),
     lastMessageAt: v.number(),
     messageCount: v.number(),
+    // OpenAI Conversations API conversation id for this session
+    openaiConversationId: v.optional(v.string()),
   })
     .index('by_user', ['userId'])
     .index('by_session_id', ['sessionId']),
@@ -80,6 +82,8 @@ export default defineSchema({
     startedAt: v.number(),
     lastMessageAt: v.number(),
     messageCount: v.number(),
+    // OpenAI Conversations API conversation id for this session
+    openaiConversationId: v.optional(v.string()),
   })
     .index('by_user', ['userId'])
     .index('by_session_id', ['sessionId']),
@@ -266,6 +270,8 @@ export default defineSchema({
     startedAt: v.number(),
     lastMessageAt: v.number(),
     messageCount: v.number(),
+    // OpenAI Conversations API conversation id for this session
+    openaiConversationId: v.optional(v.string()),
   })
     .index('by_user', ['userId'])
     .index('by_session_id', ['sessionId']),

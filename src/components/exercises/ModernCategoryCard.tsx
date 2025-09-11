@@ -4,6 +4,7 @@ import type { ImageStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Text } from '~/components/ui/text';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
+import { useAppStore } from '~/store/useAppStore';
 import type { WellnessCategory } from '~/lib/colors';
 
 interface ModernCategoryCardProps {
@@ -33,6 +34,19 @@ export const CATEGORY_BACKGROUNDS: Record<
   reminders: require('../../../assets/Cards/New colored cards/Reminders new card.jpg'),
 };
 
+// Dark theme variants for the same categories
+export const CATEGORY_BACKGROUNDS_DARK: Record<
+  WellnessCategory,
+  ImageSourcePropType
+> = {
+  mindfulness: require('../../../assets/Cards/Cards Enhanced/Mindfulness Dark Mood card.png'),
+  breathing: require('../../../assets/Cards/Cards Enhanced/Breathing Dark mood Card.png'),
+  movement: require('../../../assets/Cards/Cards Enhanced/Movement dark mood card.png'),
+  journaling: require('../../../assets/Cards/Cards Enhanced/Journaling Dark mood card.png'),
+  relaxation: require('../../../assets/Cards/Cards Enhanced/Relaxation Dark Mode Card.png'),
+  reminders: require('../../../assets/Cards/Cards Enhanced/Reminders Dark Mode Cartd.png'),
+};
+
 function ModernCategoryCardComponent({
   category,
   onPress,
@@ -44,7 +58,11 @@ function ModernCategoryCardComponent({
   const [imageError, setImageError] = useState(false);
 
   // Use the id so images work for all locales (Arabic/English)
-  const backgroundImage = CATEGORY_BACKGROUNDS[category.id];
+  const currentTheme = useAppStore((s) => s.currentTheme);
+  const backgroundImage =
+    (currentTheme === 'dark'
+      ? CATEGORY_BACKGROUNDS_DARK
+      : CATEGORY_BACKGROUNDS)[category.id];
 
   // Colors for React Native styling
   const colors = useColors();
@@ -63,7 +81,7 @@ function ModernCategoryCardComponent({
 
   return (
     <Pressable
-      className="bg-white rounded-3xl overflow-hidden"
+      className="bg-card-elevated rounded-3xl overflow-hidden"
       style={{ height: containerHeight, ...shadowStyle }}
       onPress={handlePress}
     >
@@ -94,7 +112,7 @@ function ModernCategoryCardComponent({
       </View>
 
       <BlurView
-        tint="light"
+        tint={currentTheme === 'dark' ? 'dark' : 'light'}
         intensity={28}
         style={{
           height: textHeight,
@@ -102,18 +120,21 @@ function ModernCategoryCardComponent({
           paddingTop: 8,
           paddingBottom: 16,
           justifyContent: 'space-between',
-          backgroundColor: 'rgba(255,255,255,0.55)',
+          backgroundColor:
+            currentTheme === 'dark'
+              ? 'rgba(0,0,0,0.35)'
+              : 'rgba(255,255,255,0.55)',
         }}
       >
         <Text
-          className="text-gray-900 text-lg font-semibold"
+          className="text-foreground text-lg font-semibold"
           style={{ marginBottom: 0 }}
           numberOfLines={1}
         >
           {category.name}
         </Text>
         <Text
-          className="text-gray-700 text-sm"
+          className="text-muted-foreground text-sm"
           style={{ lineHeight: 18 }}
           numberOfLines={2}
         >
