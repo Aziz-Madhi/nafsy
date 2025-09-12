@@ -1,10 +1,7 @@
 import { httpAction } from './_generated/server';
 import { httpRouter } from 'convex/server';
 import { api, internal } from './_generated/api';
-import {
-  buildResponsesPayload,
-  transformResponsesStream,
-} from './openaiResponses';
+import { transformResponsesStream } from './openaiResponses';
 import appRateLimiter from './rateLimit';
 
 // SSE helpers
@@ -121,137 +118,26 @@ export const streamChat = httpAction(async (ctx, request) => {
       });
     }
 
-    // Pre-check weekly chat limit (non-consuming) to short-circuit early
-    const chatDailyStatus = await appRateLimiter.check(ctx, 'chatWeekly', {
-      key: user._id,
-    });
+    // Pre-check weekly chat limit (non-consuming). Consumption happens inside internals.
+    const chatDailyStatus = await appRateLimiter.check(ctx, 'chatWeekly', { key: user._id });
     if (!chatDailyStatus.ok) {
-      return new Response('Weekly chat limit reached', {
-        status: 429,
-        headers: makeCorsHeaders(origin),
-      });
+      return new Response('Weekly chat limit reached', { status: 429, headers: makeCorsHeaders(origin) });
     }
 
-    // Ensure or create session
-    let sessionId = body.sessionId;
-    if (!sessionId) {
-      // Create a new session via existing mutation
-      sessionId = await ctx.runMutation(api.chat.createChatSession, {
-        type: body.chatType,
-        title: body.title,
-      });
-    } else {
-      // Ensure provided session exists and belongs to user
-      await ctx.runMutation(internal.chatStreaming.ensureSessionExists, {
-        userId: user._id,
-        sessionId,
-        chatType: body.chatType,
-        title: body.title,
-      });
-    }
-    const ensuredSessionId: string = sessionId!;
+    // Centralized prep in internal action
+    const prepared = await ctx.runAction(internal.chatStreaming.prepareStreamingTurn, {
+      userId: user._id,
+      chatType: body.chatType,
+      message: body.message,
+      sessionId: body.sessionId,
+      title: body.title,
+      requestId: body.requestId,
+    });
 
-    // No burst limiter — rely solely on daily message limit
-
-    // Insert the user message without scheduling background generation
-    try {
-      const internalAny: any = internal;
-      await ctx.runMutation(internalAny.chatStreaming.insertUserMessage, {
-        sessionId: ensuredSessionId,
-        userId: user._id,
-        chatType: body.chatType,
-        content: body.message,
-        requestId: body.requestId,
-      });
-    } catch {
-      // If insertion fails, bail early
-      return new Response('Failed to save user message', {
-        status: 500,
-        headers: makeCorsHeaders(origin),
-      });
-    }
-
-    // Determine if this is the first assistant turn for the session
-    let isNewSession = false;
-    try {
-      const recent = await ctx.runQuery(internal.chat._getMessagesForSession as any, {
-        userId: user._id,
-        type: body.chatType as any,
-        sessionId: ensuredSessionId,
-        limit: 10,
-      });
-      isNewSession = !recent.some((m: any) => m.role === 'assistant');
-    } catch {}
-
-    // Ensure OpenAI Conversation exists for this session; store on session record
-    let conversationId: string | undefined;
-    let createdConversation = false;
-    try {
-      const meta = await ctx.runMutation(
-        internal.chatStreaming.getSessionMeta as any,
-        {
-          userId: user._id,
-          sessionId: ensuredSessionId,
-          chatType: body.chatType,
-        }
-      );
-      conversationId = (meta as any)?.openaiConversationId;
-      if (!conversationId) {
-        const apiKey = process.env.OPENAI_API_KEY;
-        if (!apiKey) throw new Error('OpenAI API key not configured');
-        const res = await fetch('https://api.openai.com/v1/conversations', {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${apiKey}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            metadata: {
-              app: 'nafsy',
-              chatType: body.chatType,
-              sessionId: ensuredSessionId,
-              userId: String(user._id),
-            },
-          }),
-        });
-        if (res.ok) {
-          const json = await res.json();
-          if (json?.id) {
-            conversationId = json.id as string;
-            createdConversation = true;
-            await ctx.runMutation(
-              internal.chatStreaming.setSessionConversationId as any,
-              {
-                userId: user._id,
-                sessionId: ensuredSessionId,
-                chatType: body.chatType,
-                openaiConversationId: conversationId,
-              }
-            );
-          }
-        } else {
-          console.warn('Failed to create OpenAI conversation:', await res.text());
-        }
-      }
-    } catch (e) {
-      console.warn('OpenAI conversation setup failed:', e);
-    }
-
-    // Build minimal input: only this turn's user message
-    const formatted = [{ role: 'user' as const, content: body.message }];
-
-    const personality = personalityFromChatType(body.chatType);
-    const { payload, modelConfig } = await buildResponsesPayload(
-      ctx,
-      personality as any,
-      formatted,
-      { _id: user._id, name: user.name, language: user.language },
-      {
-        conversationId,
-        // Inject context only once per session: on creation or first assistant turn
-        injectContext: createdConversation || isNewSession,
-      }
-    );
+    const ensuredSessionId = prepared.sessionId;
+    const persistPolicy = prepared.persistPolicy;
+    const payload = prepared.payload as any;
+    const modelConfig = prepared.modelConfig as any;
     (payload as any).stream = true;
 
     const apiKey = process.env.OPENAI_API_KEY;
@@ -309,7 +195,7 @@ export const streamChat = httpAction(async (ctx, request) => {
     const iterator = transformResponsesStream(upstreamStream);
     let fullText = '';
     const startedAt = Date.now();
-    const requestId = body.requestId;
+    const requestId = prepared.requestId || body.requestId;
     const modelUsed = (payload as any).model || 'unknown';
 
     const stream = new ReadableStream<Uint8Array>({
@@ -324,52 +210,21 @@ export const streamChat = httpAction(async (ctx, request) => {
           // Signal completion
           controller.enqueue(encoder.encode(sseLine('[DONE]')));
           // Persist final assistant message and telemetry before closing
+          // Centralized finalize step (handles persistence for non-vent only)
           try {
-            await ctx.runMutation(
-              internal.chatStreaming.insertAssistantMessage,
-              {
-                sessionId: ensuredSessionId,
-                userId: user._id,
-                chatType: body.chatType,
-                content: fullText.trim(),
-                requestId,
-              }
-            );
-          } catch (e) {
-            console.error('Failed to persist assistant message:', e);
-          }
-          try {
-            const status = await appRateLimiter.limit(ctx, 'titleSummarize', {
-              key: `${user._id}:${ensuredSessionId}`,
-            });
-            if (status.ok) {
-              await ctx.scheduler.runAfter(
-                0,
-                internal.titleSummarization.generateAndApplyTitle,
-                {
-                  userId: user._id,
-                  sessionId: ensuredSessionId,
-                  chatType: body.chatType,
-                }
-              );
-            }
-          } catch {}
-          try {
-            const finishedAt = Date.now();
-            await ctx.runMutation(internal.chatStreaming.recordAITelemetry, {
+            await ctx.runMutation(internal.chatStreaming.finalizeStreamingTurn, {
               userId: user._id,
-              sessionId: ensuredSessionId,
               chatType: body.chatType,
-              provider: 'openai',
+              sessionId: ensuredSessionId,
+              content: fullText.trim(),
               model: modelUsed,
               requestId,
               startedAt,
-              finishedAt,
-              durationMs: finishedAt - startedAt,
-              contentLength: fullText.length,
               success: true,
             });
-          } catch {}
+          } catch (e) {
+            console.error('finalizeStreamingTurn failed:', e);
+          }
           controller.close();
           return;
         }
@@ -397,19 +252,18 @@ export const streamChat = httpAction(async (ctx, request) => {
         try {
           // iterator will end on next pull naturally
         } catch {}
-        // Best-effort: persist any partial content gathered so far
         try {
           if (fullText.trim().length > 0) {
-            await ctx.runMutation(
-              internal.chatStreaming.insertAssistantMessage as any,
-              {
-                sessionId: ensuredSessionId,
-                userId: user._id,
-                chatType: body.chatType,
-                content: fullText.trim(),
-                requestId,
-              }
-            );
+            await ctx.runMutation(internal.chatStreaming.finalizeStreamingTurn, {
+              userId: user._id,
+              chatType: body.chatType,
+              sessionId: ensuredSessionId,
+              content: fullText.trim(),
+              model: modelUsed,
+              requestId,
+              startedAt,
+              success: true,
+            });
           }
         } catch (e) {
           console.warn('Persist on cancel failed', e);

@@ -54,6 +54,8 @@ export default defineSchema({
     sessionId: v.optional(v.string()), // Optional for backwards compatibility
     ventSessionId: v.optional(v.string()), // Legacy field
     createdAt: v.number(),
+    // Align with other chat tables for idempotency/deduplication
+    requestId: v.optional(v.string()),
   })
     .index('by_user', ['userId'])
     .index('by_session', ['sessionId'])

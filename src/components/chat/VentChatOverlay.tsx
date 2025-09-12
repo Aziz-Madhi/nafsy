@@ -6,7 +6,7 @@
  */
 
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Modal } from 'react-native';
+import { View, Modal, ScrollView } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, {
@@ -190,19 +190,21 @@ export function VentChatOverlay({
                   )}
                 </View>
 
-                {/* Bottom half: AI response pinned to the top of the bottom half */}
-                <View
-                  style={{
-                    flex: 1,
+                {/* Bottom half: AI response area with independent vertical scroll */}
+                <ScrollView
+                  style={{ flex: 1 }}
+                  contentContainerStyle={{
                     alignItems: 'center',
                     justifyContent: 'flex-start',
+                    paddingHorizontal: 32,
+                    paddingBottom: 24,
                   }}
+                  showsVerticalScrollIndicator
+                  indicatorStyle="white"
+                  keyboardShouldPersistTaps="handled"
                 >
                   {lastAIText && (
-                    <Animated.View
-                      key={`ai-${lastAIText}`}
-                      style={{ paddingHorizontal: 32 }}
-                    >
+                    <Animated.View key={`ai-${lastAIText}`}>
                       <Text className="text-center text-gray-200 text-lg">
                         {lastAIText}
                       </Text>
@@ -235,7 +237,7 @@ export function VentChatOverlay({
                       />
                     </Animated.View>
                   )}
-                </View>
+                </ScrollView>
               </View>
             )}
           </View>

@@ -124,10 +124,8 @@ export default function ChatTab() {
     activeChatType === 'companion' ? activeSessionId : null,
     'companion'
   );
-  const ventMessages = useOfflineChatMessages(
-    activeChatType === 'event' ? activeSessionId : null,
-    'event'
-  );
+  // Strict privacy: do not read or show any stored vent messages
+  const ventMessages: Message[] = [];
 
   // Select messages based on active chat type
   const getChatMessages = () => {
@@ -226,6 +224,8 @@ export default function ChatTab() {
         const reader = res.body.getReader();
         const decoder = new TextDecoder();
         let buffer = '';
+        // Accumulate assistant text locally for overlay updates (vent chat)
+        let accumulated = '';
 
         while (true) {
           const { done, value } = await reader.read();
@@ -253,7 +253,15 @@ export default function ChatTab() {
                 evt?.type === 'text-delta' &&
                 typeof evt.textDelta === 'string'
               ) {
-                setStreamingContent((prev) => prev + (evt.textDelta as string));
+                const delta = String(evt.textDelta);
+                setStreamingContent((prev) => prev + delta);
+                accumulated += delta;
+                // Mirror streaming text to the private Vent overlay
+                if (chatType === 'event') {
+                  try {
+                    setCurrentVentMessage(`ai:${accumulated}`);
+                  } catch {}
+                }
               }
             } catch {}
           }
@@ -275,6 +283,11 @@ export default function ChatTab() {
             const list = s[sessionId!] || [];
             return { ...s, [sessionId!]: [...list, systemNotice] };
           });
+          if (chatType === 'event') {
+            try {
+              setCurrentVentMessage(`ai:${systemNotice.content}`);
+            } catch {}
+          }
         }
       } finally {
         setIsStreaming(false);
@@ -283,7 +296,7 @@ export default function ChatTab() {
         }
       }
     },
-    [getToken, mapToServerType]
+    [getToken, mapToServerType, setCurrentVentMessage, t]
   );
 
   // Cleanup streaming connection on unmount
@@ -410,10 +423,8 @@ export default function ChatTab() {
                 await switchToMainSession(sessionId);
                 break;
               case 'event':
-                sessionId = await createChatSession({
-                  type: 'vent',
-                  title: `Quick Vent Session`,
-                });
+                // Privacy: use an ephemeral client-generated session id; do not persist
+                sessionId = `vent_${Date.now()}_${user?.id || 'anon'}`;
                 setCurrentVentSessionId(sessionId);
                 break;
               case 'companion':
@@ -510,10 +521,8 @@ export default function ChatTab() {
         // Ensure a vent session exists
         let sessionId = currentVentSessionId;
         if (!sessionId) {
-          sessionId = await createChatSession({
-            type: 'vent',
-            title: 'Quick Vent Session',
-          });
+          // Privacy: use an ephemeral client-generated session id; do not persist
+          sessionId = `vent_${Date.now()}_${user?.id || 'anon'}`;
           setCurrentVentSessionId(sessionId);
         }
         // Update overlay with user message instantly

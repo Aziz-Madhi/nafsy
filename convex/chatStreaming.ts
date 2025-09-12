@@ -1,5 +1,7 @@
 import { v } from 'convex/values';
-import { internalMutation } from './_generated/server';
+import { internalAction, internalMutation } from './_generated/server';
+import { internal, api } from './_generated/api';
+import { buildResponsesPayload } from './openaiResponses';
 // Internal API not needed in this module; remove unused imports
 // Legacy DB-backed rate limiting removed in favor of component
 import appRateLimiter, { tryConsumeGlobalTopup } from './rateLimit';
@@ -235,6 +237,226 @@ export const recordAITelemetry = internalMutation({
       createdAt: Date.now(),
     });
     return id;
+  },
+});
+
+// Prepare a streaming turn: centralize session, user message insert, prompt/model prep
+export const prepareStreamingTurn = internalAction({
+  args: {
+    userId: v.id('users'),
+    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    message: v.string(),
+    sessionId: v.optional(v.string()),
+    title: v.optional(v.string()),
+    requestId: v.optional(v.string()),
+  },
+  returns: v.object({
+    sessionId: v.string(),
+    persistPolicy: v.union(v.literal('store'), v.literal('ephemeral')),
+    requestId: v.optional(v.string()),
+    payload: v.any(),
+    modelConfig: v.optional(
+      v.object({
+        temperature: v.optional(v.number()),
+        maxTokens: v.optional(v.number()),
+        topP: v.optional(v.number()),
+      })
+    ),
+  }),
+  handler: async (ctx, args) => {
+    const { userId, chatType } = args;
+
+    // Resolve sessionId and persistence policy
+    let sessionId = args.sessionId || '';
+    const persistPolicy = chatType === 'vent' ? 'ephemeral' : 'store';
+
+    if (chatType === 'vent') {
+      // Ephemeral session id; no DB session or messages
+      if (!sessionId) sessionId = `vent_ephemeral_${Date.now()}_${String(userId)}`;
+    } else {
+      // Ensure session exists; create lazily if missing
+      if (!sessionId) sessionId = `${chatType}_${Date.now()}_${String(userId)}`;
+      await ctx.runMutation(internal.chatStreaming.ensureSessionExists, {
+        userId,
+        sessionId,
+        chatType: chatType as any,
+        title: args.title,
+      });
+
+      // Insert user message atomically via internal mutation (rate limits apply inside)
+      await ctx.runMutation(internal.chatStreaming.insertUserMessage as any, {
+        sessionId,
+        userId,
+        chatType: chatType as any,
+        content: args.message,
+        requestId: args.requestId,
+      });
+    }
+
+    // Determine if we should inject context on this turn (first assistant reply)
+    let isNewSession = false;
+    if (persistPolicy === 'store') {
+      try {
+        const recent = await ctx.runQuery(internal.chat._getMessagesForSession as any, {
+          userId,
+          type: chatType as any,
+          sessionId,
+          limit: 10,
+        });
+        isNewSession = !recent.some((m: any) => m.role === 'assistant');
+      } catch {}
+    }
+
+    // Ensure or read OpenAI conversation id for stored chats; skip for vent
+    let conversationId: string | undefined;
+    let createdConversation = false;
+    if (persistPolicy === 'store') {
+      try {
+        const meta = await ctx.runMutation(internal.chatStreaming.getSessionMeta as any, {
+          userId,
+          sessionId,
+          chatType: chatType as any,
+        });
+        conversationId = (meta as any)?.openaiConversationId;
+        if (!conversationId) {
+          const apiKey = process.env.OPENAI_API_KEY;
+          if (!apiKey) throw new Error('OpenAI API key not configured');
+          const res = await fetch('https://api.openai.com/v1/conversations', {
+            method: 'POST',
+            headers: {
+              Authorization: `Bearer ${apiKey}`,
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              metadata: {
+                app: 'nafsy',
+                chatType,
+                sessionId,
+                userId: String(userId),
+              },
+            }),
+          });
+          if (res.ok) {
+            const json = await res.json();
+            if (json?.id) {
+              conversationId = json.id as string;
+              createdConversation = true;
+              await ctx.runMutation(internal.chatStreaming.setSessionConversationId as any, {
+                userId,
+                sessionId,
+                chatType: chatType as any,
+                openaiConversationId: conversationId,
+              });
+            }
+          } else {
+            console.warn('Failed to create OpenAI conversation:', await res.text());
+          }
+        }
+      } catch (e) {
+        console.warn('OpenAI conversation setup failed:', e);
+      }
+    }
+
+    // Build Responses API payload using server-side prompt configuration
+    const personality = chatType === 'main' ? 'coach' : chatType;
+    // Minimal turn: just this user message
+    const messages = [{ role: 'user' as const, content: args.message }];
+
+    // Load minimal user info via API for personalization
+    const user = await ctx.runQuery(api.personalization._getUserById as any, {
+      userId,
+    });
+    if (!user) {
+      throw new Error('User not found');
+    }
+
+    const { payload, modelConfig } = await buildResponsesPayload(
+      ctx as any,
+      personality as any,
+      messages,
+      { _id: String(user._id), name: user.name, language: user.language },
+      {
+        conversationId,
+        injectContext: createdConversation || isNewSession,
+      }
+    );
+
+    // The http handler will set payload.stream = true
+    return {
+      sessionId,
+      persistPolicy,
+      requestId: args.requestId,
+      payload,
+      modelConfig: modelConfig as any,
+    } as any;
+  },
+});
+
+// Finalize a streaming turn: persist assistant message and telemetry when applicable
+export const finalizeStreamingTurn = internalMutation({
+  args: {
+    userId: v.id('users'),
+    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    sessionId: v.string(),
+    content: v.string(),
+    model: v.string(),
+    requestId: v.optional(v.string()),
+    startedAt: v.number(),
+    success: v.boolean(),
+  },
+  returns: v.null(),
+  handler: async (ctx, args) => {
+    const { chatType, content } = args;
+    const now = Date.now();
+
+    // Vent is private: do not persist messages or record content-bearing telemetry
+    if (chatType !== 'vent') {
+      try {
+        await ctx.runMutation(internal.chatStreaming.insertAssistantMessage as any, {
+          sessionId: args.sessionId,
+          userId: args.userId,
+          chatType: chatType as any,
+          content: (content || '').trim(),
+          requestId: args.requestId,
+        });
+      } catch (e) {
+        console.error('finalizeStreamingTurn: insertAssistantMessage failed', e);
+      }
+
+      // Schedule title summarization with a lightweight rate limit
+      try {
+        const status = await appRateLimiter.limit(ctx as any, 'titleSummarize', {
+          key: `${args.userId}:${args.sessionId}` as any,
+        });
+        if (status.ok) {
+          await ctx.scheduler.runAfter(0, internal.titleSummarization.generateAndApplyTitle, {
+            userId: args.userId as any,
+            sessionId: args.sessionId,
+            chatType: chatType as any,
+          });
+        }
+      } catch {}
+
+      // Record telemetry (non-sensitive aggregates)
+      try {
+        const finishedAt = Date.now();
+        await ctx.runMutation(internal.chatStreaming.recordAITelemetry, {
+          userId: args.userId,
+          sessionId: args.sessionId,
+          chatType: chatType as any,
+          provider: 'openai',
+          model: args.model,
+          requestId: args.requestId,
+          startedAt: args.startedAt,
+          finishedAt,
+          durationMs: finishedAt - args.startedAt,
+          contentLength: (content || '').length,
+          success: args.success,
+        });
+      } catch {}
+    }
+
+    return null;
   },
 });
 
