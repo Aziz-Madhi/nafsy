@@ -1,10 +1,10 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { sendMessageRef } from './_layout';
+import { sendMessageRef, startVoiceRef } from './_layout';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import { Alert } from 'react-native';
 import { useUserSafe } from '~/lib/useUserSafe';
-import { useMutation, useQuery } from 'convex/react';
+import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
 import {
   useOfflineChatMessages,
@@ -28,6 +28,8 @@ import { ChatScreen } from '~/components/chat';
 import { useAuth } from '@clerk/clerk-expo';
 import { config } from '~/config/env';
 import { fetch as expoFetch } from 'expo/fetch';
+import { useRealtimeVoice } from '~/hooks/useRealtimeVoice';
+import { VoiceOverlay } from '~/components/chat/VoiceOverlay';
 // HTTP streaming utilities removed in favor of Convex internal actions
 // Auth is handled by root _layout.tsx - all screens here are protected
 
@@ -306,13 +308,20 @@ export default function ChatTab() {
         currentAbortRef.current?.abort();
       } catch {}
       currentAbortRef.current = null;
+      // Ensure voice session is torn down when leaving screen
+      try {
+        voice.stop();
+      } catch {}
     };
-  }, []);
+  }, [voice]);
 
   // Keep mutations for session creation and user upsert
   const upsertUser = useMutation(api.auth.upsertUser);
   const createChatSession = useMutation(api.chat.createChatSession);
   const sendChatMessage = useMutation(api.chat.sendChatMessage);
+  const mintRealtimeClientSecret = useAction(api.chat.mintRealtimeClientSecret);
+  const voice = useRealtimeVoice();
+  const [voiceVisible, setVoiceVisible] = useState(false);
 
   // Initialize with empty chat on app start (no auto-loading of previous sessions)
   useEffect(() => {
@@ -568,6 +577,20 @@ export default function ChatTab() {
     [switchChatType, activeChatType]
   );
 
+  // Voice button handler: mint ephemeral Realtime token and prepare client session config
+  const handleStartVoice = useCallback(async () => {
+    const chatTypeServer = mapToServerType(activeChatType);
+    const { started, error } = await voice.start({ chatType: chatTypeServer });
+    if (!started && error) {
+      console.error('Voice start failed:', error);
+      try {
+        Alert.alert('Voice unavailable', error);
+      } catch {}
+    } else if (started) {
+      setVoiceVisible(true);
+    }
+  }, [activeChatType, mapToServerType, voice]);
+
   // Vent overlay now updates when assistant message appears in DB
 
   // Set the message handler ref for the floating tab bar
@@ -575,12 +598,18 @@ export default function ChatTab() {
     if (sendMessageRef) {
       sendMessageRef.current = handleSendMessage;
     }
+    if (startVoiceRef) {
+      startVoiceRef.current = handleStartVoice;
+    }
     return () => {
       if (sendMessageRef) {
         sendMessageRef.current = null;
       }
+      if (startVoiceRef) {
+        startVoiceRef.current = null;
+      }
     };
-  }, [handleSendMessage]);
+  }, [handleSendMessage, handleStartVoice]);
 
   // streamingContent and isStreaming are stateful above
 
@@ -605,7 +634,8 @@ export default function ChatTab() {
   }, [messages, activeSessionId, pendingBySession]);
 
   return (
-    <ChatScreen
+    <>
+      <ChatScreen
       messages={mergedMessages}
       showHistorySidebar={showHistorySidebar}
       sessionSwitchLoading={sessionSwitchLoading}
@@ -627,6 +657,18 @@ export default function ChatTab() {
       activeChatType={activeChatType}
       onChatTypeChange={handleChatTypeChange}
       isOnline={isOnline}
-    />
+      />
+      <VoiceOverlay
+        visible={voiceVisible && voice.isActive}
+        isActive={voice.isActive}
+        onStop={() => {
+          voice.stop();
+          setVoiceVisible(false);
+        }}
+        onClose={() => setVoiceVisible(false)}
+        title="Voice"
+        subtitle={voice.isActive ? 'Connected' : 'Connecting'}
+      />
+    </>
   );
 }

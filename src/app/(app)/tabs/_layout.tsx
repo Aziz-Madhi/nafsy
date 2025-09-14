@@ -9,6 +9,10 @@ export const sendMessageRef = {
   current: null as ((message: string) => void) | null,
 };
 
+export const startVoiceRef = {
+  current: null as (() => void) | null,
+};
+
 export default function TabsLayout() {
   const colors = useColors();
   const { isSignedIn, isLoaded } = useAuth();
@@ -41,6 +45,13 @@ export default function TabsLayout() {
           onSendMessage={(message: string) => {
             try {
               sendMessageRef.current?.(message);
+            } catch {
+              // No-op; chat screen may not be mounted yet
+            }
+          }}
+          onVoicePress={() => {
+            try {
+              startVoiceRef.current?.();
             } catch {
               // No-op; chat screen may not be mounted yet
             }

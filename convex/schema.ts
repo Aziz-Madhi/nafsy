@@ -214,6 +214,34 @@ export default defineSchema({
     updatedBy: v.optional(v.string()),
   }).index('by_active', ['active']),
 
+  // Voice Realtime Configuration (separate from chat personalities)
+  voiceRealtimeConfig: defineTable({
+    // Prompt source (OpenAI Prompt IDs only; no inline content)
+    source: v.union(
+      v.literal('openai_prompt_latest'),
+      v.literal('openai_prompt_pinned')
+    ),
+    // OpenAI Prompt ID (pmpt_...)
+    openaiPromptId: v.optional(v.string()),
+    // Optional pinned version
+    openaiPromptVersion: v.optional(v.number()),
+    // Realtime model for voice (e.g., 'gpt-realtime')
+    model: v.string(),
+    // Optional generation knobs
+    temperature: v.optional(v.number()),
+    maxTokens: v.optional(v.number()),
+    topP: v.optional(v.number()),
+    // Optional default voice name (e.g., 'marin', 'verse'); env can override
+    defaultVoice: v.optional(v.string()),
+
+    // Metadata
+    active: v.boolean(),
+    version: v.number(),
+    createdAt: v.number(),
+    updatedAt: v.number(),
+    updatedBy: v.optional(v.string()),
+  }).index('by_active', ['active']),
+
   exercises: defineTable({
     title: v.string(),
     titleAr: v.string(),

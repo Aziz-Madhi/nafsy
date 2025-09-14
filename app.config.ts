@@ -20,6 +20,10 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     supportsTablet: true,
     bundleIdentifier: 'com.nafsy.app',
     // deploymentTarget: '18.0', // Removed as it's not a valid iOS config property
+    infoPlist: {
+      NSMicrophoneUsageDescription:
+        'Nafsy uses the microphone for real-time voice conversations.',
+    },
   },
   android: {
     adaptiveIcon: {
@@ -28,6 +32,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
     },
     edgeToEdgeEnabled: true,
     package: 'com.nafsy.app',
+    permissions: [
+      'android.permission.RECORD_AUDIO',
+      // Optional but recommended for better routing/volume handling
+      'android.permission.MODIFY_AUDIO_SETTINGS',
+    ],
   },
   web: {
     favicon: './assets/favicon.png',

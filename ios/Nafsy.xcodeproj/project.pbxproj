@@ -7,29 +7,51 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
-		0BB0348018C492DBFD4D841C /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 8BD263B5765D4D602DE53409 /* PrivacyInfo.xcprivacy */; };
+		1315B06C27194D5782FAD4E6 /* Rubik-SemiBold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2D5AEE413BFE4713BDA8DEB0 /* Rubik-SemiBold.ttf */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
+		1559E4C2B4F8402C838F354D /* AveriaSerifLibre-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 9D5F544B68BF41C08D9DBD93 /* AveriaSerifLibre-Light.ttf */; };
+		2F9665E42834FD482C3E5CC6 /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = E5DC97A4A3C85513FB2907D9 /* ExpoModulesProvider.swift */; };
 		3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */; };
+		4B4E4B612F6746C18322CEE3 /* AveriaSerifLibre-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CCC6AEAAAE9D49D68355E6DC /* AveriaSerifLibre-Regular.ttf */; };
+		4D969867224C4E16BDE32DB4 /* AveriaSerifLibre-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = B6A1D92AE27A4BF6964DC48C /* AveriaSerifLibre-Bold.ttf */; };
+		6BD7ED8E3CC04D7B91055E2C /* Rubik-Medium.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 98D510A315454FF89B7E0204 /* Rubik-Medium.ttf */; };
+		9C5AEADB668542088F2570B7 /* Rubik-Light.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 31687677546D4076AD92D0EE /* Rubik-Light.ttf */; };
+		B30468FD68D046A69415F0FC /* AveriaSerifLibre-LightItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 50BCBD3D9A074C539283947B /* AveriaSerifLibre-LightItalic.ttf */; };
 		BB2F792D24A3F905000567C9 /* Expo.plist in Resources */ = {isa = PBXBuildFile; fileRef = BB2F792C24A3F905000567C9 /* Expo.plist */; };
-		C59A56474145EC4FCAE30295 /* libPods-Nafsy.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 7C3BB542DD476E668DF1AA75 /* libPods-Nafsy.a */; };
+		C428D1F0F3C43EAAD5B2F001 /* libPods-Nafsy.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 07BED6C6C7DC22BA1B01A75A /* libPods-Nafsy.a */; };
+		D80CB50FFD5D87DEBB2CBD51 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 1BCC902568E0414EBFBB0DAE /* PrivacyInfo.xcprivacy */; };
+		ED3C98945A19410BB65EE1C2 /* Rubik-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = FFF52AF047B24AF39E7740B9 /* Rubik-Regular.ttf */; };
 		F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = F11748412D0307B40044C1D9 /* AppDelegate.swift */; };
-		F87BCBEE00E93FA16EC7975E /* ExpoModulesProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F570259B1B401ACCFCCC58A4 /* ExpoModulesProvider.swift */; };
+		F2E6B56E04D646F9A5B07F39 /* Rubik-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 2A252F484DC74DEB820FFD4D /* Rubik-Bold.ttf */; };
+		F35AF4EFF0194D7A9F98E662 /* AveriaSerifLibre-BoldItalic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = C7ED2D5941BF4D2AA6A0C86A /* AveriaSerifLibre-BoldItalic.ttf */; };
+		F77FAA39A3CA452CA8C4FCDD /* AveriaSerifLibre-Italic.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 55DD31F9DB334149AF9FB3FE /* AveriaSerifLibre-Italic.ttf */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		07BED6C6C7DC22BA1B01A75A /* libPods-Nafsy.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Nafsy.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07F961A680F5B00A75B9A /* Nafsy.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Nafsy.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = Nafsy/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = Nafsy/Info.plist; sourceTree = "<group>"; };
-		6576BF88403A1BA349262953 /* Pods-Nafsy.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nafsy.release.xcconfig"; path = "Target Support Files/Pods-Nafsy/Pods-Nafsy.release.xcconfig"; sourceTree = "<group>"; };
-		7C3BB542DD476E668DF1AA75 /* libPods-Nafsy.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-Nafsy.a"; sourceTree = BUILT_PRODUCTS_DIR; };
-		8BD263B5765D4D602DE53409 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Nafsy/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		1BCC902568E0414EBFBB0DAE /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; name = PrivacyInfo.xcprivacy; path = Nafsy/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		2A252F484DC74DEB820FFD4D /* Rubik-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Bold.ttf"; path = "../assets/fonts/RubikArabic/Rubik-Bold.ttf"; sourceTree = "<group>"; };
+		2D5AEE413BFE4713BDA8DEB0 /* Rubik-SemiBold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-SemiBold.ttf"; path = "../assets/fonts/RubikArabic/Rubik-SemiBold.ttf"; sourceTree = "<group>"; };
+		31687677546D4076AD92D0EE /* Rubik-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Light.ttf"; path = "../assets/fonts/RubikArabic/Rubik-Light.ttf"; sourceTree = "<group>"; };
+		50BCBD3D9A074C539283947B /* AveriaSerifLibre-LightItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "AveriaSerifLibre-LightItalic.ttf"; path = "../assets/fonts/AveriaSerif/AveriaSerifLibre-LightItalic.ttf"; sourceTree = "<group>"; };
+		55DD31F9DB334149AF9FB3FE /* AveriaSerifLibre-Italic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "AveriaSerifLibre-Italic.ttf"; path = "../assets/fonts/AveriaSerif/AveriaSerifLibre-Italic.ttf"; sourceTree = "<group>"; };
+		8380A75011923BB46A2ABCBA /* Pods-Nafsy.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nafsy.debug.xcconfig"; path = "Target Support Files/Pods-Nafsy/Pods-Nafsy.debug.xcconfig"; sourceTree = "<group>"; };
+		98D510A315454FF89B7E0204 /* Rubik-Medium.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Medium.ttf"; path = "../assets/fonts/RubikArabic/Rubik-Medium.ttf"; sourceTree = "<group>"; };
+		9D5F544B68BF41C08D9DBD93 /* AveriaSerifLibre-Light.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "AveriaSerifLibre-Light.ttf"; path = "../assets/fonts/AveriaSerif/AveriaSerifLibre-Light.ttf"; sourceTree = "<group>"; };
 		AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.storyboard; name = SplashScreen.storyboard; path = Nafsy/SplashScreen.storyboard; sourceTree = "<group>"; };
+		B6A1D92AE27A4BF6964DC48C /* AveriaSerifLibre-Bold.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "AveriaSerifLibre-Bold.ttf"; path = "../assets/fonts/AveriaSerif/AveriaSerifLibre-Bold.ttf"; sourceTree = "<group>"; };
 		BB2F792C24A3F905000567C9 /* Expo.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; path = Expo.plist; sourceTree = "<group>"; };
-		D36BE304683E0B20C20329DF /* Pods-Nafsy.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nafsy.debug.xcconfig"; path = "Target Support Files/Pods-Nafsy/Pods-Nafsy.debug.xcconfig"; sourceTree = "<group>"; };
+		C7ED2D5941BF4D2AA6A0C86A /* AveriaSerifLibre-BoldItalic.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "AveriaSerifLibre-BoldItalic.ttf"; path = "../assets/fonts/AveriaSerif/AveriaSerifLibre-BoldItalic.ttf"; sourceTree = "<group>"; };
+		CCC6AEAAAE9D49D68355E6DC /* AveriaSerifLibre-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "AveriaSerifLibre-Regular.ttf"; path = "../assets/fonts/AveriaSerif/AveriaSerifLibre-Regular.ttf"; sourceTree = "<group>"; };
+		E5DC97A4A3C85513FB2907D9 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Nafsy/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
 		ED297162215061F000B7C4FE /* JavaScriptCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = JavaScriptCore.framework; path = System/Library/Frameworks/JavaScriptCore.framework; sourceTree = SDKROOT; };
 		F11748412D0307B40044C1D9 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; name = AppDelegate.swift; path = Nafsy/AppDelegate.swift; sourceTree = "<group>"; };
 		F11748442D0722820044C1D9 /* Nafsy-Bridging-Header.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = "Nafsy-Bridging-Header.h"; path = "Nafsy/Nafsy-Bridging-Header.h"; sourceTree = "<group>"; };
-		F570259B1B401ACCFCCC58A4 /* ExpoModulesProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; name = ExpoModulesProvider.swift; path = "Pods/Target Support Files/Pods-Nafsy/ExpoModulesProvider.swift"; sourceTree = "<group>"; };
+		FD5D5BF3A4AB73AC0B65471B /* Pods-Nafsy.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Nafsy.release.xcconfig"; path = "Target Support Files/Pods-Nafsy/Pods-Nafsy.release.xcconfig"; sourceTree = "<group>"; };
+		FFF52AF047B24AF39E7740B9 /* Rubik-Regular.ttf */ = {isa = PBXFileReference; explicitFileType = undefined; fileEncoding = undefined; includeInIndex = 0; lastKnownFileType = unknown; name = "Rubik-Regular.ttf"; path = "../assets/fonts/RubikArabic/Rubik-Regular.ttf"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -37,7 +59,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				C59A56474145EC4FCAE30295 /* libPods-Nafsy.a in Frameworks */,
+				C428D1F0F3C43EAAD5B2F001 /* libPods-Nafsy.a in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -53,7 +75,7 @@
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				AA286B85B6C04FC6940260E9 /* SplashScreen.storyboard */,
-				8BD263B5765D4D602DE53409 /* PrivacyInfo.xcprivacy */,
+				1BCC902568E0414EBFBB0DAE /* PrivacyInfo.xcprivacy */,
 			);
 			name = Nafsy;
 			sourceTree = "<group>";
@@ -62,25 +84,19 @@
 			isa = PBXGroup;
 			children = (
 				ED297162215061F000B7C4FE /* JavaScriptCore.framework */,
-				7C3BB542DD476E668DF1AA75 /* libPods-Nafsy.a */,
+				07BED6C6C7DC22BA1B01A75A /* libPods-Nafsy.a */,
 			);
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
-		71D3F7E4BAEA6D53779DCD24 /* ExpoModulesProviders */ = {
+		3AAC641CF32DF606DBB4AA5A /* Pods */ = {
 			isa = PBXGroup;
 			children = (
-				7C4FE8D23CB3BA8B87FBB65E /* Nafsy */,
+				8380A75011923BB46A2ABCBA /* Pods-Nafsy.debug.xcconfig */,
+				FD5D5BF3A4AB73AC0B65471B /* Pods-Nafsy.release.xcconfig */,
 			);
-			name = ExpoModulesProviders;
-			sourceTree = "<group>";
-		};
-		7C4FE8D23CB3BA8B87FBB65E /* Nafsy */ = {
-			isa = PBXGroup;
-			children = (
-				F570259B1B401ACCFCCC58A4 /* ExpoModulesProvider.swift */,
-			);
-			name = Nafsy;
+			name = Pods;
+			path = Pods;
 			sourceTree = "<group>";
 		};
 		832341AE1AAA6A7D00B99B32 /* Libraries */ = {
@@ -90,6 +106,14 @@
 			name = Libraries;
 			sourceTree = "<group>";
 		};
+		83B3DDD44E436F35B864B8C5 /* ExpoModulesProviders */ = {
+			isa = PBXGroup;
+			children = (
+				B947BF9C15B60D6319E1928E /* Nafsy */,
+			);
+			name = ExpoModulesProviders;
+			sourceTree = "<group>";
+		};
 		83CBB9F61A601CBA00E9B192 = {
 			isa = PBXGroup;
 			children = (
@@ -97,8 +121,9 @@
 				832341AE1AAA6A7D00B99B32 /* Libraries */,
 				83CBBA001A601CBA00E9B192 /* Products */,
 				2D16E6871FA4F8E400B85C8A /* Frameworks */,
-				CB30F101F026E2ECB0590504 /* Pods */,
-				71D3F7E4BAEA6D53779DCD24 /* ExpoModulesProviders */,
+				84F9DD7F81FB40A0AF888AA5 /* Resources */,
+				3AAC641CF32DF606DBB4AA5A /* Pods */,
+				83B3DDD44E436F35B864B8C5 /* ExpoModulesProviders */,
 			);
 			indentWidth = 2;
 			sourceTree = "<group>";
@@ -113,6 +138,33 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		84F9DD7F81FB40A0AF888AA5 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				9D5F544B68BF41C08D9DBD93 /* AveriaSerifLibre-Light.ttf */,
+				CCC6AEAAAE9D49D68355E6DC /* AveriaSerifLibre-Regular.ttf */,
+				B6A1D92AE27A4BF6964DC48C /* AveriaSerifLibre-Bold.ttf */,
+				55DD31F9DB334149AF9FB3FE /* AveriaSerifLibre-Italic.ttf */,
+				50BCBD3D9A074C539283947B /* AveriaSerifLibre-LightItalic.ttf */,
+				C7ED2D5941BF4D2AA6A0C86A /* AveriaSerifLibre-BoldItalic.ttf */,
+				FFF52AF047B24AF39E7740B9 /* Rubik-Regular.ttf */,
+				2A252F484DC74DEB820FFD4D /* Rubik-Bold.ttf */,
+				98D510A315454FF89B7E0204 /* Rubik-Medium.ttf */,
+				2D5AEE413BFE4713BDA8DEB0 /* Rubik-SemiBold.ttf */,
+				31687677546D4076AD92D0EE /* Rubik-Light.ttf */,
+			);
+			name = Resources;
+			path = "";
+			sourceTree = "<group>";
+		};
+		B947BF9C15B60D6319E1928E /* Nafsy */ = {
+			isa = PBXGroup;
+			children = (
+				E5DC97A4A3C85513FB2907D9 /* ExpoModulesProvider.swift */,
+			);
+			name = Nafsy;
+			sourceTree = "<group>";
+		};
 		BB2F792B24A3F905000567C9 /* Supporting */ = {
 			isa = PBXGroup;
 			children = (
@@ -120,16 +172,6 @@
 			);
 			name = Supporting;
 			path = Nafsy/Supporting;
-			sourceTree = "<group>";
-		};
-		CB30F101F026E2ECB0590504 /* Pods */ = {
-			isa = PBXGroup;
-			children = (
-				D36BE304683E0B20C20329DF /* Pods-Nafsy.debug.xcconfig */,
-				6576BF88403A1BA349262953 /* Pods-Nafsy.release.xcconfig */,
-			);
-			name = Pods;
-			path = Pods;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -140,13 +182,13 @@
 			buildConfigurationList = 13B07F931A680F5B00A75B9A /* Build configuration list for PBXNativeTarget "Nafsy" */;
 			buildPhases = (
 				08A4A3CD28434E44B6B9DE2E /* [CP] Check Pods Manifest.lock */,
-				F7FC5E58A94F14AA370DA3F6 /* [Expo] Configure project */,
+				C2C7BF4A0CF3F6ADE58B611E /* [Expo] Configure project */,
 				13B07F871A680F5B00A75B9A /* Sources */,
 				13B07F8C1A680F5B00A75B9A /* Frameworks */,
 				13B07F8E1A680F5B00A75B9A /* Resources */,
 				00DD1BFF1BD5951E006B06BC /* Bundle React Native code and images */,
 				800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */,
-				CB3B2661DE0A87BC5AFB85E8 /* [CP] Embed Pods Frameworks */,
+				5EAF7E2E9D4B8DBB6C2CC60A /* [CP] Embed Pods Frameworks */,
 			);
 			buildRules = (
 			);
@@ -196,7 +238,18 @@
 				BB2F792D24A3F905000567C9 /* Expo.plist in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				3E461D99554A48A4959DE609 /* SplashScreen.storyboard in Resources */,
-				0BB0348018C492DBFD4D841C /* PrivacyInfo.xcprivacy in Resources */,
+				1559E4C2B4F8402C838F354D /* AveriaSerifLibre-Light.ttf in Resources */,
+				4B4E4B612F6746C18322CEE3 /* AveriaSerifLibre-Regular.ttf in Resources */,
+				4D969867224C4E16BDE32DB4 /* AveriaSerifLibre-Bold.ttf in Resources */,
+				F77FAA39A3CA452CA8C4FCDD /* AveriaSerifLibre-Italic.ttf in Resources */,
+				B30468FD68D046A69415F0FC /* AveriaSerifLibre-LightItalic.ttf in Resources */,
+				F35AF4EFF0194D7A9F98E662 /* AveriaSerifLibre-BoldItalic.ttf in Resources */,
+				ED3C98945A19410BB65EE1C2 /* Rubik-Regular.ttf in Resources */,
+				F2E6B56E04D646F9A5B07F39 /* Rubik-Bold.ttf in Resources */,
+				6BD7ED8E3CC04D7B91055E2C /* Rubik-Medium.ttf in Resources */,
+				1315B06C27194D5782FAD4E6 /* Rubik-SemiBold.ttf in Resources */,
+				9C5AEADB668542088F2570B7 /* Rubik-Light.ttf in Resources */,
+				D80CB50FFD5D87DEBB2CBD51 /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -238,6 +291,26 @@
 			runOnlyForDeploymentPostprocessing = 0;
 			shellPath = /bin/sh;
 			shellScript = "diff \"${PODS_PODFILE_DIR_PATH}/Podfile.lock\" \"${PODS_ROOT}/Manifest.lock\" > /dev/null\nif [ $? != 0 ] ; then\n    # print error to STDERR\n    echo \"error: The sandbox is not in sync with the Podfile.lock. Run 'pod install' or update your CocoaPods installation.\" >&2\n    exit 1\nfi\n# This output is used by Xcode 'outputs' to avoid re-running this script phase.\necho \"SUCCESS\" > \"${SCRIPT_OUTPUT_FILE_0}\"\n";
+			showEnvVarsInLog = 0;
+		};
+		5EAF7E2E9D4B8DBB6C2CC60A /* [CP] Embed Pods Frameworks */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+				"${PODS_ROOT}/Target Support Files/Pods-Nafsy/Pods-Nafsy-frameworks.sh",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/JitsiWebRTC/WebRTC.framework/WebRTC",
+				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
+			);
+			name = "[CP] Embed Pods Frameworks";
+			outputPaths = (
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/WebRTC.framework",
+				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Nafsy/Pods-Nafsy-frameworks.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
 		800E24972A6A228C8D4807E9 /* [CP] Copy Pods Resources */ = {
@@ -286,25 +359,7 @@
 			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Nafsy/Pods-Nafsy-resources.sh\"\n";
 			showEnvVarsInLog = 0;
 		};
-		CB3B2661DE0A87BC5AFB85E8 /* [CP] Embed Pods Frameworks */ = {
-			isa = PBXShellScriptBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			inputPaths = (
-				"${PODS_ROOT}/Target Support Files/Pods-Nafsy/Pods-Nafsy-frameworks.sh",
-				"${PODS_XCFRAMEWORKS_BUILD_DIR}/hermes-engine/Pre-built/hermes.framework/hermes",
-			);
-			name = "[CP] Embed Pods Frameworks";
-			outputPaths = (
-				"${TARGET_BUILD_DIR}/${FRAMEWORKS_FOLDER_PATH}/hermes.framework",
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-			shellPath = /bin/sh;
-			shellScript = "\"${PODS_ROOT}/Target Support Files/Pods-Nafsy/Pods-Nafsy-frameworks.sh\"\n";
-			showEnvVarsInLog = 0;
-		};
-		F7FC5E58A94F14AA370DA3F6 /* [Expo] Configure project */ = {
+		C2C7BF4A0CF3F6ADE58B611E /* [Expo] Configure project */ = {
 			isa = PBXShellScriptBuildPhase;
 			alwaysOutOfDate = 1;
 			buildActionMask = 2147483647;
@@ -331,7 +386,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				F11748422D0307B40044C1D9 /* AppDelegate.swift in Sources */,
-				F87BCBEE00E93FA16EC7975E /* ExpoModulesProvider.swift in Sources */,
+				2F9665E42834FD482C3E5CC6 /* ExpoModulesProvider.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -340,7 +395,7 @@
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = D36BE304683E0B20C20329DF /* Pods-Nafsy.debug.xcconfig */;
+			baseConfigurationReference = 8380A75011923BB46A2ABCBA /* Pods-Nafsy.debug.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;
@@ -376,7 +431,7 @@
 		};
 		13B07F951A680F5B00A75B9A /* Release */ = {
 			isa = XCBuildConfiguration;
-			baseConfigurationReference = 6576BF88403A1BA349262953 /* Pods-Nafsy.release.xcconfig */;
+			baseConfigurationReference = FD5D5BF3A4AB73AC0B65471B /* Pods-Nafsy.release.xcconfig */;
 			buildSettings = {
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				CLANG_ENABLE_MODULES = YES;

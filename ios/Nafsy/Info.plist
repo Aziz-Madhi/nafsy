@@ -34,7 +34,7 @@
       <dict>
         <key>CFBundleURLSchemes</key>
         <array>
-          <string>exp+nafsy</string>
+          <string>exp+naf</string>
         </array>
       </dict>
     </array>
@@ -51,6 +51,22 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Nafsy uses the microphone for real-time voice conversations.</string>
+    <key>UIAppFonts</key>
+    <array>
+      <string>AveriaSerifLibre-Light.ttf</string>
+      <string>AveriaSerifLibre-Regular.ttf</string>
+      <string>AveriaSerifLibre-Bold.ttf</string>
+      <string>AveriaSerifLibre-Italic.ttf</string>
+      <string>AveriaSerifLibre-LightItalic.ttf</string>
+      <string>AveriaSerifLibre-BoldItalic.ttf</string>
+      <string>Rubik-Regular.ttf</string>
+      <string>Rubik-Bold.ttf</string>
+      <string>Rubik-Medium.ttf</string>
+      <string>Rubik-SemiBold.ttf</string>
+      <string>Rubik-Light.ttf</string>
+    </array>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
     <key>UIRequiredDeviceCapabilities</key>
@@ -74,7 +90,7 @@
       <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
     <key>UIUserInterfaceStyle</key>
-    <string>Light</string>
+    <string>Automatic</string>
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
   </dict>

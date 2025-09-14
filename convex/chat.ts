@@ -1,10 +1,5 @@
 import { v } from 'convex/values';
-import {
-  mutation,
-  query,
-  internalAction,
-  internalQuery,
-} from './_generated/server';
+import { mutation, query, action, internalAction, internalQuery } from './_generated/server';
 import { updateChatSession } from './chatUtils';
 import { getAuthenticatedUser } from './authUtils';
 import { paginationOptsValidator } from 'convex/server';
@@ -667,6 +662,146 @@ export const updateChatSessionTitle = mutation({
     }
 
     return null;
+  },
+});
+
+/**
+ * Mint an OpenAI Realtime ephemeral client secret.
+ * Client uses this to open a WebRTC/WebSocket session directly with OpenAI.
+ * Model and prompt configuration are sourced from aiPrompts (server-managed),
+ * mirroring the chat configuration pattern.
+ */
+// Strongly-typed return for action handler to satisfy TS
+interface MintRealtimeSecretReturn {
+  client_secret: string;
+  expires_at?: number;
+  session: {
+    type: 'realtime';
+    model: string;
+    audio: { output: { voice: string } };
+    instructions?: string;
+  };
+  prompt?: { id: string; version?: string };
+  promptSource: 'openai_prompt_latest' | 'openai_prompt_pinned';
+}
+
+const MintRealtimeSecretReturnValidator = v.object({
+  client_secret: v.string(),
+  expires_at: v.optional(v.number()),
+  session: v.object({
+    type: v.literal('realtime'),
+    model: v.string(),
+    audio: v.object({
+      output: v.object({ voice: v.string() }),
+    }),
+    instructions: v.optional(v.string()),
+  }),
+  prompt: v.optional(v.object({ id: v.string(), version: v.optional(v.string()) })),
+  promptSource: v.union(
+    v.literal('openai_prompt_latest'),
+    v.literal('openai_prompt_pinned')
+  ),
+});
+
+export const mintRealtimeClientSecret = action({
+  args: {
+    chatType: v.optional(
+      v.union(v.literal('main'), v.literal('vent'), v.literal('companion'))
+    ),
+    // personality removed from selection; voice config is global/separate
+    voice: v.optional(v.string()),
+  },
+  returns: MintRealtimeSecretReturnValidator,
+  handler: async (ctx, args): Promise<MintRealtimeSecretReturn> => {
+    // Authenticated identity only; action cannot use ctx.db directly.
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) throw new Error('Authentication required');
+
+    // Resolve user via query
+    const user = await ctx.runQuery(api.auth.getUserByClerkId, {
+      clerkId: identity.subject,
+    });
+    if (!user) throw new Error('User not found');
+
+    // Soft rate-check using generic authOpDefault bucket
+    const ok = await appRateLimiter.check(ctx as any, 'authOpDefault' as any, {
+      key: user._id,
+    });
+    if (!ok.ok) {
+      throw new Error('Too many requests');
+    }
+
+    // Load global voice configuration
+    const voiceConfig: any = await ctx.runQuery(api.voiceRealtime.getConfig, {});
+    if (!voiceConfig || !voiceConfig.model) {
+      throw new Error('Voice configuration missing on server');
+    }
+
+    const apiKey = process.env.OPENAI_API_KEY;
+    if (!apiKey) throw new Error('Server misconfigured: OPENAI_API_KEY');
+
+    // Choose voice: server default env with optional client override
+    const defaultVoice = (
+      voiceConfig.defaultVoice || process.env.OPENAI_REALTIME_VOICE || 'verse'
+    ).trim();
+    const voice = (args.voice || defaultVoice).trim();
+
+    const sessionConfig: any = {
+      session: {
+        type: 'realtime' as const,
+        model: String(voiceConfig.model),
+        audio: {
+          output: { voice },
+        },
+      },
+    };
+
+    // No inline prompt support; prompt is applied via Prompt ID reference
+
+    // For OpenAI Prompt IDs return a reference for client to apply via session.update
+    const promptRef: { id: string; version?: string } | undefined =
+      voiceConfig.source?.startsWith('openai_prompt') && voiceConfig.openaiPromptId
+        ? {
+            id: String(voiceConfig.openaiPromptId),
+            version:
+              voiceConfig.openaiPromptVersion !== undefined
+                ? String(voiceConfig.openaiPromptVersion)
+                : undefined,
+          }
+        : undefined;
+
+    const upstream = await fetch(
+      'https://api.openai.com/v1/realtime/client_secrets',
+      {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(sessionConfig),
+      }
+    );
+
+    if (!upstream.ok) {
+      const txt = await upstream.text().catch(() => '');
+      throw new Error(`Upstream error ${upstream.status}: ${txt || 'no body'}`);
+    }
+
+    const data = (await upstream.json().catch(() => null)) as any;
+    const clientSecret: string = data?.value || data?.client_secret?.value;
+    const expiresAt: number | undefined =
+      data?.expires_at || data?.client_secret?.expires_at || undefined;
+    if (!clientSecret) {
+      throw new Error('Malformed upstream response');
+    }
+
+    return {
+      client_secret: clientSecret,
+      expires_at: expiresAt,
+      session: sessionConfig.session,
+      prompt: promptRef,
+      promptSource: voiceConfig.source as MintRealtimeSecretReturn['promptSource'],
+    };
   },
 });
 
