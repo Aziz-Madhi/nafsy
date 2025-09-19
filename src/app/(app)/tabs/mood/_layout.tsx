@@ -1,7 +1,9 @@
 import React from 'react';
 import { Stack } from 'expo-router';
+import { useColors } from '~/hooks/useColors';
 
 export default function MoodLayout() {
+  const colors = useColors();
   return (
     <Stack
       screenOptions={{
@@ -9,6 +11,7 @@ export default function MoodLayout() {
         presentation: 'modal',
         animation: 'slide_from_bottom',
         gestureEnabled: true,
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="index" />

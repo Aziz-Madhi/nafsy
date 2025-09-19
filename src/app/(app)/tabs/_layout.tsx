@@ -31,9 +31,8 @@ export default function TabsLayout() {
     <Tabs
       screenOptions={{
         headerShown: false,
-        animation: 'fade',
-        animationDuration: 100,
-        lazy: false, // mount all tabs to prevent first-switch flicker
+        // Pre-mount tabs to avoid first-visit flashes while keeping animation off.
+        lazy: false,
         detachInactiveScreens: false,
         unmountOnBlur: false,
         sceneContainerStyle: { backgroundColor: colors.background },

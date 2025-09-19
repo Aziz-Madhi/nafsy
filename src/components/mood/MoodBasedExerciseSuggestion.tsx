@@ -116,13 +116,17 @@ export function MoodBasedExerciseSuggestion({
             ...shadowMedium,
           }}
         >
-          <View className="animate-pulse">
+          <MotiView
+            from={{ opacity: 0.5 }}
+            animate={{ opacity: 1 }}
+            transition={{ loop: true, duration: 900, type: 'timing' }}
+          >
             <View className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded mb-4" />
             <View className="h-6 w-24 bg-gray-200 dark:bg-gray-700 rounded-full mb-3" />
             <View className="h-7 w-48 bg-gray-200 dark:bg-gray-700 rounded mb-2" />
             <View className="h-4 w-full bg-gray-200 dark:bg-gray-700 rounded mb-6" />
             <View className="h-12 w-32 bg-gray-300 dark:bg-gray-600 rounded-2xl" />
-          </View>
+          </MotiView>
         </View>
       </View>
     );

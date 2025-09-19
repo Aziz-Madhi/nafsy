@@ -180,32 +180,6 @@ class SimplifiedSyncManager {
   }
 
   /**
-   * Sync after user action (when data is created/updated locally)
-   */
-  async syncAfterAction(entityType?: string) {
-    // Only sync if online
-    if (!this.state.isOnline) {
-      logger.debug('Offline - queuing operation for later sync', 'SyncManager');
-      return;
-    }
-
-    // Debounce rapid successive calls
-    if (this.state.isSyncing) {
-      logger.debug('Sync already in progress, skipping', 'SyncManager');
-      return;
-    }
-
-    // Perform targeted sync for the specific entity type if provided
-    if (entityType) {
-      logger.info(`Syncing ${entityType} after user action`, 'SyncManager');
-      // You could implement targeted sync here
-    }
-
-    // For now, sync all pending operations
-    await this.syncAll();
-  }
-
-  /**
    * Refresh pending operation counts
    */
   private async refreshPendingCounts() {

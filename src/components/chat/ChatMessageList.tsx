@@ -6,6 +6,7 @@
 import React, { RefObject, memo, useCallback } from 'react';
 import { FlashList } from '@shopify/flash-list';
 import { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export interface Message {
   _id: string;
@@ -47,11 +48,15 @@ export const ChatMessageList = memo(function ChatMessageList({
   onMomentumScrollBegin,
   onMomentumScrollEnd,
 }: ChatMessageListProps) {
+  const insets = useSafeAreaInsets();
+  const baseBottomPadding = 160;
+  const bottomPadding = baseBottomPadding + insets.bottom;
+
   // Content container style with proper bottom padding for floating tab bar with input
   const contentContainerStyle = {
     paddingHorizontal: horizontalPadding,
     paddingTop: topPadding,
-    paddingBottom: 160, // Account for floating tab bar with integrated input
+    paddingBottom: bottomPadding, // Account for floating tab bar + safe area inset
   };
 
   // Fallback handler: if scrollToIndex runs before measurement is ready,
@@ -104,7 +109,7 @@ export const ChatMessageList = memo(function ChatMessageList({
       // Ensure onScroll fires consistently for near-bottom detection
       scrollEventThrottle={16}
       // Ensure scroll indicator doesn't overlap with floating tab bar
-      scrollIndicatorInsets={{ bottom: 160 }}
+      scrollIndicatorInsets={{ bottom: bottomPadding }}
     />
   );
 });

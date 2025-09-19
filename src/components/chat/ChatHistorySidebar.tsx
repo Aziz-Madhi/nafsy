@@ -137,6 +137,8 @@ const SessionItem = React.memo(
   }
 );
 
+SessionItem.displayName = 'SessionItem';
+
 export function ChatHistorySidebar({
   visible,
   onClose,

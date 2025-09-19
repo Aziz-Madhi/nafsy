@@ -4,13 +4,14 @@ module.exports = function (api) {
     presets: [
       [
         'babel-preset-expo',
-        { jsxImportSource: 'nativewind', reanimated: false },
+        { jsxImportSource: 'nativewind', reanimated: true },
       ],
       'nativewind/babel',
     ],
     plugins: [
       '@babel/plugin-proposal-export-namespace-from', // Required for Skia
-      'react-native-worklets/plugin', // Must be last
+      ['react-native-worklets/plugin', {}, 'react-native-worklets'],
+      ['react-native-reanimated/plugin', {}, 'react-native-reanimated'],
     ],
   };
 };

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { sendMessageRef, startVoiceRef } from './_layout';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
-import { Alert } from 'react-native';
+import { Alert, Keyboard } from 'react-native';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery, useAction } from 'convex/react';
 import { api } from '../../../../convex/_generated/api';
@@ -301,6 +301,22 @@ export default function ChatTab() {
     [getToken, mapToServerType, setCurrentVentMessage, t]
   );
 
+  // Keep mutations for session creation and user upsert
+  const upsertUser = useMutation(api.auth.upsertUser);
+  const createChatSession = useMutation(api.chat.createChatSession);
+  const sendChatMessage = useMutation(api.chat.sendChatMessage);
+  const mintRealtimeClientSecret = useAction(api.chat.mintRealtimeClientSecret);
+  const {
+    isActive: voiceIsActive,
+    start: startVoice,
+    stop: stopVoice,
+    muted: voiceMuted,
+    toggleMute: toggleVoiceMute,
+    userSpeaking: voiceUserSpeaking,
+    aiSpeaking: voiceAiSpeaking,
+  } = useRealtimeVoice();
+  const [voiceVisible, setVoiceVisible] = useState(false);
+
   // Cleanup streaming connection on unmount
   useEffect(() => {
     return () => {
@@ -310,18 +326,10 @@ export default function ChatTab() {
       currentAbortRef.current = null;
       // Ensure voice session is torn down when leaving screen
       try {
-        voice.stop();
+        stopVoice();
       } catch {}
     };
-  }, [voice]);
-
-  // Keep mutations for session creation and user upsert
-  const upsertUser = useMutation(api.auth.upsertUser);
-  const createChatSession = useMutation(api.chat.createChatSession);
-  const sendChatMessage = useMutation(api.chat.sendChatMessage);
-  const mintRealtimeClientSecret = useAction(api.chat.mintRealtimeClientSecret);
-  const voice = useRealtimeVoice();
-  const [voiceVisible, setVoiceVisible] = useState(false);
+  }, [stopVoice]);
 
   // Initialize with empty chat on app start (no auto-loading of previous sessions)
   useEffect(() => {
@@ -518,8 +526,11 @@ export default function ChatTab() {
   }, [setVentChatVisible]);
 
   const handleCloseVentChat = useCallback(() => {
-    setVentChatVisible(false);
-    clearVentChat();
+    Keyboard.dismiss();
+    requestAnimationFrame(() => {
+      setVentChatVisible(false);
+      clearVentChat();
+    });
   }, [setVentChatVisible, clearVentChat]);
 
   const handleSendVentMessage = useCallback(
@@ -580,7 +591,7 @@ export default function ChatTab() {
   // Voice button handler: mint ephemeral Realtime token and prepare client session config
   const handleStartVoice = useCallback(async () => {
     const chatTypeServer = mapToServerType(activeChatType);
-    const { started, error } = await voice.start({ chatType: chatTypeServer });
+    const { started, error } = await startVoice({ chatType: chatTypeServer });
     if (!started && error) {
       console.error('Voice start failed:', error);
       try {
@@ -589,7 +600,7 @@ export default function ChatTab() {
     } else if (started) {
       setVoiceVisible(true);
     }
-  }, [activeChatType, mapToServerType, voice]);
+  }, [activeChatType, mapToServerType, startVoice]);
 
   // Vent overlay now updates when assistant message appears in DB
 
@@ -636,38 +647,41 @@ export default function ChatTab() {
   return (
     <>
       <ChatScreen
-      messages={mergedMessages}
-      showHistorySidebar={showHistorySidebar}
-      sessionSwitchLoading={sessionSwitchLoading}
-      sessionError={sessionError}
-      showVentChat={showVentChat}
-      ventCurrentMessage={currentVentMessage}
-      ventLoading={ventChatLoading}
-      navigationBarPadding={0} // No padding needed - using custom navigation
-      streamingContent={streamingContent}
-      isStreaming={isStreaming}
-      onOpenSidebar={handleOpenSidebar}
-      onCloseSidebar={handleCloseSidebar}
-      onSessionSelect={handleSessionSelect}
-      onDismissError={handleDismissError}
-      onSendMessage={handleSendMessage}
-      onOpenVentChat={handleOpenVentChat}
-      onCloseVentChat={handleCloseVentChat}
-      onSendVentMessage={handleSendVentMessage}
-      activeChatType={activeChatType}
-      onChatTypeChange={handleChatTypeChange}
-      isOnline={isOnline}
+        messages={mergedMessages}
+        showHistorySidebar={showHistorySidebar}
+        sessionSwitchLoading={sessionSwitchLoading}
+        sessionError={sessionError}
+        showVentChat={showVentChat}
+        ventCurrentMessage={currentVentMessage}
+        ventLoading={ventChatLoading}
+        navigationBarPadding={0} // No padding needed - using custom navigation
+        streamingContent={streamingContent}
+        isStreaming={isStreaming}
+        onOpenSidebar={handleOpenSidebar}
+        onCloseSidebar={handleCloseSidebar}
+        onSessionSelect={handleSessionSelect}
+        onDismissError={handleDismissError}
+        onSendMessage={handleSendMessage}
+        onOpenVentChat={handleOpenVentChat}
+        onCloseVentChat={handleCloseVentChat}
+        onSendVentMessage={handleSendVentMessage}
+        activeChatType={activeChatType}
+        onChatTypeChange={handleChatTypeChange}
+        isOnline={isOnline}
       />
       <VoiceOverlay
-        visible={voiceVisible && voice.isActive}
-        isActive={voice.isActive}
+        visible={voiceVisible}
+        isActive={voiceIsActive}
+        muted={voiceMuted}
+        userSpeaking={voiceUserSpeaking}
+        aiSpeaking={voiceAiSpeaking}
         onStop={() => {
-          voice.stop();
+          stopVoice();
           setVoiceVisible(false);
         }}
-        onClose={() => setVoiceVisible(false)}
+        onToggleMute={toggleVoiceMute}
         title="Voice"
-        subtitle={voice.isActive ? 'Connected' : 'Connecting'}
+        subtitle={voiceIsActive ? 'Connected' : 'Connecting'}
       />
     </>
   );

@@ -111,9 +111,9 @@ const STRUGGLE_ICONS: Record<(typeof STRUGGLE_KEYS)[number], LucideIcon> = {
 
 const HELP_AREA_LABELS: Record<(typeof HELP_AREA_KEYS)[number], string> = {
   talkToSomeone: 'Talk to someone',
-  breathingGuidance: 'Breathing guidance',
-  mindfulnessPractice: 'Mindfulness practice',
-  journalingPrompts: 'Journaling prompts',
+  breathingGuidance: 'Breathing',
+  mindfulnessPractice: 'Mindfulness',
+  journalingPrompts: 'Journaling',
 };
 
 const FEAR_LABELS: Record<(typeof FEAR_KEYS)[number], string> = {

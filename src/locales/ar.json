@@ -147,9 +147,9 @@
       },
     "helpAreas": {
       "talkToSomeone": "التحدث مع شخص",
-      "mindfulnessPractice": "ممارسة اليقظة",
-      "breathingGuidance": "إرشادات التنفس",
-      "journalingPrompts": "أفكار للكتابة"
+      "mindfulnessPractice": "اليقظة",
+      "breathingGuidance": "التنفس",
+      "journalingPrompts": "الكتابة"
     },
       "selfImage": {
         "stressed": "متوتر",
@@ -223,6 +223,10 @@
       "placeholder": "شارك ما يدور في ذهنك...",
       "send": "إرسال",
       "welcomeMessage": "هذه مساحتك الخاصة. قل ما في بالك براحتك."
+    },
+    "vent": {
+      "overlayTitle": "فضفضة",
+      "overlaySubtitle": "مساحتك الخاصة."
     },
     "history": {
       "title": "تاريخ المحادثات",

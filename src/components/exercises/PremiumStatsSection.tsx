@@ -198,12 +198,6 @@ export function PremiumStatsSection({
                 index={2}
               />
             )}
-            {completionsThisWeek === weeklyGoal && (
-              <InsightBadge
-                text={t('mood.stats.insights.goalCrusher')}
-                index={3}
-              />
-            )}
           </View>
         </View>
       )}

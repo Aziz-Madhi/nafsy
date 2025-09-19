@@ -7,10 +7,14 @@ import {
   MutationCtx,
 } from './_generated/server';
 
-// 24 hours and week in milliseconds
+// 24 hours, week, and approx month (30d) in milliseconds
 const DAY = 24 * 60 * 60 * 1000;
 const WEEK = 7 * DAY;
+const MONTH_30D = 30 * DAY;
 const CHAT_WEEKLY_LIMIT = Number(process.env.CHAT_WEEKLY_LIMIT || 250);
+const VOICE_MONTHLY_TOKENS_LIMIT = Number(
+  process.env.VOICE_MONTHLY_TOKENS_LIMIT || 200_000
+);
 
 // Centralized rate limiter instance for the app
 // Keys are type-safe across usages in the codebase
@@ -21,6 +25,12 @@ const rateLimiterComponent: any = (components as any).rateLimiter;
 const appRateLimiter = new RateLimiter(rateLimiterComponent, {
   // Per-user total chat messages across all personalities per week
   chatWeekly: { kind: 'fixed window', rate: CHAT_WEEKLY_LIMIT, period: WEEK },
+  // Per-user combined voice tokens (input + output) per ~month (30 days)
+  voiceMonthlyTokens: {
+    kind: 'fixed window',
+    rate: VOICE_MONTHLY_TOKENS_LIMIT,
+    period: MONTH_30D,
+  },
   // Per-user exercise playbacks/completions per day
   exercisePlaybackDaily: { kind: 'fixed window', rate: 50, period: DAY },
   // Removed burst protection; simplified to daily message limit only

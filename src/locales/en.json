@@ -146,9 +146,9 @@
       },
       "helpAreas": {
         "talkToSomeone": "Talk to someone",
-        "mindfulnessPractice": "Mindfulness practice",
-        "breathingGuidance": "Breathing guidance",
-        "journalingPrompts": "Journaling prompts"
+        "mindfulnessPractice": "Mindfulness",
+        "breathingGuidance": "Breathing",
+        "journalingPrompts": "Journaling"
       },
       "selfImage": {
         "stressed": "Stressed",
@@ -216,6 +216,10 @@
       "placeholder": "Share what's on your mind...",
       "send": "Send",
       "welcomeMessage": "This is your private space. Share what's on your mind."
+    },
+    "vent": {
+      "overlayTitle": "Vent",
+      "overlaySubtitle": "Your private space."
     },
     "history": {
       "title": "History",

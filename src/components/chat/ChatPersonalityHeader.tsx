@@ -52,13 +52,7 @@ export function ChatPersonalityHeader({
 
   return (
     <View className="items-center px-6">
-      <Text variant="title3" className="font-bold text-center text-foreground">
-        {isArabic ? message.titleAr : message.title}
-      </Text>
-      <Text
-        variant="subhead"
-        className="text-center text-muted-foreground mt-1"
-      >
+      <Text variant="subhead" className="text-center text-muted-foreground">
         {isArabic ? message.subtitleAr : message.subtitle}
       </Text>
     </View>

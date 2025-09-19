@@ -505,14 +505,22 @@ export function useOfflineUpdateMood() {
       }
     ) => {
       if (!currentUser?._id) throw new Error('No current user');
-      await updateMoodLocal({ localId, userId: currentUser._id as any, ...data });
+      await updateMoodLocal({
+        localId,
+        userId: currentUser._id as any,
+        ...data,
+      });
 
       if (isOnline) {
         try {
           // Our server only supports create/update via createMood currently; rely on sync manager for canonical push
           await syncManager.syncAfterAction('moods');
         } catch (error) {
-          logger.warn('Failed to sync updated mood, queued', 'OfflineData', error);
+          logger.warn(
+            'Failed to sync updated mood, queued',
+            'OfflineData',
+            error
+          );
         }
       }
     },

@@ -262,6 +262,7 @@ export const ChatScreen = memo(function ChatScreen({
               onOpenSidebar={onOpenSidebar}
               activeChatType={activeChatType}
               onChatTypeChange={onChatTypeChange}
+              onOpenVentChat={onOpenVentChat}
             />
           </View>
 

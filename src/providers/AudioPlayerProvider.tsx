@@ -26,8 +26,12 @@ import {
 } from 'react-native-safe-area-context';
 import { Text } from '~/components/ui/text';
 import { useColors, useShadowStyle } from '~/hooks/useColors';
-import { CATEGORY_BACKGROUNDS } from '~/components/exercises/ModernCategoryCard';
+import {
+  CATEGORY_BACKGROUNDS,
+  CATEGORY_BACKGROUNDS_DARK,
+} from '~/components/exercises/ModernCategoryCard';
 import type { WellnessCategory } from '~/lib/colors';
+import { useAppStore } from '~/store/useAppStore';
 
 interface AudioTrack {
   id: string;
@@ -70,6 +74,7 @@ export const AudioPlayerProvider = ({
   const colors = useColors();
   const shadow = useShadowStyle('medium');
   const insets = useSafeAreaInsets();
+  const currentTheme = useAppStore((s) => s.currentTheme);
 
   const [isVisible, setIsVisible] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
@@ -274,8 +279,12 @@ export const AudioPlayerProvider = ({
       الاسترخاء: 'relaxation',
     } as any;
     const key = (map[raw] || raw) as WellnessCategory;
-    return (CATEGORY_BACKGROUNDS as Record<string, any>)[key] || null;
-  }, [track?.subtitle]);
+    const backgrounds =
+      currentTheme === 'dark'
+        ? (CATEGORY_BACKGROUNDS_DARK as Record<string, any>)
+        : (CATEGORY_BACKGROUNDS as Record<string, any>);
+    return backgrounds[key] || null;
+  }, [track?.subtitle, currentTheme]);
 
   // For progress seek interactions
   const [barWidth, setBarWidth] = useState(0);

@@ -5,11 +5,21 @@
  * same bottom text input experience.
  */
 
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Modal, ScrollView } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import {
+  View,
+  Modal,
+  ScrollView,
+  Keyboard,
+  KeyboardAvoidingView,
+  Platform,
+  Dimensions,
+} from 'react-native';
 import { Text } from '~/components/ui/text';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
 import Animated, {
+  Easing,
+  runOnJS,
   useSharedValue,
   useAnimatedStyle,
   withTiming,
@@ -20,6 +30,7 @@ import { cn } from '~/lib/cn';
 // Reuse the main chat input design from the floating tab bar
 import { FloatingChatInputStandalone } from '~/components/navigation/FloatingTabBar';
 import { getChatStyles } from '~/lib/chatStyles';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 interface VentChatOverlayProps {
   visible: boolean;
@@ -53,6 +64,22 @@ const MessageDisplay = ({
   </Animated.View>
 );
 
+const SCREEN_HEIGHT = Dimensions.get('window').height;
+const ENTER_DURATION = 360;
+const EXIT_DURATION = 260;
+const ENTER_TIMING = {
+  duration: ENTER_DURATION,
+  easing: Easing.out(Easing.cubic),
+};
+const ENTER_OPACITY_TIMING = {
+  duration: 240,
+  easing: Easing.out(Easing.cubic),
+};
+const EXIT_TIMING = {
+  duration: EXIT_DURATION,
+  easing: Easing.out(Easing.cubic),
+};
+
 export function VentChatOverlay({
   visible,
   onClose,
@@ -62,39 +89,99 @@ export function VentChatOverlay({
 }: VentChatOverlayProps) {
   const { t } = useTranslation();
   const [modalVisible, setModalVisible] = useState(false);
+  const insets = useSafeAreaInsets();
+  const [keyboardVisible, setKeyboardVisible] = useState(false);
 
   // Use Event personality styling (for accent color only)
   const eventStyles = getChatStyles('event');
 
   // Animation values
   const overlayOpacity = useSharedValue(0);
+  const overlayTranslateY = useSharedValue(SCREEN_HEIGHT);
 
   // Manage modal visibility to allow exit animations
   useEffect(() => {
     if (visible) {
       setModalVisible(true);
-      overlayOpacity.value = withTiming(1, { duration: 250 });
-    } else {
-      overlayOpacity.value = withTiming(0, { duration: 200 });
-      const timer = setTimeout(() => setModalVisible(false), 240);
-      return () => clearTimeout(timer);
+      overlayTranslateY.value = SCREEN_HEIGHT;
+      overlayOpacity.value = 0;
+      overlayTranslateY.value = withTiming(0, ENTER_TIMING);
+      overlayOpacity.value = withTiming(1, ENTER_OPACITY_TIMING);
+    } else if (modalVisible) {
+      overlayTranslateY.value = withTiming(
+        SCREEN_HEIGHT,
+        EXIT_TIMING,
+        (finished) => {
+          if (finished) {
+            runOnJS(setModalVisible)(false);
+          }
+        }
+      );
+      overlayOpacity.value = withTiming(0, EXIT_TIMING);
     }
-  }, [visible]);
+  }, [visible, modalVisible]);
+
+  const handleClose = useCallback(() => {
+    impactAsync(ImpactFeedbackStyle.Light);
+    Keyboard.dismiss();
+    requestAnimationFrame(() => onClose());
+  }, [onClose]);
 
   // Double tap anywhere to close
   const doubleTapGesture = Gesture.Tap()
     .numberOfTaps(2)
     .maxDuration(250)
-    .runOnJS(true)
     .onStart(() => {
-      impactAsync(ImpactFeedbackStyle.Light);
-      onClose();
+      overlayTranslateY.value = withTiming(SCREEN_HEIGHT, EXIT_TIMING);
+      overlayOpacity.value = withTiming(0, EXIT_TIMING);
+      runOnJS(handleClose)();
     });
+
+  // Swipe down to close for discoverability
+  const swipeDownGesture = Gesture.Pan()
+    .activeOffsetY([20, 999])
+    .onUpdate((event) => {
+      if (event.translationY > 0) {
+        overlayTranslateY.value = Math.min(event.translationY, SCREEN_HEIGHT);
+      }
+    })
+    .onEnd((event) => {
+      const shouldClose =
+        event.translationY > SCREEN_HEIGHT * 0.25 || event.velocityY > 900;
+
+      if (shouldClose) {
+        overlayTranslateY.value = withTiming(SCREEN_HEIGHT, EXIT_TIMING);
+        overlayOpacity.value = withTiming(0, EXIT_TIMING);
+        runOnJS(handleClose)();
+      } else {
+        overlayTranslateY.value = withTiming(0, ENTER_TIMING);
+      }
+    });
+
+  const combinedGesture = Gesture.Simultaneous(
+    doubleTapGesture,
+    swipeDownGesture
+  );
 
   // Animated styles
   const overlayAnimatedStyle = useAnimatedStyle(() => ({
     opacity: overlayOpacity.value,
+    transform: [{ translateY: overlayTranslateY.value }],
   }));
+
+  // Track keyboard visibility to adjust reserved space precisely
+  useEffect(() => {
+    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const onShow = () => setKeyboardVisible(true);
+    const onHide = () => setKeyboardVisible(false);
+    const s = Keyboard.addListener(showEvent, onShow);
+    const h = Keyboard.addListener(hideEvent, onHide);
+    return () => {
+      s.remove();
+      h.remove();
+    };
+  }, []);
 
   // Always show the latest user message on top and the latest AI response below
   const [lastUserText, setLastUserText] = useState<string | null>(null);
@@ -116,11 +203,15 @@ export function VentChatOverlay({
     }
   }, [currentMessage]);
 
-  // Reserve space for the bottom input so center looks visually centered
-  // Matches FloatingChatInputStandalone layout: height 88 + pb-16 (64) = 152
-  const RESERVED_BOTTOM = 152;
+  // Reserve space for the input only when keyboard is hidden; keep small when visible
+  const BASE_RESERVED_BOTTOM = 152; // when keyboard hidden
+  const safeAreaBottom = Math.max(insets.bottom, 16);
+  const reservedBottom = keyboardVisible ? Math.max(safeAreaBottom, 8) : BASE_RESERVED_BOTTOM + safeAreaBottom;
+
   // Match the top spacing created by ChatHeader (pt-16 + pb-4 ≈ 80px)
-  const HEADER_TOP_SPACE = 80;
+  // while ensuring content stays clear of translucent status bars.
+  const BASE_HEADER_TOP_SPACE = 80;
+  const headerTopSpace = BASE_HEADER_TOP_SPACE + Math.max(insets.top, 0);
 
   return (
     <Modal
@@ -129,33 +220,47 @@ export function VentChatOverlay({
       animationType="none"
       statusBarTranslucent
     >
-      <GestureDetector gesture={doubleTapGesture}>
-        <Animated.View style={overlayAnimatedStyle} className="flex-1 bg-black">
+      <GestureDetector gesture={combinedGesture}>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'height' : 'height'}
+          keyboardVerticalOffset={0}
+          style={{ flex: 1 }}
+        >
+          <Animated.View
+            style={[
+              overlayAnimatedStyle,
+              {
+                borderRadius: 28,
+                overflow: 'hidden',
+              },
+            ]}
+            className="flex-1 bg-black"
+          >
           {/* Center content: show intro text until user starts chatting */}
           <View style={{ flex: 1 }}>
             {!lastUserText && !lastAIText && !isLoading ? (
-              <View style={{ flex: 1, paddingBottom: RESERVED_BOTTOM }}>
+              <View style={{ flex: 1, paddingBottom: reservedBottom }}>
                 <View
                   className="flex-1 items-center justify-center px-8"
-                  style={{ paddingTop: HEADER_TOP_SPACE }}
+                  style={{ paddingTop: headerTopSpace }}
                 >
                   <Text
                     variant="title3"
                     className="font-bold text-center text-white"
                   >
-                    Vent
+                    {t('chat.vent.overlayTitle')}
                   </Text>
                   <Text
                     variant="subhead"
                     className="text-center text-gray-300 mt-2"
                     style={{ textAlign: 'center' }}
                   >
-                    Your private space.
+                    {t('chat.vent.overlaySubtitle')}
                   </Text>
                 </View>
               </View>
             ) : (
-              <View style={{ paddingBottom: RESERVED_BOTTOM, flex: 1 }}>
+              <View style={{ paddingBottom: reservedBottom, flex: 1 }}>
                 {/* Top half: user message pinned to the bottom of the top half */}
                 <View
                   style={{
@@ -251,6 +356,7 @@ export function VentChatOverlay({
             dark
           />
         </Animated.View>
+        </KeyboardAvoidingView>
       </GestureDetector>
     </Modal>
   );

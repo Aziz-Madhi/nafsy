@@ -1,119 +1,398 @@
-import React, { useEffect, useState } from 'react';
-import { Modal, View, Pressable } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withDelay,
-  Easing,
-} from 'react-native-reanimated';
+import React, { useEffect, useMemo } from 'react';
+import { Modal, Pressable, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
 import { Text } from '~/components/ui/text';
 import { useColors } from '~/hooks/useColors';
+import { withOpacity } from '~/lib/colors';
+import { useAppStore } from '~/store/useAppStore';
 import { SymbolView } from 'expo-symbols';
+import Animated, {
+  Easing,
+  interpolate,
+  useAnimatedStyle,
+  useSharedValue,
+  withRepeat,
+  withTiming,
+  cancelAnimation,
+} from 'react-native-reanimated';
 
 interface VoiceOverlayProps {
   visible: boolean;
   isActive: boolean;
+  muted?: boolean;
+  userSpeaking?: boolean;
+  aiSpeaking?: boolean;
   onStop: () => void;
-  onClose?: () => void;
+  onToggleMute?: () => void;
   title?: string;
   subtitle?: string;
 }
 
+const DISC_SIZE = 260;
+
 export function VoiceOverlay({
   visible,
   isActive,
+  muted = false,
+  userSpeaking = false,
+  aiSpeaking = false,
   onStop,
-  onClose,
+  onToggleMute,
   title = 'Voice',
-  subtitle = 'Listening and speaking',
+  subtitle,
 }: VoiceOverlayProps) {
   const colors = useColors();
-  const [modalVisible, setModalVisible] = useState(false);
+  const insets = useSafeAreaInsets();
+  const currentTheme = useAppStore((state) => state.currentTheme);
+  const isDarkTheme = currentTheme === 'dark';
+
+  const statusSubtitle = useMemo(() => {
+    if (typeof subtitle === 'string') return subtitle;
+    if (isActive) return 'Connected';
+    return 'Connecting';
+  }, [isActive, subtitle]);
+
+  const topPadding = Math.max(insets.top + 4, 16);
+  const bottomPadding = Math.max(insets.bottom + 28, 72);
+
+  const overlayBackground = withOpacity(
+    colors.background,
+    isDarkTheme ? 0.96 : 0.94
+  );
+
+  const glassColors = isDarkTheme
+    ? [
+        withOpacity(colors.card, 0),
+        withOpacity(colors.cardDarker, 0.25),
+        withOpacity(colors.cardElevated, 0.92),
+      ]
+    : [
+        withOpacity(colors.card, 0),
+        withOpacity(colors.cardElevated, 0.45),
+        withOpacity(colors.cardDarker, 0.9),
+      ];
+
+  const glowColors = isDarkTheme
+    ? [
+        withOpacity(colors.cardDarker, 0.1),
+        withOpacity(colors.card, 0.18),
+        withOpacity(colors.cardElevated, 0.28),
+      ]
+    : [
+        withOpacity(colors.cardElevated, 0.18),
+        withOpacity(colors.cardDarker, 0.26),
+        withOpacity(colors.cardDarker, 0.32),
+      ];
+
+  const titleColor = isDarkTheme ? 'rgba(255,255,255,0.92)' : colors.foreground;
+  const subtitleColor = isDarkTheme
+    ? 'rgba(255,255,255,0.7)'
+    : withOpacity(colors.foreground, 0.7);
+  const muteIconColor = isDarkTheme
+    ? 'rgba(255,255,255,0.9)'
+    : withOpacity(colors.foreground, 0.85);
+
+  const handleToggleMute = onToggleMute ?? (() => {});
+  const muteDisabled = !onToggleMute;
+
+  const cardElevated = colors.cardElevated || colors.card || '#E8DED1';
+  const cardDarker = colors.cardDarker || colors.card || '#1F2A2E';
+
+  const floatPhase = useSharedValue(0);
+  const breathPhase = useSharedValue(0);
+  const haloPhase = useSharedValue(0);
 
   useEffect(() => {
-    if (visible) setModalVisible(true);
-    else setModalVisible(false);
-  }, [visible]);
+    if (!visible) {
+      cancelAnimation(floatPhase);
+      cancelAnimation(breathPhase);
+      cancelAnimation(haloPhase);
+      floatPhase.value = 0;
+      breathPhase.value = 0;
+      haloPhase.value = 0;
+      return;
+    }
 
-  // Simple equalizer animation: 5 bars with staggered pulsation
-  const bars = new Array(5).fill(0).map((_, i) => i);
-  const anims = bars.map(() => useSharedValue(0.3));
+    floatPhase.value = withRepeat(
+      withTiming(1, {
+        duration: 5200,
+        easing: Easing.inOut(Easing.sin),
+      }),
+      -1,
+      true
+    );
 
-  useEffect(() => {
-    anims.forEach((sv, idx) => {
-      sv.value = withDelay(
-        idx * 100,
-        withRepeat(
-          withTiming(1, { duration: 600, easing: Easing.inOut(Easing.quad) }),
-          -1,
-          true
-        )
-      );
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+    breathPhase.value = withRepeat(
+      withTiming(1, {
+        duration: 3600,
+        easing: Easing.inOut(Easing.quad),
+      }),
+      -1,
+      true
+    );
+
+    haloPhase.value = withRepeat(
+      withTiming(1, {
+        duration: 4200,
+        easing: Easing.inOut(Easing.ease),
+      }),
+      -1,
+      true
+    );
+
+    return () => {
+      cancelAnimation(floatPhase);
+      cancelAnimation(breathPhase);
+      cancelAnimation(haloPhase);
+    };
+  }, [visible, floatPhase, breathPhase, haloPhase]);
+
+  const floatingStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        translateX: interpolate(floatPhase.value, [0, 1], [8, -8]),
+      },
+      {
+        translateY: interpolate(floatPhase.value, [0, 1], [-10, 10]),
+      },
+    ],
+  }));
+
+  const breathingStyle = useAnimatedStyle(() => ({
+    transform: [
+      {
+        scale: interpolate(breathPhase.value, [0, 1], [0.96, 1.04]),
+      },
+    ],
+  }));
+
+  const haloStyle = useAnimatedStyle(() => ({
+    opacity: interpolate(haloPhase.value, [0, 1], [0.18, 0.35]),
+    transform: [
+      {
+        scale: interpolate(haloPhase.value, [0, 1], [0.92, 1.08]),
+      },
+    ],
+  }));
+
+  if (!visible) return null;
 
   return (
-    <Modal visible={modalVisible} transparent animationType="fade">
-      <View className="flex-1 items-center justify-center" style={{ backgroundColor: 'rgba(0,0,0,0.9)' }}>
-        <View className="items-center px-8">
-          <Text variant="title2" className="text-white font-bold text-center">
-            {title}
-          </Text>
-          <Text variant="subhead" className="text-gray-300 mt-2 text-center">
-            {subtitle}
-          </Text>
+    <Modal visible transparent animationType="fade" onRequestClose={onStop}>
+      <View style={[styles.container, { backgroundColor: overlayBackground }]}>
+        <View style={[styles.header, { paddingTop: topPadding }]}>
+          <View style={styles.statusBlock}>
+            <Text
+              variant="title2"
+              style={[styles.statusTitle, { color: titleColor }]}
+            >
+              {statusSubtitle}
+            </Text>
+            <Text
+              variant="subhead"
+              style={[styles.statusSubtitle, { color: subtitleColor }]}
+            >
+              Stay close to the microphone for the best quality.
+            </Text>
+          </View>
         </View>
 
-        {/* Equalizer */}
-        <View className="flex-row items-end gap-2 mt-10">
-          {anims.map((sv, idx) => {
-            const style = useAnimatedStyle(() => ({
-              height: 16 + sv.value * 56,
-              opacity: isActive ? 0.95 : 0.5,
-              transform: [{ scaleY: isActive ? 1 : 0.7 }],
-            }));
-            return (
+        <View style={styles.meterWrapper}>
+          <Animated.View style={[styles.floatingDisc, floatingStyle]}>
+            <Animated.View style={[styles.breathingStack, breathingStyle]}>
               <Animated.View
-                key={idx}
+                pointerEvents="none"
                 style={[
-                  style,
+                  styles.halo,
                   {
-                    width: 8,
-                    borderRadius: 4,
-                    backgroundColor: colors.primary,
+                    backgroundColor: isDarkTheme
+                      ? withOpacity(colors.cardDarker, 0.35)
+                      : withOpacity(colors.cardElevated, 0.35),
                   },
+                  haloStyle,
                 ]}
               />
-            );
-          })}
+              <View style={styles.baseDisc}>
+                <LinearGradient
+                  colors={
+                    isDarkTheme ? ['#0d2421', '#19322f'] : ['#F5EFE8', '#E8DED1']
+                  }
+                  start={{ x: 0.25, y: 0 }}
+                  end={{ x: 0.85, y: 1 }}
+                  style={StyleSheet.absoluteFill}
+                />
+              </View>
+            </Animated.View>
+          </Animated.View>
         </View>
 
-        {/* Controls */}
-        <View className="flex-row items-center gap-6 mt-16">
-          <Pressable
-            onPress={onStop}
-            className="w-14 h-14 rounded-full items-center justify-center"
-            style={{ backgroundColor: '#EF4444' }}
-            accessibilityLabel="Stop voice"
-          >
-            <SymbolView name="stop.fill" size={22} tintColor="#FFFFFF" />
-          </Pressable>
-          {onClose && (
+        <View style={styles.flexSpacer} />
+
+        <LinearGradient
+          colors={glassColors}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 1 }}
+          style={[styles.glassPanel, { paddingBottom: bottomPadding }]}
+        >
+          <LinearGradient
+            colors={glowColors}
+            start={{ x: 0.5, y: 0 }}
+            end={{ x: 0.5, y: 1 }}
+            style={styles.glowWash}
+          />
+
+          <View style={styles.controlsRow}>
             <Pressable
-              onPress={onClose}
-              className="w-14 h-14 rounded-full items-center justify-center border"
-              style={{ borderColor: 'rgba(255,255,255,0.35)' }}
-              accessibilityLabel="Close overlay"
+              onPress={handleToggleMute}
+              accessibilityLabel={
+                muted ? 'Unmute microphone' : 'Mute microphone'
+              }
+              disabled={muteDisabled}
+              style={[
+                styles.controlBase,
+                styles.controlSize,
+                {
+                  backgroundColor: isDarkTheme
+                    ? withOpacity(colors.cardDarker, 0.88)
+                    : withOpacity(colors.cardDarker, 0.72),
+                  shadowColor: isDarkTheme
+                    ? 'rgba(0,0,0,0.55)'
+                    : withOpacity(colors.foreground, 0.22),
+                  opacity: muteDisabled ? 0.55 : 1,
+                },
+              ]}
             >
-              <SymbolView name="xmark" size={22} tintColor="#FFFFFF" />
+              <SymbolView
+                name={muted ? 'speaker.slash.fill' : 'speaker.wave.2.fill'}
+                size={20}
+                tintColor={
+                  muteDisabled ? withOpacity(muteIconColor, 0.4) : muteIconColor
+                }
+              />
             </Pressable>
-          )}
-        </View>
+            <Pressable
+              onPress={onStop}
+              accessibilityLabel="End voice session"
+              style={[
+                styles.controlBase,
+                styles.controlSize,
+                styles.endControl,
+                {
+                  backgroundColor: colors.error || '#EF4444',
+                  shadowColor: isDarkTheme
+                    ? 'rgba(0,0,0,0.55)'
+                    : 'rgba(15,20,30,0.3)',
+                },
+              ]}
+            >
+              <SymbolView name="xmark" size={18} tintColor="#FFFFFF" />
+            </Pressable>
+          </View>
+        </LinearGradient>
       </View>
     </Modal>
   );
 }
 
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+  },
+  header: {
+    paddingHorizontal: 32,
+  },
+  statusBlock: {
+    marginTop: 20,
+    alignItems: 'center',
+  },
+  statusTitle: {
+    textAlign: 'center',
+    fontWeight: '600',
+  },
+  statusSubtitle: {
+    textAlign: 'center',
+    marginTop: 16,
+  },
+  meterWrapper: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 94,
+    alignSelf: 'center',
+    width: DISC_SIZE,
+    height: DISC_SIZE,
+  },
+  floatingDisc: {
+    width: DISC_SIZE,
+    height: DISC_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  breathingStack: {
+    width: DISC_SIZE,
+    height: DISC_SIZE,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  halo: {
+    position: 'absolute',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    left: 0,
+    borderRadius: DISC_SIZE / 2,
+  },
+  baseDisc: {
+    width: DISC_SIZE,
+    height: DISC_SIZE,
+    borderRadius: DISC_SIZE / 2,
+    overflow: 'hidden',
+    shadowColor: 'rgba(0,0,0,0.35)',
+    shadowOpacity: 0.22,
+    shadowRadius: 18,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  flexSpacer: {
+    flex: 1,
+  },
+  glassPanel: {
+    marginHorizontal: 0,
+    borderTopLeftRadius: 36,
+    borderTopRightRadius: 36,
+    paddingTop: 48,
+    paddingHorizontal: 32,
+    overflow: 'hidden',
+  },
+  glowWash: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 180,
+    opacity: 0.9,
+  },
+  controlsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 20,
+  },
+  controlBase: {
+    borderRadius: 28,
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowOpacity: 0.22,
+    shadowRadius: 12,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 6,
+  },
+  controlSize: {
+    paddingHorizontal: 24,
+    height: 54,
+    minWidth: 96,
+  },
+  endControl: {
+    shadowOpacity: 0.28,
+  },
+});

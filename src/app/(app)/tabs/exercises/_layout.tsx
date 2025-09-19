@@ -1,7 +1,9 @@
 import React from 'react';
 import { Stack } from 'expo-router';
+import { useColors } from '~/hooks/useColors';
 
 export default function ExercisesLayout() {
+  const colors = useColors();
   return (
     <Stack
       screenOptions={{
@@ -10,6 +12,7 @@ export default function ExercisesLayout() {
         presentation: 'card',
         animation: 'slide_from_right',
         gestureEnabled: true,
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       {/* Main exercises tab screen */}
@@ -22,6 +25,7 @@ export default function ExercisesLayout() {
           presentation: 'card',
           animation: 'slide_from_right',
           gestureEnabled: true,
+          contentStyle: { backgroundColor: colors.background },
         }}
       />
 

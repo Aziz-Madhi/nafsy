@@ -11,7 +11,12 @@ import {
   useSafeAreaInsets,
 } from 'react-native-safe-area-context';
 import { Text } from './text';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withTiming,
+} from 'react-native-reanimated';
+import { useIsFocused } from '@react-navigation/native';
 import { useSegments, router } from 'expo-router';
 import { useScreenPadding } from '~/hooks/useScreenPadding';
 import { User } from 'lucide-react-native';
@@ -109,12 +114,20 @@ function ScreenHeader({
   showSettingsIcon?: boolean;
 }) {
   const textAlign = useAutoTextAlignment();
+  const headerRowClass = useLanguageClass(
+    'flex-row justify-between',
+    'flex-row-reverse justify-between'
+  );
+  const headerRightClass = useLanguageClass(
+    'flex-1 items-end',
+    'flex-1 items-start'
+  );
 
   if (!title && !headerCenter && !headerLeft && !headerRight) return null;
 
   return (
     <View
-      className={`px-6 py-1 mb-1 items-center ${useLanguageClass('flex-row justify-between', 'flex-row-reverse justify-between')}`}
+      className={`px-6 py-1 mb-1 items-center ${headerRowClass}`}
       style={style}
     >
       {/* Title section */}
@@ -153,9 +166,7 @@ function ScreenHeader({
       <View className="flex-2 items-center">{headerCenter}</View>
 
       {/* Settings Icon section */}
-      <View
-        className={useLanguageClass('flex-1 items-end', 'flex-1 items-start')}
-      >
+      <View className={headerRightClass}>
         {headerRight || (showSettingsIcon && <SettingsIcon />)}
       </View>
     </View>
@@ -365,9 +376,22 @@ function ScreenLayoutComponent({
     </SafeAreaView>
   );
 
+  // Simple focus-based transition between tabs/screens (fade + slight slide)
   if (animated) {
+    const isFocused = useIsFocused();
+    const progress = useSharedValue(0);
+
+    React.useEffect(() => {
+      progress.value = withTiming(isFocused ? 1 : 0, { duration: 180 });
+    }, [isFocused, progress]);
+
+    const focusStyle = useAnimatedStyle(() => ({
+      opacity: progress.value,
+      transform: [{ translateY: (1 - progress.value) * 6 }],
+    }));
+
     return (
-      <Animated.View entering={FadeInDown} className="flex-1">
+      <Animated.View style={focusStyle} className="flex-1 bg-background">
         {content}
       </Animated.View>
     );

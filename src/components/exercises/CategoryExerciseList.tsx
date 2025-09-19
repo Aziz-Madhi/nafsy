@@ -1,19 +1,19 @@
-import React, { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import React, { memo, useCallback, useMemo } from 'react';
 import {
   View,
   Pressable,
   ImageBackground,
   Dimensions,
   Image,
-  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { VerticalList } from '~/components/ui/GenericList';
 import { Text } from '~/components/ui/text';
 import { SymbolView } from 'expo-symbols';
 import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { MotiView } from 'moti';
 import { useTranslation } from '~/hooks/useTranslation';
-import { useColors, useShadowStyle } from '~/hooks/useColors';
+import { useColors } from '~/hooks/useColors';
 import {
   CATEGORY_BACKGROUNDS,
   CATEGORY_BACKGROUNDS_DARK,
@@ -100,7 +100,6 @@ function CategoryExerciseListComponent({
   const { t, currentLanguage } = useTranslation();
   const insets = useSafeAreaInsets();
   const colors = useColors();
-  const shadow = useShadowStyle('medium');
   const currentTheme = useAppStore((s) => s.currentTheme);
 
   // Memoize category name computation
@@ -181,45 +180,66 @@ function CategoryExerciseListComponent({
     };
   }, [categoryId, categoryName, currentTheme]);
 
-  // List fade-in once data is ready
-  const listOpacity = useRef(new Animated.Value(loading ? 0 : 1)).current;
-  useEffect(() => {
-    if (!loading) {
-      Animated.timing(listOpacity, {
-        toValue: 1,
-        duration: 180,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      listOpacity.setValue(0);
-    }
-  }, [loading, listOpacity]);
+  // Animated skeleton placeholders while exercises load
+  const LoadingStrip = () => {
+    const dividerColor =
+      colors.background === '#0A1514'
+        ? 'rgba(255,255,255,0.08)'
+        : 'rgba(0,0,0,0.08)';
+    const skeletonColor =
+      colors.background === '#0A1514'
+        ? 'rgba(255,255,255,0.08)'
+        : 'rgba(0,0,0,0.05)';
 
-  // Minimal loading strip (transparent, unobtrusive)
-  const LoadingStrip = () => (
-    <View style={{ paddingHorizontal: 16 }}>
-      <View
-        className="px-4 py-5"
-        style={{
-          borderBottomWidth: 1,
-          borderBottomColor:
-            colors.background === '#0A1514'
-              ? 'rgba(255,255,255,0.08)'
-              : 'rgba(0,0,0,0.08)',
-        }}
-      >
-        <View
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-          style={{
-            height: 2,
-            width: '100%',
-            backgroundColor: 'transparent',
-          }}
-        />
+    return (
+      <View style={{ paddingHorizontal: 16 }}>
+        {[0, 1, 2].map((index) => (
+          <View
+            key={index}
+            className="px-4 py-5"
+            style={{
+              borderBottomWidth: 1,
+              borderBottomColor: dividerColor,
+            }}
+          >
+            <MotiView
+              from={{ opacity: 0.4 }}
+              animate={{ opacity: 1 }}
+              transition={{
+                loop: true,
+                type: 'timing',
+                duration: 650,
+                delay: index * 90,
+              }}
+              style={{
+                height: 22,
+                borderRadius: 6,
+                backgroundColor: skeletonColor,
+                marginBottom: 12,
+                width: '80%',
+              }}
+            />
+            <MotiView
+              from={{ opacity: 0.4 }}
+              animate={{ opacity: 1 }}
+              transition={{
+                loop: true,
+                type: 'timing',
+                duration: 750,
+                delay: 40 + index * 90,
+              }}
+              style={{
+                height: 14,
+                borderRadius: 6,
+                backgroundColor: skeletonColor,
+                width: '40%',
+              }}
+            />
+          </View>
+        ))}
       </View>
-    </View>
-  );
+    );
+  };
 
   return (
     <View className="flex-1 bg-background" style={{ paddingTop: 0 }}>
@@ -242,7 +262,17 @@ function CategoryExerciseListComponent({
 
       {/* Exercise List */}
       {loading && <LoadingStrip />}
-      <Animated.View style={{ flex: 1, opacity: listOpacity }}>
+      {/* Keep container non-animated by default; use Moti for a light entrance once data arrives. */}
+      <MotiView
+        from={{ opacity: 0, translateY: 8 }}
+        animate={{
+          opacity: loading ? 0 : 1,
+          translateY: loading ? 8 : 0,
+        }}
+        transition={{ type: 'timing', duration: 220 }}
+        style={{ flex: 1 }}
+        pointerEvents={loading ? 'none' : 'auto'}
+      >
         <VerticalList
           data={filteredExercises}
           renderItem={(exercise) => {
@@ -276,7 +306,7 @@ function CategoryExerciseListComponent({
           emptyMessage={t('exercises.noExercisesInCategory')}
           contentContainerStyle={{ paddingHorizontal: 16 }}
         />
-      </Animated.View>
+      </MotiView>
     </View>
   );
 }

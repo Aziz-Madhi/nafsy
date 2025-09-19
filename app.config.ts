@@ -30,7 +30,6 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       foregroundImage: './assets/adaptive-icon.png',
       backgroundColor: '#ffffff',
     },
-    edgeToEdgeEnabled: true,
     package: 'com.nafsy.app',
     permissions: [
       'android.permission.RECORD_AUDIO',
@@ -64,7 +63,11 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
       },
     ],
     'expo-localization',
+    'expo-router',
+    'expo-secure-store',
+    'expo-system-ui',
     'expo-updates',
+    'expo-web-browser',
     'expo-sqlite',
     'expo-audio',
   ],
@@ -77,6 +80,7 @@ export default ({ config }: ConfigContext): ExpoConfig => ({
   assetBundlePatterns: ['assets/fonts/*'],
   experiments: {
     typedRoutes: true,
+    autolinkingModuleResolution: true,
   },
   extra: {
     // Environment variables for production builds
