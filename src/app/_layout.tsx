@@ -55,6 +55,7 @@ function AuthAwareNavigation({ fontsReady }: { fontsReady: boolean }) {
   const { isLoaded, isSignedIn } = useAuth();
   const currentTheme = useCurrentTheme();
   const currentUser = useCurrentUser();
+  const colors = useColors();
 
   // Show splash while auth or fonts are loading
   if (!isLoaded || !fontsReady) {
@@ -74,23 +75,24 @@ function AuthAwareNavigation({ fontsReady }: { fontsReady: boolean }) {
   return (
     <SafeErrorBoundary>
       <StatusBar style={currentTheme === 'dark' ? 'light' : 'dark'} />
-
-      {/* Use a stable Stack and pick initial route based on auth */}
-      <Stack
-        screenOptions={{ headerShown: false }}
-        initialRouteName={
-          isSignedIn
-            ? currentUser && (currentUser as any).onboardingCompleted === false
-              ? 'onboarding'
-              : '(app)'
-            : 'welcome'
-        }
-      >
-        <Stack.Screen name="welcome" />
-        <Stack.Screen name="auth" options={{ gestureEnabled: false }} />
-        <Stack.Screen name="onboarding" />
-        <Stack.Screen name="(app)" />
-      </Stack>
+      <View style={{ flex: 1, backgroundColor: colors.background }}>
+        {/* Use a stable Stack and pick initial route based on auth */}
+        <Stack
+          screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}
+          initialRouteName={
+            isSignedIn
+              ? currentUser && (currentUser as any).onboardingCompleted === false
+                ? 'onboarding'
+                : '(app)'
+              : 'welcome'
+          }
+        >
+          <Stack.Screen name="welcome" />
+          <Stack.Screen name="auth" options={{ gestureEnabled: false }} />
+          <Stack.Screen name="onboarding" />
+          <Stack.Screen name="(app)" />
+        </Stack>
+      </View>
     </SafeErrorBoundary>
   );
 }

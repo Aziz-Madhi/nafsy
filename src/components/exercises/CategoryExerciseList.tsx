@@ -31,9 +31,9 @@ interface Exercise {
     | 'breathing'
     | 'mindfulness'
     | 'movement'
-    | 'cbt'
     | 'journaling'
-    | 'relaxation';
+    | 'relaxation'
+    | 'habits';
   icon: string;
   color: string;
   steps?: string[];
@@ -82,7 +82,7 @@ const getCategoryName = (
     movement: 'exercises.categories.movement',
     journaling: 'exercises.categories.journaling',
     relaxation: 'exercises.categories.relaxation',
-    reminders: 'exercises.categories.reminders',
+    habits: 'exercises.categories.habits',
   };
   const key = categoryKeys[categoryId];
   return key
@@ -116,12 +116,7 @@ function CategoryExerciseListComponent({
   // Memoize filtered exercises to prevent re-computation
   const filteredExercises = useMemo(() => {
     return exercises.filter((exercise) => {
-      if (categoryId === 'reminders') {
-        return (
-          exercise.category === 'relaxation' ||
-          exercise.category === 'mindfulness'
-        );
-      }
+      // No special-case fallback now that migration is complete
       return exercise.category === categoryId;
     });
   }, [exercises, categoryId]);
@@ -129,14 +124,16 @@ function CategoryExerciseListComponent({
   // Header hero with category image + bottom-left title
   const Header = useMemo(() => {
     const map =
-      currentTheme === 'dark' ? CATEGORY_BACKGROUNDS_DARK : CATEGORY_BACKGROUNDS;
+      currentTheme === 'dark'
+        ? CATEGORY_BACKGROUNDS_DARK
+        : CATEGORY_BACKGROUNDS;
     const meta =
       currentTheme === 'dark' ? CATEGORY_BG_META_DARK : CATEGORY_BG_META;
     const source = (map as Record<string, any>)[
       (categoryId as WellnessCategory) || 'mindfulness'
     ];
-    const aspect = meta[(categoryId as WellnessCategory) || 'mindfulness']
-      ?.aspect ?? 0.65;
+    const aspect =
+      meta[(categoryId as WellnessCategory) || 'mindfulness']?.aspect ?? 0.65;
     return function HeaderComponent() {
       const { width } = Dimensions.get('window');
       // Use the original image's native aspect ratio so we show the

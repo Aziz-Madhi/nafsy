@@ -81,7 +81,9 @@ export const updateTitleSummarizationConfig = mutation({
   returns: v.id('titleSummarizationConfig'),
   handler: async (ctx, args) => {
     if (args.source === 'openai_prompt_pinned' && !args.openaiPromptVersion) {
-      throw new Error('Pinned prompt version required when using pinned source');
+      throw new Error(
+        'Pinned prompt version required when using pinned source'
+      );
     }
 
     // Deactivate current active config if exists
@@ -110,4 +112,3 @@ export const updateTitleSummarizationConfig = mutation({
     return id;
   },
 });
-

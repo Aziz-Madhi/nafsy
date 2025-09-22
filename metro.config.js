@@ -15,10 +15,7 @@ config.transformer = {
 config.resolver.assetExts = config.resolver.assetExts.filter(
   (ext) => ext !== 'svg'
 );
-config.resolver.sourceExts = [
-  ...config.resolver.sourceExts,
-  'svg',
-];
+config.resolver.sourceExts = [...config.resolver.sourceExts, 'svg'];
 
 // Add support for TypeScript
 config.resolver.sourceExts.push('ts', 'tsx');

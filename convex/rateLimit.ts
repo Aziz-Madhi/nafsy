@@ -5,16 +5,29 @@ import {
   internalMutation,
   internalQuery,
   MutationCtx,
+  QueryCtx,
 } from './_generated/server';
+import { Doc, Id } from './_generated/dataModel';
 
 // 24 hours, week, and approx month (30d) in milliseconds
 const DAY = 24 * 60 * 60 * 1000;
 const WEEK = 7 * DAY;
 const MONTH_30D = 30 * DAY;
 const CHAT_WEEKLY_LIMIT = Number(process.env.CHAT_WEEKLY_LIMIT || 250);
-const VOICE_MONTHLY_TOKENS_LIMIT = Number(
-  process.env.VOICE_MONTHLY_TOKENS_LIMIT || 200_000
-);
+const voiceTokensLimitEnv = process.env.VOICE_MONTHLY_TOKENS_LIMIT;
+if (!voiceTokensLimitEnv) {
+  throw new Error(
+    'VOICE_MONTHLY_TOKENS_LIMIT environment variable is required'
+  );
+}
+const VOICE_MONTHLY_TOKENS_LIMIT = Number(voiceTokensLimitEnv);
+if (
+  !Number.isFinite(VOICE_MONTHLY_TOKENS_LIMIT) ||
+  VOICE_MONTHLY_TOKENS_LIMIT <= 0
+) {
+  throw new Error('VOICE_MONTHLY_TOKENS_LIMIT must be a positive number');
+}
+export const VOICE_MONTHLY_LIMIT = VOICE_MONTHLY_TOKENS_LIMIT;
 
 // Centralized rate limiter instance for the app
 // Keys are type-safe across usages in the codebase
@@ -120,3 +133,53 @@ export async function tryConsumeGlobalTopup(
   await ctx.db.patch(rec._id, { remaining: rec.remaining - 1 });
   return true;
 }
+
+// Reset all per-user voice monthly token counters by clearing stored shards
+const VOICE_LIMITER_STATE_KEY = 'voiceLimiterVersion';
+
+type AnyCtx = MutationCtx | QueryCtx;
+type VoiceLimiterStateDoc = Doc<'voiceLimiterState'>;
+
+async function fetchVoiceLimiterState(
+  ctx: AnyCtx
+): Promise<VoiceLimiterStateDoc | null> {
+  return (await ctx.db
+    .query('voiceLimiterState')
+    .withIndex('by_key', (q) => q.eq('key', VOICE_LIMITER_STATE_KEY))
+    .first()) as VoiceLimiterStateDoc | null;
+}
+
+export async function readVoiceLimiterVersion(ctx: AnyCtx): Promise<number> {
+  const doc = await fetchVoiceLimiterState(ctx);
+  return doc?.version ?? 1;
+}
+
+export async function ensureVoiceLimiterVersion(
+  ctx: MutationCtx
+): Promise<{ version: number; id: Id<'voiceLimiterState'> }> {
+  const existing = await fetchVoiceLimiterState(ctx);
+  if (existing) {
+    return { version: existing.version, id: existing._id };
+  }
+  const id = await ctx.db.insert('voiceLimiterState', {
+    key: VOICE_LIMITER_STATE_KEY,
+    version: 1,
+    updatedAt: Date.now(),
+  });
+  return { version: 1, id };
+}
+
+export function voiceLimiterKey(version: number, userId: Id<'users'>): string {
+  return `${version}:${userId}`;
+}
+
+export const resetVoiceMonthlyGlobal = internalMutation({
+  args: {},
+  returns: v.object({ version: v.number() }),
+  handler: async (ctx) => {
+    const { version, id } = await ensureVoiceLimiterVersion(ctx);
+    const next = version + 1;
+    await ctx.db.patch(id, { version: next, updatedAt: Date.now() });
+    return { version: next };
+  },
+});

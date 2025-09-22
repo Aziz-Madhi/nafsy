@@ -314,6 +314,7 @@ export default function ChatTab() {
     toggleMute: toggleVoiceMute,
     userSpeaking: voiceUserSpeaking,
     aiSpeaking: voiceAiSpeaking,
+    error: voiceError,
   } = useRealtimeVoice();
   const [voiceVisible, setVoiceVisible] = useState(false);
 
@@ -374,31 +375,39 @@ export default function ChatTab() {
   const handleCloseSidebar = () => setHistorySidebarVisible(false);
 
   const handleSessionSelect = useCallback(
-    async (sessionId: string) => {
-      console.log('🔄 Switching to session:', sessionId);
+    async (sessionId: string, chatType: ChatType) => {
+      console.log('🔄 Switching to session:', sessionId, 'chatType:', chatType);
       console.log('📱 Current session ID before switch:', currentMainSessionId);
 
-      // Clear any existing errors before starting
       setSessionError(null);
 
-      const success = await switchToMainSession(sessionId);
+      await switchChatType(chatType);
+
+      let success = false;
+      if (chatType === 'companion') {
+        success = await switchToCompanionSession(sessionId);
+      } else if (chatType === 'coach') {
+        success = await switchToMainSession(sessionId);
+      } else {
+        success = false;
+      }
 
       console.log('✅ Session switch success:', success);
       console.log(
         '📱 Current session ID after switch:',
-        useChatUIStore.getState().currentMainSessionId
+        useChatUIStore.getState().currentMainSessionId,
+        useChatUIStore.getState().currentCompanionSessionId
       );
 
-      if (success) {
-        // Close sidebar on success
-        setHistorySidebarVisible(false);
-      } else {
-        // Error is already set in the store, but we still close the sidebar
-        // This allows the user to see the error message in the main UI
-        setHistorySidebarVisible(false);
+      setHistorySidebarVisible(false);
+
+      if (!success) {
+        console.warn('⚠️ Session switch failed for chatType:', chatType);
       }
     },
     [
+      switchChatType,
+      switchToCompanionSession,
       switchToMainSession,
       setHistorySidebarVisible,
       setSessionError,
@@ -681,7 +690,12 @@ export default function ChatTab() {
         }}
         onToggleMute={toggleVoiceMute}
         title="Voice"
-        subtitle={voiceIsActive ? 'Connected' : 'Connecting'}
+        subtitle={
+          voiceIsActive
+            ? t('voice.overlay.connected', 'Connected')
+            : t('voice.overlay.connecting', 'Connecting')
+        }
+        message={voiceError ?? undefined}
       />
     </>
   );

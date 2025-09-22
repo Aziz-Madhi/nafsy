@@ -14,7 +14,7 @@ export type WellnessCategory =
   | 'movement'
   | 'journaling'
   | 'relaxation'
-  | 'reminders';
+  | 'habits';
 
 // Color scheme types
 export type ColorScheme = 'light' | 'dark';

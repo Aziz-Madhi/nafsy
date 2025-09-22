@@ -43,7 +43,7 @@ const SIDEBAR_WIDTH = SCREEN_WIDTH * 0.8; // 80% of screen width
 interface ChatHistorySidebarProps {
   visible: boolean;
   onClose: () => void;
-  onSessionSelect: (sessionId: string) => void;
+  onSessionSelect: (sessionId: string, chatType: ChatType) => void;
   currentSessionId?: string;
 }
 
@@ -159,6 +159,7 @@ export function ChatHistorySidebar({
   const switchToCompanionSession = useChatUIStore(
     (s) => s.switchToCompanionSession
   );
+  const switchChatType = useChatUIStore((s) => s.switchChatType);
 
   const handleNewChatPress = useCallback(async () => {
     try {
@@ -166,6 +167,7 @@ export function ChatHistorySidebar({
       const serverType = activeHistoryType === 'coach' ? 'main' : 'companion';
       const newId = (await createChat({ type: serverType } as any)) as string;
       if (newId) {
+        await switchChatType(activeHistoryType);
         if (activeHistoryType === 'coach') {
           await switchToCoachSession(newId);
         } else if (activeHistoryType === 'companion') {
@@ -179,6 +181,7 @@ export function ChatHistorySidebar({
   }, [
     activeHistoryType,
     createChat,
+    switchChatType,
     switchToCoachSession,
     switchToCompanionSession,
     onClose,
@@ -315,9 +318,9 @@ export function ChatHistorySidebar({
     groupSessionsByDate,
   ]);
 
-  const handleSessionSelect = (sessionId: string) => {
+  const handleSessionSelect = (sessionId: string, chatType: ChatType) => {
     impactAsync(ImpactFeedbackStyle.Light);
-    onSessionSelect(sessionId);
+    onSessionSelect(sessionId, chatType);
     onClose();
   };
 
@@ -496,7 +499,11 @@ export function ChatHistorySidebar({
                               chatType={activeHistoryType}
                               isActive={isActive}
                               onPress={() => {
-                                if (sessionId) handleSessionSelect(sessionId);
+                                if (sessionId)
+                                  handleSessionSelect(
+                                    sessionId,
+                                    activeHistoryType
+                                  );
                               }}
                               onDelete={() => {
                                 if (sessionId)

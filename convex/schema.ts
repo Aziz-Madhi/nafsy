@@ -253,7 +253,7 @@ export default defineSchema({
       v.literal('journaling'),
       v.literal('movement'),
       v.literal('relaxation'),
-      v.literal('reminders')
+      v.literal('habits')
     ),
     duration: v.number(), // in minutes
     difficulty: v.union(
@@ -353,4 +353,10 @@ export default defineSchema({
     windowStart: v.number(), // epoch ms for start of current window (weekly)
     remaining: v.number(),
   }).index('by_window', ['windowStart']),
+
+  voiceLimiterState: defineTable({
+    key: v.string(),
+    version: v.number(),
+    updatedAt: v.number(),
+  }).index('by_key', ['key']),
 });

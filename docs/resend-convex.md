@@ -34,21 +34,21 @@ export default app;
 
 Then you can use it, as we see in convex/sendEmails.ts:
 
-import { components } from "./_generated/api";
+import { components } from "./\_generated/api";
 import { Resend } from "@convex-dev/resend";
-import { internalMutation } from "./_generated/server";
+import { internalMutation } from "./\_generated/server";
 
 export const resend: Resend = new Resend(components.resend, {});
 
 export const sendTestEmail = internalMutation({
-  handler: async (ctx) => {
-    await resend.sendEmail(ctx, {
-      from: "Me <test@mydomain.com>",
-      to: "delivered@resend.dev",
-      subject: "Hi there",
-      html: "This is a test email",
-    });
-  },
+handler: async (ctx) => {
+await resend.sendEmail(ctx, {
+from: "Me <test@mydomain.com>",
+to: "delivered@resend.dev",
+subject: "Hi there",
+html: "This is a test email",
+});
+},
 });
 
 Then, calling sendTestEmail from anywhere in your app will send this test email.
@@ -62,24 +62,24 @@ While the setup we have so far will reliably send emails, you don't have any fee
 On the Convex side, we need to mount an http endpoint to our project to route it to the Resend component in convex/http.ts:
 
 import { httpRouter } from "convex/server";
-import { httpAction } from "./_generated/server";
+import { httpAction } from "./\_generated/server";
 import { resend } from "./sendEmails";
 
 const http = httpRouter();
 
 http.route({
-  path: "/resend-webhook",
-  method: "POST",
-  handler: httpAction(async (ctx, req) => {
-    return await resend.handleResendEventWebhook(ctx, req);
-  }),
+path: "/resend-webhook",
+method: "POST",
+handler: httpAction(async (ctx, req) => {
+return await resend.handleResendEventWebhook(ctx, req);
+}),
 });
 
 export default http;
 
 If our Convex project is happy-leopard-123, we now have a Resend webhook for our project running at https://happy-leopard-123.convex.site/resend-webhook.
 
-So navigate to the Resend dashboard and create a new webhook at that URL. Make sure to enable all the email.* events; the other event types will be ignored.
+So navigate to the Resend dashboard and create a new webhook at that URL. Make sure to enable all the email.\* events; the other event types will be ignored.
 
 Finally, copy the webhook secret out of the Resend dashboard and set it to the RESEND_WEBHOOK_SECRET environment variable in your Convex deployment.
 
@@ -92,21 +92,21 @@ If you have your webhook established, you can also register an event handler in 
 
 Update your sendEmails.ts to look something like this:
 
-import { components, internal } from "./_generated/api";
-import { internalMutation } from "./_generated/server";
+import { components, internal } from "./\_generated/api";
+import { internalMutation } from "./\_generated/server";
 import { vEmailId, vEmailEvent, Resend } from "@convex-dev/resend";
 
 export const resend: Resend = new Resend(components.resend, {
-  onEmailEvent: internal.example.handleEmailEvent,
+onEmailEvent: internal.example.handleEmailEvent,
 });
 
 export const handleEmailEvent = internalMutation({
-  args: vOnEmailEventArgs,
-  handler: async (ctx, args) => {
-    // Handle however you want
-    // args provides { id: EmailId; event: EmailEvent; }
-    // see /example/example.ts
-  },
+args: vOnEmailEventArgs,
+handler: async (ctx, args) => {
+// Handle however you want
+// args provides { id: EmailId; event: EmailEvent; }
+// see /example/example.ts
+},
 });
 
 Check out the example/ project in this repo for a full demo.
@@ -140,30 +140,30 @@ If you don't care about historical email status, the recommended approach is to 
 
 // in convex/crons.ts
 import { cronJobs } from "convex/server";
-import { components, internal } from "./_generated/api.js";
-import { internalMutation } from "./_generated/server.js";
+import { components, internal } from "./\_generated/api.js";
+import { internalMutation } from "./\_generated/server.js";
 
 const crons = cronJobs();
 crons.interval(
-  "Remove old emails from the resend component",
-  { hours: 1 },
-  internal.crons.cleanupResend
+"Remove old emails from the resend component",
+{ hours: 1 },
+internal.crons.cleanupResend
 );
 
-const ONE_WEEK_MS = 7 * 24 * 60 * 60 * 1000;
+const ONE_WEEK_MS = 7 _ 24 _ 60 _ 60 _ 1000;
 export const cleanupResend = internalMutation({
-  args: {},
-  handler: async (ctx) => {
-    await ctx.scheduler.runAfter(0, components.resend.lib.cleanupOldEmails, {
-      olderThan: ONE_WEEK_MS,
-    });
-    await ctx.scheduler.runAfter(
-      0,
-      components.resend.lib.cleanupAbandonedEmails,
-      // These generally indicate a bug, so keep them around for longer.
-      { olderThan: 4 * ONE_WEEK_MS }
-    );
-  },
+args: {},
+handler: async (ctx) => {
+await ctx.scheduler.runAfter(0, components.resend.lib.cleanupOldEmails, {
+olderThan: ONE_WEEK_MS,
+});
+await ctx.scheduler.runAfter(
+0,
+components.resend.lib.cleanupAbandonedEmails,
+// These generally indicate a bug, so keep them around for longer.
+{ olderThan: 4 \* ONE_WEEK_MS }
+);
+},
 });
 
 export default crons;
@@ -179,35 +179,34 @@ Then create a new .tsx file in your Convex directory e.g. /convex/emails.tsx:
 
 // IMPORTANT: this is a Convex Node Action
 "use node";
-import { action } from "./_generated/server";
+import { action } from "./\_generated/server";
 import { render, pretty } from "@react-email/render";
 import { Button, Html } from "@react-email/components";
-import { components } from "./_generated/api";
+import { components } from "./\_generated/api";
 import { Resend } from "@convex-dev/resend";
 
 export const resend: Resend = new Resend(components.resend, {
-  testMode: false,
+testMode: false,
 });
 
 export const sendEmail = action({
-  args: {},
-  handler: async (ctx, args) => {
-    // 1. Generate the HTML from your JSX
-    // This can come from a custom component in your /emails/ directory
-    // if you would like to view your templates locally. For more info see:
-    // https://react.email/docs/getting-started/manual-setup#5-run-locally
-    const html = await pretty(
-      await render(
-        <Html>
-          <Button
-            href="https://example.com"
-            style={{ background: "#000", color: "#fff", padding: "12px 20px" }}
-          >
-            Click me
-          </Button>
-        </Html>
-      )
-    );
+args: {},
+handler: async (ctx, args) => {
+// 1. Generate the HTML from your JSX
+// This can come from a custom component in your /emails/ directory
+// if you would like to view your templates locally. For more info see:
+// https://react.email/docs/getting-started/manual-setup#5-run-locally
+const html = await pretty(
+await render(
+<Html>
+<Button
+href="https://example.com"
+style={{ background: "#000", color: "#fff", padding: "12px 20px" }} >
+Click me
+</Button>
+</Html>
+)
+);
 
     // 2. Send your email as usual using the component
     await resend.sendEmail(ctx, {
@@ -216,7 +215,8 @@ export const sendEmail = action({
       subject: "Hi there",
       html,
     });
-  },
+
+},
 });
 
 WARNING
@@ -225,8 +225,8 @@ React Email requires some Node dependencies thus it must run in a Convex Node ac
 Sending emails manually, e.g. for attachments#
 If you need something that the component doesn't provide (it is currently limited by what is supported by the batch API in Resend), you can send emails manually. This is the preferred approach, because you have fine-grained control over the email sending process, and can track its progress manually using the component's public APIs.
 
-import { components, internal } from "./_generated/api";
-import { internalMutation } from "./_generated/server";
+import { components, internal } from "./\_generated/api";
+import { internalMutation } from "./\_generated/server";
 import { Resend as ResendComponent } from "@convex-dev/resend";
 import { Resend } from "resend";
 
@@ -235,19 +235,19 @@ const resend = new Resend("re_xxxxxxxxx");
 export const resendResendComponent = new ResendComponent(components.resend, {});
 
 await resend.emails.send({
-  from: "Acme <onboarding@resend.dev>",
-  to: ["delivered@resend.dev"],
-  subject: "hello world",
-  html: "<p>it works!</p>",
+from: "Acme <onboarding@resend.dev>",
+to: ["delivered@resend.dev"],
+subject: "hello world",
+html: "<p>it works!</p>",
 });
 
 export const sendManualEmail = internalMutation({
-  args: {},
-  handler: async (ctx, args) => {
-    const from = "Acme <onboarding@resend.dev>";
-    const to = ["delivered@resend.dev"];
-    const subject = "hello world";
-    const html = "<p>it works!</p>";
+args: {},
+handler: async (ctx, args) => {
+const from = "Acme <onboarding@resend.dev>";
+const to = ["delivered@resend.dev"];
+const subject = "hello world";
+const html = "<p>it works!</p>";
 
     const emailId = await resend.sendEmailManually(
       ctx,
@@ -268,5 +268,6 @@ export const sendManualEmail = internalMutation({
         return data.id;
       }
     );
-  },
+
+},
 });

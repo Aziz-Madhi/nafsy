@@ -1,6 +1,11 @@
 import { mutation, query } from './_generated/server';
 import { v } from 'convex/values';
-import appRateLimiter from './rateLimit';
+import appRateLimiter, {
+  VOICE_MONTHLY_LIMIT,
+  ensureVoiceLimiterVersion,
+  readVoiceLimiterVersion,
+  voiceLimiterKey,
+} from './rateLimit';
 import { getAuthenticatedUser } from './auth';
 
 export const getConfig = query({
@@ -40,6 +45,50 @@ export const getConfig = query({
   },
 });
 
+export const checkAllowance = query({
+  args: {
+    userId: v.id('users'),
+    requiredTokens: v.optional(v.number()),
+  },
+  returns: v.object({
+    ok: v.boolean(),
+    remaining: v.number(),
+    required: v.number(),
+    retryAfter: v.optional(v.number()),
+  }),
+  handler: async (ctx, args) => {
+    const required = Math.min(
+      VOICE_MONTHLY_LIMIT,
+      Math.max(1, Math.ceil(args.requiredTokens ?? 1))
+    );
+    const version = await readVoiceLimiterVersion(ctx);
+    const limiterKey = voiceLimiterKey(version, args.userId);
+    const status = await appRateLimiter.check(
+      ctx as any,
+      'voiceMonthlyTokens' as any,
+      {
+        key: limiterKey,
+        count: required,
+        throws: false,
+      }
+    );
+    const state = await appRateLimiter.getValue(
+      ctx,
+      'voiceMonthlyTokens' as any,
+      {
+        key: limiterKey,
+      }
+    );
+    const remaining = Math.max(0, Math.floor(state?.value ?? 0));
+    return {
+      ok: status.ok,
+      remaining,
+      required,
+      retryAfter: status.retryAfter || undefined,
+    } as const;
+  },
+});
+
 export const updateConfig = mutation({
   args: {
     source: v.union(
@@ -70,7 +119,12 @@ export const updateConfig = mutation({
       .query('voiceRealtimeConfig')
       .withIndex('by_active', (q) => q.eq('active', true))
       .first();
-    if (current) await ctx.db.patch(current._id, { active: false, updatedAt: Date.now() });
+    if (current) {
+      await ctx.db.patch(current._id, {
+        active: false,
+        updatedAt: Date.now(),
+      });
+    }
 
     // Find latest version
     const all = await ctx.db.query('voiceRealtimeConfig').collect();
@@ -105,20 +159,138 @@ export const consumeVoiceTokens = mutation({
     // Option 2: pass individual counts and they will be summed
     inputTokens: v.optional(v.number()),
     outputTokens: v.optional(v.number()),
+    responseId: v.optional(v.string()),
+    usage: v.optional(
+      v.object({
+        total_tokens: v.optional(v.number()),
+        input_tokens: v.optional(v.number()),
+        output_tokens: v.optional(v.number()),
+        input_token_details: v.optional(
+          v.object({
+            text_tokens: v.optional(v.number()),
+            audio_tokens: v.optional(v.number()),
+            cached_tokens: v.optional(v.number()),
+          })
+        ),
+        output_token_details: v.optional(
+          v.object({
+            text_tokens: v.optional(v.number()),
+            audio_tokens: v.optional(v.number()),
+          })
+        ),
+      })
+    ),
+    billable: v.optional(
+      v.object({
+        textIn: v.optional(v.number()),
+        textOut: v.optional(v.number()),
+        audioIn: v.optional(v.number()),
+        audioOut: v.optional(v.number()),
+        total: v.optional(v.number()),
+      })
+    ),
   },
-  returns: v.object({ ok: v.boolean(), retryAfter: v.optional(v.number()) }),
+  returns: v.object({
+    ok: v.boolean(),
+    retryAfter: v.optional(v.number()),
+    totalTokens: v.optional(v.number()),
+    details: v.optional(
+      v.object({
+        textIn: v.optional(v.number()),
+        textOut: v.optional(v.number()),
+        audioIn: v.optional(v.number()),
+        audioOut: v.optional(v.number()),
+      })
+    ),
+  }),
   handler: async (ctx, args) => {
     const user = await getAuthenticatedUser(ctx);
-    const total =
-      (args.totalTokens ?? 0) + (args.inputTokens ?? 0) + (args.outputTokens ?? 0);
+    const usage = args.usage;
+    const { version } = await ensureVoiceLimiterVersion(ctx);
+    const limiterKey = voiceLimiterKey(version, user._id);
 
-    // Nothing to consume; treat as success
-    if (!total || total <= 0) return { ok: true } as const;
+    const inputDetails = usage?.input_token_details;
+    const outputDetails = usage?.output_token_details;
 
-    const status = await appRateLimiter.limit(ctx, 'voiceMonthlyTokens' as any, {
-      key: user._id as any,
-      count: Math.max(0, Math.floor(total)),
-    });
-    return status as any;
+    const billableTextIn =
+      args.billable?.textIn ??
+      Math.max(
+        (inputDetails?.text_tokens ?? 0) - (inputDetails?.cached_tokens ?? 0),
+        0
+      );
+    const billableTextOut =
+      args.billable?.textOut ?? outputDetails?.text_tokens ?? 0;
+    const billableAudioIn =
+      args.billable?.audioIn ?? inputDetails?.audio_tokens ?? 0;
+    const billableAudioOut =
+      args.billable?.audioOut ?? outputDetails?.audio_tokens ?? 0;
+
+    const sumBillable =
+      billableTextIn + billableTextOut + billableAudioIn + billableAudioOut;
+
+    const summedInputOutput =
+      (args.inputTokens ?? 0) + (args.outputTokens ?? 0);
+    const fallbackTotal =
+      args.totalTokens ?? usage?.total_tokens ?? summedInputOutput;
+
+    const totalTokens = Math.max(
+      0,
+      Math.floor(sumBillable || fallbackTotal || 0)
+    );
+
+    const details = {
+      textIn: billableTextIn,
+      textOut: billableTextOut,
+      audioIn: billableAudioIn,
+      audioOut: billableAudioOut,
+    } as const;
+
+    if (!totalTokens || totalTokens <= 0) {
+      return {
+        ok: true,
+        totalTokens: 0,
+        details,
+      } as const;
+    }
+
+    let remaining = totalTokens;
+    let retryAfter: number | undefined;
+
+    while (remaining > 0) {
+      const chunk = Math.min(remaining, VOICE_MONTHLY_LIMIT);
+      if (chunk <= 0) break;
+
+      const status = await appRateLimiter.limit(
+        ctx,
+        'voiceMonthlyTokens' as any,
+        {
+          key: limiterKey,
+          count: chunk,
+          throws: false,
+        }
+      );
+
+      if (!status.ok) {
+        return {
+          ok: false,
+          retryAfter: status.retryAfter,
+          totalTokens,
+          details,
+        } as const;
+      }
+
+      if (status.retryAfter) {
+        retryAfter = status.retryAfter;
+      }
+
+      remaining -= chunk;
+    }
+
+    return {
+      ok: true,
+      retryAfter,
+      totalTokens,
+      details,
+    } as const;
   },
 });

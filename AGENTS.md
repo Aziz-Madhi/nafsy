@@ -195,7 +195,6 @@ NEVER proactively create documentation files (\*.md) or README files. Only creat
 
 When tasked with changing the coloring of specific components, make sure to follow the unified color system that is being implemented.
 
-
 ## Project Structure & Module Organization
 
 - Source: `src/` (routes in `src/app`, UI in `src/components`, state in `src/store`, utilities in `src/lib`, providers in `src/providers`, config in `src/config`).

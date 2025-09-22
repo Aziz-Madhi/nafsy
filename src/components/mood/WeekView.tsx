@@ -40,6 +40,34 @@ export function WeekView({ moodData }: WeekViewProps) {
   const neutralColor = useMoodColor('neutral');
   const happyColor = useMoodColor('happy');
   const angryColor = useMoodColor('angry');
+  const isDarkMode = colors.background === '#0A1514';
+  const overlayBackground = colors.cardElevated;
+  const overlayBorderColor = isDarkMode
+    ? 'rgba(255, 255, 255, 0.08)'
+    : 'rgba(90, 74, 58, 0.12)';
+  const overlayShadowOpacity = isDarkMode ? 0.25 : 0.15;
+  const overlayShadowRadius = isDarkMode ? 14 : 8;
+  const noteBorderColor = isDarkMode
+    ? 'rgba(245, 245, 245, 0.12)'
+    : 'rgba(90, 74, 58, 0.18)';
+  const noteAccentColor = isDarkMode
+    ? 'rgba(245, 245, 245, 0.35)'
+    : 'rgba(90, 74, 58, 0.45)';
+  const noteLabelColor = isDarkMode
+    ? 'rgba(245, 245, 245, 0.75)'
+    : 'rgba(90, 74, 58, 0.8)';
+  const noteTextColor = isDarkMode
+    ? 'rgba(245, 245, 245, 0.88)'
+    : 'rgba(45, 55, 72, 0.88)';
+  const emptyNoteBackground = isDarkMode
+    ? 'rgba(255, 255, 255, 0.05)'
+    : 'rgba(244, 241, 237, 0.75)';
+  const emptyNoteBorder = isDarkMode
+    ? 'rgba(245, 245, 245, 0.12)'
+    : 'rgba(90, 74, 58, 0.18)';
+  const emptyNoteText = isDarkMode
+    ? 'rgba(245, 245, 245, 0.68)'
+    : colors.mutedForeground;
 
   // Get unified color from rating scale, falling back to legacy mood mapping
   const getEntryColor = (entry: Doc<'moods'> | undefined): string => {
@@ -223,29 +251,34 @@ export function WeekView({ moodData }: WeekViewProps) {
                   borderBottomWidth: 8,
                   borderLeftColor: 'transparent',
                   borderRightColor: 'transparent',
-                  borderBottomColor: '#F4F1ED',
+                  borderBottomColor: overlayBackground,
                   zIndex: 1,
                 }}
               />
 
               <View
-                className="bg-background"
+                className="bg-card-elevated"
                 style={{
                   padding: 24,
                   borderRadius: 24,
                   borderWidth: 1,
-                  borderColor: '#E5E7EB',
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 3 },
-                  shadowOpacity: 0.15,
-                  shadowRadius: 8,
-                  elevation: 6,
+                  borderColor: overlayBorderColor,
+                  shadowColor: colors.shadow,
+                  shadowOffset: { width: 0, height: 6 },
+                  shadowOpacity: overlayShadowOpacity,
+                  shadowRadius: overlayShadowRadius,
+                  elevation: isDarkMode ? 2 : 6,
                 }}
               >
                 <Text
                   variant="callout"
-                  className="text-[#2D3748] font-bold mb-3"
-                  style={{ letterSpacing: 0.3 }}
+                  className="font-semibold mb-3"
+                  style={{
+                    letterSpacing: 0.3,
+                    color: isDarkMode
+                      ? 'rgba(245, 245, 245, 0.92)'
+                      : 'rgba(45, 55, 72, 0.95)',
+                  }}
                 >
                   {format(selectedDay.date, 'EEEE, MMMM d', {
                     locale:
@@ -303,8 +336,11 @@ export function WeekView({ moodData }: WeekViewProps) {
                   </View>
                   <Text
                     variant="callout"
-                    className="text-[#2D3748] font-bold"
-                    style={{ letterSpacing: 0.3 }}
+                    className="font-semibold"
+                    style={{
+                      letterSpacing: 0.3,
+                      color: colors.foreground,
+                    }}
                   >
                     {(() => {
                       const raw =
@@ -325,17 +361,19 @@ export function WeekView({ moodData }: WeekViewProps) {
 
                 {selectedDay.mood.note ? (
                   <View
-                    className="bg-card"
                     style={{
                       borderRadius: 16,
                       padding: 16,
                       borderWidth: 1,
-                      borderColor: 'rgba(90, 74, 58, 0.2)',
-                      shadowColor: 'rgba(90, 74, 58, 0.3)',
+                      borderColor: noteBorderColor,
+                      backgroundColor: isDarkMode
+                        ? colors.card
+                        : colors.cardElevated,
+                      shadowColor: colors.shadow,
                       shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 4,
-                      elevation: 2,
+                      shadowOpacity: isDarkMode ? 0.18 : 0.1,
+                      shadowRadius: 6,
+                      elevation: isDarkMode ? 0 : 2,
                     }}
                   >
                     <View
@@ -346,44 +384,51 @@ export function WeekView({ moodData }: WeekViewProps) {
                       }}
                     >
                       <View
-                        className="bg-foreground/60"
                         style={{
                           width: 4,
                           height: 16,
                           borderRadius: 2,
                           marginRight: 8,
+                          backgroundColor: noteAccentColor,
                         }}
                       />
                       <Text
                         variant="footnote"
-                        className="text-[#5A4A3A] font-bold"
-                        style={{ letterSpacing: 0.5 }}
+                        className="font-semibold"
+                        style={{
+                          letterSpacing: 0.5,
+                          color: noteLabelColor,
+                        }}
                       >
                         {t('mood.note')}
                       </Text>
                     </View>
                     <Text
                       variant="callout"
-                      className="text-[#2D3748] italic"
-                      style={{ lineHeight: 22 }}
+                      className="italic"
+                      style={{
+                        lineHeight: 22,
+                        color: noteTextColor,
+                      }}
                     >
                       {`"${selectedDay.mood.note}"`}
                     </Text>
                   </View>
                 ) : (
                   <View
-                    className="bg-white/70"
                     style={{
                       borderRadius: 12,
                       padding: 12,
                       borderWidth: 1,
-                      borderColor: 'rgba(90, 74, 58, 0.15)',
+                      borderColor: emptyNoteBorder,
                       borderStyle: 'dashed',
+                      backgroundColor: emptyNoteBackground,
                     }}
                   >
                     <Text
                       variant="subhead"
-                      className="text-gray-500 italic font-medium text-center"
+                      className="italic font-medium text-center"
+                      style={{ color: emptyNoteText }}
                     >
                       {t('mood.noNotesForDay')}
                     </Text>

@@ -244,7 +244,11 @@ export const recordAITelemetry = internalMutation({
 export const prepareStreamingTurn = internalAction({
   args: {
     userId: v.id('users'),
-    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
     message: v.string(),
     sessionId: v.optional(v.string()),
     title: v.optional(v.string()),
@@ -272,7 +276,8 @@ export const prepareStreamingTurn = internalAction({
 
     if (chatType === 'vent') {
       // Ephemeral session id; no DB session or messages
-      if (!sessionId) sessionId = `vent_ephemeral_${Date.now()}_${String(userId)}`;
+      if (!sessionId)
+        sessionId = `vent_ephemeral_${Date.now()}_${String(userId)}`;
     } else {
       // Ensure session exists; create lazily if missing
       if (!sessionId) sessionId = `${chatType}_${Date.now()}_${String(userId)}`;
@@ -297,12 +302,15 @@ export const prepareStreamingTurn = internalAction({
     let isNewSession = false;
     if (persistPolicy === 'store') {
       try {
-        const recent = await ctx.runQuery(internal.chat._getMessagesForSession as any, {
-          userId,
-          type: chatType as any,
-          sessionId,
-          limit: 10,
-        });
+        const recent = await ctx.runQuery(
+          internal.chat._getMessagesForSession as any,
+          {
+            userId,
+            type: chatType as any,
+            sessionId,
+            limit: 10,
+          }
+        );
         isNewSession = !recent.some((m: any) => m.role === 'assistant');
       } catch {}
     }
@@ -312,11 +320,14 @@ export const prepareStreamingTurn = internalAction({
     let createdConversation = false;
     if (persistPolicy === 'store') {
       try {
-        const meta = await ctx.runMutation(internal.chatStreaming.getSessionMeta as any, {
-          userId,
-          sessionId,
-          chatType: chatType as any,
-        });
+        const meta = await ctx.runMutation(
+          internal.chatStreaming.getSessionMeta as any,
+          {
+            userId,
+            sessionId,
+            chatType: chatType as any,
+          }
+        );
         conversationId = (meta as any)?.openaiConversationId;
         if (!conversationId) {
           const apiKey = process.env.OPENAI_API_KEY;
@@ -341,15 +352,21 @@ export const prepareStreamingTurn = internalAction({
             if (json?.id) {
               conversationId = json.id as string;
               createdConversation = true;
-              await ctx.runMutation(internal.chatStreaming.setSessionConversationId as any, {
-                userId,
-                sessionId,
-                chatType: chatType as any,
-                openaiConversationId: conversationId,
-              });
+              await ctx.runMutation(
+                internal.chatStreaming.setSessionConversationId as any,
+                {
+                  userId,
+                  sessionId,
+                  chatType: chatType as any,
+                  openaiConversationId: conversationId,
+                }
+              );
             }
           } else {
-            console.warn('Failed to create OpenAI conversation:', await res.text());
+            console.warn(
+              'Failed to create OpenAI conversation:',
+              await res.text()
+            );
           }
         }
       } catch (e) {
@@ -396,7 +413,11 @@ export const prepareStreamingTurn = internalAction({
 export const finalizeStreamingTurn = internalMutation({
   args: {
     userId: v.id('users'),
-    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
     sessionId: v.string(),
     content: v.string(),
     model: v.string(),
@@ -412,28 +433,42 @@ export const finalizeStreamingTurn = internalMutation({
     // Vent is private: do not persist messages or record content-bearing telemetry
     if (chatType !== 'vent') {
       try {
-        await ctx.runMutation(internal.chatStreaming.insertAssistantMessage as any, {
-          sessionId: args.sessionId,
-          userId: args.userId,
-          chatType: chatType as any,
-          content: (content || '').trim(),
-          requestId: args.requestId,
-        });
+        await ctx.runMutation(
+          internal.chatStreaming.insertAssistantMessage as any,
+          {
+            sessionId: args.sessionId,
+            userId: args.userId,
+            chatType: chatType as any,
+            content: (content || '').trim(),
+            requestId: args.requestId,
+          }
+        );
       } catch (e) {
-        console.error('finalizeStreamingTurn: insertAssistantMessage failed', e);
+        console.error(
+          'finalizeStreamingTurn: insertAssistantMessage failed',
+          e
+        );
       }
 
       // Schedule title summarization with a lightweight rate limit
       try {
-        const status = await appRateLimiter.limit(ctx as any, 'titleSummarize', {
-          key: `${args.userId}:${args.sessionId}` as any,
-        });
+        const status = await appRateLimiter.limit(
+          ctx as any,
+          'titleSummarize',
+          {
+            key: `${args.userId}:${args.sessionId}` as any,
+          }
+        );
         if (status.ok) {
-          await ctx.scheduler.runAfter(0, internal.titleSummarization.generateAndApplyTitle, {
-            userId: args.userId as any,
-            sessionId: args.sessionId,
-            chatType: chatType as any,
-          });
+          await ctx.scheduler.runAfter(
+            0,
+            internal.titleSummarization.generateAndApplyTitle,
+            {
+              userId: args.userId as any,
+              sessionId: args.sessionId,
+              chatType: chatType as any,
+            }
+          );
         }
       } catch {}
 

@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
-import { useAction } from 'convex/react';
+import { useAction, useMutation } from 'convex/react';
 import { api } from '../../convex/_generated/api';
 import {
   mediaDevices,
@@ -7,6 +7,7 @@ import {
   RTCSessionDescription,
   MediaStream,
 } from 'react-native-webrtc';
+import { useTranslation } from '~/hooks/useTranslation';
 
 type ChatTypeServer = 'main' | 'vent' | 'companion';
 
@@ -22,12 +23,15 @@ interface RealtimeStartResult {
 
 export function useRealtimeVoice() {
   const mintToken = useAction(api.chat.mintRealtimeClientSecret);
+  const consumeTokens = useMutation(api.voiceRealtime.consumeVoiceTokens);
+  const { t } = useTranslation();
 
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const micRef = useRef<MediaStream | null>(null);
   const eventsDcRef = useRef<RTCDataChannel | null>(null);
   const userSpeakingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const aiActiveResponsesRef = useRef<Set<string>>(new Set());
+  const reportedUsageRef = useRef<Set<string>>(new Set());
   const [isActive, setIsActive] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
@@ -59,12 +63,14 @@ export function useRealtimeVoice() {
       userSpeakingTimeoutRef.current = null;
     }
     aiActiveResponsesRef.current.clear();
+    reportedUsageRef.current.clear();
   }, []);
 
   const start = useCallback(
     async (opts: StartOptions): Promise<RealtimeStartResult> => {
       setError(null);
       setMuted(false);
+      reportedUsageRef.current.clear();
       try {
         if (pcRef.current) {
           const state = pcRef.current.connectionState;
@@ -194,6 +200,119 @@ export function useRealtimeVoice() {
                   clearTimeout(userSpeakingTimeoutRef.current);
                   userSpeakingTimeoutRef.current = null;
                 }
+                return;
+              }
+
+              if (type === 'response.done') {
+                const usage = payload?.response?.usage;
+                if (!usage) return;
+
+                const usageKey =
+                  extractResponseId(payload) ??
+                  payload?.response?.id ??
+                  `usage-${Date.now()}`;
+                if (reportedUsageRef.current.has(usageKey)) return;
+                reportedUsageRef.current.add(usageKey);
+
+                const inputDetails = usage?.input_token_details || {};
+                const outputDetails = usage?.output_token_details || {};
+
+                const billableTextIn = Math.max(
+                  (inputDetails.text_tokens ?? 0) -
+                    (inputDetails.cached_tokens ?? 0),
+                  0
+                );
+                const billableTextOut = outputDetails.text_tokens ?? 0;
+                const billableAudioIn = inputDetails.audio_tokens ?? 0;
+                const billableAudioOut = outputDetails.audio_tokens ?? 0;
+
+                const totalTokens = Math.max(
+                  0,
+                  Math.floor(
+                    billableTextIn +
+                      billableTextOut +
+                      billableAudioIn +
+                      billableAudioOut
+                  )
+                );
+
+                if (totalTokens <= 0) return;
+
+                const usagePayload: Record<string, any> = {};
+                if (typeof usage.total_tokens === 'number') {
+                  usagePayload.total_tokens = usage.total_tokens;
+                }
+                if (typeof usage.input_tokens === 'number') {
+                  usagePayload.input_tokens = usage.input_tokens;
+                }
+                if (typeof usage.output_tokens === 'number') {
+                  usagePayload.output_tokens = usage.output_tokens;
+                }
+
+                const inputDetailsPayload: Record<string, any> = {};
+                if (typeof inputDetails.text_tokens === 'number') {
+                  inputDetailsPayload.text_tokens = inputDetails.text_tokens;
+                }
+                if (typeof inputDetails.audio_tokens === 'number') {
+                  inputDetailsPayload.audio_tokens = inputDetails.audio_tokens;
+                }
+                if (typeof inputDetails.cached_tokens === 'number') {
+                  inputDetailsPayload.cached_tokens =
+                    inputDetails.cached_tokens;
+                }
+                if (Object.keys(inputDetailsPayload).length > 0) {
+                  usagePayload.input_token_details = inputDetailsPayload;
+                }
+
+                const outputDetailsPayload: Record<string, any> = {};
+                if (typeof outputDetails.text_tokens === 'number') {
+                  outputDetailsPayload.text_tokens = outputDetails.text_tokens;
+                }
+                if (typeof outputDetails.audio_tokens === 'number') {
+                  outputDetailsPayload.audio_tokens =
+                    outputDetails.audio_tokens;
+                }
+                if (Object.keys(outputDetailsPayload).length > 0) {
+                  usagePayload.output_token_details = outputDetailsPayload;
+                }
+
+                consumeTokens({
+                  totalTokens,
+                  responseId: usageKey,
+                  usage:
+                    Object.keys(usagePayload).length > 0
+                      ? usagePayload
+                      : undefined,
+                  billable: {
+                    textIn: billableTextIn,
+                    textOut: billableTextOut,
+                    audioIn: billableAudioIn,
+                    audioOut: billableAudioOut,
+                    total: totalTokens,
+                  },
+                })
+                  .then((result) => {
+                    if (result && !result.ok) {
+                      setError(
+                        t(
+                          'voice.limit.monthlyReached',
+                          "You've reached your voice monthly limit."
+                        )
+                      );
+                      stop().catch(() => {});
+                    }
+                  })
+                  .catch((err) => {
+                    console.warn('[voice] failed to record usage', err);
+                    setError(
+                      t(
+                        'voice.limit.monthlyReached',
+                        "You've reached your voice monthly limit."
+                      )
+                    );
+                    stop().catch(() => {});
+                  });
+                removeAiResponse(usageKey);
                 return;
               }
 
@@ -361,7 +480,15 @@ export function useRealtimeVoice() {
 
         return { started: true };
       } catch (e: any) {
-        const msg = e?.message || 'Voice session failed';
+        const raw =
+          typeof e?.message === 'string' ? e.message : String(e ?? '');
+        const isLimit = raw.includes('VOICE_USAGE_LIMIT_REACHED');
+        const msg = isLimit
+          ? t(
+              'voice.limit.monthlyReached',
+              "You've reached your voice monthly limit."
+            )
+          : raw || t('voice.errors.sessionFailed', 'Voice session failed');
         setError(msg);
         setIsActive(false);
         setMuted(false);
@@ -373,7 +500,7 @@ export function useRealtimeVoice() {
         return { started: false, error: msg };
       }
     },
-    [mintToken, stop]
+    [consumeTokens, mintToken, stop, t]
   );
   const toggleMute = useCallback(() => {
     const next = !muted;

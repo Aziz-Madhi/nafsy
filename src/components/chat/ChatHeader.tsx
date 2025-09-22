@@ -61,16 +61,21 @@ export const ChatHeader = memo(function ChatHeader({
   const { i18n } = useTranslation();
   const isDarkMode = colors.background === '#0A1514';
   const isArabic = i18n.language === 'ar';
+  const accentTint = colors.brandDarkBlue;
 
   const message =
     personalityMessages.find((m) => m.type === activeChatType) ||
     personalityMessages[0];
 
   const canToggle =
-    Boolean(onChatTypeChange) && activeChatType !== 'event' &&
+    Boolean(onChatTypeChange) &&
+    activeChatType !== 'event' &&
     (activeChatType === 'coach' || activeChatType === 'companion');
 
   const [menuVisible, setMenuVisible] = useState(false);
+  const [leftWidth, setLeftWidth] = useState(0);
+  const [rightWidth, setRightWidth] = useState(0);
+  const sideWidth = Math.max(leftWidth, rightWidth);
 
   useEffect(() => {
     setMenuVisible(false);
@@ -95,8 +100,8 @@ export const ChatHeader = memo(function ChatHeader({
     onChatTypeChange(type);
   };
 
-  const personalityOptions = personalityMessages.filter((option) =>
-    option.type === 'coach' || option.type === 'companion'
+  const personalityOptions = personalityMessages.filter(
+    (option) => option.type === 'coach' || option.type === 'companion'
   );
 
   const alternateMessage = canToggle
@@ -106,34 +111,33 @@ export const ChatHeader = memo(function ChatHeader({
   return (
     <View className="flex-row items-center justify-between px-4 pt-16 pb-4">
       {/* Left: Sidebar Button */}
-      <Pressable
-        onPress={onOpenSidebar}
-        hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+      <View
+        onLayout={(event) => {
+          const width = event.nativeEvent.layout.width;
+          if (width !== leftWidth) {
+            setLeftWidth(width);
+          }
+        }}
+        style={{
+          width: sideWidth || undefined,
+          alignItems: 'flex-start',
+          justifyContent: 'center',
+        }}
       >
-        <View
-          className="w-10 h-10 rounded-full items-center justify-center"
+        <Pressable
+          onPress={onOpenSidebar}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
           style={{
-            backgroundColor: isDarkMode
-              ? 'rgba(255, 255, 255, 0.15)'
-              : 'rgba(255, 255, 255, 0.4)',
-            borderColor: isDarkMode
-              ? 'rgba(255, 255, 255, 0.25)'
-              : 'rgba(255, 255, 255, 0.6)',
-            borderWidth: 0.5,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 3 },
-            shadowOpacity: 0.15,
-            shadowRadius: 6,
-            elevation: 5,
+            padding: 4,
           }}
         >
           <SymbolView
             name="line.horizontal.3"
             size={24}
-            tintColor={isDarkMode ? colors.foreground : '#2F6A8D'}
+            tintColor={accentTint}
           />
-        </View>
-      </Pressable>
+        </Pressable>
+      </View>
 
       <View className="flex-1 items-center relative">
         <Pressable
@@ -150,20 +154,12 @@ export const ChatHeader = memo(function ChatHeader({
           hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
         >
           <View className="items-center">
-            <View
-              className="flex-row items-center gap-2 rounded-full px-4 py-1.5"
-              style={{
-                backgroundColor: canToggle
-                  ? isDarkMode
-                    ? 'rgba(255,255,255,0.12)'
-                    : 'rgba(255,255,255,0.35)'
-                  : 'transparent',
-              }}
-            >
+            <View className="flex-row items-center gap-1">
               <Text
-                className="text-lg font-semibold text-foreground"
+                className="text-lg font-semibold"
                 style={{
                   letterSpacing: isArabic ? 0 : 0.2,
+                  color: accentTint,
                 }}
               >
                 {isArabic ? message.titleAr : message.title}
@@ -172,7 +168,7 @@ export const ChatHeader = memo(function ChatHeader({
                 <SymbolView
                   name={menuVisible ? 'chevron.up' : 'chevron.down'}
                   size={16}
-                  tintColor={colors.foreground}
+                  tintColor={accentTint}
                 />
               )}
             </View>
@@ -180,25 +176,38 @@ export const ChatHeader = memo(function ChatHeader({
         </Pressable>
 
         {menuVisible && (
-          <View
-            className="rounded-2xl border border-border/30"
-            style={{
-              position: 'absolute',
-              top: 40,
-              minWidth: 168,
-              backgroundColor: colors.card,
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 12 },
-              shadowOpacity: 0.15,
-              shadowRadius: 24,
-              elevation: 12,
-            }}
-          >
-            {personalityOptions.map((option, index) => {
-              const isActive = option.type === activeChatType;
-              const radiusStyle = {
-                borderTopLeftRadius: index === 0 ? 16 : 0,
-                borderTopRightRadius: index === 0 ? 16 : 0,
+          <>
+            <Pressable
+              onPress={() => setMenuVisible(false)}
+              style={{
+                position: 'absolute',
+                top: -1000,
+                bottom: -1000,
+                left: -1000,
+                right: -1000,
+                zIndex: 0,
+              }}
+            />
+            <View
+              className="rounded-2xl border border-border/30"
+              style={{
+                position: 'absolute',
+                top: 40,
+                minWidth: 168,
+                backgroundColor: colors.card,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 12 },
+                shadowOpacity: 0.15,
+                shadowRadius: 24,
+                elevation: 12,
+                zIndex: 1,
+              }}
+            >
+              {personalityOptions.map((option, index) => {
+                const isActive = option.type === activeChatType;
+                const radiusStyle = {
+                  borderTopLeftRadius: index === 0 ? 16 : 0,
+                  borderTopRightRadius: index === 0 ? 16 : 0,
                 borderBottomLeftRadius:
                   index === personalityOptions.length - 1 ? 16 : 0,
                 borderBottomRightRadius:
@@ -223,7 +232,7 @@ export const ChatHeader = memo(function ChatHeader({
                     <Text
                       className="text-base"
                       style={{
-                        color: colors.foreground,
+                        color: isActive ? accentTint : colors.foreground,
                         fontWeight: isActive ? '600' : '500',
                       }}
                     >
@@ -233,31 +242,44 @@ export const ChatHeader = memo(function ChatHeader({
                       <SymbolView
                         name="checkmark"
                         size={16}
-                        tintColor={colors.foreground}
+                        tintColor={accentTint}
                       />
                     )}
                   </View>
                 </Pressable>
               );
             })}
-          </View>
+            </View>
+          </>
         )}
       </View>
 
-      {onOpenVentChat ? (
-        <Pressable
-          onPress={onOpenVentChat}
-          hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
-          accessibilityRole="button"
-          accessibilityLabel={
-            isArabic ? 'افتح دردشة التنفيس' : 'Open vent chat'
+      <View
+        onLayout={(event) => {
+          const width = event.nativeEvent.layout.width;
+          if (width !== rightWidth) {
+            setRightWidth(width);
           }
-        >
-          <MessageSquareLock size={22} color={colors.foreground} />
-        </Pressable>
-      ) : (
-        <View style={{ width: 40 }} />
-      )}
+        }}
+        style={{
+          width: sideWidth || undefined,
+          alignItems: 'flex-end',
+          justifyContent: 'center',
+        }}
+      >
+        {onOpenVentChat ? (
+          <Pressable
+            onPress={onOpenVentChat}
+            hitSlop={{ top: 12, bottom: 12, left: 12, right: 12 }}
+            accessibilityRole="button"
+            accessibilityLabel={
+              isArabic ? 'افتح دردشة التنفيس' : 'Open vent chat'
+            }
+          >
+            <MessageSquareLock size={22} color={accentTint} />
+          </Pressable>
+        ) : null}
+      </View>
     </View>
   );
 });

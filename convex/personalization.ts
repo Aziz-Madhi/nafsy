@@ -1,5 +1,10 @@
 import { v } from 'convex/values';
-import { query, internalMutation, internalAction, internalQuery } from './_generated/server';
+import {
+  query,
+  internalMutation,
+  internalAction,
+  internalQuery,
+} from './_generated/server';
 import { api, internal } from './_generated/api';
 import { Doc, Id } from './_generated/dataModel';
 // Responses API usage is enforced; no fallbacks.
@@ -111,8 +116,10 @@ export const buildUserContext = internalQuery({
           const evening =
             moods.find((m: any) => m.timeOfDay === 'evening') ||
             moods.find(
-              (m: any) => new Date(m.createdAt).getHours() >= 12 && m !== morning
-            ) || null;
+              (m: any) =>
+                new Date(m.createdAt).getHours() >= 12 && m !== morning
+            ) ||
+            null;
 
           return { morning, evening, all: moods };
         })(),
@@ -125,13 +132,24 @@ export const buildUserContext = internalQuery({
             .order('desc')
             .take(50);
 
-          const exerciseIds = [...new Set(progress.map((p: any) => p.exerciseId))];
-          const exercises = await Promise.all(exerciseIds.map((id) => ctx.db.get(id)));
-          const map = new Map(exercises.filter(Boolean).map((e: any) => [e._id, e]));
-          return progress.map((p: any) => ({ ...p, exercise: map.get(p.exerciseId) }));
+          const exerciseIds = [
+            ...new Set(progress.map((p: any) => p.exerciseId)),
+          ];
+          const exercises = await Promise.all(
+            exerciseIds.map((id) => ctx.db.get(id))
+          );
+          const map = new Map(
+            exercises.filter(Boolean).map((e: any) => [e._id, e])
+          );
+          return progress.map((p: any) => ({
+            ...p,
+            exercise: map.get(p.exerciseId),
+          }));
         })(),
         // For first-week users, skip weekly summary (we'll use onboarding context)
-        isFirstWeek ? Promise.resolve(null) : getLatestWeeklySummary(ctx, user._id),
+        isFirstWeek
+          ? Promise.resolve(null)
+          : getLatestWeeklySummary(ctx, user._id),
       ]);
 
       // Build onboarding profile context for first-week users (no summarization)
@@ -880,7 +898,14 @@ interface FormatContextParams {
 }
 
 function formatUserContext(params: FormatContextParams): string {
-  const { user, level, todayMoods, todayExercises, weeklySummary, onboardingText } = params;
+  const {
+    user,
+    level,
+    todayMoods,
+    todayExercises,
+    weeklySummary,
+    onboardingText,
+  } = params;
   const isArabic = user.language === 'ar';
 
   // Language-aware labels
@@ -921,12 +946,18 @@ function formatUserContext(params: FormatContextParams): string {
     // First line under the "Onboarding Profile" label (age/gender/last month mood)
     const first = lines.shift();
     if (first) {
-      const firstTrimmed = truncateToSentenceBoundary(first, WEEKLY_SUMMARY_MAX_CHARS);
+      const firstTrimmed = truncateToSentenceBoundary(
+        first,
+        WEEKLY_SUMMARY_MAX_CHARS
+      );
       contextParts.push(`${labels.onboarding}: ${firstTrimmed}`);
     }
     // Then add remaining onboarding lines as their own labeled rows (Goals, Help areas, etc.)
     for (const ln of lines) {
-      const lineTrimmed = truncateToSentenceBoundary(ln, WEEKLY_SUMMARY_MAX_CHARS);
+      const lineTrimmed = truncateToSentenceBoundary(
+        ln,
+        WEEKLY_SUMMARY_MAX_CHARS
+      );
       contextParts.push(lineTrimmed);
     }
   } else if (weeklySummary) {
@@ -1028,7 +1059,10 @@ function formatOnboardingProfileText(userDoc: any, language: string): string {
     parts.push(`${L.self}: ${joinOrNone(userDoc.selfImage)}`);
 
   // Notes
-  if (typeof userDoc.additionalNotes === 'string' && userDoc.additionalNotes.trim()) {
+  if (
+    typeof userDoc.additionalNotes === 'string' &&
+    userDoc.additionalNotes.trim()
+  ) {
     const note = userDoc.additionalNotes.trim();
     parts.push(`${L.notes}: ${truncateToSentenceBoundary(note, 600)}`);
   }

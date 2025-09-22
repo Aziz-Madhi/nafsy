@@ -16,6 +16,7 @@ import Animated, {
   withTiming,
   cancelAnimation,
 } from 'react-native-reanimated';
+import { useTranslation } from '~/hooks/useTranslation';
 
 interface VoiceOverlayProps {
   visible: boolean;
@@ -27,6 +28,7 @@ interface VoiceOverlayProps {
   onToggleMute?: () => void;
   title?: string;
   subtitle?: string;
+  message?: string;
 }
 
 const DISC_SIZE = 260;
@@ -41,17 +43,19 @@ export function VoiceOverlay({
   onToggleMute,
   title = 'Voice',
   subtitle,
+  message,
 }: VoiceOverlayProps) {
   const colors = useColors();
   const insets = useSafeAreaInsets();
   const currentTheme = useAppStore((state) => state.currentTheme);
   const isDarkTheme = currentTheme === 'dark';
+  const { t } = useTranslation();
 
   const statusSubtitle = useMemo(() => {
     if (typeof subtitle === 'string') return subtitle;
-    if (isActive) return 'Connected';
-    return 'Connecting';
-  }, [isActive, subtitle]);
+    if (isActive) return t('voice.overlay.connected', 'Connected');
+    return t('voice.overlay.connecting', 'Connecting');
+  }, [isActive, subtitle, t]);
 
   const topPadding = Math.max(insets.top + 4, 16);
   const bottomPadding = Math.max(insets.bottom + 28, 72);
@@ -60,6 +64,12 @@ export function VoiceOverlay({
     colors.background,
     isDarkTheme ? 0.96 : 0.94
   );
+
+  const limitBackground = withOpacity(
+    colors.error || '#EF4444',
+    isDarkTheme ? 0.85 : 0.92
+  );
+  const limitBorder = withOpacity(colors.error || '#EF4444', 0.35);
 
   const glassColors = isDarkTheme
     ? [
@@ -85,6 +95,10 @@ export function VoiceOverlay({
         withOpacity(colors.cardDarker, 0.32),
       ];
 
+  const discGradientColors = isDarkTheme
+    ? ['#0d2421', '#19322f']
+    : ['#F5EFE8', '#E8DED1'];
+
   const titleColor = isDarkTheme ? 'rgba(255,255,255,0.92)' : colors.foreground;
   const subtitleColor = isDarkTheme
     ? 'rgba(255,255,255,0.7)'
@@ -95,9 +109,6 @@ export function VoiceOverlay({
 
   const handleToggleMute = onToggleMute ?? (() => {});
   const muteDisabled = !onToggleMute;
-
-  const cardElevated = colors.cardElevated || colors.card || '#E8DED1';
-  const cardDarker = colors.cardDarker || colors.card || '#1F2A2E';
 
   const floatPhase = useSharedValue(0);
   const breathPhase = useSharedValue(0);
@@ -189,12 +200,35 @@ export function VoiceOverlay({
             >
               {statusSubtitle}
             </Text>
-            <Text
-              variant="subhead"
-              style={[styles.statusSubtitle, { color: subtitleColor }]}
-            >
-              Stay close to the microphone for the best quality.
-            </Text>
+            {message ? (
+              <View
+                style={[
+                  styles.messagePill,
+                  {
+                    backgroundColor: limitBackground,
+                    borderColor: limitBorder,
+                  },
+                ]}
+              >
+                <Text
+                  variant="subhead"
+                  style={styles.messageText}
+                  numberOfLines={2}
+                >
+                  {message}
+                </Text>
+              </View>
+            ) : (
+              <Text
+                variant="subhead"
+                style={[styles.statusSubtitle, { color: subtitleColor }]}
+              >
+                {t(
+                  'voice.overlay.stayClose',
+                  'Stay close to the microphone for the best quality.'
+                )}
+              </Text>
+            )}
           </View>
         </View>
 
@@ -215,9 +249,7 @@ export function VoiceOverlay({
               />
               <View style={styles.baseDisc}>
                 <LinearGradient
-                  colors={
-                    isDarkTheme ? ['#0d2421', '#19322f'] : ['#F5EFE8', '#E8DED1']
-                  }
+                  colors={discGradientColors}
                   start={{ x: 0.25, y: 0 }}
                   end={{ x: 0.85, y: 1 }}
                   style={StyleSheet.absoluteFill}
@@ -313,6 +345,18 @@ const styles = StyleSheet.create({
   statusSubtitle: {
     textAlign: 'center',
     marginTop: 16,
+  },
+  messagePill: {
+    marginTop: 16,
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 18,
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  messageText: {
+    textAlign: 'center',
+    color: '#FFFFFF',
+    fontWeight: '600',
   },
   meterWrapper: {
     alignItems: 'center',

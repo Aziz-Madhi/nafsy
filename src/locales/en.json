@@ -170,12 +170,12 @@
       "finish": "Finish",
       "saving": "Saving...",
       "privacy": {
-        "title": "Privacy First",
-        "description": "Your data is encrypted and never shared."
+        "title": "Safe & Yours",
+        "description": "Your words are protected and used to personalize your experience only."
       },
       "companion": {
         "title": "Daily Companion",
-        "description": "Support for wellness. Not a replacement for professional care."
+        "description": "Wellness support. Not a replacement for professional care."
       },
       "learning": {
         "title": "Learns With You",
@@ -599,7 +599,7 @@
       "movement": "Movement",
       "journaling": "Journaling",
       "relaxation": "Relaxation",
-      "reminders": "Reminders"
+      "habits": "Habits"
     },
     "descriptions": {
       "breathing": "Calm your mind with breath",
@@ -607,7 +607,7 @@
       "movement": "Move your body gently",
       "journaling": "Express your thoughts",
       "relaxation": "Find your inner peace",
-      "reminders": "Daily wellness wisdom"
+      "habits": "Build healthy routines"
     },
     "stats": {
       "completed": "Completed",
@@ -774,6 +774,19 @@
       "helpCenter": "Help Center",
       "crisisResources": "Crisis Resources",
       "feedback": "Send Feedback"
+    }
+  },
+  "voice": {
+    "limit": {
+      "monthlyReached": "You've reached your voice monthly limit."
+    },
+    "overlay": {
+      "stayClose": "Stay close to the microphone for the best quality.",
+      "connected": "Connected",
+      "connecting": "Connecting"
+    },
+    "errors": {
+      "sessionFailed": "Voice session failed"
     }
   },
   "helpCenter": {

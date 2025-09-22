@@ -26,54 +26,54 @@ The full source code is at https://github.com/ldanilek/whisper, and I’ll highl
 To create a Whisper — an encrypted secret message — we use AES symmetric encryption before calling the createWhisper mutation in Convex. This code runs in the browser, so the raw URL and secret are never sent to Convex.
 
 if (password.length === 0) {
-  password = uuid.v4();
+password = uuid.v4();
 }
 const encryptedSecret = CryptoJS.AES.encrypt(secret, password).toString();
 const passwordHash = hashPassword(password);
 await createWhisperMutation(
-	name, encryptedSecret, passwordHash, creatorKey, expiration,
+name, encryptedSecret, passwordHash, creatorKey, expiration,
 );
 
 Accessing the Whisper requires password hash to match, and it’s a mutation so the access can be recorded. This code runs in a transaction on Convex servers.
 
 // accessWhisper.ts
 export default mutation({
-  args: {
-      whisperName: v.string();
-      passwordHash: v.string();
-      accessKey: v.string();
-      ip: v.union(v.string(), v.null());
-  },
-  handler: async (
-    { db },
-    {
-      whisperName,
-      passwordHash,
-      accessKey,
-      ip,
-    }
-  ) => {
-    const whisperDoc = await getValidWhisper(db, whisperName, true);
-    if (!timingSafeEqual(whisperDoc.passwordHash, passwordHash)) {
-      throw Error("incorrect password");
-    }
-    await db.insert("accesses", {
-      name: whisperName,
-      accessKey,
-      ip,
-    });
-  },
+args: {
+whisperName: v.string();
+passwordHash: v.string();
+accessKey: v.string();
+ip: v.union(v.string(), v.null());
+},
+handler: async (
+{ db },
+{
+whisperName,
+passwordHash,
+accessKey,
+ip,
+}
+) => {
+const whisperDoc = await getValidWhisper(db, whisperName, true);
+if (!timingSafeEqual(whisperDoc.passwordHash, passwordHash)) {
+throw Error("incorrect password");
+}
+await db.insert("accesses", {
+name: whisperName,
+accessKey,
+ip,
+});
+},
 });
 
 Once the access is registered, we use a Convex query to read the encrypted message, and AES to decrypt it.
 
 const SecretDisplay = ({name, accessKey, password}) => {
-  const encryptedSecret = useQuery(api.readSecret.default, name, accessKey);
-  return <div>{
-    encryptedSecret ?
-		CryptoJS.AES.decrypt(encryptedSecret, password).toString(CryptoJS.enc.Utf8) 
-		: "Loading..."
-  }</div>;
+const encryptedSecret = useQuery(api.readSecret.default, name, accessKey);
+return <div>{
+encryptedSecret ?
+CryptoJS.AES.decrypt(encryptedSecret, password).toString(CryptoJS.enc.Utf8)
+: "Loading..."
+}</div>;
 }
 
 To delete expired secrets, we schedule a mutation to delete the encrypted message.
@@ -81,6 +81,6 @@ To delete expired secrets, we schedule a mutation to delete the encrypted messag
 // inside createWhisper.ts
 await scheduler.runAt(expireTime, internal.deleteExpired.default, whisperName, creatorKey);
 // inside expireNow.ts
-await db.patch(whisperDoc!._id, {
-  encryptedSecret: "",
+await db.patch(whisperDoc!.\_id, {
+encryptedSecret: "",
 });

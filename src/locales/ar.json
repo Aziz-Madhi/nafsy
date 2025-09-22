@@ -145,12 +145,12 @@
         "emotionalRegulation": "تنظيم المشاعر",
         "ventFeelings": "مساحة آمنة للتنفيس"
       },
-    "helpAreas": {
-      "talkToSomeone": "التحدث مع شخص",
-      "mindfulnessPractice": "اليقظة",
-      "breathingGuidance": "التنفس",
-      "journalingPrompts": "الكتابة"
-    },
+      "helpAreas": {
+        "talkToSomeone": "التحدث مع شخص",
+        "mindfulnessPractice": "اليقظة",
+        "breathingGuidance": "التنفس",
+        "journalingPrompts": "الكتابة"
+      },
       "selfImage": {
         "stressed": "متوتر",
         "overwhelmed": "مُثقل",
@@ -177,8 +177,8 @@
       "finish": "إنهاء",
       "saving": "جارٍ الحفظ...",
       "privacy": {
-        "title": "الخصوصية أولاً",
-        "description": "بياناتك مُشفرة ولا تتم مشاركتها أبداً."
+        "title": "آمنة ومِلكك",
+        "description": "كلماتك محميّة وتُستخدم لتخصيص تجربتك فقط."
       },
       "companion": {
         "title": "رفيق يومي",
@@ -606,7 +606,7 @@
       "movement": "الحركة",
       "journaling": "كتابة اليوميات",
       "relaxation": "الاسترخاء",
-      "reminders": "التذكيرات"
+      "habits": "العادات"
     },
     "descriptions": {
       "breathing": "اهدأ عقلك بالتنفّس",
@@ -614,7 +614,7 @@
       "movement": "حرك جسدك برفق",
       "journaling": "عبر عن أفكارك",
       "relaxation": "اعثر على سلامك الداخلي",
-      "reminders": "حكمة العافية اليومية"
+      "habits": "ابنِ عادات صحية"
     },
     "stats": {
       "completed": "مكتمل",
@@ -771,11 +771,24 @@
     "subscription": {
       "freePlan": "خطة مجانية"
     },
-    
+
     "support": {
       "helpCenter": "مركز المساعدة",
       "crisisResources": "موارد الأزمات",
       "feedback": "إرسال ملاحظات"
+    }
+  },
+  "voice": {
+    "limit": {
+      "monthlyReached": "لقد وصلت إلى الحد الشهري للصوت."
+    },
+    "overlay": {
+      "stayClose": "ابقَ قريبًا من الميكروفون للحصول على أفضل جودة.",
+      "connected": "متصل",
+      "connecting": "جاري الاتصال"
+    },
+    "errors": {
+      "sessionFailed": "فشل بدء جلسة الصوت"
     }
   },
   "helpCenter": {

@@ -1,11 +1,21 @@
 {
   "mcpServers": {
     "RadonAi": {
-      "url": "http://127.0.0.1:61217/mcp",
+      "url": "http://127.0.0.1:62145/mcp",
       "type": "http",
       "headers": {
-        "nonce": "5c7234fa-ecc9-47f6-85e4-c2a80e6bf6d0"
+        "nonce": "f9f9fc56-1f91-488e-9e4a-15d4f69f816c"
       }
+    },
+    "convex": {
+      "command": "bunx -y convex@latest mcp start",
+      "env": {
+        "CONVEX_DEPLOYMENT": "admired-dog-452"
+      },
+      "args": [
+        "--projectDir",
+        "/Users/azizmadhi/naf"
+      ]
     }
   }
 }

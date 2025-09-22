@@ -59,7 +59,11 @@ export const generateAndApplyTitle = internalAction({
   args: {
     userId: v.id('users'),
     sessionId: v.string(),
-    chatType: v.union(v.literal('main'), v.literal('companion'), v.literal('vent')),
+    chatType: v.union(
+      v.literal('main'),
+      v.literal('companion'),
+      v.literal('vent')
+    ),
   },
   returns: v.union(v.object({ title: v.string() }), v.null()),
   handler: async (ctx, args) => {
@@ -78,12 +82,15 @@ export const generateAndApplyTitle = internalAction({
     if (!config) return null;
 
     // Gather first three messages for the session
-    const serverMessages = await ctx.runQuery(internal.chat._getMessagesForSession, {
-      userId: args.userId as Id<'users'>,
-      type: (args.chatType as any),
-      sessionId: args.sessionId,
-      limit: 50,
-    });
+    const serverMessages = await ctx.runQuery(
+      internal.chat._getMessagesForSession,
+      {
+        userId: args.userId as Id<'users'>,
+        type: args.chatType as any,
+        sessionId: args.sessionId,
+        limit: 50,
+      }
+    );
     const asc = [...serverMessages].sort((a, b) => a.createdAt - b.createdAt);
     const firstThree = asc.slice(0, 3).map((m) => ({
       role: m.role as 'user' | 'assistant',

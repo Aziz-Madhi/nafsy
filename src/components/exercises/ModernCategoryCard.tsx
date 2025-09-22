@@ -1,5 +1,10 @@
 import React, { memo, useState, useCallback, useMemo } from 'react';
-import { View, Pressable, ImageBackground, ImageSourcePropType } from 'react-native';
+import {
+  View,
+  Pressable,
+  ImageBackground,
+  ImageSourcePropType,
+} from 'react-native';
 import type { ImageStyle } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { Text } from '~/components/ui/text';
@@ -31,7 +36,7 @@ export const CATEGORY_BACKGROUNDS: Record<
   movement: require('../../../assets/Cards/New colored cards/Movement new card.jpg'),
   journaling: require('../../../assets/Cards/New colored cards/Journaling new card.jpg'),
   relaxation: require('../../../assets/Cards/New colored cards/Relaxation new card..jpeg'),
-  reminders: require('../../../assets/Cards/New colored cards/Reminders new card.jpg'),
+  habits: require('../../../assets/Cards/New colored cards/Reminders new card.jpg'),
 };
 
 // Dark theme variants for the same categories
@@ -44,7 +49,7 @@ export const CATEGORY_BACKGROUNDS_DARK: Record<
   movement: require('../../../assets/Cards/Cards Enhanced/Movement dark mood card.png'),
   journaling: require('../../../assets/Cards/Cards Enhanced/Journaling Dark mood card.png'),
   relaxation: require('../../../assets/Cards/Cards Enhanced/Relaxation Dark Mode Card.png'),
-  reminders: require('../../../assets/Cards/Cards Enhanced/Reminders Dark Mode Cartd.png'),
+  habits: require('../../../assets/Cards/Cards Enhanced/Reminders Dark Mode Cartd.png'),
 };
 
 function ModernCategoryCardComponent({
@@ -59,10 +64,9 @@ function ModernCategoryCardComponent({
 
   // Use the id so images work for all locales (Arabic/English)
   const currentTheme = useAppStore((s) => s.currentTheme);
-  const backgroundImage =
-    (currentTheme === 'dark'
-      ? CATEGORY_BACKGROUNDS_DARK
-      : CATEGORY_BACKGROUNDS)[category.id];
+  const backgroundImage = (
+    currentTheme === 'dark' ? CATEGORY_BACKGROUNDS_DARK : CATEGORY_BACKGROUNDS
+  )[category.id];
 
   // Colors for React Native styling
   const colors = useColors();
@@ -97,7 +101,13 @@ function ModernCategoryCardComponent({
                 top: -2, // tiny overscan to avoid any top gap
                 bottom: -6, // slight overscan at bottom so we can position lower without gaps
               }
-            : { position: 'absolute' as const, left: 0, right: 0, top: 0, bottom: 0 };
+            : {
+                position: 'absolute' as const,
+                left: 0,
+                right: 0,
+                top: 0,
+                bottom: 0,
+              };
           return backgroundImage && !imageError ? (
             <ImageBackground
               source={backgroundImage}

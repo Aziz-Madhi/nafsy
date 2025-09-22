@@ -83,7 +83,9 @@ function DailyExerciseCardComponent({
                       autoAlign={false}
                       numberOfLines={2}
                     >
-                      {exercise.descriptionAr ? exercise.descriptionAr : exercise.description}
+                      {exercise.descriptionAr
+                        ? exercise.descriptionAr
+                        : exercise.description}
                     </Text>
                   </>
                 ) : (

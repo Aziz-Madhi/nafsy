@@ -49,9 +49,9 @@ Data model in `convex/schema.ts`:
 
 ```ts
 globalTopups: defineTable({
-  windowStart: v.number(),  // start of the current UTC week
-  remaining: v.number(),    // pool remaining for this week (applies to all users)
-}).index('by_window', ['windowStart'])
+  windowStart: v.number(), // start of the current UTC week
+  remaining: v.number(), // pool remaining for this week (applies to all users)
+}).index('by_window', ['windowStart']);
 ```
 
 Server helpers in `convex/rateLimit.ts`:
@@ -71,7 +71,10 @@ if (!status.ok) {
   const consumed = await tryConsumeGlobalTopup(ctx);
   if (!consumed) {
     // 3) No top-up available → throw 429
-    await appRateLimiter.limit(ctx, 'chatWeekly', { key: userId, throws: true });
+    await appRateLimiter.limit(ctx, 'chatWeekly', {
+      key: userId,
+      throws: true,
+    });
   }
 }
 ```
@@ -88,8 +91,10 @@ When the server returns `429`, the client injects a localized assistant‑style 
 // On streaming error with status 429:
 const systemNotice: Message = {
   _id: `sys-rate-${Date.now()}`,
-  content: t('chat.limit.weeklyReached',
-    "You've reached your weekly message limit. Please check back next week."),
+  content: t(
+    'chat.limit.weeklyReached',
+    "You've reached your weekly message limit. Please check back next week."
+  ),
   role: 'assistant',
   _creationTime: Date.now(),
 };
@@ -107,10 +112,11 @@ Locales updated:
 
 ### Change the weekly cap (base limit)
 
-1) Update Convex env var `CHAT_WEEKLY_LIMIT` (e.g., `250 → 300`).
-2) Restart Convex workers (dev: restart `convex dev`; prod: `bun convex:deploy`).
+1. Update Convex env var `CHAT_WEEKLY_LIMIT` (e.g., `250 → 300`).
+2. Restart Convex workers (dev: restart `convex dev`; prod: `bun convex:deploy`).
 
 Notes:
+
 - The limiter config is loaded at worker start; a restart is required to pick up new env values.
 
 ### Grant additional messages instantly to everyone
@@ -122,6 +128,7 @@ internal.rateLimit.grantGlobalTopup({ amount: 100 });
 ```
 
 Effects:
+
 - Immediately adds `+100` messages to the shared pool for the current week.
 - Users who already hit their weekly cap can continue; each additional send consumes one from the pool.
 - Negative amounts are allowed (pool won’t go below zero) if you need to reduce remaining top‑ups.
@@ -133,6 +140,7 @@ internal.rateLimit.resetChatWeekly({ userId: '<Convex users._id>' });
 ```
 
 Use cases:
+
 - QA flow for a specific tester, or targeted support intervention.
 
 ### Inspect the current top‑up pool
@@ -176,12 +184,12 @@ Frontend (App):
 
 ## How To Test
 
-1) Set a small weekly cap:
+1. Set a small weekly cap:
    - Set `CHAT_WEEKLY_LIMIT=3` and restart Convex.
-2) Send 3 messages — 4th should 429.
-3) Grant a top‑up:
+2. Send 3 messages — 4th should 429.
+3. Grant a top‑up:
    - `internal.rateLimit.grantGlobalTopup({ amount: 2 })` → next 2 messages should succeed.
-4) Raise the base cap:
+4. Raise the base cap:
    - Set `CHAT_WEEKLY_LIMIT=5`, restart Convex → base limit now 5 + any remaining top‑ups.
 
 ---
@@ -243,5 +251,3 @@ await internal.rateLimit.resetChatWeekly({ userId: 'xxxx' });
 - Removed daily chat limit and any duplicate/legacy DB‑based rate limit checks.
 - Consolidated all chat limiting to `chatWeekly` + global top‑ups.
 - Localized user‑facing rate‑limit messaging.
-
-

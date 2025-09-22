@@ -19,7 +19,7 @@ export const getAllExercises = query({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
-        v.literal('reminders')
+        v.literal('habits')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -49,7 +49,7 @@ export const getExercisesByCategory = query({
       v.literal('journaling'),
       v.literal('movement'),
       v.literal('relaxation'),
-      v.literal('reminders')
+      v.literal('habits')
     ),
   },
   returns: v.array(
@@ -66,7 +66,7 @@ export const getExercisesByCategory = query({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
-        v.literal('reminders')
+        v.literal('habits')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -109,7 +109,7 @@ export const getExercise = query({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
-        v.literal('reminders')
+        v.literal('habits')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -141,7 +141,7 @@ export const getRandomExerciseByCategories = query({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
-        v.literal('reminders')
+        v.literal('habits')
       )
     ),
   },
@@ -159,6 +159,7 @@ export const getRandomExerciseByCategories = query({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
+        v.literal('habits'),
         v.literal('reminders')
       ),
       duration: v.number(),
@@ -210,7 +211,7 @@ export const createExercise = internalMutation({
       v.literal('journaling'),
       v.literal('movement'),
       v.literal('relaxation'),
-      v.literal('reminders')
+      v.literal('habits')
     ),
     duration: v.number(),
     difficulty: v.union(
@@ -244,7 +245,7 @@ export const updateExercise = internalMutation({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
-        v.literal('reminders')
+        v.literal('habits')
       )
     ),
     duration: v.optional(v.number()),
@@ -278,7 +279,7 @@ export const getExercisesWithProgress = query({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
-        v.literal('reminders')
+        v.literal('habits')
       )
     ),
   },
@@ -296,7 +297,7 @@ export const getExercisesWithProgress = query({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
-        v.literal('reminders')
+        v.literal('habits')
       ),
       duration: v.number(),
       difficulty: v.union(
@@ -382,6 +383,7 @@ export const getDailyExercise = query({
         v.literal('journaling'),
         v.literal('movement'),
         v.literal('relaxation'),
+        v.literal('habits'),
         v.literal('reminders')
       ),
       duration: v.number(),

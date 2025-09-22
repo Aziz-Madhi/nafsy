@@ -171,8 +171,10 @@ export function VentChatOverlay({
 
   // Track keyboard visibility to adjust reserved space precisely
   useEffect(() => {
-    const showEvent = Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
-    const hideEvent = Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
+    const showEvent =
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow';
+    const hideEvent =
+      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide';
     const onShow = () => setKeyboardVisible(true);
     const onHide = () => setKeyboardVisible(false);
     const s = Keyboard.addListener(showEvent, onShow);
@@ -206,7 +208,9 @@ export function VentChatOverlay({
   // Reserve space for the input only when keyboard is hidden; keep small when visible
   const BASE_RESERVED_BOTTOM = 152; // when keyboard hidden
   const safeAreaBottom = Math.max(insets.bottom, 16);
-  const reservedBottom = keyboardVisible ? Math.max(safeAreaBottom, 8) : BASE_RESERVED_BOTTOM + safeAreaBottom;
+  const reservedBottom = keyboardVisible
+    ? Math.max(safeAreaBottom, 8)
+    : BASE_RESERVED_BOTTOM + safeAreaBottom;
 
   // Match the top spacing created by ChatHeader (pt-16 + pb-4 ≈ 80px)
   // while ensuring content stays clear of translucent status bars.
@@ -236,126 +240,129 @@ export function VentChatOverlay({
             ]}
             className="flex-1 bg-black"
           >
-          {/* Center content: show intro text until user starts chatting */}
-          <View style={{ flex: 1 }}>
-            {!lastUserText && !lastAIText && !isLoading ? (
-              <View style={{ flex: 1, paddingBottom: reservedBottom }}>
-                <View
-                  className="flex-1 items-center justify-center px-8"
-                  style={{ paddingTop: headerTopSpace }}
-                >
-                  <Text
-                    variant="title3"
-                    className="font-bold text-center text-white"
+            {/* Center content: show intro text until user starts chatting */}
+            <View style={{ flex: 1 }}>
+              {!lastUserText && !lastAIText && !isLoading ? (
+                <View style={{ flex: 1, paddingBottom: reservedBottom }}>
+                  <View
+                    className="flex-1 items-center justify-center px-8"
+                    style={{ paddingTop: headerTopSpace }}
                   >
-                    {t('chat.vent.overlayTitle')}
-                  </Text>
-                  <Text
-                    variant="subhead"
-                    className="text-center text-gray-300 mt-2"
-                    style={{ textAlign: 'center' }}
+                    <Text
+                      variant="title3"
+                      className="font-bold text-center text-white"
+                    >
+                      {t('chat.vent.overlayTitle')}
+                    </Text>
+                    <Text
+                      variant="subhead"
+                      className="text-center text-gray-300 mt-2"
+                      style={{ textAlign: 'center' }}
+                    >
+                      {t('chat.vent.overlaySubtitle')}
+                    </Text>
+                  </View>
+                </View>
+              ) : (
+                <View style={{ paddingBottom: reservedBottom, flex: 1 }}>
+                  {/* Top half: user message pinned to the bottom of the top half */}
+                  <View
+                    style={{
+                      flex: 1,
+                      alignItems: 'center',
+                      justifyContent: 'flex-end',
+                    }}
                   >
-                    {t('chat.vent.overlaySubtitle')}
-                  </Text>
+                    {lastUserText && (
+                      <Animated.View
+                        key={`user-${lastUserText}`}
+                        style={{ paddingHorizontal: 32 }}
+                      >
+                        <Text className="text-center text-white text-xl font-semibold">
+                          {lastUserText}
+                        </Text>
+                      </Animated.View>
+                    )}
+                  </View>
+
+                  {/* Divider centered in the available space */}
+                  <View
+                    className="items-center"
+                    style={{ paddingVertical: 12 }}
+                  >
+                    {(lastUserText || lastAIText) && (
+                      <Animated.View>
+                        <View
+                          style={{
+                            backgroundColor: eventStyles.primaryColor + '55',
+                          }}
+                          className="h-[2px] w-16 rounded-full"
+                        />
+                      </Animated.View>
+                    )}
+                  </View>
+
+                  {/* Bottom half: AI response area with independent vertical scroll */}
+                  <ScrollView
+                    style={{ flex: 1 }}
+                    contentContainerStyle={{
+                      alignItems: 'center',
+                      justifyContent: 'flex-start',
+                      paddingHorizontal: 32,
+                      paddingBottom: 24,
+                    }}
+                    showsVerticalScrollIndicator
+                    indicatorStyle="white"
+                    keyboardShouldPersistTaps="handled"
+                  >
+                    {lastAIText && (
+                      <Animated.View key={`ai-${lastAIText}`}>
+                        <Text className="text-center text-gray-200 text-lg">
+                          {lastAIText}
+                        </Text>
+                      </Animated.View>
+                    )}
+
+                    {/* Loading indicator while waiting for AI; stays in the same slot */}
+                    {isLoading && lastUserText && !lastAIText && (
+                      <Animated.View
+                        className="flex-row gap-2"
+                        style={{ marginTop: 12 }}
+                      >
+                        <View
+                          style={{
+                            backgroundColor: eventStyles.primaryColor + '60',
+                          }}
+                          className="w-2 h-2 rounded-full"
+                        />
+                        <View
+                          style={{
+                            backgroundColor: eventStyles.primaryColor + '90',
+                          }}
+                          className="w-2 h-2 rounded-full"
+                        />
+                        <View
+                          style={{
+                            backgroundColor: eventStyles.primaryColor + '60',
+                          }}
+                          className="w-2 h-2 rounded-full"
+                        />
+                      </Animated.View>
+                    )}
+                  </ScrollView>
                 </View>
-              </View>
-            ) : (
-              <View style={{ paddingBottom: reservedBottom, flex: 1 }}>
-                {/* Top half: user message pinned to the bottom of the top half */}
-                <View
-                  style={{
-                    flex: 1,
-                    alignItems: 'center',
-                    justifyContent: 'flex-end',
-                  }}
-                >
-                  {lastUserText && (
-                    <Animated.View
-                      key={`user-${lastUserText}`}
-                      style={{ paddingHorizontal: 32 }}
-                    >
-                      <Text className="text-center text-white text-xl font-semibold">
-                        {lastUserText}
-                      </Text>
-                    </Animated.View>
-                  )}
-                </View>
+              )}
+            </View>
 
-                {/* Divider centered in the available space */}
-                <View className="items-center" style={{ paddingVertical: 12 }}>
-                  {(lastUserText || lastAIText) && (
-                    <Animated.View>
-                      <View
-                        style={{
-                          backgroundColor: eventStyles.primaryColor + '55',
-                        }}
-                        className="h-[2px] w-16 rounded-full"
-                      />
-                    </Animated.View>
-                  )}
-                </View>
+            {/* (Legacy centered loaders removed in favor of structured layout above) */}
 
-                {/* Bottom half: AI response area with independent vertical scroll */}
-                <ScrollView
-                  style={{ flex: 1 }}
-                  contentContainerStyle={{
-                    alignItems: 'center',
-                    justifyContent: 'flex-start',
-                    paddingHorizontal: 32,
-                    paddingBottom: 24,
-                  }}
-                  showsVerticalScrollIndicator
-                  indicatorStyle="white"
-                  keyboardShouldPersistTaps="handled"
-                >
-                  {lastAIText && (
-                    <Animated.View key={`ai-${lastAIText}`}>
-                      <Text className="text-center text-gray-200 text-lg">
-                        {lastAIText}
-                      </Text>
-                    </Animated.View>
-                  )}
-
-                  {/* Loading indicator while waiting for AI; stays in the same slot */}
-                  {isLoading && lastUserText && !lastAIText && (
-                    <Animated.View
-                      className="flex-row gap-2"
-                      style={{ marginTop: 12 }}
-                    >
-                      <View
-                        style={{
-                          backgroundColor: eventStyles.primaryColor + '60',
-                        }}
-                        className="w-2 h-2 rounded-full"
-                      />
-                      <View
-                        style={{
-                          backgroundColor: eventStyles.primaryColor + '90',
-                        }}
-                        className="w-2 h-2 rounded-full"
-                      />
-                      <View
-                        style={{
-                          backgroundColor: eventStyles.primaryColor + '60',
-                        }}
-                        className="w-2 h-2 rounded-full"
-                      />
-                    </Animated.View>
-                  )}
-                </ScrollView>
-              </View>
-            )}
-          </View>
-
-          {/* (Legacy centered loaders removed in favor of structured layout above) */}
-
-          {/* Bottom text input — reuse main chat's floating input (dark variant) */}
-          <FloatingChatInputStandalone
-            onSendMessage={onSendMessage}
-            chatType="event"
-            dark
-          />
-        </Animated.View>
+            {/* Bottom text input — reuse main chat's floating input (dark variant) */}
+            <FloatingChatInputStandalone
+              onSendMessage={onSendMessage}
+              chatType="event"
+              dark
+            />
+          </Animated.View>
         </KeyboardAvoidingView>
       </GestureDetector>
     </Modal>

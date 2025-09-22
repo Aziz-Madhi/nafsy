@@ -29,6 +29,7 @@ This report documents everything implemented to deliver reliable in‑app audio 
 ### 2.1 Component install
 
 `convex/convex.config.ts`
+
 ```ts
 import { defineApp } from 'convex/server';
 import r2 from '@convex-dev/r2/convex.config';
@@ -43,6 +44,7 @@ Environment (Convex): `R2_TOKEN`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R
 ### 2.2 Server functions
 
 `convex/r2.ts`
+
 - `r2 = new R2(components.r2)`
 - Upload (developer‑only):
   - `generateUploadUrl` (clientApi)
@@ -59,38 +61,49 @@ Environment (Convex): `R2_TOKEN`, `R2_ACCESS_KEY_ID`, `R2_SECRET_ACCESS_KEY`, `R
 ### 2.3 Schema & validators
 
 `convex/schema.ts`
+
 - `exercises` table includes `audioKey?: string`.
 
 `convex/exercises.ts`
+
 - All query return validators include optional `audioKey` to avoid `ReturnsValidationError` when linked.
 
 ### 2.4 Developer upload + link flow
 
 We do NOT allow end‑user upload. A developer attaches audio to an exercise:
 
-1) Generate PUT URL (via MCP/Convex):
+1. Generate PUT URL (via MCP/Convex):
+
 ```ts
 await api.r2.generateUploadUrlWithCustomKey({
   key: 'audio/exercises/<exerciseId>.mp3',
 });
 ```
-2) Upload locally:
+
+2. Upload locally:
+
 ```bash
 curl -X PUT -H 'Content-Type: audio/mpeg' \
   --data-binary @/absolute/path/to/file.mp3 "<signed_put_url>"
 ```
-3) Sync metadata (optional):
+
+3. Sync metadata (optional):
+
 ```ts
 await api.r2.syncMetadata({ key: 'audio/exercises/<exerciseId>.mp3' });
 ```
-4) Link to exercise:
+
+4. Link to exercise:
+
 ```ts
 await api.r2.linkExerciseAudio({
   exerciseId: '<id>',
   key: 'audio/exercises/<exerciseId>.mp3',
 });
 ```
-5) Playback (client): request a signed GET URL when starting playback:
+
+5. Playback (client): request a signed GET URL when starting playback:
+
 ```ts
 const url = await convex.query(api.r2.getExerciseAudioUrl, {
   exerciseId: '<id>',
@@ -109,19 +122,21 @@ const url = await convex.query(api.r2.getExerciseAudioUrl, {
 `src/providers/AudioPlayerProvider.tsx`
 
 Responsibilities:
+
 - Create and manage a single `expo-audio` player.
 - Configure audio session on start and fully release it on close.
 - Track `isPlaying`, `positionMillis`, `durationMillis` from `playbackStatusUpdate`.
 - Present a full‑screen modal with blurred category background, seek bar, play/pause, ±10s, and speed toggle.
 
 Public API:
+
 ```ts
 interface AudioTrack {
   id: string;
   title: string;
   subtitle?: string; // category label for backdrop
-  icon?: string;     // emoji for header circle
-  color?: string;    // accent for play/progress
+  icon?: string; // emoji for header circle
+  color?: string; // accent for play/progress
   durationSeconds?: number;
   sourceUri?: string; // signed R2 url
   onClose?: () => void; // optional callback after close
@@ -140,6 +155,7 @@ interface AudioPlayerContextValue {
 ```
 
 Lifecycle:
+
 - Start
   - `setAudioModeAsync({ playsInSilentMode: true, … })`
   - `setIsAudioActiveAsync(true)`
@@ -150,9 +166,11 @@ Lifecycle:
   - `setIsAudioActiveAsync(false)` → clear state → call `track.onClose?.()`
 
 UI highlights:
+
 - Full‑screen modal (fade), blurred category image (expo-blur), Lucide icons (Play, Pause, RotateCcw, RotateCw, X), tap‑to‑seek, speed cycle (x1 → x1.25 → x1.5 → x2).
 
 ### 3.2 Why expo‑audio (not expo‑av)
+
 - Simpler player lifecycle for SDK 53.
 - The issue “setAudioModeAsync of undefined” occurred when using expo‑av imports. Switching to expo‑audio fixed it.
 
@@ -163,6 +181,7 @@ UI highlights:
 To eliminate modal stacking (root cause of freezes), we use pushed screens for browsing; the audio player is the only modal.
 
 `src/app/(app)/tabs/exercises/_layout.tsx`
+
 - All screens: `presentation: 'card'`, `animation: 'slide_from_right'`.
 - Routes:
   - `index` — exercises landing
@@ -170,10 +189,12 @@ To eliminate modal stacking (root cause of freezes), we use pushed screens for b
   - `exercise/[id]` — exercise detail
 
 `src/app/(app)/tabs/exercises/category/[id].tsx`
+
 - Lists exercises and pushes to detail: `router.push('/tabs/exercises/exercise/<id>')`.
 - Safe‑area top padding added for back chevron.
 
 `src/app/(app)/tabs/exercises/exercise/[id].tsx`
+
 - Fetches exercise via `api.exercises.getExercise`.
 - Shows description, steps, meta, and Start button.
 - On Start: requests signed URL via `api.r2.getExerciseAudioUrl`, then `useAudioPlayer().open({...})`; records completion via `api.userProgress.recordCompletion`.
@@ -214,15 +235,16 @@ Result: Only one modal (audio player) at a time. No invisible modal intercepting
 ## 8) File Map
 
 Backend:
+
 - `convex/convex.config.ts` — R2 component
 - `convex/r2.ts` — upload/link/serve functions
 - `convex/schema.ts` — `exercises.audioKey`
 - `convex/exercises.ts` — validators include `audioKey`
 
 Frontend:
+
 - `src/providers/AudioPlayerProvider.tsx` — player + UI
 - `src/app/(app)/tabs/exercises/_layout.tsx` — stack as card screens
 - `src/app/(app)/tabs/exercises/index.tsx` — landing
 - `src/app/(app)/tabs/exercises/category/[id].tsx` — category
 - `src/app/(app)/tabs/exercises/exercise/[id].tsx` — detail
-

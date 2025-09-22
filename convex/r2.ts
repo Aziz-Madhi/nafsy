@@ -40,7 +40,10 @@ export const getFileUrl = query({
   },
   returns: v.string(),
   handler: async (_ctx, args) => {
-    return r2.getUrl(args.key, args.expiresIn ? { expiresIn: args.expiresIn } : undefined);
+    return r2.getUrl(
+      args.key,
+      args.expiresIn ? { expiresIn: args.expiresIn } : undefined
+    );
   },
 });
 
@@ -58,10 +61,15 @@ export const getExerciseAudioUrl = query({
     const lang = args.lang || 'en';
     const key =
       lang === 'ar'
-        ? ((exercise as any).audioKeyAr as string | undefined) || ((exercise as any).audioKey as string | undefined)
-        : ((exercise as any).audioKey as string | undefined) || ((exercise as any).audioKeyAr as string | undefined);
+        ? ((exercise as any).audioKeyAr as string | undefined) ||
+          ((exercise as any).audioKey as string | undefined)
+        : ((exercise as any).audioKey as string | undefined) ||
+          ((exercise as any).audioKeyAr as string | undefined);
     if (!key) return null;
-    return r2.getUrl(key, args.expiresIn ? { expiresIn: args.expiresIn } : undefined);
+    return r2.getUrl(
+      key,
+      args.expiresIn ? { expiresIn: args.expiresIn } : undefined
+    );
   },
 });
 

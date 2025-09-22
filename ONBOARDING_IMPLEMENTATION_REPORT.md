@@ -10,14 +10,17 @@ This document explains the new onboarding flow that precedes sign‑up and the p
 
 ## User Flow
 
-1) Welcome (pre‑auth)
+1. Welcome (pre‑auth)
+
 - Introduces Nafsy (AI chat, mood tracking, exercises)
 - Actions: “Get Started” → Sign Up, “I already have an account” → Sign In
 
-2) Sign In / Sign Up (auth)
+2. Sign In / Sign Up (auth)
+
 - After sign up, users are routed into onboarding (post‑auth) until completed.
 
-3) Onboarding (post‑auth, 3 steps + Summary)
+3. Onboarding (post‑auth, 3 steps + Summary)
+
 - Profile: Name, Age, Gender, Struggles (chips)
 - Mood: Today’s rating (1–10), Past month mood (single choice)
 - Preferences: Goals (chips), You often feel (chips), Help areas (chips), Fears (chips)
@@ -98,6 +101,7 @@ Net effect: Onboarding screens render without snapshot churn or loops.
 - Arabic keys can be added to `src/locales/ar.json` following the same structure
 
 Recommended follow‑up: add full translations for:
+
 - `onboarding.profile.strugglesTitle` + `onboarding.profile.struggles.*`
 - `onboarding.preferences.helpAreasTitle` + `onboarding.preferences.helpAreas.*`
 - `onboarding.preferences.fearsTitle` + `onboarding.preferences.fears.*`
@@ -105,17 +109,20 @@ Recommended follow‑up: add full translations for:
 ## Backend (Convex)
 
 Schema (`convex/schema.ts`)
+
 - `users` table augmented with optional fields:
   - `age`, `gender`, `onboardingCompleted`
   - `moodLastMonth: string`
   - `goals: string[]`, `selfImage: string[]`, `helpAreas: string[]`, `fears: string[]`, `struggles: string[]`
 
 Auth API (`convex/auth.ts`)
+
 - `upsertUserHelper`: updates/inserts new profile and onboarding fields
 - `upsertUser` and `updateUser`: accept new optional fields
 - `getCurrentUser` and `getUserByClerkId`: return new fields; duplicate keys were removed during TS cleanup
 
 Gating Logic
+
 - When a user is first created in app layout, we mark `onboardingCompleted: false`
 - App layout redirects such users into `/onboarding/profile`
 - On completion, we set `onboardingCompleted: true` and redirect to `/tabs/chat`
@@ -197,4 +204,5 @@ users: {
 - Add “Skip for now” path with soft reminders (if product wants even less friction)
 
 ---
+
 If you want, I can now add the missing EN/AR translation keys or wire personalization (AI prompt bootstrapping and exercise biasing) using these fields.

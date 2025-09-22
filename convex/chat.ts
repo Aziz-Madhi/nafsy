@@ -1,12 +1,21 @@
 import { v } from 'convex/values';
-import { mutation, query, action, internalAction, internalQuery } from './_generated/server';
+import {
+  mutation,
+  query,
+  action,
+  internalAction,
+  internalQuery,
+} from './_generated/server';
 import { updateChatSession } from './chatUtils';
 import { getAuthenticatedUser } from './authUtils';
 import { paginationOptsValidator } from 'convex/server';
 import { internal, api } from './_generated/api';
 import { Id } from './_generated/dataModel';
 import { buildResponsesPayload } from './openaiResponses';
-import appRateLimiter, { tryConsumeGlobalTopup } from './rateLimit';
+import appRateLimiter, {
+  tryConsumeGlobalTopup,
+  VOICE_MONTHLY_LIMIT,
+} from './rateLimit';
 
 // Chat type enum for unified functions
 const ChatType = v.union(
@@ -696,7 +705,9 @@ const MintRealtimeSecretReturnValidator = v.object({
     }),
     instructions: v.optional(v.string()),
   }),
-  prompt: v.optional(v.object({ id: v.string(), version: v.optional(v.string()) })),
+  prompt: v.optional(
+    v.object({ id: v.string(), version: v.optional(v.string()) })
+  ),
   promptSource: v.union(
     v.literal('openai_prompt_latest'),
     v.literal('openai_prompt_pinned')
@@ -732,7 +743,10 @@ export const mintRealtimeClientSecret = action({
     }
 
     // Load global voice configuration
-    const voiceConfig: any = await ctx.runQuery(api.voiceRealtime.getConfig, {});
+    const voiceConfig: any = await ctx.runQuery(
+      api.voiceRealtime.getConfig,
+      {}
+    );
     if (!voiceConfig || !voiceConfig.model) {
       throw new Error('Voice configuration missing on server');
     }
@@ -742,9 +756,24 @@ export const mintRealtimeClientSecret = action({
 
     // Choose voice: server default env with optional client override
     const defaultVoice = (
-      voiceConfig.defaultVoice || process.env.OPENAI_REALTIME_VOICE || 'verse'
+      voiceConfig.defaultVoice ||
+      process.env.OPENAI_REALTIME_VOICE ||
+      'verse'
     ).trim();
     const voice = (args.voice || defaultVoice).trim();
+
+    const sessionBudget = Math.min(
+      VOICE_MONTHLY_LIMIT,
+      Math.max(50, Math.ceil(voiceConfig.maxTokens ?? 800))
+    );
+
+    const allowance = await ctx.runQuery(api.voiceRealtime.checkAllowance, {
+      userId: user._id,
+      requiredTokens: sessionBudget,
+    });
+    if (!allowance.ok) {
+      throw new Error('VOICE_USAGE_LIMIT_REACHED');
+    }
 
     const sessionConfig: any = {
       session: {
@@ -760,7 +789,8 @@ export const mintRealtimeClientSecret = action({
 
     // For OpenAI Prompt IDs return a reference for client to apply via session.update
     const promptRef: { id: string; version?: string } | undefined =
-      voiceConfig.source?.startsWith('openai_prompt') && voiceConfig.openaiPromptId
+      voiceConfig.source?.startsWith('openai_prompt') &&
+      voiceConfig.openaiPromptId
         ? {
             id: String(voiceConfig.openaiPromptId),
             version:
@@ -800,7 +830,8 @@ export const mintRealtimeClientSecret = action({
       expires_at: expiresAt,
       session: sessionConfig.session,
       prompt: promptRef,
-      promptSource: voiceConfig.source as MintRealtimeSecretReturn['promptSource'],
+      promptSource:
+        voiceConfig.source as MintRealtimeSecretReturn['promptSource'],
     };
   },
 });

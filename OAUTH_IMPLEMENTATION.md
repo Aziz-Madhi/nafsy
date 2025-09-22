@@ -1,7 +1,9 @@
 # OAuth Implementation Documentation
+
 ## Google & Apple Authentication with Clerk and Convex
 
 ### Table of Contents
+
 1. [Overview](#overview)
 2. [Architecture](#architecture)
 3. [Implementation Details](#implementation-details)
@@ -19,6 +21,7 @@
 This document details the implementation of Google and Apple OAuth authentication in the Nafsy mental health app, using Clerk for authentication and Convex for the backend database.
 
 ### Key Features
+
 - ✅ Google Sign-In (all platforms)
 - ✅ Apple Sign-In (iOS only)
 - ✅ Seamless user creation in Convex
@@ -27,6 +30,7 @@ This document details the implementation of Google and Apple OAuth authenticatio
 - ✅ Multilingual support (English/Arabic)
 
 ### Technology Stack
+
 - **Authentication Provider**: Clerk
 - **Backend Database**: Convex
 - **Frontend Framework**: React Native with Expo
@@ -55,6 +59,7 @@ This document details the implementation of Google and Apple OAuth authenticatio
 ```
 
 ### Data Flow
+
 1. User initiates OAuth flow
 2. Clerk handles authentication with provider
 3. Successful auth redirects to OAuth callback
@@ -66,58 +71,61 @@ This document details the implementation of Google and Apple OAuth authenticatio
 ## Implementation Details
 
 ### 1. Social Authentication Hook
+
 **File**: `/src/hooks/useSocialAuth.ts`
 
 ```typescript
 export function useSocialAuth(): UseSocialAuthReturn {
   const { startSSOFlow } = useSSO();
   const router = useRouter();
-  
+
   const handleSocialAuth = async (provider: SocialProvider) => {
     // Start OAuth flow
     const result = await startSSOFlow({
       strategy: provider,
       redirectUrl: AuthSession.makeRedirectUri(),
     });
-    
+
     if (result?.createdSessionId) {
       // Set active session in Clerk
       await result.setActive?.({ session: result.createdSessionId });
-      
+
       // Redirect to callback for user creation
       router.replace('/auth/oauth-callback');
     }
   };
-  
+
   return { handleSocialAuth, loading };
 }
 ```
 
 **Key Features**:
+
 - Handles both Google and Apple OAuth
 - Browser warm-up for Android performance
 - Error handling with user-friendly messages
 - Haptic feedback for better UX
 
 ### 2. OAuth Callback Screen
+
 **File**: `/src/app/auth/oauth-callback.tsx`
 
 ```typescript
 export default function OAuthCallbackScreen() {
   const { user: clerkUser } = useUser();
   const upsertUser = useMutation(api.auth.upsertUser);
-  
+
   useEffect(() => {
     const createUserAndRedirect = async () => {
       // Wait for Clerk user to be available
       if (!clerkUser?.id) return;
-      
+
       // Check if user exists in Convex
       if (currentUser) {
         router.replace('/tabs/chat');
         return;
       }
-      
+
       // Create user in Convex
       await upsertUser({
         clerkId: clerkUser.id,
@@ -125,12 +133,12 @@ export default function OAuthCallbackScreen() {
         name: clerkUser.fullName || clerkUser.firstName,
         avatarUrl: clerkUser.imageUrl,
       });
-      
+
       // Navigate to app
       router.replace('/tabs/chat');
     };
   }, [clerkUser]);
-  
+
   return <OAuthLoadingScreen />;
 }
 ```
@@ -140,6 +148,7 @@ export default function OAuthCallbackScreen() {
 ### 3. UI Components
 
 #### Social Auth Buttons
+
 **File**: `/src/components/auth/SocialAuthButtons.tsx`
 
 ```typescript
@@ -157,17 +166,20 @@ export default function OAuthCallbackScreen() {
 ```
 
 **Design Features**:
+
 - White filled buttons with shadows
 - Custom Google SVG icon with brand colors
 - Apple icon using lucide-react-native
 - Platform-specific rendering (Apple only on iOS)
 
 #### Enhanced Button Component
+
 **File**: `/src/components/ui/button.tsx`
 
 Added new "filled" variant:
+
 ```typescript
-filled: 'bg-white dark:bg-card-darker shadow-md web:hover:shadow-lg active:shadow-sm'
+filled: 'bg-white dark:bg-card-darker shadow-md web:hover:shadow-lg active:shadow-sm';
 ```
 
 ---
@@ -211,7 +223,7 @@ sequenceDiagram
     participant Clerk
     participant OAuth Provider
     participant Convex
-    
+
     User->>App: Clicks Google/Apple Sign In
     App->>Clerk: startSSOFlow()
     Clerk->>OAuth Provider: Redirect to OAuth
@@ -270,6 +282,7 @@ sequenceDiagram
 ### Visual Design Elements
 
 #### Color System
+
 ```css
 /* Auth-specific colors added to global.css */
 --auth-input-bg: 250 250 250;
@@ -280,18 +293,21 @@ sequenceDiagram
 ```
 
 #### Button Styling
+
 - **Shape**: Rounded corners (rounded-xl)
 - **Shadow**: Subtle elevation for depth
 - **Icons**: Official brand colors for Google, monochrome for Apple
 - **Typography**: Semi-bold, 16px font size
 
 #### Loading Screen
+
 - App logo centered
 - Activity spinner
 - "Setting up your account..." message
 - "This will only take a moment" subtext
 
 ### Responsive Layout
+
 ```typescript
 <View className="max-w-sm w-full mx-auto">
   {/* Ensures proper width on all screen sizes */}
@@ -310,6 +326,7 @@ sequenceDiagram
    - Can retry immediately
 
 2. **Network Issues**
+
    ```typescript
    if (error?.message) {
      Alert.alert(t('common.error'), errorMessage);
@@ -334,6 +351,7 @@ sequenceDiagram
    - Disables buttons during processing
 
 2. **User Existence Check**
+
    ```typescript
    if (currentUser) {
      router.replace('/tabs/chat');
@@ -344,7 +362,7 @@ sequenceDiagram
 3. **Timeout Handling**
    ```typescript
    if (retryCount < 10) {
-     setTimeout(() => setRetryCount(prev => prev + 1), 500);
+     setTimeout(() => setRetryCount((prev) => prev + 1), 500);
    }
    ```
 
@@ -353,6 +371,7 @@ sequenceDiagram
 ## Testing Guide
 
 ### Prerequisites
+
 1. Clerk dashboard configured with:
    - Google OAuth credentials
    - Apple OAuth credentials (iOS only)
@@ -367,6 +386,7 @@ sequenceDiagram
 ### Test Scenarios
 
 #### Scenario 1: New User Sign-Up
+
 1. Tap "Continue with Google"
 2. Complete Google authentication
 3. Verify loading screen appears
@@ -374,23 +394,27 @@ sequenceDiagram
 5. Check Convex database for user record
 
 #### Scenario 2: Existing User Sign-In
+
 1. Sign out of app
 2. Tap "Continue with Google"
 3. Automatic authentication (if still logged in to Google)
 4. Verify immediate redirect (no user creation)
 
 #### Scenario 3: Network Interruption
+
 1. Start OAuth flow
 2. Disable network mid-process
 3. Verify error message appears
 4. Re-enable network and retry
 
 #### Scenario 4: Apple Sign-In (iOS only)
+
 1. Verify Apple button only shows on iOS
 2. Complete Apple authentication
 3. Verify same flow as Google
 
 ### Development Testing
+
 ```bash
 # Start development server
 bun start
@@ -412,7 +436,9 @@ bun convex:dev
 ### Common Issues and Solutions
 
 #### Issue: "User not found" errors in Convex
+
 **Solution**: Ensure OAuth callback screen is used
+
 ```typescript
 // Correct
 router.replace('/auth/oauth-callback');
@@ -422,13 +448,17 @@ router.replace('/tabs/chat');
 ```
 
 #### Issue: OAuth buttons not responding
+
 **Solution**: Check loading state
+
 ```typescript
 if (loading) return; // Prevents multiple clicks
 ```
 
 #### Issue: Apple Sign-In not showing
+
 **Solution**: Verify platform check
+
 ```typescript
 {Platform.OS === 'ios' && (
   <AppleSignInButton />
@@ -436,7 +466,9 @@ if (loading) return; // Prevents multiple clicks
 ```
 
 #### Issue: User data not syncing
+
 **Solution**: Verify upsertUser mutation
+
 ```typescript
 await upsertUser({
   clerkId: clerkUser.id, // Required
@@ -447,7 +479,9 @@ await upsertUser({
 ```
 
 ### Debug Logging
+
 Enable in development:
+
 ```typescript
 if (__DEV__) {
   console.log('OAuth result:', result);
@@ -457,7 +491,9 @@ if (__DEV__) {
 ```
 
 ### Convex Dashboard
+
 Monitor user creation:
+
 1. Go to Convex dashboard
 2. Navigate to Data → users table
 3. Check for new records with clerkId
@@ -511,11 +547,12 @@ Monitor user creation:
 The OAuth implementation provides a secure, user-friendly authentication experience that seamlessly integrates Clerk's authentication with Convex's database. The architecture ensures data consistency while providing excellent UX through proper loading states and error handling.
 
 For questions or issues, please refer to:
+
 - [Clerk Documentation](https://clerk.dev/docs)
 - [Convex Documentation](https://docs.convex.dev)
 - [Expo Auth Session](https://docs.expo.dev/versions/latest/sdk/auth-session/)
 
 ---
 
-*Last Updated: January 2025*
-*Implementation by: Claude Code Assistant*
+_Last Updated: January 2025_
+_Implementation by: Claude Code Assistant_

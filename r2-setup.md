@@ -29,22 +29,22 @@ Instantiate a R2 component client in a file in your app's convex/ folder:
 
 // convex/example.ts
 import { R2 } from "@convex-dev/r2";
-import { components } from "./_generated/api";
+import { components } from "./\_generated/api";
 
 export const r2 = new R2(components.r2);
 
 export const { generateUploadUrl, syncMetadata } = r2.clientApi({
-  checkUpload: async (ctx, bucket) => {
-    // const user = await userFromAuth(ctx);
-    // ...validate that the user can upload to this bucket
-  },
- onUpload: async (ctx, bucket, key) => {
-   // ...do something with the key
-   // This technically runs in the `syncMetadata` mutation, as the upload
-   // is performed from the client side. Will run if using the `useUploadFile`
-   // hook, or if `syncMetadata` function is called directly. Runs after the
-   // `checkUpload` callback.
-  },
+checkUpload: async (ctx, bucket) => {
+// const user = await userFromAuth(ctx);
+// ...validate that the user can upload to this bucket
+},
+onUpload: async (ctx, bucket, key) => {
+// ...do something with the key
+// This technically runs in the `syncMetadata` mutation, as the upload
+// is performed from the client side. Will run if using the `useUploadFile`
+// hook, or if `syncMetadata` function is called directly. Runs after the
+// `checkUpload` callback.
+},
 });
 
 Use the useUploadFile hook in your component to upload files:
@@ -54,41 +54,42 @@ React:
 // src/App.tsx
 import { FormEvent, useRef, useState } from "react";
 import { useAction } from "convex/react";
-import { api } from "../convex/_generated/api";
+import { api } from "../convex/\_generated/api";
 import { useUploadFile } from "@convex-dev/r2/react";
 
 export default function App() {
-  // Passing the entire api exported from `convex/example.ts` to the hook.
-  // This must include `generateUploadUrl` and `syncMetadata` from the r2 client api.
-  const uploadFile = useUploadFile(api.example);
-  const imageInput = useRef<HTMLInputElement>(null);
-  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+// Passing the entire api exported from `convex/example.ts` to the hook.
+// This must include `generateUploadUrl` and `syncMetadata` from the r2 client api.
+const uploadFile = useUploadFile(api.example);
+const imageInput = useRef<HTMLInputElement>(null);
+const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
-  async function handleUpload(event: FormEvent) {
-    event.preventDefault();
+async function handleUpload(event: FormEvent) {
+event.preventDefault();
 
     // The file is uploaded to R2, metadata is synced to the database, and the
     // key of the newly created object is returned.
     await uploadFile(selectedImage!);
     setSelectedImage(null);
     imageInput.current!.value = "";
-  }
-  return (
-    <form onSubmit={handleUpload}>
-      <input
-        type="file"
-        accept="image/*"
-        ref={imageInput}
-        onChange={(event) => setSelectedImage(event.target.files![0])}
-        disabled={selectedImage !== null}
-      />
-      <input
-        type="submit"
-        value="Upload"
-        disabled={selectedImage === null}
-      />
-    </form>
-  );
+
+}
+return (
+<form onSubmit={handleUpload}>
+<input
+type="file"
+accept="image/\*"
+ref={imageInput}
+onChange={(event) => setSelectedImage(event.target.files![0])}
+disabled={selectedImage !== null}
+/>
+<input
+type="submit"
+value="Upload"
+disabled={selectedImage === null}
+/>
+</form>
+);
 }
 
 Svelte:
@@ -128,40 +129,40 @@ The r2.generateUploadUrl function generates a uuid to use as the object key by d
 
 // convex/example.ts
 import { R2 } from "@convex-dev/r2";
-import { components } from "./_generated/api";
+import { components } from "./\_generated/api";
 
 export const r2 = new R2(components.r2);
 
 // A custom mutation that creates a key from the user id and a uuid. If the key
 // already exists, the mutation will fail.
 export const generateUploadUrlWithCustomKey = mutation({
-  args: {},
-  handler: async (ctx) => {
-    // Replace this with whatever function you use to get the current user
-    const currentUser = await getUser(ctx);
-    if (!currentUser) {
-      throw new Error("User not found");
-    }
-    const key = `${currentUser.id}.${crypto.randomUUID()}`;
-    return r2.generateUploadUrl(key);
-  },
+args: {},
+handler: async (ctx) => {
+// Replace this with whatever function you use to get the current user
+const currentUser = await getUser(ctx);
+if (!currentUser) {
+throw new Error("User not found");
+}
+const key = `${currentUser.id}.${crypto.randomUUID()}`;
+return r2.generateUploadUrl(key);
+},
 });
 
 Storing Files from Actions#
 Files can be stored in R2 directly from actions using the r2.store method. This is useful when you need to store files that are generated or downloaded on the server side.
 
 // convex/example.ts
-import { internalAction } from "./_generated/server";
+import { internalAction } from "./\_generated/server";
 import { R2 } from "@convex-dev/r2";
 
 const r2 = new R2(components.r2);
 
 export const store = internalAction({
-  handler: async (ctx) => {
-    // Download a random image from picsum.photos
-    const url = "https://picsum.photos/200/300";
-    const response = await fetch(url);
-    const blob = await response.blob();
+handler: async (ctx) => {
+// Download a random image from picsum.photos
+const url = "https://picsum.photos/200/300";
+const response = await fetch(url);
+const blob = await response.blob();
 
     // This function call is the only required part, it uploads the blob to R2,
     // syncs the metadata, and returns the key. The key is a uuid by default, but
@@ -174,7 +175,8 @@ export const store = internalAction({
 
     // Example use case, associate the key with a record in your database
     await ctx.runMutation(internal.example.insertImage, { key });
-  },
+
+},
 });
 
 The store method:
@@ -191,38 +193,38 @@ The simplest way to serve files is to return URLs along with other data required
 A file URL can be generated from a object key by the r2.getUrl function of the R2 component client.
 
 // convex/listMessages.ts
-import { components } from "./_generated/api";
-import { query } from "./_generated/server";
+import { components } from "./\_generated/api";
+import { query } from "./\_generated/server";
 import { R2 } from "@convex-dev/r2";
 
 const r2 = new R2(components.r2);
 
 export const list = query({
-  args: {},
-  handler: async (ctx) => {
-    // In this example, messages have an imageKey field with the object key
-    const messages = await ctx.db.query("messages").collect();
-    return Promise.all(
-      messages.map(async (message) => ({
-        ...message,
-        imageUrl: await r2.getUrl(
-          message.imageKey,
-          // Options object is optional, can be omitted
-          {
-            // Custom expiration time in seconds, default is 900 (15 minutes)
-            expiresIn: 60 * 60 * 24, // 1 day
-          }
-        ),
-      }))
-    );
-  },
+args: {},
+handler: async (ctx) => {
+// In this example, messages have an imageKey field with the object key
+const messages = await ctx.db.query("messages").collect();
+return Promise.all(
+messages.map(async (message) => ({
+...message,
+imageUrl: await r2.getUrl(
+message.imageKey,
+// Options object is optional, can be omitted
+{
+// Custom expiration time in seconds, default is 900 (15 minutes)
+expiresIn: 60 _ 60 _ 24, // 1 day
+}
+),
+}))
+);
+},
 });
 
 File URLs can be used in img elements to render images:
 
 // src/App.tsx
 function Image({ message }: { message: { url: string } }) {
-  return <img src={message.url} height="300px" width="auto" />;
+return <img src={message.url} height="300px" width="auto" />;
 }
 
 Deleting Files#
@@ -230,18 +232,18 @@ Files stored in R2 can be deleted from actions or mutations via the r2.deleteObj
 
 // convex/images.ts
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation } from "./\_generated/server";
 import { R2 } from "@convex-dev/r2";
 
 const r2 = new R2(components.r2);
 
 export const deleteObject = mutation({
-  args: {
-    key: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await r2.deleteObject(ctx, args.key);
-  },
+args: {
+key: v.string(),
+},
+handler: async (ctx, args) => {
+return await r2.deleteObject(ctx, args.key);
+},
 });
 
 Accessing File Metadata#
@@ -249,26 +251,26 @@ File metadata of an R2 file can be accessed from actions via r2.getMetadata:
 
 // convex/images.ts
 import { v } from "convex/values";
-import { query } from "./_generated/server";
+import { query } from "./\_generated/server";
 import { R2 } from "@convex-dev/r2";
 
 const r2 = new R2(components.r2);
 
 export const getMetadata = query({
-  args: {
-    key: v.string(),
-  },
-  handler: async (ctx, args) => {
-    return await r2.getMetadata(args.key);
-  },
+args: {
+key: v.string(),
+},
+handler: async (ctx, args) => {
+return await r2.getMetadata(args.key);
+},
 });
 
 This is an example of the returned document:
 
 {
-  "ContentType": "image/jpeg",
-  "ContentLength": 125338,
-  "LastModified": "2024-03-20T12:34:56Z"
+"ContentType": "image/jpeg",
+"ContentLength": 125338,
+"LastModified": "2024-03-20T12:34:56Z"
 }
 
 The returned document has the following fields:
@@ -280,27 +282,27 @@ Listing and paginating metadata#
 Metadata can be listed or paginated from actions via r2.listMetadata and r2.pageMetadata.
 
 // convex/example.ts
-import { query } from "./_generated/server";
+import { query } from "./\_generated/server";
 import { R2 } from "@convex-dev/r2";
 
 const r2 = new R2(components.r2);
 
 export const list = query({
-  args: {
-    limit: v.optional(v.number()),
-  },
-  handler: async (ctx, args) => {
-    return r2.listMetadata(ctx, args.limit);
-  },
+args: {
+limit: v.optional(v.number()),
+},
+handler: async (ctx, args) => {
+return r2.listMetadata(ctx, args.limit);
+},
 });
 
 export const page = query({
-  args: {
-    paginationOpts: paginationOptsValidator,
-  },
-  handler: async (ctx, args) => {
-    return r2.pageMetadata(ctx, args.paginationOpts);
-  },
+args: {
+paginationOpts: paginationOptsValidator,
+},
+handler: async (ctx, args) => {
+return r2.pageMetadata(ctx, args.paginationOpts);
+},
 });
 
 Accessing metadata after upload#
@@ -310,18 +312,18 @@ Because this runs after metadata sync, the r2.getMetadata can be used to access 
 
 // convex/example.ts
 import { R2, type R2Callbacks } from "@convex-dev/r2";
-import { components } from "./_generated/api";
+import { components } from "./\_generated/api";
 
 export const r2 = new R2(components.r2);
 
 const callbacks: R2Callbacks = internal.example;
 
 export const { generateUploadUrl, syncMetadata, onSyncMetadata } = r2.clientApi(
-  {
-    // Pass the functions from this file back into the component.
-    // Technically only an object with `onSyncMetadata` is required, the recommended
-    // pattern is just for convenience.
-    callbacks,
+{
+// Pass the functions from this file back into the component.
+// Technically only an object with `onSyncMetadata` is required, the recommended
+// pattern is just for convenience.
+callbacks,
 
     onSyncMetadata: async (ctx, args) => {
       // args: { bucket: string; key: string; isNew: boolean }
@@ -331,48 +333,42 @@ export const { generateUploadUrl, syncMetadata, onSyncMetadata } = r2.clientApi(
       // log metadata of synced object
       console.log("metadata", metadata);
     },
-  }
+
+}
 );
-
-
-
-
-
 
 To serve audio files in your React Native Expo app without exhausting your Convex bandwidth, you should use the Convex Cloudflare R2 component to store your files and then generate direct URLs for users to access those files from R2, bypassing Convex's bandwidth.
 
 ### How to Set This Up
 
 1. **Upload Audio Files to R2**
-    
-    - Use the R2 component in your Convex backend to generate upload URLs and sync metadata.
-    - You can use the `useUploadFile` hook (for React web/Svelte) or implement a similar upload flow in React Native by generating a signed upload URL from Convex and uploading the file directly to R2 from your app.
-    - Example for generating an upload URL and syncing metadata is shown in the R2 docs, but for React Native, you’ll need to use `fetch` to POST the file to the signed URL you get from your backend.
+   - Use the R2 component in your Convex backend to generate upload URLs and sync metadata.
+   - You can use the `useUploadFile` hook (for React web/Svelte) or implement a similar upload flow in React Native by generating a signed upload URL from Convex and uploading the file directly to R2 from your app.
+   - Example for generating an upload URL and syncing metadata is shown in the R2 docs, but for React Native, you’ll need to use `fetch` to POST the file to the signed URL you get from your backend.
+
 2. **Store the R2 Object Key in Convex**
-    
-    - After uploading, store the R2 object key in your Convex database, associated with your audio file's metadata.
+   - After uploading, store the R2 object key in your Convex database, associated with your audio file's metadata.
+
 3. **Generate Direct R2 URLs for Clients**
-    
-    - When you want to serve the audio file, use the `r2.getUrl(key)` method in your Convex backend to generate a direct, signed URL to the file in R2.
-    - Return this URL to your client in a query or mutation. The client can then use this URL to stream or download the audio file directly from Cloudflare R2, not through Convex, so Convex bandwidth is not used.
-    
-    ```ts
-    // Example Convex query to return R2 URLs
-    import { query } from "./_generated/server";
-    import { R2 } from "@convex-dev/r2";
-    const r2 = new R2(components.r2);
-    
-    export const getAudioUrl = query({
-      args: { key: v.string() },
-      handler: async (ctx, args) => {
-        return await r2.getUrl(args.key, { expiresIn: 60 * 60 * 24 }); // 1 day
-      },
-    });
-    ```
-    
+   - When you want to serve the audio file, use the `r2.getUrl(key)` method in your Convex backend to generate a direct, signed URL to the file in R2.
+   - Return this URL to your client in a query or mutation. The client can then use this URL to stream or download the audio file directly from Cloudflare R2, not through Convex, so Convex bandwidth is not used.
+
+   ```ts
+   // Example Convex query to return R2 URLs
+   import { query } from './_generated/server';
+   import { R2 } from '@convex-dev/r2';
+   const r2 = new R2(components.r2);
+
+   export const getAudioUrl = query({
+     args: { key: v.string() },
+     handler: async (ctx, args) => {
+       return await r2.getUrl(args.key, { expiresIn: 60 * 60 * 24 }); // 1 day
+     },
+   });
+   ```
+
 4. **Client Usage**
-    
-    - In your React Native app, use the returned URL as the source for your audio player. The file will be streamed directly from R2.
+   - In your React Native app, use the returned URL as the source for your audio player. The file will be streamed directly from R2.
 
 ### Why This Works
 

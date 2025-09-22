@@ -44,7 +44,7 @@ interface ChatScreenProps {
   // Actions
   onOpenSidebar: () => void;
   onCloseSidebar: () => void;
-  onSessionSelect: (sessionId: string) => void;
+  onSessionSelect: (sessionId: string, chatType: ChatType) => void;
   onDismissError: () => void;
   onSendMessage: (message: string) => void;
   onOpenVentChat?: () => void;

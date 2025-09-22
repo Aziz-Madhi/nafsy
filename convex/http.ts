@@ -119,20 +119,28 @@ export const streamChat = httpAction(async (ctx, request) => {
     }
 
     // Pre-check weekly chat limit (non-consuming). Consumption happens inside internals.
-    const chatDailyStatus = await appRateLimiter.check(ctx, 'chatWeekly', { key: user._id });
+    const chatDailyStatus = await appRateLimiter.check(ctx, 'chatWeekly', {
+      key: user._id,
+    });
     if (!chatDailyStatus.ok) {
-      return new Response('Weekly chat limit reached', { status: 429, headers: makeCorsHeaders(origin) });
+      return new Response('Weekly chat limit reached', {
+        status: 429,
+        headers: makeCorsHeaders(origin),
+      });
     }
 
     // Centralized prep in internal action
-    const prepared = await ctx.runAction(internal.chatStreaming.prepareStreamingTurn, {
-      userId: user._id,
-      chatType: body.chatType,
-      message: body.message,
-      sessionId: body.sessionId,
-      title: body.title,
-      requestId: body.requestId,
-    });
+    const prepared = await ctx.runAction(
+      internal.chatStreaming.prepareStreamingTurn,
+      {
+        userId: user._id,
+        chatType: body.chatType,
+        message: body.message,
+        sessionId: body.sessionId,
+        title: body.title,
+        requestId: body.requestId,
+      }
+    );
 
     const ensuredSessionId = prepared.sessionId;
     const persistPolicy = prepared.persistPolicy;
@@ -212,16 +220,19 @@ export const streamChat = httpAction(async (ctx, request) => {
           // Persist final assistant message and telemetry before closing
           // Centralized finalize step (handles persistence for non-vent only)
           try {
-            await ctx.runMutation(internal.chatStreaming.finalizeStreamingTurn, {
-              userId: user._id,
-              chatType: body.chatType,
-              sessionId: ensuredSessionId,
-              content: fullText.trim(),
-              model: modelUsed,
-              requestId,
-              startedAt,
-              success: true,
-            });
+            await ctx.runMutation(
+              internal.chatStreaming.finalizeStreamingTurn,
+              {
+                userId: user._id,
+                chatType: body.chatType,
+                sessionId: ensuredSessionId,
+                content: fullText.trim(),
+                model: modelUsed,
+                requestId,
+                startedAt,
+                success: true,
+              }
+            );
           } catch (e) {
             console.error('finalizeStreamingTurn failed:', e);
           }
@@ -254,16 +265,19 @@ export const streamChat = httpAction(async (ctx, request) => {
         } catch {}
         try {
           if (fullText.trim().length > 0) {
-            await ctx.runMutation(internal.chatStreaming.finalizeStreamingTurn, {
-              userId: user._id,
-              chatType: body.chatType,
-              sessionId: ensuredSessionId,
-              content: fullText.trim(),
-              model: modelUsed,
-              requestId,
-              startedAt,
-              success: true,
-            });
+            await ctx.runMutation(
+              internal.chatStreaming.finalizeStreamingTurn,
+              {
+                userId: user._id,
+                chatType: body.chatType,
+                sessionId: ensuredSessionId,
+                content: fullText.trim(),
+                model: modelUsed,
+                requestId,
+                startedAt,
+                success: true,
+              }
+            );
           }
         } catch (e) {
           console.warn('Persist on cancel failed', e);

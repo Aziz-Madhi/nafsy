@@ -52,10 +52,10 @@ function PremiumCategoryGridComponent({
         icon: '🌬️',
       },
       {
-        id: 'reminders' as const,
-        name: t('exercises.categories.reminders'),
+        id: 'habits' as const,
+        name: t('exercises.categories.habits'),
         color: '#DDA0DD',
-        description: t('exercises.descriptions.reminders'),
+        description: t('exercises.descriptions.habits'),
         icon: '💭',
       },
     ];

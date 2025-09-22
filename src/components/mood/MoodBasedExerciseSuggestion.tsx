@@ -36,13 +36,13 @@ export function MoodBasedExerciseSuggestion({
       };
 
     // Solid pastel backgrounds that do not blend with theme background
-    const bgByCategory: Record<string, string> = {
+      const bgByCategory: Record<string, string> = {
       mindfulness: colors.wellnessMindfulnessBg,
       breathing: colors.wellnessBreathingBg,
       movement: colors.wellnessMovementBg,
       journaling: colors.wellnessJournalingBg,
       relaxation: colors.wellnessRelaxationBg,
-      reminders: colors.wellnessRemindersBg,
+        habits: colors.wellnessRemindersBg,
     };
 
     const backgroundColor =

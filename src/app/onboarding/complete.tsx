@@ -104,7 +104,7 @@ export default function OnboardingCompleteScreen() {
           style={{ height: 174, marginBottom: 16, position: 'relative' }}
         >
           <Image
-            source={require('../../../assets/Cards/All set icon..png')}
+            source={require('../../../assets/Cards/All set card.png')}
             style={{
               width: 300,
               height: 300,
@@ -140,7 +140,10 @@ export default function OnboardingCompleteScreen() {
           </Text>
         </View>
 
-        <View className="w-full mt-6 gap-5" style={{ marginHorizontal: -20 }}>
+        <View
+          className="w-full mt-6 gap-5"
+          style={{ marginHorizontal: -20, transform: [{ translateY: -16 }] }}
+        >
           <View className="gap-3 mb-5">
             <View className="flex-row gap-3">
               <View className="flex-1">

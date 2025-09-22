@@ -29,7 +29,7 @@ function getCategoryIcon(category: string): string {
     movement: '🚶‍♀️',
     journaling: '✍️',
     relaxation: '🛀',
-    reminders: '💭',
+    habits: '💭',
   };
   return icons[category] || '⭐';
 }
@@ -41,7 +41,7 @@ function getCategoryColor(category: string): string {
     movement: '#45B7D1',
     journaling: '#96CEB4',
     relaxation: '#FFEAA7',
-    reminders: '#DDA0DD',
+    habits: '#DDA0DD',
   };
   return categoryColors[category] || '#FF6B6B';
 }
