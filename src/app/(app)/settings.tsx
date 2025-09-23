@@ -9,6 +9,9 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { router } from 'expo-router';
+import { Linking } from 'react-native';
+import * as Haptics from 'expo-haptics';
+import { safeHaptics } from '../../../lib/haptics';
 import { useAuth } from '@clerk/clerk-expo';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { Text } from '~/components/ui/text';
@@ -16,7 +19,6 @@ import {
   Globe,
   Moon,
   Smartphone,
-  Volume2,
   HelpCircle,
   Heart,
   MessageSquare,
@@ -25,17 +27,10 @@ import {
   ChevronRight,
   X,
   User,
-  Bell,
   FileText,
-  Info,
   Mail,
 } from 'lucide-react-native';
-import {
-  impactAsync,
-  notificationAsync,
-  ImpactFeedbackStyle,
-  NotificationFeedbackType,
-} from 'expo-haptics';
+// haptics handled via safeHaptics wrapper and store toggle
 import { useColors } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
 import { cn } from '~/lib/cn';
@@ -193,7 +188,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
 
   // Extract from settings
   const theme = settings.theme;
-  const notificationsEnabled = settings.notificationsEnabled;
+  // const notificationsEnabled = settings.notificationsEnabled;
 
   // Simplified store selectors
   const setTheme = useAppStore((state) => state.setTheme);
@@ -203,7 +198,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
   // Settings handlers
 
   const handleThemeChange = useCallback(() => {
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact();
     const themes = ['light', 'dark', 'system'] as const;
     const currentIndex = themes.indexOf(theme);
     const nextIndex = (currentIndex + 1) % themes.length;
@@ -211,7 +206,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
   }, [theme, setTheme]);
 
   const handleLanguageChange = useCallback(async () => {
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact();
 
     try {
       // Simple toggle - handles everything internally
@@ -251,32 +246,39 @@ const SettingsScreen = React.memo(function SettingsScreen() {
     }
   };
 
-  const handleNotificationsToggle = useCallback(
+  // Notifications toggle removed
+
+  const hapticFeedbackEnabled = settings.hapticFeedbackEnabled !== false;
+
+  const handleHapticsToggle = useCallback(
     (value: boolean) => {
-      impactAsync(ImpactFeedbackStyle.Light);
-      updateSettings({ notificationsEnabled: value });
+      updateSettings({ hapticFeedbackEnabled: value });
+      if (value) {
+        // play a sample to confirm it's on
+        safeHaptics.selection();
+      }
     },
     [updateSettings]
   );
 
   // Navigation handlers
   const handleHelpCenter = useCallback(() => {
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact();
     router.push('/help-center');
   }, []);
 
-  const handleCrisisResources = useCallback(() => {
-    impactAsync(ImpactFeedbackStyle.Light);
-    router.push('/crisis-resources');
+  const handleGetHelp = useCallback(() => {
+    safeHaptics.impact();
+    Linking.openURL('https://www.iasp.info/crisis-centres-helplines/');
   }, []);
 
   const handleFeedback = useCallback(() => {
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact();
     router.push('/feedback');
   }, []);
 
   const handleClose = useCallback(() => {
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact();
     router.back();
   }, []);
 
@@ -286,7 +288,7 @@ const SettingsScreen = React.memo(function SettingsScreen() {
 
     try {
       setIsSigningOut(true);
-      notificationAsync(NotificationFeedbackType.Warning);
+      safeHaptics.notification(Haptics.NotificationFeedbackType.Warning);
       await new Promise((resolve) => setTimeout(resolve, 150));
 
       // Sign out from Clerk
@@ -409,37 +411,15 @@ const SettingsScreen = React.memo(function SettingsScreen() {
             icon={Smartphone}
             label={t('profile.settings.hapticFeedback')}
             type="switch"
-            switchValue={true}
-            onSwitchChange={() => {}}
+            switchValue={hapticFeedbackEnabled}
+            onSwitchChange={handleHapticsToggle}
+            isLast
             iconColor={colors.success}
             iconBgColor={colors.success}
           />
-          <SettingRow
-            icon={Bell}
-            label={t('profile.settings.notifications')}
-            type="switch"
-            switchValue={notificationsEnabled}
-            onSwitchChange={handleNotificationsToggle}
-            isLast
-            iconColor={colors.warning}
-            iconBgColor={colors.warning}
-          />
         </View>
 
-        {/* VOICE MODE Section */}
-        <SectionHeader title={t('profile.sections.voiceMode')} />
-        <View className="mx-4 rounded-2xl overflow-hidden bg-black/[0.03] dark:bg-white/[0.03]">
-          <SettingRow
-            icon={Volume2}
-            label={t('profile.settings.voice')}
-            value={t('profile.settings.comingSoon')}
-            type="navigation"
-            isFirst
-            isLast
-            iconColor={colors.muted}
-            iconBgColor={colors.muted}
-          />
-        </View>
+        {/* Voice Mode section removed */}
 
         {/* ABOUT Section */}
         <SectionHeader title={t('profile.sections.about')} />
@@ -451,13 +431,6 @@ const SettingsScreen = React.memo(function SettingsScreen() {
             isFirst
             iconColor={colors.success}
             iconBgColor={colors.success}
-          />
-          <SettingRow
-            icon={Heart}
-            label={t('profile.settings.crisisResources')}
-            onPress={handleCrisisResources}
-            iconColor={colors.error}
-            iconBgColor={colors.error}
           />
           <SettingRow
             icon={MessageSquare}
@@ -477,18 +450,27 @@ const SettingsScreen = React.memo(function SettingsScreen() {
             icon={Shield}
             label={t('profile.settings.privacyPolicy')}
             type="navigation"
-            iconColor={colors.mutedForeground}
-            iconBgColor={colors.muted}
-          />
-          <SettingRow
-            icon={Info}
-            label="Nafsy for iOS"
-            value={appVersion}
-            type="navigation"
             isLast
             iconColor={colors.mutedForeground}
             iconBgColor={colors.muted}
           />
+        </View>
+
+        {/* Prominent Get Help CTA */}
+        <View className="mx-4 mt-4">
+          <Pressable
+            onPress={handleGetHelp}
+            className="rounded-2xl overflow-hidden"
+            style={({ pressed }) => ({ opacity: pressed ? 0.9 : 1 })}
+          >
+            <View className="bg-red-600">
+              <View className="px-4 py-4 flex-row items-center justify-center">
+                <Text className="text-white text-[17px] font-semibold">
+                  {t('profile.settings.getHelp')}
+                </Text>
+              </View>
+            </View>
+          </Pressable>
         </View>
 
         {/* Log Out Button */}
@@ -525,6 +507,13 @@ const SettingsScreen = React.memo(function SettingsScreen() {
               </View>
             </View>
           </Pressable>
+        </View>
+
+        {/* App version footer */}
+        <View className="mx-4 mt-3 items-center">
+          <Text className="text-muted-foreground text-[12px]">
+            Nafsy for iOS • v{appVersion}
+          </Text>
         </View>
       </ScrollView>
     </SafeAreaView>

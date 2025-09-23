@@ -6,7 +6,8 @@ import Animated, {
   withSpring,
   WithSpringConfig,
 } from 'react-native-reanimated';
-import { impactAsync, ImpactFeedbackStyle, selectionAsync } from 'expo-haptics';
+import { ImpactFeedbackStyle } from 'expo-haptics';
+import { safeHaptics } from '~/lib/haptics';
 
 interface AnimatedPressableProps extends Omit<PressableProps, 'onPress'> {
   onPress?: () => void;
@@ -24,10 +25,10 @@ const defaultSpringConfig: WithSpringConfig = {
 };
 
 const hapticMap = {
-  light: () => impactAsync(ImpactFeedbackStyle.Light),
-  medium: () => impactAsync(ImpactFeedbackStyle.Medium),
-  heavy: () => impactAsync(ImpactFeedbackStyle.Heavy),
-  selection: () => selectionAsync(),
+  light: () => safeHaptics.impact(ImpactFeedbackStyle.Light),
+  medium: () => safeHaptics.impact(ImpactFeedbackStyle.Medium),
+  heavy: () => safeHaptics.impact(ImpactFeedbackStyle.Heavy),
+  selection: () => safeHaptics.selection(),
 };
 
 export const AnimatedPressable = React.memo(function AnimatedPressable({

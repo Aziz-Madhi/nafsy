@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { View, StyleSheet } from 'react-native';
 import { Text } from '~/components/ui/text';
 import { cn } from '~/lib/cn';
 import { MotiPressable } from 'moti/interactions';
@@ -117,10 +117,7 @@ export function WeekDayDot({
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 0 }}
               style={{
-                position: 'absolute',
-                width: '100%',
-                height: '100%',
-                borderRadius: 14,
+                ...StyleSheet.absoluteFillObject,
               }}
             />
           )}

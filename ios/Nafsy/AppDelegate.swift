@@ -1,6 +1,8 @@
 import Expo
 import React
 import ReactAppDependencyProvider
+import AVFAudio
+import WebRTC
 
 @UIApplicationMain
 public class AppDelegate: ExpoAppDelegate {
@@ -28,6 +30,39 @@ public class AppDelegate: ExpoAppDelegate {
       in: window,
       launchOptions: launchOptions)
 #endif
+
+    // Configure iOS AVAudioSession for WebRTC: PlayAndRecord + DefaultToSpeaker + voiceChat
+    do {
+      let rtcSession = RTCAudioSession.sharedInstance()
+      rtcSession.lockForConfiguration()
+      defer { rtcSession.unlockForConfiguration() }
+      try rtcSession.setCategory(AVAudioSession.Category.playAndRecord,
+                                 with: [.defaultToSpeaker, .allowBluetooth, .allowBluetoothA2DP])
+      try rtcSession.setMode(AVAudioSession.Mode.voiceChat)
+      try rtcSession.setActive(true)
+      // Some iOS versions require an explicit override to loudspeaker after activation
+      do {
+        try AVAudioSession.sharedInstance().overrideOutputAudioPort(.speaker)
+      } catch {
+        // no-op
+      }
+    } catch {
+      // no-op if configuration fails
+    }
+
+    // Re-assert loudspeaker on route changes (e.g., when WebRTC or Bluetooth adjusts the route)
+    NotificationCenter.default.addObserver(forName: AVAudioSession.routeChangeNotification,
+                                           object: nil,
+                                           queue: .main) { _ in
+      let rtcSession = RTCAudioSession.sharedInstance()
+      rtcSession.lockForConfiguration()
+      defer { rtcSession.unlockForConfiguration() }
+      do {
+        try AVAudioSession.sharedInstance().overrideOutputAudioPort(.speaker)
+      } catch {
+        // no-op
+      }
+    }
 
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }

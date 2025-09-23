@@ -12,7 +12,8 @@ import { useColors } from '~/hooks/useColors';
 import { withOpacity } from '~/lib/colors';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from '~/hooks/useTranslation';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { ImpactFeedbackStyle } from 'expo-haptics';
+import { safeHaptics } from '~/lib/haptics';
 // Using product-specified 1–10 rating scale colors
 
 interface RatingSelectorProps {
@@ -91,7 +92,7 @@ export function RatingSelector({
 
   const callOnChange = useCallback(
     (v: number) => {
-      impactAsync(ImpactFeedbackStyle.Light);
+      safeHaptics.impact(ImpactFeedbackStyle.Light);
       onChange(v);
     },
     [onChange]
@@ -103,7 +104,7 @@ export function RatingSelector({
   const pan = Gesture.Pan()
     .onBegin(() => {
       if (!isActive && onActivate) {
-        runOnJS(impactAsync)(ImpactFeedbackStyle.Light);
+        runOnJS(safeHaptics.impact)(ImpactFeedbackStyle.Light);
         runOnJS(onActivate)();
       }
       startX.value = thumbX.value;
@@ -196,7 +197,7 @@ export function RatingSelector({
           onPressIn={(e) => {
             if (!isActive) {
               if (onActivate) {
-                impactAsync(ImpactFeedbackStyle.Light);
+                safeHaptics.impact(ImpactFeedbackStyle.Light);
                 onActivate();
               }
               return;

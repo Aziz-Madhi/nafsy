@@ -10,7 +10,9 @@ import {
 import { Text } from '~/components/ui/text';
 import { SymbolView } from 'expo-symbols';
 import { router } from 'expo-router';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { Linking } from 'react-native';
+import { ImpactFeedbackStyle } from 'expo-haptics';
+import { safeHaptics } from '../../../lib/haptics';
 import Animated, {
   FadeInDown,
   useAnimatedStyle,
@@ -38,7 +40,7 @@ function FAQItem({ question, answer }: { question: string; answer: string }) {
   }));
 
   const handlePress = () => {
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact(ImpactFeedbackStyle.Light);
     setIsExpanded(!isExpanded);
   };
 
@@ -114,13 +116,13 @@ export default function HelpCenter() {
   );
 
   const handleStartChat = () => {
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact(ImpactFeedbackStyle.Light);
     setShowChat(true);
   };
 
   const handleSendMessage = () => {
     if (!chatMessage.trim()) return;
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact(ImpactFeedbackStyle.Light);
     // In a real app, this would send the message to customer support
     setChatMessage('');
     // Show confirmation
@@ -213,7 +215,7 @@ export default function HelpCenter() {
               </Pressable>
 
               <Pressable
-                onPress={() => router.push('/crisis-resources')}
+                onPress={() => Linking.openURL('https://www.iasp.info/crisis-centres-helplines/')}
                 className="bg-black/[0.03] dark:bg-white/[0.03] rounded-3xl p-4"
                 style={({ pressed }) => ({ opacity: pressed ? 0.8 : 1 })}
               >
@@ -227,7 +229,7 @@ export default function HelpCenter() {
                   </View>
                   <View className="flex-1">
                     <Text variant="callout" className="font-semibold mb-0.5">
-                      {t('profile.settings.crisis')}
+                      {t('profile.settings.getHelp')}
                     </Text>
                     <Text variant="caption1" className="text-muted-foreground">
                       {t('profile.settings.crisisSubtitle')}

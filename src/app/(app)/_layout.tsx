@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
+// Ensure global haptics toggle patch is applied early
+import '../../../lib/haptics';
 import { Stack, Redirect } from 'expo-router';
 import { useAuth } from '@clerk/clerk-expo';
 import { View, ActivityIndicator } from 'react-native';
@@ -182,10 +184,6 @@ export default function AppLayout() {
             animation: 'slide_from_bottom',
             gestureEnabled: true,
           }}
-        />
-        <Stack.Screen
-          name="crisis-resources"
-          options={{ headerShown: false }}
         />
         <Stack.Screen name="feedback" options={{ headerShown: false }} />
         <Stack.Screen name="help-center" options={{ headerShown: false }} />

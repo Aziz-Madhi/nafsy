@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { View, Pressable } from 'react-native';
 import { WeekDayDot } from './WeekDayDot';
 import { Doc } from '../../../convex/_generated/dataModel';
@@ -33,6 +33,27 @@ export function WeekView({ moodData }: WeekViewProps) {
 
   // Colors for React Native styling
   const colors = useColors();
+
+  // Measure week row to align pointer precisely with selected day
+  const rowRef = useRef<View>(null);
+  const [rowWidth, setRowWidth] = useState(0);
+  const [rowWindowX, setRowWindowX] = useState(0);
+  const itemRefs = useRef<Array<View | null>>([]);
+  const [dayCenters, setDayCenters] = useState<number[]>(
+    Array(7).fill(0)
+  );
+  const overlayRef = useRef<View>(null);
+  const [overlayWindowX, setOverlayWindowX] = useState(0);
+  const [pointerLeft, setPointerLeft] = useState<number | null>(null);
+
+  // Recompute pointer when selection or layouts change
+  useEffect(() => {
+    if (selectedDayIndex === null) return;
+    const center = dayCenters[selectedDayIndex];
+    if (center && overlayWindowX !== 0) {
+      setPointerLeft(center - overlayWindowX);
+    }
+  }, [selectedDayIndex, dayCenters, overlayWindowX]);
 
   // Get all mood colors at the top level for all possible moods
   const sadColor = useMoodColor('sad');
@@ -146,17 +167,26 @@ export function WeekView({ moodData }: WeekViewProps) {
   // Calculate pointer position for visual connection
   const getPointerPosition = () => {
     if (selectedDayIndex === null) return { left: '50%' as const };
-    // Calculate px offset instead of percentage to satisfy RN typing
-    const containerWidth = 320; // approximate; pointer is purely decorative
-    const step = containerWidth / 7;
-    const x = step * (selectedDayIndex + 0.5);
-    return { left: x } as const;
+    if (pointerLeft !== null) return { left: pointerLeft } as const;
+    // Fallback approximation
+    const measuredWidth = rowWidth || 320;
+    const step = measuredWidth / 7;
+    const approxCenter = rowWindowX + step * (selectedDayIndex + 0.5);
+    return { left: approxCenter - (overlayWindowX || 8) } as const;
   };
 
   return (
     <>
       <View className="py-4">
-        <View className="flex-row justify-around">
+        <View
+          ref={rowRef}
+          onLayout={(e) => {
+            setRowWidth(e.nativeEvent.layout.width);
+            // Measure x in window for absolute positioning conversion
+            rowRef.current?.measureInWindow?.((x) => setRowWindowX(x));
+          }}
+          className="flex-row justify-around"
+        >
           {last7Days.map((day, index) => {
             // Calculate gradient for dual moods
             const pixelStyle = getMoodPixelStyle(
@@ -175,8 +205,23 @@ export function WeekView({ moodData }: WeekViewProps) {
               pixelStyle.type === 'solid' ? pixelStyle.color : '#E5E7EB'; // Default gray for when gradient is used
 
             return (
-              <WeekDayDot
+              <View
                 key={index}
+                ref={(el) => {
+                  itemRefs.current[index] = el;
+                }}
+                onLayout={(e) => {
+                  const { x, width } = e.nativeEvent.layout;
+                  // Convert from row-local coordinates to window coordinates
+                  const centerInWindow = rowWindowX + x + width / 2;
+                  setDayCenters((prev) => {
+                    const copy = [...prev];
+                    copy[index] = centerInWindow;
+                    return copy;
+                  });
+                }}
+              >
+                <WeekDayDot
                 day={day.dayName}
                 color={solidColor}
                 isToday={day.isToday}
@@ -189,7 +234,8 @@ export function WeekView({ moodData }: WeekViewProps) {
                 gradientLocations={gradientLocations}
                 morningMood={day.morningMood?.mood}
                 eveningMood={day.eveningMood?.mood}
-              />
+                />
+              </View>
             );
           })}
         </View>
@@ -210,6 +256,7 @@ export function WeekView({ moodData }: WeekViewProps) {
           >
             <MotiView
               key="insights-container"
+              ref={overlayRef as any}
               from={{
                 opacity: 0,
                 translateY: -5,
@@ -225,6 +272,11 @@ export function WeekView({ moodData }: WeekViewProps) {
               transition={{
                 type: 'timing',
                 duration: 200,
+              }}
+              onLayout={() => {
+                const overlay = overlayRef.current as any;
+                // Capture window X for fallback and to support measureLayout-less targets
+                overlay?.measureInWindow?.((x: number) => setOverlayWindowX(x));
               }}
             >
               {/* Triangular Pointer */}

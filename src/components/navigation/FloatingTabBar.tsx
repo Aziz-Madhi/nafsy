@@ -9,7 +9,8 @@ import {
 } from 'react-native';
 import { MessageCircle, Heart, Activity, ArrowUp } from 'lucide-react-native';
 import { SoundWaveIcon } from '~/components/ui/SoundWaveIcon';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { ImpactFeedbackStyle } from 'expo-haptics';
+import { safeHaptics } from '~/lib/haptics';
 import { useColors } from '~/hooks/useColors';
 import { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { BlurView } from 'expo-blur';
@@ -175,7 +176,7 @@ export function FloatingTabBar({
 
   const handleTabPress = useCallback(
     async (route: any, isFocused: boolean) => {
-      await impactAsync(ImpactFeedbackStyle.Light);
+      await safeHaptics.impact(ImpactFeedbackStyle.Light);
 
       const event = navigation.emit({
         type: 'tabPress',
@@ -204,7 +205,7 @@ export function FloatingTabBar({
       clearCoachChatInput();
       clearMainChatInput();
     }
-    await impactAsync(ImpactFeedbackStyle.Medium);
+    await safeHaptics.impact(ImpactFeedbackStyle.Medium);
     try {
       await Promise.resolve(onSendMessage(messageText));
     } finally {

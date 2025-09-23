@@ -4,7 +4,8 @@ import { DashboardLayout } from '~/components/ui/ScreenLayout';
 import { Text } from '~/components/ui/text';
 import { WeekView } from '~/components/mood/WeekView';
 import { PixelCalendar } from '~/components/mood/PixelCalendar';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { ImpactFeedbackStyle } from 'expo-haptics';
+import { safeHaptics } from '~/lib/haptics';
 import { useCurrentUser } from '~/hooks/useSharedData';
 import {
   useOfflineMoodData,
@@ -729,7 +730,7 @@ export default function MoodIndex() {
 
     try {
       setIsSaving(true);
-      impactAsync(ImpactFeedbackStyle.Medium);
+      safeHaptics.impact(ImpactFeedbackStyle.Medium);
 
       // Call with rating (keep legacy mood populated server-side)
       const create = createMood as unknown as (args: any) => Promise<string>;
@@ -845,7 +846,8 @@ export default function MoodIndex() {
                       className="text-center mb-1"
                       style={{
                         color: '#1F2937',
-                        letterSpacing: 0.5,
+                        // Avoid letterSpacing for Arabic to preserve glyph shaping
+                        letterSpacing: i18n.language === 'ar' ? 0 : 0.5,
                       }}
                     >
                       {selectedEncouragingMessage.prefix}
@@ -858,7 +860,8 @@ export default function MoodIndex() {
                     className="text-center mb-4"
                     style={{
                       color: '#1F2937',
-                      letterSpacing: 1.5,
+                      // Avoid letterSpacing for Arabic to preserve glyph shaping
+                      letterSpacing: i18n.language === 'ar' ? 0 : 1.5,
                     }}
                   >
                     {selectedEncouragingMessage.highlight}
@@ -1039,7 +1042,7 @@ export default function MoodIndex() {
               onPress={() => {
                 if (!isNavigating) {
                   setIsNavigating(true);
-                  impactAsync(ImpactFeedbackStyle.Light);
+                  safeHaptics.impact(ImpactFeedbackStyle.Light);
                   router.push('/tabs/mood/year-view');
                   // Reset navigation flag after a delay
                   setTimeout(() => setIsNavigating(false), 1000);

@@ -31,6 +31,7 @@ const defaultSettings: AppSettings = {
   notificationsEnabled: true,
   moodRemindersEnabled: true,
   moodReminderTime: '09:00',
+  hapticFeedbackEnabled: true,
 };
 
 // App store state and actions interface

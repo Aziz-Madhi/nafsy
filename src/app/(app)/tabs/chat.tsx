@@ -1,7 +1,8 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { sendMessageRef, startVoiceRef } from './_layout';
-import { impactAsync, ImpactFeedbackStyle } from 'expo-haptics';
+import { ImpactFeedbackStyle } from 'expo-haptics';
+import { safeHaptics } from '~/lib/haptics';
 import { Alert, Keyboard } from 'react-native';
 import { useUserSafe } from '~/lib/useUserSafe';
 import { useMutation, useQuery, useAction } from 'convex/react';
@@ -368,7 +369,7 @@ export default function ChatTab() {
 
   // Simple sidebar handlers
   const handleOpenSidebar = () => {
-    impactAsync(ImpactFeedbackStyle.Light);
+    safeHaptics.impact(ImpactFeedbackStyle.Light);
     setHistorySidebarVisible(true);
   };
 

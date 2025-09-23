@@ -90,6 +90,7 @@ export interface AppSettings {
   notificationsEnabled: boolean;
   moodRemindersEnabled: boolean;
   moodReminderTime: string; // "09:00"
+  hapticFeedbackEnabled?: boolean;
 }
 
 export type Theme = 'light' | 'dark' | 'system';
